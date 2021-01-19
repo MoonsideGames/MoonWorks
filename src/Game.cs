@@ -1,5 +1,4 @@
-﻿using System;
-using SDL2;
+﻿using SDL2;
 using Campari;
 using System.Collections.Generic;
 
@@ -11,10 +10,10 @@ namespace MoonWorks
         private double timestep;
         ulong currentTime = SDL.SDL_GetPerformanceCounter();
         double accumulator = 0;
+        bool debugMode;
 
-        public IntPtr WindowHandle { get; }
+        public Window Window { get; }
         public GraphicsDevice GraphicsDevice { get; }
-
         public Input Input { get; }
 
         private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
@@ -25,8 +24,12 @@ namespace MoonWorks
             { PresentMode.FIFORelaxed, RefreshCS.Refresh.PresentMode.FIFORelaxed }
         };
 
-        public Game(uint windowWidth, uint windowHeight, PresentMode presentMode, int targetTimestep = 60, bool debugMode = false)
-        {
+        public Game(
+            WindowCreateInfo windowCreateInfo,
+            PresentMode presentMode,
+            int targetTimestep = 60,
+            bool debugMode = false
+        ) {
             timestep = 1.0 / targetTimestep;
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
@@ -35,18 +38,17 @@ namespace MoonWorks
                 return;
             }
 
-            WindowHandle = SDL.SDL_CreateWindow(
-                "CampariTest",
-                SDL.SDL_WINDOWPOS_UNDEFINED,
-                SDL.SDL_WINDOWPOS_UNDEFINED,
-                (int)windowWidth,
-                (int)windowHeight,
-                SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN
+            Input = new Input();
+
+            Window = new Window(windowCreateInfo);
+
+            GraphicsDevice = new GraphicsDevice(
+                Window.Handle,
+                moonWorksToRefreshPresentMode[presentMode],
+                debugMode
             );
 
-            GraphicsDevice = new GraphicsDevice(WindowHandle, moonWorksToRefreshPresentMode[presentMode], debugMode);
-
-            Input = new Input();
+            this.debugMode = debugMode;
         }
 
         public void Run()
