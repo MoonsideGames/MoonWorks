@@ -30,7 +30,7 @@ namespace MoonWorks
         public float TriggerLeft { get; private set; }
         public float TriggerRight { get; private set; }
 
-        public Gamepad(IntPtr handle)
+        internal Gamepad(IntPtr handle)
         {
             Handle = handle;
         }
