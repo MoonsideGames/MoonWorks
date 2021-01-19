@@ -1,0 +1,6 @@
+[submodule "lib/SDL2-CS"]
+	path = lib/SDL2-CS
+	url = https://github.com/flibitijibibo/SDL2-CS.git
+[submodule "lib/Campari"]
+	path = lib/Campari
+	url = https://gitea.moonside.games/MoonsideGames/Campari.git

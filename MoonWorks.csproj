@@ -4,4 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include=".\lib\SDL2-CS\SDL2-CS.Core.csproj" />
+    <ProjectReference Include=".\lib\Campari\Campari.csproj" />
+    <ProjectReference Include=".\lib\Campari\lib\RefreshCS\RefreshCS.csproj" />
+  </ItemGroup>
 </Project>
