@@ -39,6 +39,7 @@ namespace MoonWorks.Audio
                 device,
                 buffer,
                 0,
+                (uint) buffer.Length,
                 (ushort) info.channels,
                 info.sample_rate
             );
@@ -47,7 +48,8 @@ namespace MoonWorks.Audio
         public StaticSound(
             AudioDevice device,
             float[] buffer,
-            uint bufferOffset,
+            uint bufferOffset, /* in floats */
+            uint bufferLength, /* in floats */
             ushort channels,
             uint samplesPerSecond
         ) : base(device) {
@@ -63,14 +65,13 @@ namespace MoonWorks.Audio
                 nAvgBytesPerSec = blockAlign * samplesPerSecond
             };
 
-            var bufferLengthInBytes = sizeof(float) * buffer.Length;
-
+            var bufferLengthInBytes = (int) (bufferLength * sizeof(float));
             Handle = new FAudio.FAudioBuffer();
             Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
             Handle.pContext = IntPtr.Zero;
             Handle.AudioBytes = (uint) bufferLengthInBytes;
             Handle.pAudioData = Marshal.AllocHGlobal(bufferLengthInBytes);
-            Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, buffer.Length);
+            Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
             Handle.PlayBegin = 0;
             Handle.PlayLength = 0;
 
