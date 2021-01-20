@@ -1,6 +1,7 @@
 ﻿using SDL2;
 using Campari;
 using System.Collections.Generic;
+using MoonWorks.Audio;
 
 namespace MoonWorks
 {
@@ -14,6 +15,7 @@ namespace MoonWorks
 
         public Window Window { get; }
         public GraphicsDevice GraphicsDevice { get; }
+        public AudioDevice AudioDevice { get; }
         public Input Input { get; }
 
         private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
@@ -38,6 +40,8 @@ namespace MoonWorks
                 return;
             }
 
+            Logger.Initialize();
+
             Input = new Input();
 
             Window = new Window(windowCreateInfo);
@@ -47,6 +51,8 @@ namespace MoonWorks
                 moonWorksToRefreshPresentMode[presentMode],
                 debugMode
             );
+
+            AudioDevice = new AudioDevice();
 
             this.debugMode = debugMode;
         }

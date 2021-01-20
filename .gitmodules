@@ -4,3 +4,6 @@
 [submodule "lib/Campari"]
 	path = lib/Campari
 	url = https://gitea.moonside.games/MoonsideGames/Campari.git
+[submodule "lib/FAudio"]
+	path = lib/FAudio
+	url = https://github.com/FNA-XNA/FAudio.git

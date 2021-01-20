@@ -5,7 +5,7 @@ namespace MoonWorks
 {
     public class Window
     {
-        public IntPtr Handle { get; }
+        internal IntPtr Handle { get; }
         public ScreenMode ScreenMode { get; }
 
         public Window(WindowCreateInfo windowCreateInfo)

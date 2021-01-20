@@ -4,12 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoonWorks", "MoonWorks.csproj", "{DDC9BA9B-4440-4CB3-BDB4-D5F91DE1686B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{608AA31D-F163-4096-B4EF-B9C7D21D52BB} = {608AA31D-F163-4096-B4EF-B9C7D21D52BB}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDL2-CS.Core", "lib\SDL2-CS\SDL2-CS.Core.csproj", "{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Campari", "lib\Campari\Campari.csproj", "{D09577DE-99F5-4C30-9165-4012C37CE0CE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RefreshCS", "lib\Campari\lib\RefreshCS\RefreshCS.csproj", "{66116A40-B360-4BA3-966A-A54F3E562EC1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FAudio-CS.Core", "lib\FAudio\csharp\FAudio-CS.Core.csproj", "{608AA31D-F163-4096-B4EF-B9C7D21D52BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +38,10 @@ Global
 		{66116A40-B360-4BA3-966A-A54F3E562EC1}.Debug|x64.Build.0 = Debug|x64
 		{66116A40-B360-4BA3-966A-A54F3E562EC1}.Release|x64.ActiveCfg = Release|x64
 		{66116A40-B360-4BA3-966A-A54F3E562EC1}.Release|x64.Build.0 = Release|x64
+		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Debug|x64.ActiveCfg = Debug|x64
+		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Debug|x64.Build.0 = Debug|x64
+		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Release|x64.ActiveCfg = Release|x64
+		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
