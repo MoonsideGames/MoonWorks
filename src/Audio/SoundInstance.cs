@@ -198,6 +198,11 @@ namespace MoonWorks.Audio
             Handle = handle;
             this.is3D = is3D;
             InitDSPSettings(Parent.Format.nChannels);
+
+            FAudio.FAudioVoice_SetOutputVoices(
+                handle,
+                ref Device.ReverbSends
+            );
         }
 
         private void InitDSPSettings(uint srcChannels)

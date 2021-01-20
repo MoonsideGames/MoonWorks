@@ -16,7 +16,7 @@ namespace MoonWorks.Audio
         public float DopplerScale = 1f;
         public float SpeedOfSound = 343.5f;
 
-        private FAudio.FAudioVoiceSends reverbSends;
+        internal FAudio.FAudioVoiceSends ReverbSends;
 
         private readonly List<WeakReference<DynamicSoundInstance>> dynamicSoundInstances = new List<WeakReference<DynamicSoundInstance>>();
 
@@ -180,14 +180,14 @@ namespace MoonWorks.Audio
 
             /* Init reverb sends */
 
-            reverbSends = new FAudio.FAudioVoiceSends
+            ReverbSends = new FAudio.FAudioVoiceSends
             {
                 SendCount = 2,
                 pSends = Marshal.AllocHGlobal(
                     2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()
                 )
             };
-            FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) reverbSends.pSends;
+            FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) ReverbSends.pSends;
             sendDesc[0].Flags = 0;
             sendDesc[0].pOutputVoice = MasteringVoice;
             sendDesc[1].Flags = 0;
