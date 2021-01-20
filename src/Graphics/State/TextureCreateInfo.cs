@@ -8,10 +8,10 @@ namespace MoonWorks.Graphics
         public uint Height;
         public uint Depth;
         public bool IsCube;
-        public Refresh.SampleCount SampleCount;
+        public SampleCount SampleCount;
         public uint LevelCount;
-        public Refresh.ColorFormat Format;
-        public Refresh.TextureUsageFlags UsageFlags;
+        public ColorFormat Format;
+        public TextureUsageFlags UsageFlags;
 
         public Refresh.TextureCreateInfo ToRefreshTextureCreateInfo()
         {
@@ -21,10 +21,10 @@ namespace MoonWorks.Graphics
                 height = Height,
                 depth = Depth,
                 isCube = Conversions.BoolToByte(IsCube),
-                sampleCount = SampleCount,
+                sampleCount = (Refresh.SampleCount) SampleCount,
                 levelCount = LevelCount,
-                format = Format,
-                usageFlags = UsageFlags
+                format = (Refresh.ColorFormat) Format,
+                usageFlags = (Refresh.TextureUsageFlags) UsageFlags
             };
         }
     }

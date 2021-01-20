@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
     {
         public uint Width { get; }
         public uint Height { get; }
-        public Refresh.ColorFormat Format { get; }
+        public ColorFormat Format { get; }
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
@@ -21,15 +21,15 @@ namespace MoonWorks.Graphics
                 out var channels
             );
 
-            MoonWorks.Graphics.TextureCreateInfo textureCreateInfo;
+            TextureCreateInfo textureCreateInfo;
             textureCreateInfo.Width = (uint)width;
             textureCreateInfo.Height = (uint)height;
             textureCreateInfo.Depth = 1;
-            textureCreateInfo.Format = Refresh.ColorFormat.R8G8B8A8;
+            textureCreateInfo.Format = ColorFormat.R8G8B8A8;
             textureCreateInfo.IsCube = false;
             textureCreateInfo.LevelCount = 1;
-            textureCreateInfo.SampleCount = Refresh.SampleCount.One;
-            textureCreateInfo.UsageFlags = Refresh.TextureUsageFlags.SamplerBit;
+            textureCreateInfo.SampleCount = SampleCount.One;
+            textureCreateInfo.UsageFlags = TextureUsageFlags.SamplerBit;
 
             var texture = new Texture(device, ref textureCreateInfo);
 
@@ -51,13 +51,13 @@ namespace MoonWorks.Graphics
             GraphicsDevice device,
             uint width,
             uint height,
-            Refresh.ColorFormat format,
-            Refresh.TextureUsageFlags usageFlags,
-            Refresh.SampleCount sampleCount = Refresh.SampleCount.One,
+            ColorFormat format,
+            TextureUsageFlags usageFlags,
+            SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
         )
         {
-            var textureCreateInfo = new MoonWorks.Graphics.TextureCreateInfo
+            var textureCreateInfo = new TextureCreateInfo
             {
                 Width = width,
                 Height = height,
@@ -77,13 +77,13 @@ namespace MoonWorks.Graphics
             uint width,
             uint height,
             uint depth,
-            Refresh.ColorFormat format,
-            Refresh.TextureUsageFlags usageFlags,
-            Refresh.SampleCount sampleCount = Refresh.SampleCount.One,
+            ColorFormat format,
+            TextureUsageFlags usageFlags,
+            SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
         )
         {
-            var textureCreateInfo = new MoonWorks.Graphics.TextureCreateInfo
+            var textureCreateInfo = new TextureCreateInfo
             {
                 Width = width,
                 Height = height,
@@ -101,13 +101,13 @@ namespace MoonWorks.Graphics
         public static Texture CreateTextureCube(
             GraphicsDevice device,
             uint size,
-            Refresh.ColorFormat format,
-            Refresh.TextureUsageFlags usageFlags,
-            Refresh.SampleCount sampleCount = Refresh.SampleCount.One,
+            ColorFormat format,
+            TextureUsageFlags usageFlags,
+            SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
         )
         {
-            var textureCreateInfo = new MoonWorks.Graphics.TextureCreateInfo
+            var textureCreateInfo = new TextureCreateInfo
             {
                 Width = size,
                 Height = size,
@@ -122,7 +122,7 @@ namespace MoonWorks.Graphics
             return new Texture(device, ref textureCreateInfo);
         }
 
-        public Texture(GraphicsDevice device, ref MoonWorks.Graphics.TextureCreateInfo textureCreateInfo) : base(device)
+        public Texture(GraphicsDevice device, ref TextureCreateInfo textureCreateInfo) : base(device)
         {
             var refreshTextureCreateInfo = textureCreateInfo.ToRefreshTextureCreateInfo();
 

@@ -9,10 +9,10 @@ namespace MoonWorks.Graphics
 
         public unsafe RenderPass(
             GraphicsDevice device,
-            params Refresh.ColorTargetDescription[] colorTargetDescriptions
+            params ColorTargetDescription[] colorTargetDescriptions
         ) : base(device)
         {
-            fixed (Refresh.ColorTargetDescription* ptr = colorTargetDescriptions)
+            fixed (ColorTargetDescription* ptr = colorTargetDescriptions)
             {
                 Refresh.RenderPassCreateInfo renderPassCreateInfo;
                 renderPassCreateInfo.colorTargetCount = (uint) colorTargetDescriptions.Length;
@@ -25,13 +25,13 @@ namespace MoonWorks.Graphics
 
         public unsafe RenderPass(
             GraphicsDevice device,
-            Refresh.DepthStencilTargetDescription depthStencilTargetDescription,
-            params Refresh.ColorTargetDescription[] colorTargetDescriptions
+            DepthStencilTargetDescription depthStencilTargetDescription,
+            params ColorTargetDescription[] colorTargetDescriptions
         ) : base(device)
         {
-            Refresh.DepthStencilTargetDescription* depthStencilPtr = &depthStencilTargetDescription;
+            DepthStencilTargetDescription* depthStencilPtr = &depthStencilTargetDescription;
 
-            fixed (Refresh.ColorTargetDescription* colorPtr = colorTargetDescriptions)
+            fixed (ColorTargetDescription* colorPtr = colorTargetDescriptions)
             {
                 Refresh.RenderPassCreateInfo renderPassCreateInfo;
                 renderPassCreateInfo.colorTargetCount = (uint)colorTargetDescriptions.Length;

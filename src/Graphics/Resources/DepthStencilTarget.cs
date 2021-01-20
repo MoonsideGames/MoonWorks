@@ -7,7 +7,7 @@ namespace MoonWorks.Graphics
     {
         public uint Width { get; }
         public uint Height { get; }
-        public Refresh.DepthFormat Format { get; }
+        public DepthFormat Format { get; }
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyDepthStencilTarget;
 
@@ -15,12 +15,18 @@ namespace MoonWorks.Graphics
             GraphicsDevice device,
             uint width,
             uint height,
-            Refresh.DepthFormat depthFormat
+            DepthFormat depthFormat
         ) : base(device)
         {
-            Handle = Refresh.Refresh_CreateDepthStencilTarget(device.Handle, width, height, depthFormat);
+            Handle = Refresh.Refresh_CreateDepthStencilTarget(
+                device.Handle, 
+                width, 
+                height, 
+                (Refresh.DepthFormat) depthFormat
+            );
             Width = width;
             Height = height;
+            Format = depthFormat;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace MoonWorks.Graphics
             MultisampleState multisampleState,
             GraphicsPipelineLayoutCreateInfo pipelineLayoutCreateInfo,
             RasterizerState rasterizerState,
-            Refresh.PrimitiveType primitiveType,
+            PrimitiveType primitiveType,
             VertexInputState vertexInputState,
             ViewportState viewportState,
             RenderPass renderPass
@@ -38,7 +38,7 @@ namespace MoonWorks.Graphics
             Refresh.GraphicsPipelineCreateInfo graphicsPipelineCreateInfo;
 
             graphicsPipelineCreateInfo.colorBlendState.logicOpEnable = Conversions.BoolToByte(colorBlendState.LogicOpEnable);
-            graphicsPipelineCreateInfo.colorBlendState.logicOp = colorBlendState.LogicOp;
+            graphicsPipelineCreateInfo.colorBlendState.logicOp = (Refresh.LogicOp) colorBlendState.LogicOp;
             graphicsPipelineCreateInfo.colorBlendState.blendStates = (IntPtr) colorTargetBlendStates;
             graphicsPipelineCreateInfo.colorBlendState.blendStateCount = (uint) colorBlendState.ColorTargetBlendStates.Length;
             graphicsPipelineCreateInfo.colorBlendState.blendConstants[0] = colorBlendState.BlendConstants.R;
@@ -90,7 +90,7 @@ namespace MoonWorks.Graphics
             graphicsPipelineCreateInfo.viewportState.scissors = scissorHandle.AddrOfPinnedObject();
             graphicsPipelineCreateInfo.viewportState.scissorCount = (uint) viewportState.Scissors.Length;
 
-            graphicsPipelineCreateInfo.primitiveType = primitiveType;
+            graphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
             graphicsPipelineCreateInfo.renderPass = renderPass.Handle;
 
             Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, ref graphicsPipelineCreateInfo);

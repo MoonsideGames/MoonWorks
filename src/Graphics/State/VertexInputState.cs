@@ -4,7 +4,7 @@ namespace MoonWorks.Graphics
 {
     public struct VertexInputState
     {
-        public Refresh.VertexBinding[] VertexBindings;
-        public Refresh.VertexAttribute[] VertexAttributes;
+        public VertexBinding[] VertexBindings;
+        public VertexAttribute[] VertexAttributes;
     }
 }

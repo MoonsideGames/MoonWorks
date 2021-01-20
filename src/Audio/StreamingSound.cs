@@ -5,7 +5,8 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Audio
 {
     /// <summary>
-    /// For streaming long playback. Reads an OGG file.
+    /// For streaming long playback. 
+    /// Can be extended to support custom decoders.
     /// </summary>
     public abstract class StreamingSound : SoundInstance
     {

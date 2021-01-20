@@ -4,7 +4,7 @@ namespace MoonWorks.Graphics
 {
     public static class Bytecode
     {
-        public static uint[] ReadBytecode(FileInfo fileInfo)
+        public static uint[] ReadBytecodeAsUInt32(FileInfo fileInfo)
         {
             byte[] data;
             int size;

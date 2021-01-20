@@ -34,9 +34,9 @@ namespace MoonWorks.Graphics
             Level = level;
         }
 
-        public RefreshCS.Refresh.TextureSlice ToRefreshTextureSlice()
+        public Refresh.TextureSlice ToRefreshTextureSlice()
         {
-            RefreshCS.Refresh.TextureSlice textureSlice = new RefreshCS.Refresh.TextureSlice
+            Refresh.TextureSlice textureSlice = new Refresh.TextureSlice
             {
                 texture = Texture.Handle,
                 rectangle = Rectangle,

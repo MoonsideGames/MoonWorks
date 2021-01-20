@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
 
         public unsafe ShaderModule(GraphicsDevice device, FileInfo fileInfo) : base(device)
         {
-            fixed (uint* ptr = Bytecode.ReadBytecode(fileInfo))
+            fixed (uint* ptr = Bytecode.ReadBytecodeAsUInt32(fileInfo))
             {
                 Refresh.ShaderModuleCreateInfo shaderModuleCreateInfo;
                 shaderModuleCreateInfo.codeSize = (UIntPtr) fileInfo.Length;

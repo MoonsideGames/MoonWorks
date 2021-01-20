@@ -9,13 +9,13 @@ namespace MoonWorks.Graphics
 
         public Buffer(
             GraphicsDevice device,
-            Refresh.BufferUsageFlags usageFlags,
+            BufferUsageFlags usageFlags,
             uint sizeInBytes
         ) : base(device)
         {
             Handle = Refresh.Refresh_CreateBuffer(
                 device.Handle,
-                usageFlags,
+                (Refresh.BufferUsageFlags) usageFlags,
                 sizeInBytes
             );
         }

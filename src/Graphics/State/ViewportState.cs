@@ -4,7 +4,7 @@ namespace MoonWorks.Graphics
 {
     public struct ViewportState
     {
-        public Refresh.Viewport[] Viewports;
-        public Refresh.Rect[] Scissors;
+        public Viewport[] Viewports;
+        public Rect[] Scissors;
     }
 }
