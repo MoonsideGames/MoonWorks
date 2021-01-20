@@ -82,6 +82,7 @@ namespace MoonWorks
                         HandleSDLEvents();
 
                         Input.Update();
+                        AudioDevice.Update();
 
                         Update(timestep);
 

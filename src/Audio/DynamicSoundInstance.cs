@@ -16,7 +16,7 @@ namespace MoonWorks.Audio
 
         public override SoundState State { get; protected set; }
 
-        public DynamicSoundInstance(
+        internal DynamicSoundInstance(
             AudioDevice device,
             DynamicSound parent,
             bool is3D
@@ -26,6 +26,8 @@ namespace MoonWorks.Audio
             queuedSizes = new List<uint>();
 
             buffer = new float[DynamicSound.BUFFER_SIZE];
+
+            State = SoundState.Stopped;
         }
 
         public void Play()
@@ -60,7 +62,7 @@ namespace MoonWorks.Audio
             ClearBuffers();
         }
 
-        private void Update()
+        internal void Update()
         {
             if (State != SoundState.Playing)
             {
@@ -117,7 +119,7 @@ namespace MoonWorks.Audio
                 buffer.Length
             );
 
-            IntPtr next = Marshal.AllocHGlobal(buffer.Length);
+            IntPtr next = Marshal.AllocHGlobal(buffer.Length * sizeof(float));
             Marshal.Copy(buffer, 0, next, buffer.Length);
 
             lock (queuedBuffers)

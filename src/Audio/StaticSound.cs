@@ -6,13 +6,15 @@ namespace MoonWorks.Audio
 {
     public class StaticSound : Sound, IDisposable
     {
+        internal override FAudio.FAudioWaveFormatEx Format { get; }
         internal FAudio.FAudioBuffer Handle;
-        private bool IsDisposed;
 
         public uint LoopStart { get; set; } = 0;
         public uint LoopLength { get; set; } = 0;
 
-        public static StaticSound FromOgg(FileInfo fileInfo)
+        private bool IsDisposed;
+
+        public static StaticSound LoadOgg(AudioDevice device, FileInfo fileInfo)
         {
             var filePointer = FAudio.stb_vorbis_open_filename(fileInfo.FullName, out var error, IntPtr.Zero);
 
@@ -21,12 +23,20 @@ namespace MoonWorks.Audio
                 throw new AudioLoadException("Error loading file!");
             }
             var info = FAudio.stb_vorbis_get_info(filePointer);
-            var bufferSize =  (uint)(info.sample_rate * info.channels);
+            var bufferSize = FAudio.stb_vorbis_stream_length_in_samples(filePointer);
             var buffer = new float[bufferSize];
+
+            FAudio.stb_vorbis_get_samples_float_interleaved(
+                filePointer,
+                info.channels,
+                buffer,
+                (int) bufferSize
+            );
 
             FAudio.stb_vorbis_close(filePointer);
 
             return new StaticSound(
+                device,
                 buffer,
                 0,
                 (ushort) info.channels,
@@ -35,25 +45,42 @@ namespace MoonWorks.Audio
         }
 
         public StaticSound(
+            AudioDevice device,
             float[] buffer,
             uint bufferOffset,
             ushort channels,
             uint samplesPerSecond
-        ) : base(channels, samplesPerSecond) {
-            var bufferLength = 4 * buffer.Length;
+        ) : base(device) {
+            var blockAlign = (ushort)(4 * channels);
+
+            Format = new FAudio.FAudioWaveFormatEx
+            {
+                wFormatTag = 3,
+                wBitsPerSample = 32,
+                nChannels = channels,
+                nBlockAlign = blockAlign,
+                nSamplesPerSec = samplesPerSecond,
+                nAvgBytesPerSec = blockAlign * samplesPerSecond
+            };
+
+            var bufferLengthInBytes = sizeof(float) * buffer.Length;
 
             Handle = new FAudio.FAudioBuffer();
             Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
             Handle.pContext = IntPtr.Zero;
-            Handle.AudioBytes = (uint) bufferLength;
-            Handle.pAudioData = Marshal.AllocHGlobal((int) bufferLength);
-            Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
+            Handle.AudioBytes = (uint) bufferLengthInBytes;
+            Handle.pAudioData = Marshal.AllocHGlobal(bufferLengthInBytes);
+            Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, buffer.Length);
             Handle.PlayBegin = 0;
-            Handle.PlayLength = (
-                Handle.AudioBytes /
-                (uint) Format.nChannels /
-                (uint) (Format.wBitsPerSample / 8)
-            );
+            Handle.PlayLength = 0;
+
+            LoopStart = 0;
+            LoopLength = 0;
+        }
+
+        public StaticSoundInstance CreateInstance()
+        {
+            return new StaticSoundInstance(Device, this, false, true);
         }
 
         protected virtual void Dispose(bool disposing)

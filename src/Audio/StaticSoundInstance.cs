@@ -38,6 +38,7 @@ namespace MoonWorks.Audio
         ) : base(device, parent, is3D)
         {
             Loop = loop;
+            State = SoundState.Stopped;
         }
 
         public void Play()

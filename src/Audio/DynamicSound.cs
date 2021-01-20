@@ -4,10 +4,13 @@ using System.IO;
 namespace MoonWorks.Audio
 {
     /// <summary>
-    /// For streaming long playback.
+    /// For streaming long playback. Reads an OGG file.
     /// </summary>
     public class DynamicSound : Sound, IDisposable
     {
+        internal override FAudio.FAudioWaveFormatEx Format { get; }
+
+        // FIXME: what should this value be?
         public const int BUFFER_SIZE = 1024 * 128;
 
         internal IntPtr FileHandle { get; }
@@ -15,9 +18,7 @@ namespace MoonWorks.Audio
 
         private bool IsDisposed;
 
-        // FIXME: what should this value be?
-
-        public DynamicSound(FileInfo fileInfo, ushort channels, uint samplesPerSecond) : base(channels, samplesPerSecond)
+        public DynamicSound(AudioDevice device, FileInfo fileInfo) : base(device)
         {
             FileHandle = FAudio.stb_vorbis_open_filename(fileInfo.FullName, out var error, IntPtr.Zero);
 
@@ -28,6 +29,26 @@ namespace MoonWorks.Audio
             }
 
             Info = FAudio.stb_vorbis_get_info(FileHandle);
+
+            var blockAlign = (ushort)(4 * Info.channels);
+
+            Format = new FAudio.FAudioWaveFormatEx
+            {
+                wFormatTag = 3,
+                wBitsPerSample = 32,
+                nChannels = (ushort) Info.channels,
+                nBlockAlign = blockAlign,
+                nSamplesPerSec = Info.sample_rate,
+                nAvgBytesPerSec = blockAlign * Info.sample_rate,
+                cbSize = 0
+            };
+        }
+
+        public DynamicSoundInstance CreateInstance()
+        {
+            var instance = new DynamicSoundInstance(Device, this, false);
+            Device.AddDynamicSoundInstance(instance);
+            return instance;
         }
 
         protected virtual void Dispose(bool disposing)

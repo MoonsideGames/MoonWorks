@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
@@ -16,6 +17,8 @@ namespace MoonWorks.Audio
         public float SpeedOfSound = 343.5f;
 
         private FAudio.FAudioVoiceSends reverbSends;
+
+        private readonly List<WeakReference<DynamicSoundInstance>> dynamicSoundInstances = new List<WeakReference<DynamicSoundInstance>>();
 
         public unsafe AudioDevice()
         {
@@ -177,16 +180,39 @@ namespace MoonWorks.Audio
 
             /* Init reverb sends */
 
-            reverbSends = new FAudio.FAudioVoiceSends();
-            reverbSends.SendCount = 2;
-            reverbSends.pSends = Marshal.AllocHGlobal(
-                2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()
-            );
+            reverbSends = new FAudio.FAudioVoiceSends
+            {
+                SendCount = 2,
+                pSends = Marshal.AllocHGlobal(
+                    2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()
+                )
+            };
             FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) reverbSends.pSends;
             sendDesc[0].Flags = 0;
             sendDesc[0].pOutputVoice = MasteringVoice;
             sendDesc[1].Flags = 0;
             sendDesc[1].pOutputVoice = ReverbVoice;
+        }
+
+        public void Update()
+        {
+            for (var i = dynamicSoundInstances.Count - 1; i >= 0; i--)
+            {
+                var weakReference = dynamicSoundInstances[i];
+                if (weakReference.TryGetTarget(out var dynamicSoundInstance))
+                {
+                    dynamicSoundInstance.Update();
+                }
+                else
+                {
+                    dynamicSoundInstances.RemoveAt(i);
+                }
+            }
+        }
+
+        internal void AddDynamicSoundInstance(DynamicSoundInstance instance)
+        {
+            dynamicSoundInstances.Add(new WeakReference<DynamicSoundInstance>(instance));
         }
     }
 }
