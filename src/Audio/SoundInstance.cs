@@ -7,15 +7,15 @@ namespace MoonWorks.Audio
     {
         protected AudioDevice Device { get; }
         internal IntPtr Handle { get; }
-        protected Sound Parent { get; }
+        public Sound Parent { get; }
         protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
-        public SoundState State { get; protected set; }
 
         protected bool is3D;
-
-        private float _pan = 0;
         private bool IsDisposed;
 
+        public abstract SoundState State { get; protected set; }
+
+        private float _pan = 0;
         public float Pan
         {
             get => _pan;
@@ -168,8 +168,11 @@ namespace MoonWorks.Audio
             }
         }
 
-        public SoundInstance(AudioDevice device, Sound parent, bool is3D)
-        {
+        public SoundInstance(
+            AudioDevice device,
+            Sound parent,
+            bool is3D
+        ) {
             Device = device;
             Parent = parent;
 
@@ -195,7 +198,6 @@ namespace MoonWorks.Audio
             Handle = handle;
             this.is3D = is3D;
             InitDSPSettings(Parent.Format.nChannels);
-
         }
 
         private void InitDSPSettings(uint srcChannels)

@@ -4,39 +4,67 @@ namespace MoonWorks.Audio
 {
     public class StaticSoundInstance : SoundInstance
     {
-        public bool Loop { get; protected set; }
+        public bool Loop { get; }
+
+        private SoundState _state = SoundState.Stopped;
+        public override SoundState State
+        {
+            get
+            {
+                FAudio.FAudioSourceVoice_GetState(
+                    Handle,
+                    out var state,
+                    FAudio.FAUDIO_VOICE_NOSAMPLESPLAYED
+                );
+                if (state.BuffersQueued == 0)
+                {
+                    Stop(true);
+                }
+
+                return _state;
+            }
+
+            protected set
+            {
+                _state = value;
+            }
+        }
 
         public StaticSoundInstance(
             AudioDevice device,
-            Sound parent,
-            bool is3D
-        ) : base(device, parent, is3D) { }
-
-        public void Play(bool loop = false)
+            StaticSound parent,
+            bool is3D,
+            bool loop = false
+        ) : base(device, parent, is3D)
         {
+            Loop = loop;
+        }
+
+        public void Play()
+        {
+            var parent = (StaticSound) Parent;
+
             if (State == SoundState.Playing)
             {
                 return;
             }
 
-            if (loop)
+            if (Loop)
             {
-                Loop = true;
-                Parent.Handle.LoopCount = 255;
-                Parent.Handle.LoopBegin = 0;
-                Parent.Handle.LoopLength = Parent.LoopLength;
+                parent.Handle.LoopCount = 255;
+                parent.Handle.LoopBegin = parent.LoopStart;
+                parent.Handle.LoopLength = parent.LoopLength;
             }
             else
             {
-                Loop = false;
-                Parent.Handle.LoopCount = 0;
-                Parent.Handle.LoopBegin = 0;
-                Parent.Handle.LoopLength = 0;
+                parent.Handle.LoopCount = 0;
+                parent.Handle.LoopBegin = 0;
+                parent.Handle.LoopLength = 0;
             }
 
             FAudio.FAudioSourceVoice_SubmitSourceBuffer(
                 Handle,
-                ref Parent.Handle,
+                ref parent.Handle,
                 IntPtr.Zero
             );
 
