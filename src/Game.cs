@@ -1,7 +1,7 @@
-﻿using SDL2;
-using MoonWorks.Graphics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using SDL2;
 using MoonWorks.Audio;
+using MoonWorks.Graphics;
 
 namespace MoonWorks
 {
