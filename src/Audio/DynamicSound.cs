@@ -44,9 +44,9 @@ namespace MoonWorks.Audio
             };
         }
 
-        public DynamicSoundInstance CreateInstance()
+        public DynamicSoundInstance CreateInstance(bool loop = false)
         {
-            var instance = new DynamicSoundInstance(Device, this, false);
+            var instance = new DynamicSoundInstance(Device, this, false, loop);
             Device.AddDynamicSoundInstance(instance);
             return instance;
         }

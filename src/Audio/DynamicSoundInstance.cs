@@ -19,8 +19,9 @@ namespace MoonWorks.Audio
         internal DynamicSoundInstance(
             AudioDevice device,
             DynamicSound parent,
-            bool is3D
-        ) : base(device, parent, is3D)
+            bool is3D,
+            bool loop
+        ) : base(device, parent, is3D, loop)
         {
             queuedBuffers = new List<IntPtr>();
             queuedSizes = new List<uint>();
@@ -32,17 +33,14 @@ namespace MoonWorks.Audio
 
         public void Play()
         {
-            Update();
-
             if (State == SoundState.Playing)
             {
                 return;
             }
 
-            QueueBuffers();
-
-            FAudio.FAudioSourceVoice_Start(Handle, 0, 0);
             State = SoundState.Playing;
+            Update();
+            FAudio.FAudioSourceVoice_Start(Handle, 0, 0);
         }
 
         public void Pause()
@@ -54,12 +52,16 @@ namespace MoonWorks.Audio
             }
         }
 
-        public void Stop()
+        public void Stop(bool immediate = true)
         {
-            FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-            FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+            if (immediate)
+            {
+                FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+                FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+                ClearBuffers();
+            }
+
             State = SoundState.Stopped;
-            ClearBuffers();
         }
 
         internal void Update()
@@ -80,8 +82,9 @@ namespace MoonWorks.Audio
             {
                 Marshal.FreeHGlobal(queuedBuffers[0]);
                 queuedBuffers.RemoveAt(0);
-                queuedSizes.RemoveAt(0);
             }
+
+            QueueBuffers();
         }
 
         private void QueueBuffers()
@@ -104,7 +107,7 @@ namespace MoonWorks.Audio
                     Marshal.FreeHGlobal(buf);
                 }
                 queuedBuffers.Clear();
-                queuedBuffers.Clear();
+                queuedSizes.Clear();
             }
         }
 
@@ -112,6 +115,7 @@ namespace MoonWorks.Audio
         {
             var parent = (DynamicSound) Parent;
 
+            /* NOTE: this function returns samples per channel, not total samples */
             var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
                 parent.FileHandle,
                 parent.Info.channels,
@@ -119,13 +123,14 @@ namespace MoonWorks.Audio
                 buffer.Length
             );
 
-            IntPtr next = Marshal.AllocHGlobal(buffer.Length * sizeof(float));
-            Marshal.Copy(buffer, 0, next, buffer.Length);
+            var sampleCount = samples * parent.Info.channels;
+            var lengthInBytes = (uint) sampleCount * sizeof(float);
+
+            IntPtr next = Marshal.AllocHGlobal((int) lengthInBytes);
+            Marshal.Copy(buffer, 0, next, sampleCount);
 
             lock (queuedBuffers)
             {
-                var lengthInBytes = (uint) buffer.Length * sizeof(float);
-
                 queuedBuffers.Add(next);
                 if (State != SoundState.Stopped)
                 {
@@ -149,6 +154,19 @@ namespace MoonWorks.Audio
                 else
                 {
                     queuedSizes.Add(lengthInBytes);
+                }
+            }
+
+            /* We have reached the end of the file, what do we do? */
+            if (sampleCount < buffer.Length)
+            {
+                if (Loop)
+                {
+                    FAudio.stb_vorbis_seek_start(parent.FileHandle);
+                }
+                else
+                {
+                    Stop(false);
                 }
             }
         }

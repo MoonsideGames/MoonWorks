@@ -8,6 +8,8 @@ namespace MoonWorks.Audio
         protected AudioDevice Device { get; }
         internal IntPtr Handle { get; }
         public Sound Parent { get; }
+        public bool Loop { get; }
+
         protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
         protected bool is3D;
@@ -171,7 +173,8 @@ namespace MoonWorks.Audio
         public SoundInstance(
             AudioDevice device,
             Sound parent,
-            bool is3D
+            bool is3D,
+            bool loop
         ) {
             Device = device;
             Parent = parent;
@@ -203,6 +206,8 @@ namespace MoonWorks.Audio
                 handle,
                 ref Device.ReverbSends
             );
+
+            Loop = loop;
         }
 
         private void InitDSPSettings(uint srcChannels)

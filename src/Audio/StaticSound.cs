@@ -78,9 +78,9 @@ namespace MoonWorks.Audio
             LoopLength = 0;
         }
 
-        public StaticSoundInstance CreateInstance()
+        public StaticSoundInstance CreateInstance(bool loop = false)
         {
-            return new StaticSoundInstance(Device, this, false, true);
+            return new StaticSoundInstance(Device, this, false, loop);
         }
 
         protected virtual void Dispose(bool disposing)

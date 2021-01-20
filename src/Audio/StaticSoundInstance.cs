@@ -4,8 +4,6 @@ namespace MoonWorks.Audio
 {
     public class StaticSoundInstance : SoundInstance
     {
-        public bool Loop { get; }
-
         private SoundState _state = SoundState.Stopped;
         public override SoundState State
         {
@@ -30,14 +28,13 @@ namespace MoonWorks.Audio
             }
         }
 
-        public StaticSoundInstance(
+        internal StaticSoundInstance(
             AudioDevice device,
             StaticSound parent,
             bool is3D,
-            bool loop = false
-        ) : base(device, parent, is3D)
+            bool loop
+        ) : base(device, parent, is3D, loop)
         {
-            Loop = loop;
             State = SoundState.Stopped;
         }
 
