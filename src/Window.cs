@@ -24,7 +24,7 @@ namespace MoonWorks
             ScreenMode = windowCreateInfo.ScreenMode;
 
             Handle = SDL.SDL_CreateWindow(
-                "CampariTest",
+                "MoonWorks.GraphicsTest",
                 SDL.SDL_WINDOWPOS_UNDEFINED,
                 SDL.SDL_WINDOWPOS_UNDEFINED,
                 (int)windowCreateInfo.WindowWidth,

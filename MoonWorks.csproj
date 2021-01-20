@@ -12,8 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include=".\lib\SDL2-CS\SDL2-CS.Core.csproj" />
-    <ProjectReference Include=".\lib\Campari\Campari.csproj" />
-    <ProjectReference Include=".\lib\Campari\lib\RefreshCS\RefreshCS.csproj" />
+    <ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
     <ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
   </ItemGroup>
 </Project>

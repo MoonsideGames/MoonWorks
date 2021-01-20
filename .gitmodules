@@ -1,9 +1,9 @@
 [submodule "lib/SDL2-CS"]
 	path = lib/SDL2-CS
 	url = https://github.com/flibitijibibo/SDL2-CS.git
-[submodule "lib/Campari"]
-	path = lib/Campari
-	url = https://gitea.moonside.games/MoonsideGames/Campari.git
 [submodule "lib/FAudio"]
 	path = lib/FAudio
 	url = https://github.com/FNA-XNA/FAudio.git
+[submodule "lib/RefreshCS"]
+	path = lib/RefreshCS
+	url = https://gitea.moonside.games/MoonsideGames/RefreshCS.git
