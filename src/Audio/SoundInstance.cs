@@ -67,7 +67,7 @@ namespace MoonWorks.Audio
                 _pitch = value;
                 FAudio.FAudioSourceVoice_SetFrequencyRatio(
                     Handle,
-                    (float) Math.Pow(2.0, _pitch) * doppler,
+                    (float) System.Math.Pow(2.0, _pitch) * doppler,
                     0
                 );
             }
