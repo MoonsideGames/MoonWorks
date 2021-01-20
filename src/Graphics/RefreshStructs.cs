@@ -7,15 +7,6 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Graphics
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct Color
-    {
-        public byte r;
-        public byte g;
-        public byte b;
-        public byte a;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     public struct DepthStencilValue
     {
         public float depth;
