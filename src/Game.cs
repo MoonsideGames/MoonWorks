@@ -79,7 +79,8 @@ namespace MoonWorks
                 {
                     while (accumulator >= timestep)
                     {
-                        SDL.SDL_PumpEvents();
+                        HandleSDLEvents();
+
                         Input.Update();
 
                         Update(timestep);
@@ -91,6 +92,19 @@ namespace MoonWorks
                     {
                         Draw();
                     }
+                }
+            }
+        }
+
+        private void HandleSDLEvents()
+        {
+            while (SDL.SDL_PollEvent(out var _event) == 1)
+            {
+                switch (_event.type)
+                {
+                    case SDL.SDL_EventType.SDL_QUIT:
+                        quit = true;
+                        break;
                 }
             }
         }
