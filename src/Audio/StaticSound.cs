@@ -23,7 +23,7 @@ namespace MoonWorks.Audio
                 throw new AudioLoadException("Error loading file!");
             }
             var info = FAudio.stb_vorbis_get_info(filePointer);
-            var bufferSize = FAudio.stb_vorbis_stream_length_in_samples(filePointer);
+            var bufferSize = FAudio.stb_vorbis_stream_length_in_samples(filePointer) * info.channels;
             var buffer = new float[bufferSize];
 
             FAudio.stb_vorbis_get_samples_float_interleaved(
