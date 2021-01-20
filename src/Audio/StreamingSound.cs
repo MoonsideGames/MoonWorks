@@ -4,32 +4,26 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-    public class DynamicSoundInstance : SoundInstance
+    /// <summary>
+    /// For streaming long playback. Reads an OGG file.
+    /// </summary>
+    public abstract class StreamingSound : SoundInstance
     {
-        private List<IntPtr> queuedBuffers;
-        private List<uint> queuedSizes;
+        private readonly List<IntPtr> queuedBuffers = new List<IntPtr>();
+        private readonly List<uint> queuedSizes = new List<uint>();
         private const int MINIMUM_BUFFER_CHECK = 3;
 
         public int PendingBufferCount => queuedBuffers.Count;
 
-        private readonly float[] buffer;
+        private bool IsDisposed;
 
-        public override SoundState State { get; protected set; }
-
-        internal DynamicSoundInstance(
+        public StreamingSound(
             AudioDevice device,
-            DynamicSound parent,
+            ushort channels,
+            uint samplesPerSecond,
             bool is3D,
             bool loop
-        ) : base(device, parent, is3D, loop)
-        {
-            queuedBuffers = new List<IntPtr>();
-            queuedSizes = new List<uint>();
-
-            buffer = new float[DynamicSound.BUFFER_SIZE];
-
-            State = SoundState.Stopped;
-        }
+        ) : base(device, channels, samplesPerSecond, is3D, loop) { }
 
         public void Play()
         {
@@ -78,27 +72,28 @@ namespace MoonWorks.Audio
             );
 
             while (PendingBufferCount > state.BuffersQueued)
-            lock (queuedBuffers)
-            {
-                Marshal.FreeHGlobal(queuedBuffers[0]);
-                queuedBuffers.RemoveAt(0);
-            }
+                lock (queuedBuffers)
+                {
+                    Marshal.FreeHGlobal(queuedBuffers[0]);
+                    queuedBuffers.RemoveAt(0);
+                }
 
             QueueBuffers();
         }
 
-        private void QueueBuffers()
+        protected void QueueBuffers()
         {
             for (
                 int i = MINIMUM_BUFFER_CHECK - PendingBufferCount;
                 i > 0;
                 i -= 1
-            ) {
+            )
+            {
                 AddBuffer();
             }
         }
 
-        private void ClearBuffers()
+        protected void ClearBuffers()
         {
             lock (queuedBuffers)
             {
@@ -111,23 +106,19 @@ namespace MoonWorks.Audio
             }
         }
 
-        private void AddBuffer()
+        protected void AddBuffer()
         {
-            var parent = (DynamicSound) Parent;
-
-            /* NOTE: this function returns samples per channel, not total samples */
-            var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
-                parent.FileHandle,
-                parent.Info.channels,
-                buffer,
-                buffer.Length
+            AddBuffer(
+                out var buffer, 
+                out var bufferOffset, 
+                out var bufferLength,
+                out var reachedEnd
             );
 
-            var sampleCount = samples * parent.Info.channels;
-            var lengthInBytes = (uint) sampleCount * sizeof(float);
+            var lengthInBytes = bufferLength * sizeof(float);
 
             IntPtr next = Marshal.AllocHGlobal((int) lengthInBytes);
-            Marshal.Copy(buffer, 0, next, sampleCount);
+            Marshal.Copy(buffer, (int) bufferOffset, next, (int) bufferLength);
 
             lock (queuedBuffers)
             {
@@ -140,8 +131,8 @@ namespace MoonWorks.Audio
                         pAudioData = next,
                         PlayLength = (
                             lengthInBytes /
-                            (uint) parent.Info.channels /
-                            (uint) (parent.Format.wBitsPerSample / 8)
+                            Format.nChannels /
+                            (uint)(Format.wBitsPerSample / 8)
                         )
                     };
 
@@ -158,17 +149,43 @@ namespace MoonWorks.Audio
             }
 
             /* We have reached the end of the file, what do we do? */
-            if (sampleCount < buffer.Length)
+            if (reachedEnd)
             {
                 if (Loop)
                 {
-                    FAudio.stb_vorbis_seek_start(parent.FileHandle);
+                    SeekStart();
                 }
                 else
                 {
                     Stop(false);
                 }
             }
+        }
+
+        protected abstract void AddBuffer(
+            out float[] buffer,
+            out uint bufferOffset, /* in floats */
+            out uint bufferLength, /* in floats */
+            out bool reachedEnd
+        );
+
+        protected abstract void SeekStart();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!IsDisposed)
+            {
+                if (disposing)
+                {
+                    // dispose managed state (managed objects)
+                    Stop(true);
+                }
+
+                // dispose unmanaged state
+                IsDisposed = true;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

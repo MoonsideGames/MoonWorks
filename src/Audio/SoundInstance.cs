@@ -7,7 +7,7 @@ namespace MoonWorks.Audio
     {
         protected AudioDevice Device { get; }
         internal IntPtr Handle { get; }
-        public Sound Parent { get; }
+        internal FAudio.FAudioWaveFormatEx Format { get; }
         public bool Loop { get; }
 
         protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
@@ -118,10 +118,12 @@ namespace MoonWorks.Audio
             {
                 _lowPassFilter = value;
 
-                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters();
-                p.Type = FAudio.FAudioFilterType.FAudioLowPassFilter;
-                p.Frequency = _lowPassFilter;
-                p.OneOverQ = 1f;
+                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
+                {
+                    Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
+                    Frequency = _lowPassFilter,
+                    OneOverQ = 1f
+                };
                 FAudio.FAudioVoice_SetFilterParameters(
                     Handle,
                     ref p,
@@ -138,10 +140,12 @@ namespace MoonWorks.Audio
             {
                 _highPassFilter = value;
 
-                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters();
-                p.Type = FAudio.FAudioFilterType.FAudioHighPassFilter;
-                p.Frequency = _highPassFilter;
-                p.OneOverQ = 1f;
+                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
+                {
+                    Type = FAudio.FAudioFilterType.FAudioHighPassFilter,
+                    Frequency = _highPassFilter,
+                    OneOverQ = 1f
+                };
                 FAudio.FAudioVoice_SetFilterParameters(
                     Handle,
                     ref p,
@@ -158,10 +162,12 @@ namespace MoonWorks.Audio
             {
                 _bandPassFilter = value;
 
-                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters();
-                p.Type = FAudio.FAudioFilterType.FAudioBandPassFilter;
-                p.Frequency = _bandPassFilter;
-                p.OneOverQ = 1f;
+                FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
+                {
+                    Type = FAudio.FAudioFilterType.FAudioBandPassFilter,
+                    Frequency = _bandPassFilter,
+                    OneOverQ = 1f
+                };
                 FAudio.FAudioVoice_SetFilterParameters(
                     Handle,
                     ref p,
@@ -172,14 +178,25 @@ namespace MoonWorks.Audio
 
         public SoundInstance(
             AudioDevice device,
-            Sound parent,
+            ushort channels,
+            uint samplesPerSecond,
             bool is3D,
             bool loop
         ) {
             Device = device;
-            Parent = parent;
 
-            FAudio.FAudioWaveFormatEx format = Parent.Format;
+            var blockAlign = (ushort)(4 * channels);
+            var format = new FAudio.FAudioWaveFormatEx
+            {
+                wFormatTag = 3,
+                wBitsPerSample = 32,
+                nChannels = channels,
+                nBlockAlign = blockAlign,
+                nSamplesPerSec = samplesPerSecond,
+                nAvgBytesPerSec = blockAlign * samplesPerSecond
+            };
+
+            Format = format;
 
             FAudio.FAudio_CreateSourceVoice(
                 Device.Handle,
@@ -200,7 +217,7 @@ namespace MoonWorks.Audio
 
             Handle = handle;
             this.is3D = is3D;
-            InitDSPSettings(Parent.Format.nChannels);
+            InitDSPSettings(Format.nChannels);
 
             FAudio.FAudioVoice_SetOutputVoices(
                 handle,
@@ -208,6 +225,7 @@ namespace MoonWorks.Audio
             );
 
             Loop = loop;
+            State = SoundState.Stopped;
         }
 
         private void InitDSPSettings(uint srcChannels)

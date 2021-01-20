@@ -4,6 +4,8 @@ namespace MoonWorks.Audio
 {
     public class StaticSoundInstance : SoundInstance
     {
+        public StaticSound Parent { get; }
+
         private SoundState _state = SoundState.Stopped;
         public override SoundState State
         {
@@ -33,15 +35,13 @@ namespace MoonWorks.Audio
             StaticSound parent,
             bool is3D,
             bool loop
-        ) : base(device, parent, is3D, loop)
+        ) : base(device, parent.Channels, parent.SamplesPerSecond, is3D, loop)
         {
-            State = SoundState.Stopped;
+            Parent = parent;
         }
 
         public void Play()
         {
-            var parent = (StaticSound) Parent;
-
             if (State == SoundState.Playing)
             {
                 return;
@@ -49,20 +49,20 @@ namespace MoonWorks.Audio
 
             if (Loop)
             {
-                parent.Handle.LoopCount = 255;
-                parent.Handle.LoopBegin = parent.LoopStart;
-                parent.Handle.LoopLength = parent.LoopLength;
+                Parent.Handle.LoopCount = 255;
+                Parent.Handle.LoopBegin = Parent.LoopStart;
+                Parent.Handle.LoopLength = Parent.LoopLength;
             }
             else
             {
-                parent.Handle.LoopCount = 0;
-                parent.Handle.LoopBegin = 0;
-                parent.Handle.LoopLength = 0;
+                Parent.Handle.LoopCount = 0;
+                Parent.Handle.LoopBegin = 0;
+                Parent.Handle.LoopLength = 0;
             }
 
             FAudio.FAudioSourceVoice_SubmitSourceBuffer(
                 Handle,
-                ref parent.Handle,
+                ref Parent.Handle,
                 IntPtr.Zero
             );
 

@@ -18,7 +18,7 @@ namespace MoonWorks.Audio
 
         internal FAudio.FAudioVoiceSends ReverbSends;
 
-        private readonly List<WeakReference<DynamicSoundInstance>> dynamicSoundInstances = new List<WeakReference<DynamicSoundInstance>>();
+        private readonly List<WeakReference<StreamingSound>> streamingSounds = new List<WeakReference<StreamingSound>>();
 
         public unsafe AudioDevice()
         {
@@ -196,23 +196,23 @@ namespace MoonWorks.Audio
 
         public void Update()
         {
-            for (var i = dynamicSoundInstances.Count - 1; i >= 0; i--)
+            for (var i = streamingSounds.Count - 1; i >= 0; i--)
             {
-                var weakReference = dynamicSoundInstances[i];
-                if (weakReference.TryGetTarget(out var dynamicSoundInstance))
+                var weakReference = streamingSounds[i];
+                if (weakReference.TryGetTarget(out var streamingSound))
                 {
-                    dynamicSoundInstance.Update();
+                    streamingSound.Update();
                 }
                 else
                 {
-                    dynamicSoundInstances.RemoveAt(i);
+                    streamingSounds.RemoveAt(i);
                 }
             }
         }
 
-        internal void AddDynamicSoundInstance(DynamicSoundInstance instance)
+        internal void AddDynamicSoundInstance(StreamingSound instance)
         {
-            dynamicSoundInstances.Add(new WeakReference<DynamicSoundInstance>(instance));
+            streamingSounds.Add(new WeakReference<StreamingSound>(instance));
         }
     }
 }

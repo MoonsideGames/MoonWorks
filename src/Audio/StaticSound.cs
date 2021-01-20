@@ -4,10 +4,12 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-    public class StaticSound : Sound, IDisposable
+    public class StaticSound : IDisposable
     {
-        internal override FAudio.FAudioWaveFormatEx Format { get; }
+        internal AudioDevice Device { get; }
         internal FAudio.FAudioBuffer Handle;
+        public ushort Channels { get; }
+        public uint SamplesPerSecond { get; }
 
         public uint LoopStart { get; set; } = 0;
         public uint LoopLength { get; set; } = 0;
@@ -37,33 +39,26 @@ namespace MoonWorks.Audio
 
             return new StaticSound(
                 device,
+                (ushort) info.channels,
+                info.sample_rate,
                 buffer,
                 0,
-                (uint) buffer.Length,
-                (ushort) info.channels,
-                info.sample_rate
+                (uint) buffer.Length
             );
         }
 
         public StaticSound(
             AudioDevice device,
+            ushort channels,
+            uint samplesPerSecond,
             float[] buffer,
             uint bufferOffset, /* in floats */
-            uint bufferLength, /* in floats */
-            ushort channels,
-            uint samplesPerSecond
-        ) : base(device) {
-            var blockAlign = (ushort)(4 * channels);
+            uint bufferLength  /* in floats */
+        ) {
+            Device = device;
 
-            Format = new FAudio.FAudioWaveFormatEx
-            {
-                wFormatTag = 3,
-                wBitsPerSample = 32,
-                nChannels = channels,
-                nBlockAlign = blockAlign,
-                nSamplesPerSec = samplesPerSecond,
-                nAvgBytesPerSec = blockAlign * samplesPerSecond
-            };
+            Channels = channels;
+            SamplesPerSecond = samplesPerSecond;
 
             var bufferLengthInBytes = (int) (bufferLength * sizeof(float));
             Handle = new FAudio.FAudioBuffer();
