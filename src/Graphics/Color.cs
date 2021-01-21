@@ -33,6 +33,42 @@ namespace MoonWorks.Graphics
 		#region Public Properties
 
 		/// <summary>
+		/// Gets or sets the red component.
+		/// </summary>
+		public byte R
+		{
+			get
+			{
+				unchecked
+				{
+					return (byte)(this.packedValue);
+				}
+			}
+			set
+			{
+				this.packedValue = (this.packedValue & 0xffffff00) | value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the green component.
+		/// </summary>
+		public byte G
+		{
+			get
+			{
+				unchecked
+				{
+					return (byte)(this.packedValue >> 8);
+				}
+			}
+			set
+			{
+				this.packedValue = (this.packedValue & 0xffff00ff) | ((uint)value << 8);
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the blue component.
 		/// </summary>
 		public byte B
@@ -47,42 +83,6 @@ namespace MoonWorks.Graphics
 			set
 			{
 				this.packedValue = (this.packedValue & 0xff00ffff) | ((uint) value << 16);
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the green component.
-		/// </summary>
-		public byte G
-		{
-			get
-			{
-				unchecked
-				{
-					return (byte) (this.packedValue >> 8);
-				}
-			}
-			set
-			{
-				this.packedValue = (this.packedValue & 0xffff00ff) | ((uint) value << 8);
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the red component.
-		/// </summary>
-		public byte R
-		{
-			get
-			{
-				unchecked
-				{
-					return (byte) (this.packedValue);
-				}
-			}
-			set
-			{
-				this.packedValue = (this.packedValue & 0xffffff00) | value;
 			}
 		}
 
