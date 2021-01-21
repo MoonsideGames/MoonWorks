@@ -5,11 +5,8 @@ namespace MoonWorks.Graphics
 {
     public class ColorTarget : GraphicsResource
     {
-        public uint Width { get; }
-        public uint Height { get; }
-
-        public Texture Texture { get; }
-        public ColorFormat Format => Texture.Format;
+        public TextureSlice TextureSlice { get; }
+        public ColorFormat Format => TextureSlice.Texture.Format;
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyColorTarget;
 
@@ -49,6 +46,7 @@ namespace MoonWorks.Graphics
                 (Refresh.SampleCount) sampleCount, 
                 ref refreshTextureSlice
             );
+            TextureSlice = textureSlice;
         }
     }
 }

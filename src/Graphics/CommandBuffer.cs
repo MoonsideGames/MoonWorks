@@ -327,8 +327,39 @@ namespace MoonWorks.Graphics
         }
 
         public void QueuePresent(
-            ref TextureSlice textureSlice,
-            ref Rect destinationRectangle,
+            in Texture texture,
+            in Rect destinationRectangle,
+            Filter filter
+        )
+        {
+            var refreshRect = destinationRectangle.ToRefresh();
+            var refreshTextureSlice = new Refresh.TextureSlice
+            {
+                texture = texture.Handle,
+                rectangle = new Refresh.Rect
+                {
+                    x = 0,
+                    y = 0,
+                    w = (int)texture.Width,
+                    h = (int)texture.Height
+                },
+                layer = 0,
+                level = 0,
+                depth = 0
+            };
+
+            Refresh.Refresh_QueuePresent(
+                Device.Handle,
+                Handle,
+                ref refreshTextureSlice,
+                ref refreshRect,
+                (Refresh.Filter)filter
+            );
+        }
+
+        public void QueuePresent(
+            in TextureSlice textureSlice,
+            in Rect destinationRectangle,
             Filter filter
         ) {
             var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
@@ -344,7 +375,7 @@ namespace MoonWorks.Graphics
         }
 
         public void QueuePresent(
-            ref TextureSlice textureSlice,
+            in TextureSlice textureSlice,
             Filter filter
         ) {
             var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
@@ -387,8 +418,8 @@ namespace MoonWorks.Graphics
         }
 
         public void CopyTextureToTexture(
-            ref TextureSlice sourceTextureSlice,
-            ref TextureSlice destinationTextureSlice,
+            in TextureSlice sourceTextureSlice,
+            in TextureSlice destinationTextureSlice,
             Filter filter
         ) {
             var sourceRefreshTextureSlice = sourceTextureSlice.ToRefreshTextureSlice();
@@ -404,7 +435,7 @@ namespace MoonWorks.Graphics
         }
 
         public void CopyTextureToBuffer(
-            ref TextureSlice textureSlice,
+            in TextureSlice textureSlice,
             Buffer buffer
         ) {
             var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
