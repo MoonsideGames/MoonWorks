@@ -189,14 +189,14 @@ namespace MoonWorks.Graphics
         public void BindIndexBuffer(
             Buffer indexBuffer,
             uint offset,
-            Refresh.IndexElementSize indexElementSize
+            IndexElementSize indexElementSize
         ) {
             Refresh.Refresh_BindIndexBuffer(
                 Device.Handle,
                 Handle,
                 indexBuffer.Handle,
                 offset,
-                indexElementSize
+                (Refresh.IndexElementSize) indexElementSize
             );
         }
 
