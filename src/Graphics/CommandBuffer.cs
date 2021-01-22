@@ -23,9 +23,6 @@ namespace MoonWorks.Graphics
             in DepthStencilValue depthStencilClearValue,
             params Color[] clearColors
         ) {
-            var refreshRenderArea = renderArea.ToRefresh();
-            var refreshDepthStencilClearValue = depthStencilClearValue.ToRefresh();
-
             fixed (Color* clearColorPtr = &clearColors[0])
             {
                 Refresh.Refresh_BeginRenderPass(
@@ -33,10 +30,10 @@ namespace MoonWorks.Graphics
                     Handle,
                     renderPass.Handle,
                     framebuffer.Handle,
-                    refreshRenderArea,
+                    renderArea.ToRefresh(),
                     (IntPtr) clearColorPtr,
                     (uint)clearColors.Length,
-                    refreshDepthStencilClearValue
+                    depthStencilClearValue.ToRefresh()
                 );
             }
         }
@@ -47,8 +44,6 @@ namespace MoonWorks.Graphics
             in Rect renderArea,
             params Color[] clearColors
         ) {
-            var refreshRenderArea = renderArea.ToRefresh();
-
             fixed (Color* clearColorPtr = &clearColors[0])
             {
                 Refresh.Refresh_BeginRenderPass(
@@ -56,7 +51,7 @@ namespace MoonWorks.Graphics
                     Handle,
                     renderPass.Handle,
                     framebuffer.Handle,
-                    refreshRenderArea,
+                    renderArea.ToRefresh(),
                     (IntPtr) clearColorPtr,
                     (uint) clearColors.Length,
                     IntPtr.Zero
@@ -262,22 +257,21 @@ namespace MoonWorks.Graphics
             );
         }
 
-        public void Clear(
-            in Refresh.Rect clearRect,
+        public unsafe void Clear(
+            in Rect clearRect,
             Refresh.ClearOptionsFlags clearOptions,
-            in Refresh.Color[] colors,
-            float depth,
-            int stencil
+            in DepthStencilValue depthStencilClearValue,
+            params Color[] clearColors
         ) {
+            Refresh.Color* colors = stackalloc Refresh.Color[clearColors.Length];
             Refresh.Refresh_Clear(
                 Device.Handle,
                 Handle,
-                in clearRect,
+                clearRect.ToRefresh(),
                 clearOptions,
-                in colors,
-                (uint) colors.Length,
-                depth,
-                stencil
+                (IntPtr) colors,
+                (uint) clearColors.Length,
+                depthStencilClearValue.ToRefresh()
             );
         }
 
