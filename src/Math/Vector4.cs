@@ -17,6 +17,7 @@
 #region Using Statements
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 #endregion
 
@@ -27,6 +28,7 @@ namespace MoonWorks.Math
 	/// </summary>
 	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
+	[StructLayout(LayoutKind.Explicit)]
 	public struct Vector4 : IEquatable<Vector4>
 	{
 		#region Public Static Properties
@@ -121,21 +123,25 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// The x coordinate of this <see cref="Vector4"/>.
 		/// </summary>
+		[FieldOffset(0)]
 		public float X;
 
 		/// <summary>
 		/// The y coordinate of this <see cref="Vector4"/>.
 		/// </summary>
+		[FieldOffset(4)]
 		public float Y;
 
 		/// <summary>
 		/// The z coordinate of this <see cref="Vector4"/>.
 		/// </summary>
+		[FieldOffset(8)]
 		public float Z;
 
 		/// <summary>
 		/// The w coordinate of this <see cref="Vector4"/>.
 		/// </summary>
+		[FieldOffset(12)]
 		public float W;
 
 		#endregion
