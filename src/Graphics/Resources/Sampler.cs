@@ -12,11 +12,9 @@ namespace MoonWorks.Graphics
             ref SamplerState samplerState
         ) : base(device)
         {
-            var refreshSamplerStateCreateInfo = samplerState.ToRefreshSamplerStateCreateInfo();
-
             Handle = Refresh.Refresh_CreateSampler(
                 device.Handle,
-                ref refreshSamplerStateCreateInfo
+                samplerState.ToRefreshSamplerStateCreateInfo()
             );
         }
     }

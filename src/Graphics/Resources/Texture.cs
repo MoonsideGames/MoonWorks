@@ -124,11 +124,9 @@ namespace MoonWorks.Graphics
 
         public Texture(GraphicsDevice device, ref TextureCreateInfo textureCreateInfo) : base(device)
         {
-            var refreshTextureCreateInfo = textureCreateInfo.ToRefreshTextureCreateInfo();
-
             Handle = Refresh.Refresh_CreateTexture(
                 device.Handle,
-                ref refreshTextureCreateInfo
+                textureCreateInfo.ToRefreshTextureCreateInfo()
             );
 
             Format = textureCreateInfo.Format;
@@ -150,7 +148,7 @@ namespace MoonWorks.Graphics
 
             Refresh.Refresh_SetTextureData(
                 Device.Handle,
-                ref textureSlice,
+                textureSlice,
                 data,
                 dataLengthInBytes
             );
@@ -162,7 +160,7 @@ namespace MoonWorks.Graphics
 
             Refresh.Refresh_SetTextureData(
                 Device.Handle,
-                ref refreshTextureSlice,
+                refreshTextureSlice,
                 data,
                 dataLengthInBytes
             );

@@ -99,4 +99,31 @@ namespace MoonWorks.Graphics
         public LoadOp stencilLoadOp;
         public StoreOp stencilStoreOp;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StencilOpState
+    {
+        public StencilOp failOp;
+        public StencilOp passOp;
+        public StencilOp depthFailOp;
+        public CompareOp compareOp;
+        public uint compareMask;
+        public uint writeMask;
+        public uint reference;
+
+        // FIXME: can we do an explicit cast here?
+        public Refresh.StencilOpState ToRefresh()
+        {
+            return new Refresh.StencilOpState
+            {
+                failOp = (Refresh.StencilOp)failOp,
+                passOp = (Refresh.StencilOp)passOp,
+                depthFailOp = (Refresh.StencilOp)depthFailOp,
+                compareOp = (Refresh.CompareOp)compareOp,
+                compareMask = compareMask,
+                writeMask = writeMask,
+                reference = reference
+            };
+        }
+    }
 }

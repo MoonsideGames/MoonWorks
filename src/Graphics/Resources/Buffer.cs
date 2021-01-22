@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -34,6 +35,22 @@ namespace MoonWorks.Graphics
                     offsetInBytes,
                     (IntPtr) ptr,
                     dataLengthInBytes
+                );
+            }
+        }
+
+        public unsafe void SetData<T>(
+            T[] data
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &data[0])
+            {
+                Refresh.Refresh_SetBufferData(
+                    Device.Handle,
+                    Handle,
+                    0,
+                    (IntPtr)ptr,
+                    (uint) (data.Length * Marshal.SizeOf<T>())
                 );
             }
         }

@@ -25,7 +25,7 @@ namespace MoonWorks.Graphics
             };
 
             Handle = Refresh.Refresh_CreateDevice(
-                ref presentationParameters,
+                presentationParameters,
                 Conversions.BoolToByte(debugMode)
             );
 

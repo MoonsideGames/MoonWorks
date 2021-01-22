@@ -19,8 +19,8 @@ namespace MoonWorks.Graphics
         public unsafe void BeginRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
-            ref Rect renderArea,
-            ref DepthStencilValue depthStencilClearValue,
+            in Rect renderArea,
+            in DepthStencilValue depthStencilClearValue,
             params Color[] clearColors
         ) {
             var refreshRenderArea = renderArea.ToRefresh();
@@ -33,10 +33,10 @@ namespace MoonWorks.Graphics
                     Handle,
                     renderPass.Handle,
                     framebuffer.Handle,
-                    ref refreshRenderArea,
+                    refreshRenderArea,
                     (IntPtr) clearColorPtr,
                     (uint)clearColors.Length,
-                    ref refreshDepthStencilClearValue
+                    refreshDepthStencilClearValue
                 );
             }
         }
@@ -44,7 +44,7 @@ namespace MoonWorks.Graphics
         public unsafe void BeginRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
-            ref Rect renderArea,
+            in Rect renderArea,
             params Color[] clearColors
         ) {
             var refreshRenderArea = renderArea.ToRefresh();
@@ -56,7 +56,7 @@ namespace MoonWorks.Graphics
                     Handle,
                     renderPass.Handle,
                     framebuffer.Handle,
-                    ref refreshRenderArea,
+                    refreshRenderArea,
                     (IntPtr) clearColorPtr,
                     (uint) clearColors.Length,
                     IntPtr.Zero
@@ -246,18 +246,18 @@ namespace MoonWorks.Graphics
         }
 
         public void Clear(
-            ref Refresh.Rect clearRect,
+            in Refresh.Rect clearRect,
             Refresh.ClearOptionsFlags clearOptions,
-            ref Refresh.Color[] colors,
+            in Refresh.Color[] colors,
             float depth,
             int stencil
         ) {
             Refresh.Refresh_Clear(
                 Device.Handle,
                 Handle,
-                ref clearRect,
+                in clearRect,
                 clearOptions,
-                ref colors,
+                in colors,
                 (uint) colors.Length,
                 depth,
                 stencil
@@ -351,8 +351,8 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_QueuePresent(
                 Device.Handle,
                 Handle,
-                ref refreshTextureSlice,
-                ref refreshRect,
+                refreshTextureSlice,
+                refreshRect,
                 (Refresh.Filter)filter
             );
         }
@@ -368,8 +368,8 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_QueuePresent(
                 Device.Handle,
                 Handle,
-                ref refreshTextureSlice,
-                ref refreshRect,
+                refreshTextureSlice,
+                refreshRect,
                 (Refresh.Filter) filter
             );
         }
@@ -378,12 +378,10 @@ namespace MoonWorks.Graphics
             in TextureSlice textureSlice,
             Filter filter
         ) {
-            var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
-
             Refresh.Refresh_QueuePresent(
                 Device.Handle,
                 Handle,
-                ref refreshTextureSlice,
+                textureSlice.ToRefreshTextureSlice(),
                 IntPtr.Zero,
                 (Refresh.Filter) filter
             );
@@ -411,7 +409,7 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_QueuePresent(
                 Device.Handle,
                 Handle,
-                ref refreshTextureSlice,
+                refreshTextureSlice,
                 IntPtr.Zero,
                 (Refresh.Filter) filter
             );
@@ -428,8 +426,8 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_CopyTextureToTexture(
                 Device.Handle,
                 Handle,
-                ref sourceRefreshTextureSlice,
-                ref destRefreshTextureSlice,
+                sourceRefreshTextureSlice,
+                destRefreshTextureSlice,
                 (Refresh.Filter) filter
             );
         }
@@ -443,7 +441,7 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_CopyTextureToBuffer(
                 Device.Handle,
                 Handle,
-                ref refreshTextureSlice,
+                refreshTextureSlice,
                 buffer.Handle
             );
         }

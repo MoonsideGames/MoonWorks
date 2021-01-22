@@ -16,7 +16,7 @@ namespace MoonWorks.Graphics
                 shaderModuleCreateInfo.codeSize = (UIntPtr) fileInfo.Length;
                 shaderModuleCreateInfo.byteCode = (IntPtr) ptr;
 
-                Handle = Refresh.Refresh_CreateShaderModule(device.Handle, ref shaderModuleCreateInfo);
+                Handle = Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);
             }
         }
     }

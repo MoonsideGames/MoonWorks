@@ -5,9 +5,9 @@ namespace MoonWorks.Graphics
     public struct DepthStencilState
     {
         public bool DepthTestEnable;
-        public Refresh.StencilOpState BackStencilState;
-        public Refresh.StencilOpState FrontStencilState;
-        public Refresh.CompareOp CompareOp;
+        public StencilOpState BackStencilState;
+        public StencilOpState FrontStencilState;
+        public CompareOp CompareOp;
         public bool DepthBoundsTestEnable;
         public bool DepthWriteEnable;
         public float MinDepthBounds;
@@ -20,7 +20,7 @@ namespace MoonWorks.Graphics
             DepthWriteEnable = true,
             DepthBoundsTestEnable = false,
             StencilTestEnable = false,
-            CompareOp = Refresh.CompareOp.LessOrEqual
+            CompareOp = CompareOp.LessOrEqual
         };
 
         public static readonly DepthStencilState DepthRead = new DepthStencilState
@@ -29,7 +29,7 @@ namespace MoonWorks.Graphics
             DepthWriteEnable = false,
             DepthBoundsTestEnable = false,
             StencilTestEnable = false,
-            CompareOp = Refresh.CompareOp.LessOrEqual
+            CompareOp = CompareOp.LessOrEqual
         };
 
         public static readonly DepthStencilState Disable = new DepthStencilState

@@ -19,7 +19,7 @@ namespace MoonWorks.Graphics
                 renderPassCreateInfo.colorTargetDescriptions = (IntPtr) ptr;
                 renderPassCreateInfo.depthStencilTargetDescription = IntPtr.Zero;
 
-                Handle = Refresh.Refresh_CreateRenderPass(device.Handle, ref renderPassCreateInfo);
+                Handle = Refresh.Refresh_CreateRenderPass(device.Handle, renderPassCreateInfo);
             }
         }
 
@@ -38,7 +38,7 @@ namespace MoonWorks.Graphics
                 renderPassCreateInfo.colorTargetDescriptions = (IntPtr)colorPtr;
                 renderPassCreateInfo.depthStencilTargetDescription = (IntPtr) depthStencilPtr;
 
-                Handle = Refresh.Refresh_CreateRenderPass(device.Handle, ref renderPassCreateInfo);
+                Handle = Refresh.Refresh_CreateRenderPass(device.Handle, renderPassCreateInfo);
             }
         }
     }

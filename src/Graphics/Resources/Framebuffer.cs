@@ -44,7 +44,7 @@ namespace MoonWorks.Graphics
                     renderPass = renderPass.Handle
                 };
 
-                Handle = Refresh.Refresh_CreateFramebuffer(device.Handle, ref framebufferCreateInfo);
+                Handle = Refresh.Refresh_CreateFramebuffer(device.Handle, framebufferCreateInfo);
             }
         }
     }

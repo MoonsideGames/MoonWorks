@@ -40,11 +40,10 @@ namespace MoonWorks.Graphics
 
         public ColorTarget(GraphicsDevice device, SampleCount sampleCount, ref TextureSlice textureSlice) : base(device)
         {
-            var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
             Handle = Refresh.Refresh_CreateColorTarget(
                 device.Handle, 
                 (Refresh.SampleCount) sampleCount, 
-                ref refreshTextureSlice
+                textureSlice.ToRefreshTextureSlice()
             );
             TextureSlice = textureSlice;
         }

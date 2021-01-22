@@ -46,12 +46,12 @@ namespace MoonWorks.Graphics
             graphicsPipelineCreateInfo.colorBlendState.blendConstants[2] = colorBlendState.BlendConstants.B;
             graphicsPipelineCreateInfo.colorBlendState.blendConstants[3] = colorBlendState.BlendConstants.A;
 
-            graphicsPipelineCreateInfo.depthStencilState.backStencilState = depthStencilState.BackStencilState;
-            graphicsPipelineCreateInfo.depthStencilState.compareOp = depthStencilState.CompareOp;
+            graphicsPipelineCreateInfo.depthStencilState.backStencilState = depthStencilState.BackStencilState.ToRefresh();
+            graphicsPipelineCreateInfo.depthStencilState.compareOp = (Refresh.CompareOp) depthStencilState.CompareOp;
             graphicsPipelineCreateInfo.depthStencilState.depthBoundsTestEnable = Conversions.BoolToByte(depthStencilState.DepthBoundsTestEnable);
             graphicsPipelineCreateInfo.depthStencilState.depthTestEnable = Conversions.BoolToByte(depthStencilState.DepthTestEnable);
             graphicsPipelineCreateInfo.depthStencilState.depthWriteEnable = Conversions.BoolToByte(depthStencilState.DepthWriteEnable);
-            graphicsPipelineCreateInfo.depthStencilState.frontStencilState = depthStencilState.FrontStencilState;
+            graphicsPipelineCreateInfo.depthStencilState.frontStencilState = depthStencilState.FrontStencilState.ToRefresh();
             graphicsPipelineCreateInfo.depthStencilState.maxDepthBounds = depthStencilState.MaxDepthBounds;
             graphicsPipelineCreateInfo.depthStencilState.minDepthBounds = depthStencilState.MinDepthBounds;
             graphicsPipelineCreateInfo.depthStencilState.stencilTestEnable = Conversions.BoolToByte(depthStencilState.StencilTestEnable);
@@ -93,7 +93,7 @@ namespace MoonWorks.Graphics
             graphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
             graphicsPipelineCreateInfo.renderPass = renderPass.Handle;
 
-            Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, ref graphicsPipelineCreateInfo);
+            Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo);
 
             vertexAttributesHandle.Free();
             vertexBindingsHandle.Free();

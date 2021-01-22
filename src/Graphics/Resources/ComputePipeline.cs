@@ -32,7 +32,7 @@ namespace MoonWorks.Graphics
 
             Handle = Refresh.Refresh_CreateComputePipeline(
                 device.Handle,
-                ref computePipelineCreateInfo
+                computePipelineCreateInfo
             );
         }
     }
