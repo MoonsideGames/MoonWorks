@@ -1,17 +1,19 @@
 using SDL2;
 using System.Collections.Generic;
 
-namespace MoonWorks
+namespace MoonWorks.Input
 {
-    public class Input
+    public class Inputs
     {
         public Keyboard Keyboard { get; }
+        public Mouse Mouse { get; }
 
         List<Gamepad> gamepads = new List<Gamepad>();
 
-        internal Input()
+        internal Inputs()
         {
             Keyboard = new Keyboard();
+            Mouse = new Mouse();
 
             for (int i = 0; i < SDL.SDL_NumJoysticks(); i++)
             {
@@ -26,6 +28,7 @@ namespace MoonWorks
         internal void Update()
         {
             Keyboard.Update();
+            Mouse.Update();
 
             foreach (var gamepad in gamepads)
             {

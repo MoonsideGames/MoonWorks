@@ -1,4 +1,4 @@
-namespace MoonWorks
+namespace MoonWorks.Input
 {
     public enum ButtonState
     {

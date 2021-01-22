@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using SDL2;
 
-namespace MoonWorks
+namespace MoonWorks.Input
 {
     public class Keyboard
     {

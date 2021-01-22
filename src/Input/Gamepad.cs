@@ -1,7 +1,7 @@
 using System;
 using SDL2;
 
-namespace MoonWorks
+namespace MoonWorks.Input
 {
     public class Gamepad
     {

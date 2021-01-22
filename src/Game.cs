@@ -2,6 +2,7 @@
 using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
+using MoonWorks.Input;
 
 namespace MoonWorks
 {
@@ -16,7 +17,7 @@ namespace MoonWorks
         public Window Window { get; }
         public GraphicsDevice GraphicsDevice { get; }
         public AudioDevice AudioDevice { get; }
-        public Input Input { get; }
+        public Inputs Inputs { get; }
 
         private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
         {
@@ -42,7 +43,7 @@ namespace MoonWorks
 
             Logger.Initialize();
 
-            Input = new Input();
+            Inputs = new Inputs();
 
             Window = new Window(windowCreateInfo);
 
@@ -81,7 +82,7 @@ namespace MoonWorks
                     {
                         HandleSDLEvents();
 
-                        Input.Update();
+                        Inputs.Update();
                         AudioDevice.Update();
 
                         Update(timestep);
