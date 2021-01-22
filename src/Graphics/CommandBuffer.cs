@@ -186,6 +186,28 @@ namespace MoonWorks.Graphics
             );
         }
 
+        public unsafe void BindVertexBuffers(
+            params Buffer[] buffers
+        ) {
+            var bufferPtrs = stackalloc IntPtr[buffers.Length];
+            var offsets = stackalloc ulong[buffers.Length];
+
+            for (var i = 0; i < buffers.Length; i += 1)
+            {
+                bufferPtrs[i] = buffers[i].Handle;
+                offsets[i] = 0;
+            }
+
+            Refresh.Refresh_BindVertexBuffers(
+                Device.Handle,
+                Handle,
+                0,
+                (uint) buffers.Length,
+                (IntPtr) bufferPtrs,
+                (IntPtr) offsets
+            );
+        }
+
         public void BindIndexBuffer(
             Buffer indexBuffer,
             uint offset,
