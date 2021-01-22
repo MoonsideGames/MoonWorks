@@ -38,9 +38,9 @@ namespace MoonWorks.Input
             DeltaX = deltaX;
             DeltaY = deltaY;
 
-            LeftButton = UpdateState(LeftButton, buttons, SDL.SDL_BUTTON_LEFT);
-            MiddleButton = UpdateState(MiddleButton, buttons, SDL.SDL_BUTTON_MIDDLE);
-            RightButton = UpdateState(RightButton, buttons, SDL.SDL_BUTTON_RIGHT);
+            LeftButton = UpdateState(LeftButton, buttons, SDL.SDL_BUTTON_LMASK);
+            MiddleButton = UpdateState(MiddleButton, buttons, SDL.SDL_BUTTON_MMASK);
+            RightButton = UpdateState(RightButton, buttons, SDL.SDL_BUTTON_RMASK);
         }
 
         private ButtonState UpdateState(ButtonState state, uint buttonMask, uint buttonFlag)
