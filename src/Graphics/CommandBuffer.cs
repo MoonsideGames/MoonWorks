@@ -210,8 +210,8 @@ namespace MoonWorks.Graphics
 
         public void BindIndexBuffer(
             Buffer indexBuffer,
-            uint offset,
-            IndexElementSize indexElementSize
+            IndexElementSize indexElementSize,
+            uint offset = 0
         ) {
             Refresh.Refresh_BindIndexBuffer(
                 Device.Handle,
