@@ -223,20 +223,15 @@ namespace MoonWorks.Graphics
         }
 
         public unsafe void BindVertexSamplers(
-            Texture[] textures,
-            Sampler[] samplers
+            params TextureSamplerBinding[] textureSamplerBindings
         ) {
-            var texturePtrs = stackalloc IntPtr[textures.Length];
-            var samplerPtrs = stackalloc IntPtr[samplers.Length];
+            var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+            var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-            for (var i = 0; i < textures.Length; i += 1)
+            for (var i = 0; i < textureSamplerBindings.Length; i += 1)
             {
-                texturePtrs[i] = textures[i].Handle;
-            }
-
-            for (var i = 0; i < samplers.Length; i += 1)
-            {
-                samplerPtrs[i] = samplers[i].Handle;
+                texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
+                samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
             }
 
             Refresh.Refresh_BindVertexSamplers(
