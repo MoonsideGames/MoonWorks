@@ -4,9 +4,9 @@ namespace MoonWorks.Input
 {
     public class Mouse
     {
-        public ButtonState LeftButton { get; private set; }
-        public ButtonState MiddleButton { get; private set; }
-        public ButtonState RightButton { get; private set; }
+        public ButtonState LeftButton { get; } = new ButtonState();
+        public ButtonState MiddleButton { get; } = new ButtonState();
+        public ButtonState RightButton { get; } = new ButtonState();
 
         public int X { get; private set; }
         public int Y { get; private set; }
@@ -21,8 +21,8 @@ namespace MoonWorks.Input
             {
                 relativeMode = value;
                 SDL.SDL_SetRelativeMouseMode(
-                    relativeMode ? 
-                    SDL.SDL_bool.SDL_TRUE : 
+                    relativeMode ?
+                    SDL.SDL_bool.SDL_TRUE :
                     SDL.SDL_bool.SDL_FALSE
                 );
             }
@@ -30,7 +30,7 @@ namespace MoonWorks.Input
 
         internal void Update()
         {
-            var buttons = SDL.SDL_GetMouseState(out var x, out var y);
+            var buttonMask = SDL.SDL_GetMouseState(out var x, out var y);
             var _ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
 
             X = x;
@@ -38,28 +38,14 @@ namespace MoonWorks.Input
             DeltaX = deltaX;
             DeltaY = deltaY;
 
-            LeftButton = UpdateState(LeftButton, buttons, SDL.SDL_BUTTON_LMASK);
-            MiddleButton = UpdateState(MiddleButton, buttons, SDL.SDL_BUTTON_MMASK);
-            RightButton = UpdateState(RightButton, buttons, SDL.SDL_BUTTON_RMASK);
+            LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
+            MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
+            RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
         }
 
-        private ButtonState UpdateState(ButtonState state, uint buttonMask, uint buttonFlag)
+        private bool IsPressed(uint buttonMask, uint buttonFlag)
         {
-            var isPressed = buttonMask & buttonFlag;
-
-            if (isPressed != 0)
-            {
-                if (state == ButtonState.Pressed)
-                {
-                    return ButtonState.Held;
-                }
-                else if (state == ButtonState.Released)
-                {
-                    return ButtonState.Pressed;
-                }
-            }
-
-            return ButtonState.Released;
+            return (buttonMask & buttonFlag) != 0;
         }
     }
 }

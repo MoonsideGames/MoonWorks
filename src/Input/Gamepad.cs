@@ -7,21 +7,21 @@ namespace MoonWorks.Input
     {
         internal IntPtr Handle;
 
-        public ButtonState A { get; private set; }
-        public ButtonState B { get; private set; }
-        public ButtonState X { get; private set; }
-        public ButtonState Y { get; private set; }
-        public ButtonState Back { get; private set; }
-        public ButtonState Guide { get; private set; }
-        public ButtonState Start { get; private set; }
-        public ButtonState LeftStick { get; private set; }
-        public ButtonState RightStick { get; private set; }
-        public ButtonState LeftShoulder { get; private set; }
-        public ButtonState RightShoulder { get; private set; }
-        public ButtonState DpadUp { get; private set; }
-        public ButtonState DpadDown { get; private set; }
-        public ButtonState DpadLeft { get; private set; }
-        public ButtonState DpadRight { get; private set; }
+        public ButtonState A { get; } = new ButtonState();
+        public ButtonState B { get; } = new ButtonState();
+        public ButtonState X { get; } = new ButtonState();
+        public ButtonState Y { get; } = new ButtonState();
+        public ButtonState Back { get; } = new ButtonState();
+        public ButtonState Guide { get; } = new ButtonState();
+        public ButtonState Start { get; } = new ButtonState();
+        public ButtonState LeftStick { get; } = new ButtonState();
+        public ButtonState RightStick { get; } = new ButtonState();
+        public ButtonState LeftShoulder { get; } = new ButtonState();
+        public ButtonState RightShoulder { get; } = new ButtonState();
+        public ButtonState DpadUp { get; } = new ButtonState();
+        public ButtonState DpadDown { get; } = new ButtonState();
+        public ButtonState DpadLeft { get; } = new ButtonState();
+        public ButtonState DpadRight { get; } = new ButtonState();
 
         public float LeftX { get; private set; }
         public float LeftY { get; private set; }
@@ -37,21 +37,21 @@ namespace MoonWorks.Input
 
         internal void Update()
         {
-            A = UpdateState(A, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
-            B = UpdateState(B, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
-            X = UpdateState(X, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X);
-            Y = UpdateState(Y, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y);
-            Back = UpdateState(Back, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK);
-            Guide = UpdateState(Guide, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE);
-            Start = UpdateState(Start, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START);
-            LeftStick = UpdateState(LeftStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
-            RightStick = UpdateState(RightStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-            LeftShoulder = UpdateState(LeftShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-            RightShoulder = UpdateState(RightShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-            DpadUp = UpdateState(DpadUp, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP);
-            DpadDown = UpdateState(DpadDown, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-            DpadLeft = UpdateState(DpadLeft, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-            DpadRight = UpdateState(DpadRight, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+            A.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A));
+            B.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B));
+            X.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X));
+            Y.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y));
+            Back.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK));
+            Guide.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE));
+            Start.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START));
+            LeftStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK));
+            RightStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK));
+            LeftShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER));
+            RightShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
+            DpadUp.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP));
+            DpadDown.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN));
+            DpadLeft.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+            DpadRight.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
 
             LeftX = UpdateAxis(SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
             LeftY = UpdateAxis(SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
@@ -61,23 +61,9 @@ namespace MoonWorks.Input
             TriggerRight = UpdateTrigger(SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
         }
 
-        private ButtonState UpdateState(ButtonState state, SDL.SDL_GameControllerButton button)
+        private bool IsPressed(SDL.SDL_GameControllerButton button)
         {
-            var isPressed = SDL.SDL_GameControllerGetButton(Handle, button);
-
-            if (isPressed == 1)
-            {
-                if (state == ButtonState.Pressed)
-                {
-                    return ButtonState.Held;
-                }
-                else if (state == ButtonState.Released)
-                {
-                    return ButtonState.Pressed;
-                }
-            }
-
-            return ButtonState.Released;
+            return MoonWorks.Conversions.ByteToBool(SDL.SDL_GameControllerGetButton(Handle, button));
         }
 
         private float UpdateAxis(SDL.SDL_GameControllerAxis axis)
