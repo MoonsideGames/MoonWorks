@@ -6,9 +6,9 @@ MoonWorks wraps native-code implementations in managed C# for clean high-level a
 
 MoonWorks *does* provide the components you need to implement a functioning game: window management, input, graphics, 3D math utilities, and audio.
 
-MoonWorks *does not* include things like a built-in physics engine, a GUI editor, or a standard rendering pipeline. My philosophy is that these decisions and tools are better made per-team or per-project.
+MoonWorks *does not* include things like a built-in physics engine, a GUI editor, or a standard rendering pipeline. These decisions and tools are better made per-team or per-project. In short, if you don't mind learning what a vertex buffer is, this framework is for you.
 
-If you don't mind learning what a vertex buffer is, this framework is for you.
+MoonWorks uses strictly Free Open Source Software. It will never have any kind of dependency on proprietary products.
 
 ## Dependencies
 
