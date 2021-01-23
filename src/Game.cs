@@ -8,6 +8,8 @@ namespace MoonWorks
 {
     public abstract class Game
     {
+        public const double MAX_DELTA_TIME = 0.1;
+
         private bool quit = false;
         private double timestep;
         ulong currentTime = SDL.SDL_GetPerformanceCounter();
@@ -65,9 +67,9 @@ namespace MoonWorks
                 var newTime = SDL.SDL_GetPerformanceCounter();
                 double frameTime = (newTime - currentTime) / (double)SDL.SDL_GetPerformanceFrequency();
 
-                if (frameTime > 0.25)
+                if (frameTime > MAX_DELTA_TIME)
                 {
-                    frameTime = 0.25;
+                    frameTime = MAX_DELTA_TIME;
                 }
 
                 currentTime = newTime;
