@@ -3,6 +3,7 @@ using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
+using MoonWorks.Window;
 
 namespace MoonWorks
 {
@@ -16,7 +17,7 @@ namespace MoonWorks
         double accumulator = 0;
         bool debugMode;
 
-        public Window Window { get; }
+        public OSWindow Window { get; }
         public GraphicsDevice GraphicsDevice { get; }
         public AudioDevice AudioDevice { get; }
         public Inputs Inputs { get; }
@@ -47,7 +48,7 @@ namespace MoonWorks
 
             Inputs = new Inputs();
 
-            Window = new Window(windowCreateInfo);
+            Window = new OSWindow(windowCreateInfo);
 
             GraphicsDevice = new GraphicsDevice(
                 Window.Handle,
@@ -92,9 +93,11 @@ namespace MoonWorks
                         accumulator -= timestep;
                     }
 
+                    double alpha = accumulator / timestep;
+
                     if (updateThisLoop)
                     {
-                        Draw();
+                        Draw(timestep, alpha);
                     }
                 }
             }
@@ -115,6 +118,6 @@ namespace MoonWorks
 
         protected abstract void Update(double dt);
 
-        protected abstract void Draw();
+        protected abstract void Draw(double dt, double alpha);
     }
 }

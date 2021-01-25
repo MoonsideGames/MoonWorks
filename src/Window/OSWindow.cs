@@ -1,14 +1,14 @@
 using System;
 using SDL2;
 
-namespace MoonWorks
+namespace MoonWorks.Window
 {
-    public class Window
+    public class OSWindow
     {
         internal IntPtr Handle { get; }
         public ScreenMode ScreenMode { get; }
 
-        public Window(WindowCreateInfo windowCreateInfo)
+        public OSWindow(WindowCreateInfo windowCreateInfo)
         {
             var windowFlags = SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
 

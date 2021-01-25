@@ -1,4 +1,4 @@
-namespace MoonWorks
+namespace MoonWorks.Window
 {
     public struct WindowCreateInfo
     {
