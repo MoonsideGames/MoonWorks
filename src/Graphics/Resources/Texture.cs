@@ -30,7 +30,7 @@ namespace MoonWorks.Graphics
             textureCreateInfo.IsCube = false;
             textureCreateInfo.LevelCount = 1;
             textureCreateInfo.SampleCount = SampleCount.One;
-            textureCreateInfo.UsageFlags = TextureUsageFlags.SamplerBit;
+            textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
 
             var texture = new Texture(device, textureCreateInfo);
 

@@ -85,8 +85,8 @@ namespace MoonWorks.Graphics
     [Flags]
     public enum TextureUsageFlags : uint
     {
-        SamplerBit = 1,
-        ColorTargetBit = 2
+        Sampler = 1,
+        ColorTarget = 2
     }
 
     public enum SampleCount

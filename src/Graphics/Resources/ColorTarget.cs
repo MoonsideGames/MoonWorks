@@ -20,8 +20,8 @@ namespace MoonWorks.Graphics
             uint levelCount = 1
         )
         {
-            var flags = TextureUsageFlags.ColorTargetBit;
-            if (canBeSampled) { flags |= TextureUsageFlags.SamplerBit; }
+            var flags = TextureUsageFlags.ColorTarget;
+            if (canBeSampled) { flags |= TextureUsageFlags.Sampler; }
 
             var texture = Texture.CreateTexture2D(
                 device,
@@ -41,8 +41,8 @@ namespace MoonWorks.Graphics
         public ColorTarget(GraphicsDevice device, SampleCount sampleCount, ref TextureSlice textureSlice) : base(device)
         {
             Handle = Refresh.Refresh_CreateColorTarget(
-                device.Handle, 
-                (Refresh.SampleCount) sampleCount, 
+                device.Handle,
+                (Refresh.SampleCount) sampleCount,
                 textureSlice.ToRefreshTextureSlice()
             );
             TextureSlice = textureSlice;
