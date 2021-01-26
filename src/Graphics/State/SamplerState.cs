@@ -4,29 +4,29 @@ namespace MoonWorks.Graphics
 {
     public struct SamplerState
     {
-        public Refresh.Filter MinFilter;
-        public Refresh.Filter MagFilter;
-        public Refresh.SamplerMipmapMode MipmapMode;
-        public Refresh.SamplerAddressMode AddressModeU;
-        public Refresh.SamplerAddressMode AddressModeV;
-        public Refresh.SamplerAddressMode AddressModeW;
+        public Filter MinFilter;
+        public Filter MagFilter;
+        public SamplerMipmapMode MipmapMode;
+        public SamplerAddressMode AddressModeU;
+        public SamplerAddressMode AddressModeV;
+        public SamplerAddressMode AddressModeW;
         public float MipLodBias;
         public bool AnisotropyEnable;
         public float MaxAnisotropy;
         public bool CompareEnable;
-        public Refresh.CompareOp CompareOp;
+        public CompareOp CompareOp;
         public float MinLod;
         public float MaxLod;
-        public Refresh.BorderColor BorderColor;
+        public BorderColor BorderColor;
 
         public static readonly SamplerState AnisotropicClamp = new SamplerState
         {
-            MinFilter = Refresh.Filter.Linear,
-            MagFilter = Refresh.Filter.Linear,
-            MipmapMode = Refresh.SamplerMipmapMode.Linear,
-            AddressModeU = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeV = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeW = Refresh.SamplerAddressMode.ClampToEdge,
+            MinFilter = Filter.Linear,
+            MagFilter = Filter.Linear,
+            MipmapMode = SamplerMipmapMode.Linear,
+            AddressModeU = SamplerAddressMode.ClampToEdge,
+            AddressModeV = SamplerAddressMode.ClampToEdge,
+            AddressModeW = SamplerAddressMode.ClampToEdge,
             CompareEnable = false,
             AnisotropyEnable = true,
             MaxAnisotropy = 4,
@@ -37,12 +37,12 @@ namespace MoonWorks.Graphics
 
         public static readonly SamplerState AnisotropicWrap = new SamplerState
         {
-            MinFilter = Refresh.Filter.Linear,
-            MagFilter = Refresh.Filter.Linear,
-            MipmapMode = Refresh.SamplerMipmapMode.Linear,
-            AddressModeU = Refresh.SamplerAddressMode.Repeat,
-            AddressModeV = Refresh.SamplerAddressMode.Repeat,
-            AddressModeW = Refresh.SamplerAddressMode.Repeat,
+            MinFilter = Filter.Linear,
+            MagFilter = Filter.Linear,
+            MipmapMode = SamplerMipmapMode.Linear,
+            AddressModeU = SamplerAddressMode.Repeat,
+            AddressModeV = SamplerAddressMode.Repeat,
+            AddressModeW = SamplerAddressMode.Repeat,
             CompareEnable = false,
             AnisotropyEnable = true,
             MaxAnisotropy = 4,
@@ -53,12 +53,12 @@ namespace MoonWorks.Graphics
 
         public static readonly SamplerState LinearClamp = new SamplerState
         {
-            MinFilter = Refresh.Filter.Linear,
-            MagFilter = Refresh.Filter.Linear,
-            MipmapMode = Refresh.SamplerMipmapMode.Linear,
-            AddressModeU = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeV = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeW = Refresh.SamplerAddressMode.ClampToEdge,
+            MinFilter = Filter.Linear,
+            MagFilter = Filter.Linear,
+            MipmapMode = SamplerMipmapMode.Linear,
+            AddressModeU = SamplerAddressMode.ClampToEdge,
+            AddressModeV = SamplerAddressMode.ClampToEdge,
+            AddressModeW = SamplerAddressMode.ClampToEdge,
             CompareEnable = false,
             AnisotropyEnable = false,
             MipLodBias = 0f,
@@ -68,12 +68,12 @@ namespace MoonWorks.Graphics
 
         public static readonly SamplerState LinearWrap = new SamplerState
         {
-            MinFilter = Refresh.Filter.Linear,
-            MagFilter = Refresh.Filter.Linear,
-            MipmapMode = Refresh.SamplerMipmapMode.Linear,
-            AddressModeU = Refresh.SamplerAddressMode.Repeat,
-            AddressModeV = Refresh.SamplerAddressMode.Repeat,
-            AddressModeW = Refresh.SamplerAddressMode.Repeat,
+            MinFilter = Filter.Linear,
+            MagFilter = Filter.Linear,
+            MipmapMode = SamplerMipmapMode.Linear,
+            AddressModeU = SamplerAddressMode.Repeat,
+            AddressModeV = SamplerAddressMode.Repeat,
+            AddressModeW = SamplerAddressMode.Repeat,
             CompareEnable = false,
             AnisotropyEnable = false,
             MipLodBias = 0f,
@@ -83,12 +83,12 @@ namespace MoonWorks.Graphics
 
         public static readonly SamplerState PointClamp = new SamplerState
         {
-            MinFilter = Refresh.Filter.Nearest,
-            MagFilter = Refresh.Filter.Nearest,
-            MipmapMode = Refresh.SamplerMipmapMode.Nearest,
-            AddressModeU = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeV = Refresh.SamplerAddressMode.ClampToEdge,
-            AddressModeW = Refresh.SamplerAddressMode.ClampToEdge,
+            MinFilter = Filter.Nearest,
+            MagFilter = Filter.Nearest,
+            MipmapMode = SamplerMipmapMode.Nearest,
+            AddressModeU = SamplerAddressMode.ClampToEdge,
+            AddressModeV = SamplerAddressMode.ClampToEdge,
+            AddressModeW = SamplerAddressMode.ClampToEdge,
             CompareEnable = false,
             AnisotropyEnable = false,
             MipLodBias = 0f,
@@ -98,12 +98,12 @@ namespace MoonWorks.Graphics
 
         public static readonly SamplerState PointWrap = new SamplerState
         {
-            MinFilter = Refresh.Filter.Nearest,
-            MagFilter = Refresh.Filter.Nearest,
-            MipmapMode = Refresh.SamplerMipmapMode.Nearest,
-            AddressModeU = Refresh.SamplerAddressMode.Repeat,
-            AddressModeV = Refresh.SamplerAddressMode.Repeat,
-            AddressModeW = Refresh.SamplerAddressMode.Repeat,
+            MinFilter = Filter.Nearest,
+            MagFilter = Filter.Nearest,
+            MipmapMode = SamplerMipmapMode.Nearest,
+            AddressModeU = SamplerAddressMode.Repeat,
+            AddressModeV = SamplerAddressMode.Repeat,
+            AddressModeW = SamplerAddressMode.Repeat,
             CompareEnable = false,
             AnisotropyEnable = false,
             MipLodBias = 0f,
@@ -115,20 +115,20 @@ namespace MoonWorks.Graphics
         {
             return new Refresh.SamplerStateCreateInfo
             {
-                minFilter = MinFilter,
-                magFilter = MagFilter,
-                mipmapMode = MipmapMode,
-                addressModeU = AddressModeU,
-                addressModeV = AddressModeV,
-                addressModeW = AddressModeW,
+                minFilter = (Refresh.Filter)MinFilter,
+                magFilter = (Refresh.Filter)MagFilter,
+                mipmapMode = (Refresh.SamplerMipmapMode)MipmapMode,
+                addressModeU = (Refresh.SamplerAddressMode)AddressModeU,
+                addressModeV = (Refresh.SamplerAddressMode)AddressModeV,
+                addressModeW = (Refresh.SamplerAddressMode)AddressModeW,
                 mipLodBias = MipLodBias,
                 anisotropyEnable = Conversions.BoolToByte(AnisotropyEnable),
                 maxAnisotropy = MaxAnisotropy,
                 compareEnable = Conversions.BoolToByte(CompareEnable),
-                compareOp = CompareOp,
+                compareOp = (Refresh.CompareOp)CompareOp,
                 minLod = MinLod,
                 maxLod = MaxLod,
-                borderColor = BorderColor
+                borderColor = (Refresh.BorderColor)BorderColor
             };
         }
     }
