@@ -77,8 +77,6 @@ namespace MoonWorks
 
                 accumulator += frameTime;
 
-                bool updateThisLoop = (accumulator >= timestep);
-
                 if (!quit)
                 {
                     while (accumulator >= timestep)
@@ -95,10 +93,7 @@ namespace MoonWorks
 
                     double alpha = accumulator / timestep;
 
-                    if (updateThisLoop)
-                    {
-                        Draw(timestep, alpha);
-                    }
+                    Draw(timestep, alpha);
                 }
             }
         }
