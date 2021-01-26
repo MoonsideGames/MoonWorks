@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -31,7 +32,7 @@ namespace MoonWorks.Graphics
             textureCreateInfo.SampleCount = SampleCount.One;
             textureCreateInfo.UsageFlags = TextureUsageFlags.SamplerBit;
 
-            var texture = new Texture(device, ref textureCreateInfo);
+            var texture = new Texture(device, textureCreateInfo);
 
             texture.SetData(pixels, (uint)(width * height * 4));
 
@@ -69,7 +70,7 @@ namespace MoonWorks.Graphics
                 UsageFlags = usageFlags
             };
 
-            return new Texture(device, ref textureCreateInfo);
+            return new Texture(device, textureCreateInfo);
         }
 
         public static Texture CreateTexture3D(
@@ -95,7 +96,7 @@ namespace MoonWorks.Graphics
                 UsageFlags = usageFlags
             };
 
-            return new Texture(device, ref textureCreateInfo);
+            return new Texture(device, textureCreateInfo);
         }
 
         public static Texture CreateTextureCube(
@@ -119,10 +120,10 @@ namespace MoonWorks.Graphics
                 UsageFlags = usageFlags
             };
 
-            return new Texture(device, ref textureCreateInfo);
+            return new Texture(device, textureCreateInfo);
         }
 
-        public Texture(GraphicsDevice device, ref TextureCreateInfo textureCreateInfo) : base(device)
+        public Texture(GraphicsDevice device, in TextureCreateInfo textureCreateInfo) : base(device)
         {
             Handle = Refresh.Refresh_CreateTexture(
                 device.Handle,
@@ -134,36 +135,39 @@ namespace MoonWorks.Graphics
             Height = textureCreateInfo.Height;
         }
 
-        public void SetData(IntPtr data, uint dataLengthInBytes)
+        public void SetData(in TextureSlice textureSlice, IntPtr data, uint dataLengthInBytes)
         {
-            Refresh.TextureSlice textureSlice;
-            textureSlice.texture = Handle;
-            textureSlice.rectangle.x = 0;
-            textureSlice.rectangle.y = 0;
-            textureSlice.rectangle.w = (int)Width;
-            textureSlice.rectangle.h = (int)Height;
-            textureSlice.level = 0;
-            textureSlice.layer = 0;
-            textureSlice.depth = 0;
-
             Refresh.Refresh_SetTextureData(
                 Device.Handle,
-                textureSlice,
+                textureSlice.ToRefreshTextureSlice(),
                 data,
                 dataLengthInBytes
             );
         }
 
-        public void SetData(ref TextureSlice textureSlice, IntPtr data, uint dataLengthInBytes)
+        public void SetData(IntPtr data, uint dataLengthInBytes)
         {
-            var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
+            SetData(new TextureSlice(this), data, dataLengthInBytes);
+        }
 
-            Refresh.Refresh_SetTextureData(
-                Device.Handle,
-                refreshTextureSlice,
-                data,
-                dataLengthInBytes
-            );
+        public unsafe void SetData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
+        {
+            var size = Marshal.SizeOf<T>();
+
+            fixed (T* ptr = &data[0])
+            {
+                Refresh.Refresh_SetTextureData(
+                    Device.Handle,
+                    textureSlice.ToRefreshTextureSlice(),
+                    (IntPtr) ptr,
+                    (uint) (data.Length * size)
+                );
+            }
+        }
+
+        public unsafe void SetData<T>(T[] data) where T : unmanaged
+        {
+            SetData(new TextureSlice(this), data);
         }
     }
 }

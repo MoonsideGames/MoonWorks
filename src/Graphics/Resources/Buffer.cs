@@ -55,9 +55,9 @@ namespace MoonWorks.Graphics
             }
         }
 
-        public unsafe void SetData<T>(
+        public void SetData<T>(
             uint offsetInBytes,
-            T* data,
+            IntPtr data,
             uint dataLengthInBytes
         ) where T : unmanaged
         {
@@ -65,7 +65,7 @@ namespace MoonWorks.Graphics
                 Device.Handle,
                 Handle,
                 offsetInBytes,
-                (IntPtr) data,
+                data,
                 dataLengthInBytes
             );
         }
