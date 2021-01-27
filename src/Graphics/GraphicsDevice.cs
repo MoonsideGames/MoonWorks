@@ -12,6 +12,8 @@ namespace MoonWorks.Graphics
 
         private readonly Queue<CommandBuffer> commandBufferPool;
 
+        private readonly List<WeakReference> resources = new List<WeakReference>();
+
         public GraphicsDevice(
             IntPtr deviceWindowHandle,
             Refresh.PresentMode presentMode,
@@ -78,16 +80,44 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_Wait(Handle);
         }
 
+        internal void AddResourceReference(WeakReference resourceReference)
+        {
+            lock (resources)
+            {
+                resources.Add(resourceReference);
+            }
+        }
+
+        internal void RemoveResourceReference(WeakReference resourceReference)
+        {
+            lock (resources)
+            {
+                resources.Remove(resourceReference);
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    lock (resources)
+                    {
+                        foreach (var resource in resources)
+                        {
+                            var target = resource.Target;
+                            if (target != null)
+                            {
+                                (target as IDisposable).Dispose();
+                            }
+                        }
+                        resources.Clear();
+                    }
+
+                    Refresh.Refresh_DestroyDevice(Handle);
                 }
 
-                Refresh.Refresh_DestroyDevice(Handle);
                 IsDisposed = true;
             }
         }

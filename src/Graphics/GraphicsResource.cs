@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MoonWorks.Graphics
 {
@@ -12,9 +10,14 @@ namespace MoonWorks.Graphics
         public bool IsDisposed { get; private set; }
         protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
+        private WeakReference selfReference;
+
         public GraphicsResource(GraphicsDevice device)
         {
             Device = device;
+
+            selfReference = new WeakReference(this);
+            Device.AddResourceReference(selfReference);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -22,6 +25,13 @@ namespace MoonWorks.Graphics
             if (!IsDisposed)
             {
                 QueueDestroyFunction(Device.Handle, Handle);
+
+                if (selfReference != null)
+                {
+                    Device.RemoveResourceReference(selfReference);
+                    selfReference = null;
+                }
+
                 IsDisposed = true;
             }
         }
