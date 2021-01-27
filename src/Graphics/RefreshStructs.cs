@@ -9,16 +9,16 @@ namespace MoonWorks.Graphics
     [StructLayout(LayoutKind.Sequential)]
     public struct DepthStencilValue
     {
-        public float depth;
-        public uint stencil;
+        public float Depth;
+        public uint Stencil;
 
         // FIXME: can we do an unsafe cast somehow?
         public Refresh.DepthStencilValue ToRefresh()
         {
             return new Refresh.DepthStencilValue
             {
-                depth = depth,
-                stencil = stencil
+                depth = Depth,
+                stencil = Stencil
             };
         }
     }
@@ -26,103 +26,94 @@ namespace MoonWorks.Graphics
     [StructLayout(LayoutKind.Sequential)]
     public struct Rect
     {
-        public int x;
-        public int y;
-        public int w;
-        public int h;
+        public int X;
+        public int Y;
+        public int W;
+        public int H;
 
         // FIXME: can we do an unsafe cast somehow?
         public Refresh.Rect ToRefresh()
         {
             return new Refresh.Rect
             {
-                x = x,
-                y = y,
-                w = w,
-                h = h
+                x = X,
+                y = Y,
+                w = W,
+                h = H
             };
         }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct Vec4
-    {
-        public float x;
-        public float y;
-        public float z;
-        public float w;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     public struct Viewport
     {
-        public float x;
-        public float y;
-        public float w;
-        public float h;
-        public float minDepth;
-        public float maxDepth;
+        public float X;
+        public float Y;
+        public float W;
+        public float H;
+        public float MinDepth;
+        public float MaxDepth;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct VertexBinding
     {
-        public uint binding;
-        public uint stride;
-        public VertexInputRate inputRate;
+        public uint Binding;
+        public uint Stride;
+        public VertexInputRate InputRate;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct VertexAttribute
     {
-        public uint location;
-        public uint binding;
-        public VertexElementFormat format;
-        public uint offset;
+        public uint Location;
+        public uint Binding;
+        public VertexElementFormat Format;
+        public uint Offset;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct ColorTargetDescription
     {
-        public TextureFormat format;
-        public SampleCount multisampleCount;
-        public LoadOp loadOp;
-        public StoreOp storeOp;
+        public TextureFormat Format;
+        public SampleCount MultisampleCount;
+        public LoadOp LoadOp;
+        public StoreOp StoreOp;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct DepthStencilTargetDescription
     {
-        public TextureFormat depthFormat;
-        public LoadOp loadOp;
-        public StoreOp storeOp;
-        public LoadOp stencilLoadOp;
-        public StoreOp stencilStoreOp;
+        public TextureFormat Format;
+        public LoadOp LoadOp;
+        public StoreOp StoreOp;
+        public LoadOp StencilLoadOp;
+        public StoreOp StencilStoreOp;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct StencilOpState
     {
-        public StencilOp failOp;
-        public StencilOp passOp;
-        public StencilOp depthFailOp;
-        public CompareOp compareOp;
-        public uint compareMask;
-        public uint writeMask;
-        public uint reference;
+        public StencilOp FailOp;
+        public StencilOp PassOp;
+        public StencilOp DepthFailOp;
+        public CompareOp CompareOp;
+        public uint CompareMask;
+        public uint WriteMask;
+        public uint Reference;
 
         // FIXME: can we do an explicit cast here?
         public Refresh.StencilOpState ToRefresh()
         {
             return new Refresh.StencilOpState
             {
-                failOp = (Refresh.StencilOp)failOp,
-                passOp = (Refresh.StencilOp)passOp,
-                depthFailOp = (Refresh.StencilOp)depthFailOp,
-                compareOp = (Refresh.CompareOp)compareOp,
-                compareMask = compareMask,
-                writeMask = writeMask,
-                reference = reference
+                failOp = (Refresh.StencilOp)FailOp,
+                passOp = (Refresh.StencilOp)PassOp,
+                depthFailOp = (Refresh.StencilOp)DepthFailOp,
+                compareOp = (Refresh.CompareOp)CompareOp,
+                compareMask = CompareMask,
+                writeMask = WriteMask,
+                reference = Reference
             };
         }
     }
