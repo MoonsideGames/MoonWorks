@@ -8,6 +8,10 @@ namespace MoonWorks.Graphics
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 
+        public ShaderStageState VertexShaderState { get; }
+        public ShaderStageState FragmentShaderState { get; }
+        public RenderPass RenderPass { get; }
+
         public unsafe GraphicsPipeline(
             GraphicsDevice device,
             ColorBlendState colorBlendState,
@@ -99,6 +103,10 @@ namespace MoonWorks.Graphics
             vertexBindingsHandle.Free();
             viewportHandle.Free();
             scissorHandle.Free();
+
+            VertexShaderState = vertexShaderState;
+            FragmentShaderState = fragmentShaderState;
+            RenderPass = renderPass;
         }
     }
 }
