@@ -36,6 +36,42 @@ namespace MoonWorks.Graphics
             return new RenderTarget(device, new TextureSlice(texture), sampleCount);
         }
 
+        public static RenderTarget CreateDepthBuffer(
+            GraphicsDevice device,
+            uint width,
+            uint height
+        ) {
+            var flags = TextureUsageFlags.DepthStencilTarget;
+
+            var texture = Texture.CreateTexture2D(
+                device,
+                width,
+                height,
+                TextureFormat.D32,
+                flags
+            );
+
+            return new RenderTarget(device, new TextureSlice(texture));
+        }
+
+        public static RenderTarget CreateDepthStencilBuffer(
+            GraphicsDevice device,
+            uint width,
+            uint height
+        ) {
+            var flags = TextureUsageFlags.DepthStencilTarget;
+
+            var texture = Texture.CreateTexture2D(
+                device,
+                width,
+                height,
+                TextureFormat.D32S8,
+                flags
+            );
+
+            return new RenderTarget(device, new TextureSlice(texture));
+        }
+
         public RenderTarget(GraphicsDevice device, in TextureSlice textureSlice, SampleCount sampleCount = SampleCount.One) : base(device)
         {
             Handle = Refresh.Refresh_CreateRenderTarget(
