@@ -64,20 +64,20 @@ namespace MoonWorks.Graphics
             graphicsPipelineCreateInfo.fragmentShaderState.shaderModule = fragmentShaderState.ShaderModule.Handle;
             graphicsPipelineCreateInfo.fragmentShaderState.uniformBufferSize = fragmentShaderState.UniformBufferSize;
 
-            graphicsPipelineCreateInfo.multisampleState.multisampleCount = multisampleState.MultisampleCount;
+            graphicsPipelineCreateInfo.multisampleState.multisampleCount = (Refresh.SampleCount)multisampleState.MultisampleCount;
             graphicsPipelineCreateInfo.multisampleState.sampleMask = multisampleState.SampleMask;
 
             graphicsPipelineCreateInfo.pipelineLayoutCreateInfo.vertexSamplerBindingCount = pipelineLayoutCreateInfo.VertexSamplerBindingCount;
             graphicsPipelineCreateInfo.pipelineLayoutCreateInfo.fragmentSamplerBindingCount = pipelineLayoutCreateInfo.FragmentSamplerBindingCount;
 
-            graphicsPipelineCreateInfo.rasterizerState.cullMode = rasterizerState.CullMode;
+            graphicsPipelineCreateInfo.rasterizerState.cullMode = (Refresh.CullMode)rasterizerState.CullMode;
             graphicsPipelineCreateInfo.rasterizerState.depthBiasClamp = rasterizerState.DepthBiasClamp;
             graphicsPipelineCreateInfo.rasterizerState.depthBiasConstantFactor = rasterizerState.DepthBiasConstantFactor;
             graphicsPipelineCreateInfo.rasterizerState.depthBiasEnable = Conversions.BoolToByte(rasterizerState.DepthBiasEnable);
             graphicsPipelineCreateInfo.rasterizerState.depthBiasSlopeFactor = rasterizerState.DepthBiasSlopeFactor;
             graphicsPipelineCreateInfo.rasterizerState.depthClampEnable = Conversions.BoolToByte(rasterizerState.DepthClampEnable);
-            graphicsPipelineCreateInfo.rasterizerState.fillMode = rasterizerState.FillMode;
-            graphicsPipelineCreateInfo.rasterizerState.frontFace = rasterizerState.FrontFace;
+            graphicsPipelineCreateInfo.rasterizerState.fillMode = (Refresh.FillMode)rasterizerState.FillMode;
+            graphicsPipelineCreateInfo.rasterizerState.frontFace = (Refresh.FrontFace)rasterizerState.FrontFace;
             graphicsPipelineCreateInfo.rasterizerState.lineWidth = rasterizerState.LineWidth;
 
             graphicsPipelineCreateInfo.vertexInputState.vertexAttributes = vertexAttributesHandle.AddrOfPinnedObject();

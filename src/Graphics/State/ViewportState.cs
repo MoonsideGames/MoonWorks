@@ -1,5 +1,3 @@
-using RefreshCS;
-
 namespace MoonWorks.Graphics
 {
     public struct ViewportState
