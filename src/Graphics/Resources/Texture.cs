@@ -9,7 +9,7 @@ namespace MoonWorks.Graphics
     {
         public uint Width { get; }
         public uint Height { get; }
-        public ColorFormat Format { get; }
+        public TextureFormat Format { get; }
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
@@ -26,7 +26,7 @@ namespace MoonWorks.Graphics
             textureCreateInfo.Width = (uint)width;
             textureCreateInfo.Height = (uint)height;
             textureCreateInfo.Depth = 1;
-            textureCreateInfo.Format = ColorFormat.R8G8B8A8;
+            textureCreateInfo.Format = TextureFormat.R8G8B8A8;
             textureCreateInfo.IsCube = false;
             textureCreateInfo.LevelCount = 1;
             textureCreateInfo.SampleCount = SampleCount.One;
@@ -52,7 +52,7 @@ namespace MoonWorks.Graphics
             GraphicsDevice device,
             uint width,
             uint height,
-            ColorFormat format,
+            TextureFormat format,
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
@@ -78,7 +78,7 @@ namespace MoonWorks.Graphics
             uint width,
             uint height,
             uint depth,
-            ColorFormat format,
+            TextureFormat format,
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
@@ -102,7 +102,7 @@ namespace MoonWorks.Graphics
         public static Texture CreateTextureCube(
             GraphicsDevice device,
             uint size,
-            ColorFormat format,
+            TextureFormat format,
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1

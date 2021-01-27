@@ -51,7 +51,7 @@ namespace MoonWorks.Graphics
         ThirtyTwo
     }
 
-    public enum ColorFormat
+    public enum TextureFormat
     {
         R8G8B8A8,
         R5G6B5,
@@ -71,22 +71,19 @@ namespace MoonWorks.Graphics
         R32G32B32A32_SFLOAT,
         R16_SFLOAT,
         R16G16_SFLOAT,
-        R16G16B16A16_SFLOAT
-    }
-
-    public enum DepthFormat
-    {
-        Depth16,
-        Depth32,
-        Depth16Stencil8,
-        Depth32Stencil8
+        R16G16B16A16_SFLOAT,
+        D16,
+        D32,
+        D16S8,
+        D32S8
     }
 
     [Flags]
     public enum TextureUsageFlags : uint
     {
         Sampler = 1,
-        ColorTarget = 2
+        ColorTarget = 2,
+        DepthStencilTarget = 4
     }
 
     public enum SampleCount

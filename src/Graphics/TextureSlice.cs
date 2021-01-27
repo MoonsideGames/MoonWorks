@@ -5,7 +5,7 @@ namespace MoonWorks.Graphics
     public struct TextureSlice
     {
         public Texture Texture { get; }
-        public Refresh.Rect Rectangle { get;  }
+        public Rect Rectangle { get;  }
         public uint Depth { get; }
         public uint Layer { get; }
         public uint Level { get; }
@@ -13,7 +13,7 @@ namespace MoonWorks.Graphics
         public TextureSlice(Texture texture)
         {
             Texture = texture;
-            Rectangle = new Refresh.Rect
+            Rectangle = new Rect
             {
                 x = 0,
                 y = 0,
@@ -25,7 +25,7 @@ namespace MoonWorks.Graphics
             Level = 0;
         }
 
-        public TextureSlice(Texture texture, Refresh.Rect rectangle, uint depth = 0, uint layer = 0, uint level = 0)
+        public TextureSlice(Texture texture, Rect rectangle, uint depth = 0, uint layer = 0, uint level = 0)
         {
             Texture = texture;
             Rectangle = rectangle;
@@ -39,7 +39,7 @@ namespace MoonWorks.Graphics
             Refresh.TextureSlice textureSlice = new Refresh.TextureSlice
             {
                 texture = Texture.Handle,
-                rectangle = Rectangle,
+                rectangle = Rectangle.ToRefresh(),
                 depth = Depth,
                 layer = Layer,
                 level = Level

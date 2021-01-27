@@ -12,8 +12,8 @@ namespace MoonWorks.Graphics
             uint width,
             uint height,
             RenderPass renderPass,
-            DepthStencilTarget depthStencilTarget, /* can be NULL */
-            params ColorTarget[] colorTargets
+            RenderTarget depthStencilTarget, /* can be NULL */
+            params RenderTarget[] colorTargets
         ) : base(device)
         {
             IntPtr[] colorTargetHandles = new IntPtr[colorTargets.Length];

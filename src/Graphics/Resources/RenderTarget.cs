@@ -3,18 +3,18 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
-    public class ColorTarget : GraphicsResource
+    public class RenderTarget : GraphicsResource
     {
         public TextureSlice TextureSlice { get; }
-        public ColorFormat Format => TextureSlice.Texture.Format;
+        public TextureFormat Format => TextureSlice.Texture.Format;
 
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyColorTarget;
+        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
 
-        public static ColorTarget CreateBackedColorTarget2D(
+        public static RenderTarget CreateBackedColorTarget2D(
             GraphicsDevice device,
             uint width,
             uint height,
-            ColorFormat format,
+            TextureFormat format,
             bool canBeSampled,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
@@ -33,17 +33,15 @@ namespace MoonWorks.Graphics
                 levelCount
             );
 
-            var textureSlice = new TextureSlice(texture);
-
-            return new ColorTarget(device, sampleCount, ref textureSlice);
+            return new RenderTarget(device, new TextureSlice(texture), sampleCount);
         }
 
-        public ColorTarget(GraphicsDevice device, SampleCount sampleCount, ref TextureSlice textureSlice) : base(device)
+        public RenderTarget(GraphicsDevice device, in TextureSlice textureSlice, SampleCount sampleCount = SampleCount.One) : base(device)
         {
-            Handle = Refresh.Refresh_CreateColorTarget(
+            Handle = Refresh.Refresh_CreateRenderTarget(
                 device.Handle,
-                (Refresh.SampleCount) sampleCount,
-                textureSlice.ToRefreshTextureSlice()
+                textureSlice.ToRefreshTextureSlice(),
+                (Refresh.SampleCount) sampleCount
             );
             TextureSlice = textureSlice;
         }

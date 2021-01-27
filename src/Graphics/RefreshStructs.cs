@@ -84,7 +84,7 @@ namespace MoonWorks.Graphics
     [StructLayout(LayoutKind.Sequential)]
     public struct ColorTargetDescription
     {
-        public ColorFormat format;
+        public TextureFormat format;
         public SampleCount multisampleCount;
         public LoadOp loadOp;
         public StoreOp storeOp;
@@ -93,7 +93,7 @@ namespace MoonWorks.Graphics
     [StructLayout(LayoutKind.Sequential)]
     public struct DepthStencilTargetDescription
     {
-        public DepthFormat depthFormat;
+        public TextureFormat depthFormat;
         public LoadOp loadOp;
         public StoreOp storeOp;
         public LoadOp stencilLoadOp;
