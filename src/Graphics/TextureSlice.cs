@@ -15,10 +15,10 @@ namespace MoonWorks.Graphics
             Texture = texture;
             Rectangle = new Rect
             {
-                x = 0,
-                y = 0,
-                w = (int) texture.Width,
-                h = (int) texture.Height
+                X = 0,
+                Y = 0,
+                W = (int) texture.Width,
+                H = (int) texture.Height
             };
             Depth = 0;
             Layer = 0;

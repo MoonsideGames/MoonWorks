@@ -9,12 +9,12 @@ namespace MoonWorks.Graphics
 
         public Sampler(
             GraphicsDevice device,
-            in SamplerState samplerState
+            in SamplerCreateInfo samplerCreateInfo
         ) : base(device)
         {
             Handle = Refresh.Refresh_CreateSampler(
                 device.Handle,
-                samplerState.ToRefreshSamplerStateCreateInfo()
+                samplerCreateInfo.ToRefreshSamplerStateCreateInfo()
             );
         }
     }

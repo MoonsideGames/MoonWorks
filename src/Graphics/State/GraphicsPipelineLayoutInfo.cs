@@ -1,6 +1,6 @@
 namespace MoonWorks.Graphics
 {
-    public struct GraphicsPipelineLayoutCreateInfo
+    public struct GraphicsPipelineLayoutInfo
     {
         public uint VertexSamplerBindingCount;
         public uint FragmentSamplerBindingCount;

@@ -2,7 +2,7 @@
 
 namespace MoonWorks.Graphics
 {
-    public struct SamplerState
+    public struct SamplerCreateInfo
     {
         public Filter MinFilter;
         public Filter MagFilter;
@@ -19,7 +19,7 @@ namespace MoonWorks.Graphics
         public float MaxLod;
         public BorderColor BorderColor;
 
-        public static readonly SamplerState AnisotropicClamp = new SamplerState
+        public static readonly SamplerCreateInfo AnisotropicClamp = new SamplerCreateInfo
         {
             MinFilter = Filter.Linear,
             MagFilter = Filter.Linear,
@@ -35,7 +35,7 @@ namespace MoonWorks.Graphics
             MaxLod = 1000 /* VK_LOD_CLAMP_NONE */
         };
 
-        public static readonly SamplerState AnisotropicWrap = new SamplerState
+        public static readonly SamplerCreateInfo AnisotropicWrap = new SamplerCreateInfo
         {
             MinFilter = Filter.Linear,
             MagFilter = Filter.Linear,
@@ -51,7 +51,7 @@ namespace MoonWorks.Graphics
             MaxLod = 1000 /* VK_LOD_CLAMP_NONE */
         };
 
-        public static readonly SamplerState LinearClamp = new SamplerState
+        public static readonly SamplerCreateInfo LinearClamp = new SamplerCreateInfo
         {
             MinFilter = Filter.Linear,
             MagFilter = Filter.Linear,
@@ -66,7 +66,7 @@ namespace MoonWorks.Graphics
             MaxLod = 1000
         };
 
-        public static readonly SamplerState LinearWrap = new SamplerState
+        public static readonly SamplerCreateInfo LinearWrap = new SamplerCreateInfo
         {
             MinFilter = Filter.Linear,
             MagFilter = Filter.Linear,
@@ -81,7 +81,7 @@ namespace MoonWorks.Graphics
             MaxLod = 1000
         };
 
-        public static readonly SamplerState PointClamp = new SamplerState
+        public static readonly SamplerCreateInfo PointClamp = new SamplerCreateInfo
         {
             MinFilter = Filter.Nearest,
             MagFilter = Filter.Nearest,
@@ -96,7 +96,7 @@ namespace MoonWorks.Graphics
             MaxLod = 1000
         };
 
-        public static readonly SamplerState PointWrap = new SamplerState
+        public static readonly SamplerCreateInfo PointWrap = new SamplerCreateInfo
         {
             MinFilter = Filter.Nearest,
             MagFilter = Filter.Nearest,
