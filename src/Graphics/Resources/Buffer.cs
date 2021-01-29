@@ -22,8 +22,8 @@ namespace MoonWorks.Graphics
         }
 
         public unsafe void SetData<T>(
-            uint offsetInBytes,
             T[] data,
+            uint offsetInBytes,
             uint dataLengthInBytes
         ) where T : unmanaged
         {
@@ -55,17 +55,30 @@ namespace MoonWorks.Graphics
             }
         }
 
-        public void SetData<T>(
-            uint offsetInBytes,
+        public void SetData(
             IntPtr data,
+            uint offsetInBytes,
             uint dataLengthInBytes
-        ) where T : unmanaged
-        {
+        ) {
             Refresh.Refresh_SetBufferData(
                 Device.Handle,
                 Handle,
                 offsetInBytes,
                 data,
+                dataLengthInBytes
+            );
+        }
+
+        public unsafe void SetData<T>(
+            T* data,
+            uint offsetInBytes,
+            uint dataLengthInBytes
+        ) where T : unmanaged {
+            Refresh.Refresh_SetBufferData(
+                Device.Handle,
+                Handle,
+                offsetInBytes,
+                (IntPtr) data,
                 dataLengthInBytes
             );
         }
