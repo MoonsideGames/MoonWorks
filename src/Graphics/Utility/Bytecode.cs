@@ -4,11 +4,11 @@ namespace MoonWorks.Graphics
 {
     public static class Bytecode
     {
-        public static uint[] ReadBytecodeAsUInt32(FileInfo fileInfo)
+        public static uint[] ReadBytecodeAsUInt32(string filePath)
         {
             byte[] data;
             int size;
-            using (FileStream stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read))
+            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
                 size = (int)stream.Length;
                 data = new byte[size];

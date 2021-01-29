@@ -13,10 +13,10 @@ namespace MoonWorks.Graphics
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
-        public static Texture LoadPNG(GraphicsDevice device, FileInfo fileInfo)
+        public static Texture LoadPNG(GraphicsDevice device, string filePath)
         {
             var pixels = Refresh.Refresh_Image_Load(
-                fileInfo.FullName,
+                filePath,
                 out var width,
                 out var height,
                 out var channels

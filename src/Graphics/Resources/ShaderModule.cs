@@ -8,12 +8,14 @@ namespace MoonWorks.Graphics
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyShaderModule;
 
-        public unsafe ShaderModule(GraphicsDevice device, FileInfo fileInfo) : base(device)
+        public unsafe ShaderModule(GraphicsDevice device, string filePath) : base(device)
         {
-            fixed (uint* ptr = Bytecode.ReadBytecodeAsUInt32(fileInfo))
+            var bytecode = Bytecode.ReadBytecodeAsUInt32(filePath);
+
+            fixed (uint* ptr = bytecode)
             {
                 Refresh.ShaderModuleCreateInfo shaderModuleCreateInfo;
-                shaderModuleCreateInfo.codeSize = (UIntPtr) fileInfo.Length;
+                shaderModuleCreateInfo.codeSize = (UIntPtr) (bytecode.Length * sizeof(uint));
                 shaderModuleCreateInfo.byteCode = (IntPtr) ptr;
 
                 Handle = Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);

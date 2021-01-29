@@ -18,12 +18,12 @@ namespace MoonWorks.Audio
         private bool IsDisposed;
 
         public static StreamingSoundOgg Load(
-            AudioDevice device, 
-            FileInfo fileInfo,
+            AudioDevice device,
+            string filePath,
             bool is3D = false,
             bool loop = false
         ) {
-            var fileHandle = FAudio.stb_vorbis_open_filename(fileInfo.FullName, out var error, IntPtr.Zero);
+            var fileHandle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
             if (error != 0)
             {
                 Logger.LogError("Error opening OGG file!");

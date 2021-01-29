@@ -16,9 +16,9 @@ namespace MoonWorks.Audio
 
         private bool IsDisposed;
 
-        public static StaticSound LoadOgg(AudioDevice device, FileInfo fileInfo)
+        public static StaticSound LoadOgg(AudioDevice device, string filePath)
         {
-            var filePointer = FAudio.stb_vorbis_open_filename(fileInfo.FullName, out var error, IntPtr.Zero);
+            var filePointer = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
 
             if (error != 0)
             {
