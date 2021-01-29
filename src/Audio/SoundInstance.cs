@@ -228,6 +228,10 @@ namespace MoonWorks.Audio
             State = SoundState.Stopped;
         }
 
+        public abstract void Play();
+        public abstract void Pause();
+        public abstract void Stop(bool immediate);
+
         private void InitDSPSettings(uint srcChannels)
         {
             dspSettings = new FAudio.F3DAUDIO_DSP_SETTINGS();
@@ -314,6 +318,7 @@ namespace MoonWorks.Audio
                 if (disposing)
                 {
                     // dispose managed state (managed objects)
+                    Stop(true);
                 }
 
                 FAudio.FAudioVoice_DestroyVoice(Handle);

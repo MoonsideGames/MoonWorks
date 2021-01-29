@@ -12,7 +12,7 @@ namespace MoonWorks.Graphics
 
         private readonly Queue<CommandBuffer> commandBufferPool;
 
-        private readonly List<WeakReference> resources = new List<WeakReference>();
+        private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
 
         public GraphicsDevice(
             IntPtr deviceWindowHandle,
@@ -80,7 +80,7 @@ namespace MoonWorks.Graphics
             Refresh.Refresh_Wait(Handle);
         }
 
-        internal void AddResourceReference(WeakReference resourceReference)
+        internal void AddResourceReference(WeakReference<GraphicsResource> resourceReference)
         {
             lock (resources)
             {
@@ -88,7 +88,7 @@ namespace MoonWorks.Graphics
             }
         }
 
-        internal void RemoveResourceReference(WeakReference resourceReference)
+        internal void RemoveResourceReference(WeakReference<GraphicsResource> resourceReference)
         {
             lock (resources)
             {
@@ -106,10 +106,9 @@ namespace MoonWorks.Graphics
                     {
                         foreach (var resource in resources)
                         {
-                            var target = resource.Target;
-                            if (target != null)
+                            if (resource.TryGetTarget(out var target))
                             {
-                                (target as IDisposable).Dispose();
+                                target.Dispose();
                             }
                         }
                         resources.Clear();

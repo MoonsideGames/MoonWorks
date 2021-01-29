@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Audio
 {
     /// <summary>
-    /// For streaming long playback. 
+    /// For streaming long playback.
     /// Can be extended to support custom decoders.
     /// </summary>
     public abstract class StreamingSound : SoundInstance
@@ -26,7 +26,7 @@ namespace MoonWorks.Audio
             bool loop
         ) : base(device, channels, samplesPerSecond, is3D, loop) { }
 
-        public void Play()
+        public override void Play()
         {
             if (State == SoundState.Playing)
             {
@@ -38,7 +38,7 @@ namespace MoonWorks.Audio
             FAudio.FAudioSourceVoice_Start(Handle, 0, 0);
         }
 
-        public void Pause()
+        public override void Pause()
         {
             if (State == SoundState.Playing)
             {
@@ -47,7 +47,7 @@ namespace MoonWorks.Audio
             }
         }
 
-        public void Stop(bool immediate = true)
+        public override void Stop(bool immediate = true)
         {
             if (immediate)
             {
@@ -110,8 +110,8 @@ namespace MoonWorks.Audio
         protected void AddBuffer()
         {
             AddBuffer(
-                out var buffer, 
-                out var bufferOffset, 
+                out var buffer,
+                out var bufferOffset,
                 out var bufferLength,
                 out var reachedEnd
             );

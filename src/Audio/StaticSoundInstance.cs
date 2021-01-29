@@ -40,7 +40,7 @@ namespace MoonWorks.Audio
             Parent = parent;
         }
 
-        public void Play()
+        public override void Play()
         {
             if (State == SoundState.Playing)
             {
@@ -70,7 +70,7 @@ namespace MoonWorks.Audio
             State = SoundState.Playing;
         }
 
-        public void Pause()
+        public override void Pause()
         {
             if (State == SoundState.Paused)
             {
@@ -79,7 +79,7 @@ namespace MoonWorks.Audio
             }
         }
 
-        public void Stop(bool immediate = true)
+        public override void Stop(bool immediate = true)
         {
             if (immediate)
             {

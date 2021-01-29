@@ -10,13 +10,13 @@ namespace MoonWorks.Graphics
         public bool IsDisposed { get; private set; }
         protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
-        private WeakReference selfReference;
+        private WeakReference<GraphicsResource> selfReference;
 
         public GraphicsResource(GraphicsDevice device)
         {
             Device = device;
 
-            selfReference = new WeakReference(this);
+            selfReference = new WeakReference<GraphicsResource>(this);
             Device.AddResourceReference(selfReference);
         }
 

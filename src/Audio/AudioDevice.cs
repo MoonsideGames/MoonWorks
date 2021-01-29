@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-    public class AudioDevice
+    public class AudioDevice : IDisposable
     {
         public IntPtr Handle { get; }
         public byte[] Handle3D { get; }
@@ -17,8 +17,9 @@ namespace MoonWorks.Audio
         public float SpeedOfSound = 343.5f;
 
         internal FAudio.FAudioVoiceSends ReverbSends;
-
         private readonly List<WeakReference<StreamingSound>> streamingSounds = new List<WeakReference<StreamingSound>>();
+
+        private bool IsDisposed;
 
         public unsafe AudioDevice()
         {
@@ -213,6 +214,43 @@ namespace MoonWorks.Audio
         internal void AddDynamicSoundInstance(StreamingSound instance)
         {
             streamingSounds.Add(new WeakReference<StreamingSound>(instance));
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!IsDisposed)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    foreach (var weakReference in streamingSounds)
+                    {
+                        if (weakReference.TryGetTarget(out var streamingSound))
+                        {
+                            streamingSound.Dispose();
+                        }
+                    }
+                    streamingSounds.Clear();
+                }
+
+                FAudio.FAudio_Release(Handle);
+
+                IsDisposed = true;
+            }
+        }
+
+        // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        ~AudioDevice()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
