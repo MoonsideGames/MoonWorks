@@ -14,7 +14,7 @@ namespace MoonWorks.Graphics
 
         public unsafe GraphicsPipeline(
             GraphicsDevice device,
-            GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
+            in GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
         ) : base(device)
         {
             ColorBlendState colorBlendState = graphicsPipelineCreateInfo.ColorBlendState;

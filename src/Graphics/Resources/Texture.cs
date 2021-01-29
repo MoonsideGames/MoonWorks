@@ -123,7 +123,10 @@ namespace MoonWorks.Graphics
             return new Texture(device, textureCreateInfo);
         }
 
-        public Texture(GraphicsDevice device, in TextureCreateInfo textureCreateInfo) : base(device)
+        public Texture(
+            GraphicsDevice device,
+            in TextureCreateInfo textureCreateInfo
+        ) : base(device)
         {
             Handle = Refresh.Refresh_CreateTexture(
                 device.Handle,
