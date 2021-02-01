@@ -69,13 +69,13 @@ namespace MoonWorks.Graphics
             );
         }
 
-        public unsafe uint PushComputeShaderParams<T>(
+        public unsafe uint PushComputeShaderUniforms<T>(
             params T[] uniforms
         ) where T : unmanaged
         {
             fixed (T* ptr = &uniforms[0])
             {
-                return Refresh.Refresh_PushComputeShaderParams(
+                return Refresh.Refresh_PushComputeShaderUniforms(
                     Device.Handle,
                     Handle,
                     (IntPtr) ptr,
