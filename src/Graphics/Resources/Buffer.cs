@@ -23,18 +23,20 @@ namespace MoonWorks.Graphics
 
         public unsafe void SetData<T>(
             T[] data,
-            uint offsetInBytes,
-            uint dataLengthInBytes
+            uint offsetInElements,
+            uint lengthInElements
         ) where T : unmanaged
         {
+            var elementSize = Marshal.SizeOf<T>();
+
             fixed (T* ptr = &data[0])
             {
                 Refresh.Refresh_SetBufferData(
                     Device.Handle,
                     Handle,
-                    offsetInBytes,
+                    (uint) (offsetInElements * elementSize),
                     (IntPtr) ptr,
-                    dataLengthInBytes
+                    (uint) (lengthInElements * elementSize)
                 );
             }
         }
@@ -71,15 +73,16 @@ namespace MoonWorks.Graphics
 
         public unsafe void SetData<T>(
             T* data,
-            uint offsetInBytes,
-            uint dataLengthInBytes
+            uint offsetInElements,
+            uint lengthInElements
         ) where T : unmanaged {
+            var elementSize = Marshal.SizeOf<T>();
             Refresh.Refresh_SetBufferData(
                 Device.Handle,
                 Handle,
-                offsetInBytes,
+                (uint) (offsetInElements * elementSize),
                 (IntPtr) data,
-                dataLengthInBytes
+                (uint) (lengthInElements * elementSize)
             );
         }
 
