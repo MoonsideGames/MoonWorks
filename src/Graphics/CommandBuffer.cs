@@ -79,7 +79,7 @@ namespace MoonWorks.Graphics
                     Device.Handle,
                     Handle,
                     (IntPtr) ptr,
-                    (uint) uniforms.Length
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
                 );
             }
         }
@@ -138,7 +138,7 @@ namespace MoonWorks.Graphics
                     Device.Handle,
                     Handle,
                     (IntPtr) ptr,
-                    (uint) uniforms.Length
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
                 );
             }
         }
@@ -153,7 +153,7 @@ namespace MoonWorks.Graphics
                     Device.Handle,
                     Handle,
                     (IntPtr) ptr,
-                    (uint) uniforms.Length
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
                 );
             }
         }
