@@ -124,5 +124,35 @@ namespace MoonWorks.Graphics
             FragmentShaderState = fragmentShaderState;
             RenderPass = renderPass;
         }
+
+        public unsafe uint PushVertexShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushVertexShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
+        }
+
+        public unsafe uint PushFragmentShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushFragmentShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
+        }
     }
 }

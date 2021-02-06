@@ -1,5 +1,6 @@
 ﻿using RefreshCS;
 using System;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics
 {
@@ -38,6 +39,21 @@ namespace MoonWorks.Graphics
             );
 
             ComputeShaderState = computeShaderState;
+        }
+
+        public unsafe uint PushComputeShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushComputeShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
         }
     }
 }
