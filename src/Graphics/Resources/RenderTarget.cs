@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
 
-        public static RenderTarget CreateBackedColorTarget2D(
+        public static RenderTarget CreateBackedRenderTarget(
             GraphicsDevice device,
             uint width,
             uint height,
@@ -18,10 +18,26 @@ namespace MoonWorks.Graphics
             bool canBeSampled,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
-        )
-        {
-            var flags = TextureUsageFlags.ColorTarget;
-            if (canBeSampled) { flags |= TextureUsageFlags.Sampler; }
+        ) {
+            TextureUsageFlags flags = 0;
+
+            if (
+                format == TextureFormat.D16 ||
+                format == TextureFormat.D32 ||
+                format == TextureFormat.D16S8 ||
+                format == TextureFormat.D32S8
+            ) {
+                flags |= TextureUsageFlags.DepthStencilTarget;
+            }
+            else
+            {
+                flags |= TextureUsageFlags.ColorTarget;
+            }
+
+            if (canBeSampled)
+            {
+                flags |= TextureUsageFlags.Sampler;
+            }
 
             var texture = Texture.CreateTexture2D(
                 device,
@@ -34,42 +50,6 @@ namespace MoonWorks.Graphics
             );
 
             return new RenderTarget(device, new TextureSlice(texture), sampleCount);
-        }
-
-        public static RenderTarget CreateDepthBuffer(
-            GraphicsDevice device,
-            uint width,
-            uint height
-        ) {
-            var flags = TextureUsageFlags.DepthStencilTarget;
-
-            var texture = Texture.CreateTexture2D(
-                device,
-                width,
-                height,
-                TextureFormat.D32,
-                flags
-            );
-
-            return new RenderTarget(device, new TextureSlice(texture));
-        }
-
-        public static RenderTarget CreateDepthStencilBuffer(
-            GraphicsDevice device,
-            uint width,
-            uint height
-        ) {
-            var flags = TextureUsageFlags.DepthStencilTarget;
-
-            var texture = Texture.CreateTexture2D(
-                device,
-                width,
-                height,
-                TextureFormat.D32S8,
-                flags
-            );
-
-            return new RenderTarget(device, new TextureSlice(texture));
         }
 
         public RenderTarget(GraphicsDevice device, in TextureSlice textureSlice, SampleCount sampleCount = SampleCount.One) : base(device)

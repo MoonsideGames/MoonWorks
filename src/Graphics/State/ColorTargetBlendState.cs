@@ -67,6 +67,12 @@ namespace MoonWorks.Graphics
             ColorWriteMask = ColorComponentFlags.RGBA
         };
 
+        public static readonly ColorTargetBlendState Disable = new ColorTargetBlendState
+        {
+            BlendEnable = false,
+            ColorWriteMask = ColorComponentFlags.None
+        };
+
         public Refresh.ColorTargetBlendState ToRefreshColorTargetBlendState()
         {
             return new Refresh.ColorTargetBlendState

@@ -253,7 +253,8 @@ namespace MoonWorks.Graphics
         RGA = R | G | A,
         GBA = G | B | A,
 
-        RGBA = R | G | B | A
+        RGBA = R | G | B | A,
+        None = 0
     }
 
     public enum ShaderStageType
