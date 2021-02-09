@@ -214,7 +214,7 @@ namespace MoonWorks.Graphics
 
         public unsafe void Clear(
             in Rect clearRect,
-            Refresh.ClearOptionsFlags clearOptions,
+            ClearOptionsFlags clearOptions,
             in DepthStencilValue depthStencilClearValue,
             params Color[] clearColors
         ) {
@@ -223,7 +223,7 @@ namespace MoonWorks.Graphics
                 Device.Handle,
                 Handle,
                 clearRect.ToRefresh(),
-                clearOptions,
+                (Refresh.ClearOptionsFlags)clearOptions,
                 (IntPtr) colors,
                 (uint) clearColors.Length,
                 depthStencilClearValue.ToRefresh()
