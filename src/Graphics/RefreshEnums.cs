@@ -97,7 +97,7 @@ namespace MoonWorks.Graphics
         SixtyFour
     }
 
-    public enum CubeMapFace
+    public enum CubeMapFace : uint
     {
         PositiveX,
         NegativeX,
