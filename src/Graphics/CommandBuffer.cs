@@ -72,21 +72,31 @@ namespace MoonWorks.Graphics
             RenderPass renderPass,
             Framebuffer framebuffer,
             in Rect renderArea,
-            params Color[] clearColors
+            params Vector4[] clearColors
         ) {
-            fixed (Color* clearColorPtr = &clearColors[0])
+            Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
+
+            for (var i = 0; i < clearColors.Length; i++)
             {
-                Refresh.Refresh_BeginRenderPass(
-                    Device.Handle,
-                    Handle,
-                    renderPass.Handle,
-                    framebuffer.Handle,
-                    renderArea.ToRefresh(),
-                    (IntPtr) clearColorPtr,
-                    (uint) clearColors.Length,
-                    IntPtr.Zero
-                );
+                colors[i] = new Refresh.Vec4
+                {
+                    x = clearColors[i].X,
+                    y = clearColors[i].Y,
+                    z = clearColors[i].Z,
+                    w = clearColors[i].W
+                };
             }
+
+            Refresh.Refresh_BeginRenderPass(
+                Device.Handle,
+                Handle,
+                renderPass.Handle,
+                framebuffer.Handle,
+                renderArea.ToRefresh(),
+                (IntPtr) colors,
+                (uint) clearColors.Length,
+                IntPtr.Zero
+            );
         }
 
         public void BindComputePipeline(
