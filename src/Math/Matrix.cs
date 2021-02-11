@@ -976,7 +976,7 @@ namespace MoonWorks.Math
 		) {
 			result.M11 = 2f / width;
 			result.M12 = result.M13 = result.M14 = 0f;
-			result.M22 = -2f / height;
+			result.M22 = 2f / height;
 			result.M21 = result.M23 = result.M24 = 0f;
 			result.M33 = 1f / (zNearPlane - zFarPlane);
 			result.M31 = result.M32 = result.M34 = 0f;
@@ -1040,7 +1040,7 @@ namespace MoonWorks.Math
 			result.M13 = 0.0f;
 			result.M14 = 0.0f;
 			result.M21 = 0.0f;
-			result.M22 = -(float) (2.0 / ((double) top - (double) bottom));
+			result.M22 = (float) (2.0 / ((double) bottom - (double) top));
 			result.M23 = 0.0f;
 			result.M24 = 0.0f;
 			result.M31 = 0.0f;
@@ -1048,11 +1048,11 @@ namespace MoonWorks.Math
 			result.M33 = (float) (1.0 / ((double) zNearPlane - (double) zFarPlane));
 			result.M34 = 0.0f;
 			result.M41 = (float) (
-				((double) left + (double) right) /
-				((double) left - (double) right)
+				-((double) left + (double) right) /
+				((double) right - (double) left)
 			);
 			result.M42 = (float) (
-				((double) top + (double) bottom) /
+				-((double) top + (double) bottom) /
 				((double) bottom - (double) top)
 			);
 			result.M43 = (float) (
