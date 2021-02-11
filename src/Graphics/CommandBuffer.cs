@@ -213,12 +213,13 @@ namespace MoonWorks.Graphics
         }
 
         public unsafe void BindVertexSamplers(
-            params TextureSamplerBinding[] textureSamplerBindings
+            TextureSamplerBinding[] textureSamplerBindings,
+            int length
         ) {
             var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
             var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-            for (var i = 0; i < textureSamplerBindings.Length; i += 1)
+            for (var i = 0; i < length; i += 1)
             {
                 texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
                 samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
@@ -232,13 +233,20 @@ namespace MoonWorks.Graphics
             );
         }
 
-        public unsafe void BindFragmentSamplers(
+        public unsafe void BindVertexSamplers(
             params TextureSamplerBinding[] textureSamplerBindings
+        ) {
+            BindVertexSamplers(textureSamplerBindings, textureSamplerBindings.Length);
+        }
+
+        public unsafe void BindFragmentSamplers(
+            TextureSamplerBinding[] textureSamplerBindings,
+            int length
         ) {
             var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
             var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-            for (var i = 0; i < textureSamplerBindings.Length; i += 1)
+            for (var i = 0; i < length; i += 1)
             {
                 texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
                 samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
@@ -250,6 +258,12 @@ namespace MoonWorks.Graphics
                 (IntPtr) texturePtrs,
                 (IntPtr) samplerPtrs
             );
+        }
+
+        public unsafe void BindFragmentSamplers(
+            params TextureSamplerBinding[] textureSamplerBindings
+        ) {
+            BindFragmentSamplers(textureSamplerBindings, textureSamplerBindings.Length);
         }
 
         public unsafe void Clear(
