@@ -1013,26 +1013,26 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed <see cref="Vector3"/>.</returns>
-		public static Vector3 Transform(Vector3 position, Matrix matrix)
+		public static Vector3 Transform(Vector3 position, Matrix4x4 matrix)
 		{
 			Transform(ref position, ref matrix, out position);
 			return position;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed <see cref="Vector3"/> as an output parameter.</param>
 		public static void Transform(
 			ref Vector3 position,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			out Vector3 result
 		) {
 			float x = (
@@ -1059,14 +1059,14 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on all vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on all vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		public static void Transform(
 			Vector3[] sourceArray,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector3[] destinationArray
 		) {
 			Debug.Assert(
@@ -1093,18 +1093,18 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
 		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector3"/> should be written.</param>
 		/// <param name="length">The number of vectors to be transformed.</param>
 		public static void Transform(
 			Vector3[] sourceArray,
 			int sourceIndex,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector3[] destinationArray,
 			int destinationIndex,
 			int length
@@ -1255,26 +1255,26 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="normal">Source <see cref="Vector3"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed normal.</returns>
-		public static Vector3 TransformNormal(Vector3 normal, Matrix matrix)
+		public static Vector3 TransformNormal(Vector3 normal, Matrix4x4 matrix)
 		{
 			TransformNormal(ref normal, ref matrix, out normal);
 			return normal;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="normal">Source <see cref="Vector3"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed normal as an output parameter.</param>
 		public static void TransformNormal(
 			ref Vector3 normal,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			out Vector3 result
 		) {
 			float x = (normal.X * matrix.M11) + (normal.Y * matrix.M21) + (normal.Z * matrix.M31);
@@ -1286,14 +1286,14 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on all normals within array of <see cref="Vector3"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on all normals within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		public static void TransformNormal(
 			Vector3[] sourceArray,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector3[] destinationArray
 		) {
 			Debug.Assert(
@@ -1311,18 +1311,18 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on normals within array of <see cref="Vector3"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on normals within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
 		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector3"/> should be written.</param>
 		/// <param name="length">The number of normals to be transformed.</param>
 		public static void TransformNormal(
 			Vector3[] sourceArray,
 			int sourceIndex,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector3[] destinationArray,
 			int destinationIndex,
 			int length

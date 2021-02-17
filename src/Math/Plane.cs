@@ -216,7 +216,7 @@ namespace MoonWorks.Math
 		/// <param name="plane">The normalized plane to transform.</param>
 		/// <param name="matrix">The transformation matrix.</param>
 		/// <returns>The transformed plane.</returns>
-		public static Plane Transform(Plane plane, Matrix matrix)
+		public static Plane Transform(Plane plane, Matrix4x4 matrix)
 		{
 			Plane result;
 			Transform(ref plane, ref matrix, out result);
@@ -231,16 +231,16 @@ namespace MoonWorks.Math
 		/// <param name="result">The transformed plane.</param>
 		public static void Transform(
 			ref Plane plane,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			out Plane result
 		) {
 			/* See "Transforming Normals" in
 			 * http://www.glprogramming.com/red/appendixf.html
 			 * for an explanation of how this works.
 			 */
-			Matrix transformedMatrix;
-			Matrix.Invert(ref matrix, out transformedMatrix);
-			Matrix.Transpose(
+			Matrix4x4 transformedMatrix;
+			Matrix4x4.Invert(ref matrix, out transformedMatrix);
+			Matrix4x4.Transpose(
 				ref transformedMatrix,
 				out transformedMatrix
 			);

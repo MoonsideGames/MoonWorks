@@ -370,11 +370,11 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Quaternion"/> from the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Quaternion"/> from the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="matrix">The rotation matrix.</param>
 		/// <returns>A quaternion composed from the rotation part of the matrix.</returns>
-		public static Quaternion CreateFromRotationMatrix(Matrix matrix)
+		public static Quaternion CreateFromRotationMatrix(Matrix4x4 matrix)
 		{
 			Quaternion quaternion;
 			CreateFromRotationMatrix(ref matrix, out quaternion);
@@ -382,11 +382,11 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Quaternion"/> from the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Quaternion"/> from the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="matrix">The rotation matrix.</param>
 		/// <param name="result">A quaternion composed from the rotation part of the matrix as an output parameter.</param>
-		public static void CreateFromRotationMatrix(ref Matrix matrix, out Quaternion result)
+		public static void CreateFromRotationMatrix(ref Matrix4x4 matrix, out Quaternion result)
 		{
 			float sqrt;
 			float half;

@@ -77,11 +77,11 @@ namespace MoonWorks.Math
 		#region Public Methods
 
 		/// <summary>
-		/// Creates a new <see cref="BoundingSphere"/> that contains a transformation of translation and scale from this sphere by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="BoundingSphere"/> that contains a transformation of translation and scale from this sphere by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed <see cref="BoundingSphere"/>.</returns>
-		public BoundingSphere Transform(Matrix matrix)
+		public BoundingSphere Transform(Matrix4x4 matrix)
 		{
 			BoundingSphere sphere = new BoundingSphere();
 			sphere.Center = Vector3.Transform(this.Center, matrix);
@@ -99,11 +99,11 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="BoundingSphere"/> that contains a transformation of translation and scale from this sphere by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="BoundingSphere"/> that contains a transformation of translation and scale from this sphere by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed <see cref="BoundingSphere"/> as an output parameter.</param>
-		public void Transform(ref Matrix matrix, out BoundingSphere result)
+		public void Transform(ref Matrix4x4 matrix, out BoundingSphere result)
 		{
 			result.Center = Vector3.Transform(this.Center, matrix);
 			result.Radius = this.Radius *

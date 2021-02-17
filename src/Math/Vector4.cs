@@ -942,12 +942,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector2"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed <see cref="Vector4"/>.</returns>
-		public static Vector4 Transform(Vector2 position, Matrix matrix)
+		public static Vector4 Transform(Vector2 position, Matrix4x4 matrix)
 		{
 			Vector4 result;
 			Transform(ref position, ref matrix, out result);
@@ -955,12 +955,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed <see cref="Vector4"/>.</returns>
-		public static Vector4 Transform(Vector3 position, Matrix matrix)
+		public static Vector4 Transform(Vector3 position, Matrix4x4 matrix)
 		{
 			Vector4 result;
 			Transform(ref position, ref matrix, out result);
@@ -968,24 +968,24 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 4d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 4d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector4"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <returns>Transformed <see cref="Vector4"/>.</returns>
-		public static Vector4 Transform(Vector4 vector, Matrix matrix)
+		public static Vector4 Transform(Vector4 vector, Matrix4x4 matrix)
 		{
 			Transform(ref vector, ref matrix, out vector);
 			return vector;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector2"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed <see cref="Vector4"/> as an output parameter.</param>
-		public static void Transform(ref Vector2 position, ref Matrix matrix, out Vector4 result)
+		public static void Transform(ref Vector2 position, ref Matrix4x4 matrix, out Vector4 result)
 		{
 			result = new Vector4(
 				(position.X * matrix.M11) + (position.Y * matrix.M21) + matrix.M41,
@@ -996,12 +996,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed <see cref="Vector4"/> as an output parameter.</param>
-		public static void Transform(ref Vector3 position, ref Matrix matrix, out Vector4 result)
+		public static void Transform(ref Vector3 position, ref Matrix4x4 matrix, out Vector4 result)
 		{
 			float x = (
 				(position.X * matrix.M11) +
@@ -1034,12 +1034,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector4"/> that contains a transformation of 4d-vector by the specified <see cref="Matrix"/>.
+		/// Creates a new <see cref="Vector4"/> that contains a transformation of 4d-vector by the specified <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">Source <see cref="Vector4"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Transformed <see cref="Vector4"/> as an output parameter.</param>
-		public static void Transform(ref Vector4 vector, ref Matrix matrix, out Vector4 result)
+		public static void Transform(ref Vector4 vector, ref Matrix4x4 matrix, out Vector4 result)
 		{
 			float x = (
 				(vector.X * matrix.M11) +
@@ -1072,14 +1072,14 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on all vectors within array of <see cref="Vector4"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on all vectors within array of <see cref="Vector4"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		public static void Transform(
 			Vector4[] sourceArray,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector4[] destinationArray
 		) {
 			if (sourceArray == null)
@@ -1107,18 +1107,18 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Apply transformation on vectors within array of <see cref="Vector4"/> by the specified <see cref="Matrix"/> and places the results in an another array.
+		/// Apply transformation on vectors within array of <see cref="Vector4"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
 		/// </summary>
 		/// <param name="sourceArray">Source array.</param>
 		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
 		/// <param name="destinationArray">Destination array.</param>
 		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector4"/> should be written.</param>
 		/// <param name="length">The number of vectors to be transformed.</param>
 		public static void Transform(
 			Vector4[] sourceArray,
 			int sourceIndex,
-			ref Matrix matrix,
+			ref Matrix4x4 matrix,
 			Vector4[] destinationArray,
 			int destinationIndex,
 			int length

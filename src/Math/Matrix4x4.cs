@@ -30,7 +30,7 @@ namespace MoonWorks.Math
 	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	[StructLayout(LayoutKind.Sequential)]
-	public struct Matrix : IEquatable<Matrix>
+	public struct Matrix4x4 : IEquatable<Matrix4x4>
 	{
 		#region Public Properties
 
@@ -88,7 +88,7 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Returns the identity matrix.
 		/// </summary>
-		public static Matrix Identity
+		public static Matrix4x4 Identity
 		{
 			get
 			{
@@ -281,7 +281,7 @@ namespace MoonWorks.Math
 
 		#region Private Static Variables
 
-		private static Matrix identity = new Matrix(
+		private static Matrix4x4 identity = new Matrix4x4(
 			1f, 0f, 0f, 0f,
 			0f, 1f, 0f, 0f,
 			0f, 0f, 1f, 0f,
@@ -311,7 +311,7 @@ namespace MoonWorks.Math
 		/// <param name="m42">A fourth row and second column value.</param>
 		/// <param name="m43">A fourth row and third column value.</param>
 		/// <param name="m44">A fourth row and fourth column value.</param>
-		public Matrix(
+		public Matrix4x4(
 			float m11, float m12, float m13, float m14,
 			float m21, float m22, float m23, float m24,
 			float m31, float m32, float m33, float m34,
@@ -371,7 +371,7 @@ namespace MoonWorks.Math
 				return false;
 			}
 
-			Matrix m1 = new Matrix(
+			Matrix4x4 m1 = new Matrix4x4(
 				M11 / scale.X, M12 / scale.X, M13 / scale.X, 0,
 				M21 / scale.Y, M22 / scale.Y, M23 / scale.Y, 0,
 				M31 / scale.Z, M32 / scale.Z, M33 / scale.Z, 0,
@@ -383,9 +383,9 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Returns a determinant of this <see cref="Matrix"/>.
+		/// Returns a determinant of this <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <returns>Determinant of this <see cref="Matrix"/></returns>
+		/// <returns>Determinant of this <see cref="Matrix4x4"/></returns>
 		/// <remarks>See more about determinant here - http://en.wikipedia.org/wiki/Determinant.
 		/// </remarks>
 		public float Determinant()
@@ -407,11 +407,11 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Compares whether current instance is equal to specified <see cref="Matrix"/> without any tolerance.
+		/// Compares whether current instance is equal to specified <see cref="Matrix4x4"/> without any tolerance.
 		/// </summary>
-		/// <param name="other">The <see cref="Matrix"/> to compare.</param>
+		/// <param name="other">The <see cref="Matrix4x4"/> to compare.</param>
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
-		public bool Equals(Matrix other)
+		public bool Equals(Matrix4x4 other)
 		{
 			return (	M11 == other.M11 &&
 					M12 == other.M12 &&
@@ -438,13 +438,13 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public override bool Equals(object obj)
 		{
-			return (obj is Matrix) && Equals((Matrix) obj);
+			return (obj is Matrix4x4) && Equals((Matrix4x4) obj);
 		}
 
 		/// <summary>
-		/// Gets the hash code of this <see cref="Matrix"/>.
+		/// Gets the hash code of this <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <returns>Hash code of this <see cref="Matrix"/>.</returns>
+		/// <returns>Hash code of this <see cref="Matrix4x4"/>.</returns>
 		public override int GetHashCode()
 		{
 			return (
@@ -456,13 +456,13 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Returns a <see cref="String"/> representation of this <see cref="Matrix"/> in the format:
+		/// Returns a <see cref="String"/> representation of this <see cref="Matrix4x4"/> in the format:
 		/// {M11:[<see cref="M11"/>] M12:[<see cref="M12"/>] M13:[<see cref="M13"/>] M14:[<see cref="M14"/>]}
 		/// {M21:[<see cref="M21"/>] M12:[<see cref="M22"/>] M13:[<see cref="M23"/>] M14:[<see cref="M24"/>]}
 		/// {M31:[<see cref="M31"/>] M32:[<see cref="M32"/>] M33:[<see cref="M33"/>] M34:[<see cref="M34"/>]}
 		/// {M41:[<see cref="M41"/>] M42:[<see cref="M42"/>] M43:[<see cref="M43"/>] M44:[<see cref="M44"/>]}
 		/// </summary>
-		/// <returns>A <see cref="String"/> representation of this <see cref="Matrix"/>.</returns>
+		/// <returns>A <see cref="String"/> representation of this <see cref="Matrix4x4"/>.</returns>
 		public override string ToString()
 		{
 			return (
@@ -490,12 +490,12 @@ namespace MoonWorks.Math
 		#region Public Static Methods
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains sum of two matrixes.
+		/// Creates a new <see cref="Matrix4x4"/> which contains sum of two matrixes.
 		/// </summary>
 		/// <param name="matrix1">The first matrix to add.</param>
 		/// <param name="matrix2">The second matrix to add.</param>
 		/// <returns>The result of the matrix addition.</returns>
-		public static Matrix Add(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 Add(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			matrix1.M11 += matrix2.M11;
 			matrix1.M12 += matrix2.M12;
@@ -517,12 +517,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains sum of two matrixes.
+		/// Creates a new <see cref="Matrix4x4"/> which contains sum of two matrixes.
 		/// </summary>
 		/// <param name="matrix1">The first matrix to add.</param>
 		/// <param name="matrix2">The second matrix to add.</param>
 		/// <param name="result">The result of the matrix addition as an output parameter.</param>
-		public static void Add(ref Matrix matrix1, ref Matrix matrix2, out Matrix result)
+		public static void Add(ref Matrix4x4 matrix1, ref Matrix4x4 matrix2, out Matrix4x4 result)
 		{
 			result.M11 = matrix1.M11 + matrix2.M11;
 			result.M12 = matrix1.M12 + matrix2.M12;
@@ -543,20 +543,20 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> for spherical billboarding that rotates around specified object position.
+		/// Creates a new <see cref="Matrix4x4"/> for spherical billboarding that rotates around specified object position.
 		/// </summary>
 		/// <param name="objectPosition">Position of billboard object. It will rotate around that vector.</param>
 		/// <param name="cameraPosition">The camera position.</param>
 		/// <param name="cameraUpVector">The camera up vector.</param>
 		/// <param name="cameraForwardVector">Optional camera forward vector.</param>
-		/// <returns>The <see cref="Matrix"/> for spherical billboarding.</returns>
-		public static Matrix CreateBillboard(
+		/// <returns>The <see cref="Matrix4x4"/> for spherical billboarding.</returns>
+		public static Matrix4x4 CreateBillboard(
 			Vector3 objectPosition,
 			Vector3 cameraPosition,
 			Vector3 cameraUpVector,
 			Nullable<Vector3> cameraForwardVector
 		) {
-			Matrix result;
+			Matrix4x4 result;
 
 			// Delegate to the other overload of the function to do the work
 			CreateBillboard(
@@ -571,19 +571,19 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> for spherical billboarding that rotates around specified object position.
+		/// Creates a new <see cref="Matrix4x4"/> for spherical billboarding that rotates around specified object position.
 		/// </summary>
 		/// <param name="objectPosition">Position of billboard object. It will rotate around that vector.</param>
 		/// <param name="cameraPosition">The camera position.</param>
 		/// <param name="cameraUpVector">The camera up vector.</param>
 		/// <param name="cameraForwardVector">Optional camera forward vector.</param>
-		/// <param name="result">The <see cref="Matrix"/> for spherical billboarding as an output parameter.</param>
+		/// <param name="result">The <see cref="Matrix4x4"/> for spherical billboarding as an output parameter.</param>
 		public static void CreateBillboard(
 			ref Vector3 objectPosition,
 			ref Vector3 cameraPosition,
 			ref Vector3 cameraUpVector,
 			Vector3? cameraForwardVector,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			Vector3 vector;
 			Vector3 vector2;
@@ -628,22 +628,22 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> for cylindrical billboarding that rotates around specified axis.
+		/// Creates a new <see cref="Matrix4x4"/> for cylindrical billboarding that rotates around specified axis.
 		/// </summary>
 		/// <param name="objectPosition">Object position the billboard will rotate around.</param>
 		/// <param name="cameraPosition">Camera position.</param>
 		/// <param name="rotateAxis">Axis of billboard for rotation.</param>
 		/// <param name="cameraForwardVector">Optional camera forward vector.</param>
 		/// <param name="objectForwardVector">Optional object forward vector.</param>
-		/// <returns>The <see cref="Matrix"/> for cylindrical billboarding.</returns>
-		public static Matrix CreateConstrainedBillboard(
+		/// <returns>The <see cref="Matrix4x4"/> for cylindrical billboarding.</returns>
+		public static Matrix4x4 CreateConstrainedBillboard(
 			Vector3 objectPosition,
 			Vector3 cameraPosition,
 			Vector3 rotateAxis,
 			Nullable<Vector3> cameraForwardVector,
 			Nullable<Vector3> objectForwardVector
 		) {
-			Matrix result;
+			Matrix4x4 result;
 			CreateConstrainedBillboard(
 				ref objectPosition,
 				ref cameraPosition,
@@ -656,21 +656,21 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> for cylindrical billboarding that rotates around specified axis.
+		/// Creates a new <see cref="Matrix4x4"/> for cylindrical billboarding that rotates around specified axis.
 		/// </summary>
 		/// <param name="objectPosition">Object position the billboard will rotate around.</param>
 		/// <param name="cameraPosition">Camera position.</param>
 		/// <param name="rotateAxis">Axis of billboard for rotation.</param>
 		/// <param name="cameraForwardVector">Optional camera forward vector.</param>
 		/// <param name="objectForwardVector">Optional object forward vector.</param>
-		/// <param name="result">The <see cref="Matrix"/> for cylindrical billboarding as an output parameter.</param>
+		/// <param name="result">The <see cref="Matrix4x4"/> for cylindrical billboarding as an output parameter.</param>
 		public static void CreateConstrainedBillboard(
 			ref Vector3 objectPosition,
 			ref Vector3 cameraPosition,
 			ref Vector3 rotateAxis,
 			Vector3? cameraForwardVector,
 			Vector3? objectForwardVector,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			float num;
 			Vector3 vector;
@@ -755,28 +755,28 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains the rotation moment around specified axis.
+		/// Creates a new <see cref="Matrix4x4"/> which contains the rotation moment around specified axis.
 		/// </summary>
 		/// <param name="axis">The axis of rotation.</param>
 		/// <param name="angle">The angle of rotation in radians.</param>
-		/// <returns>The rotation <see cref="Matrix"/>.</returns>
-		public static Matrix CreateFromAxisAngle(Vector3 axis, float angle)
+		/// <returns>The rotation <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateFromAxisAngle(Vector3 axis, float angle)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateFromAxisAngle(ref axis, angle, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains the rotation moment around specified axis.
+		/// Creates a new <see cref="Matrix4x4"/> which contains the rotation moment around specified axis.
 		/// </summary>
 		/// <param name="axis">The axis of rotation.</param>
 		/// <param name="angle">The angle of rotation in radians.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> as an output parameter.</param>
 		public static void CreateFromAxisAngle(
 			ref Vector3 axis,
 			float angle,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			float x = axis.X;
 			float y = axis.Y;
@@ -808,23 +808,23 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> from a <see cref="Quaternion"/>.
+		/// Creates a new rotation <see cref="Matrix4x4"/> from a <see cref="Quaternion"/>.
 		/// </summary>
 		/// <param name="quaternion"><see cref="Quaternion"/> of rotation moment.</param>
-		/// <returns>The rotation <see cref="Matrix"/>.</returns>
-		public static Matrix CreateFromQuaternion(Quaternion quaternion)
+		/// <returns>The rotation <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateFromQuaternion(Quaternion quaternion)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateFromQuaternion(ref quaternion, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> from a <see cref="Quaternion"/>.
+		/// Creates a new rotation <see cref="Matrix4x4"/> from a <see cref="Quaternion"/>.
 		/// </summary>
 		/// <param name="quaternion"><see cref="Quaternion"/> of rotation moment.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> as an output parameter.</param>
-		public static void CreateFromQuaternion(ref Quaternion quaternion, out Matrix result)
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> as an output parameter.</param>
+		public static void CreateFromQuaternion(ref Quaternion quaternion, out Matrix4x4 result)
 		{
 			float num9 = quaternion.X * quaternion.X;
 			float num8 = quaternion.Y * quaternion.Y;
@@ -854,35 +854,35 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> from the specified yaw, pitch and roll values.
+		/// Creates a new rotation <see cref="Matrix4x4"/> from the specified yaw, pitch and roll values.
 		/// </summary>
 		/// <param name="yaw">The yaw rotation value in radians.</param>
 		/// <param name="pitch">The pitch rotation value in radians.</param>
 		/// <param name="roll">The roll rotation value in radians.</param>
-		/// <returns>The rotation <see cref="Matrix"/>.</returns>
+		/// <returns>The rotation <see cref="Matrix4x4"/>.</returns>
 		/// <remarks>For more information about yaw, pitch and roll visit http://en.wikipedia.org/wiki/Euler_angles.
 		/// </remarks>
-		public static Matrix CreateFromYawPitchRoll(float yaw, float pitch, float roll)
+		public static Matrix4x4 CreateFromYawPitchRoll(float yaw, float pitch, float roll)
 		{
-			Matrix matrix;
+			Matrix4x4 matrix;
 			CreateFromYawPitchRoll(yaw, pitch, roll, out matrix);
 			return matrix;
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> from the specified yaw, pitch and roll values.
+		/// Creates a new rotation <see cref="Matrix4x4"/> from the specified yaw, pitch and roll values.
 		/// </summary>
 		/// <param name="yaw">The yaw rotation value in radians.</param>
 		/// <param name="pitch">The pitch rotation value in radians.</param>
 		/// <param name="roll">The roll rotation value in radians.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> as an output parameter.</param>
 		/// <remarks>For more information about yaw, pitch and roll visit http://en.wikipedia.org/wiki/Euler_angles.
 		/// </remarks>
 		public static void CreateFromYawPitchRoll(
 			float yaw,
 			float pitch,
 			float roll,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			Quaternion quaternion;
 			Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll, out quaternion);
@@ -890,34 +890,34 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new viewing <see cref="Matrix"/>.
+		/// Creates a new viewing <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="cameraPosition">Position of the camera.</param>
 		/// <param name="cameraTarget">Lookup vector of the camera.</param>
 		/// <param name="cameraUpVector">The direction of the upper edge of the camera.</param>
-		/// <returns>The viewing <see cref="Matrix"/>.</returns>
-		public static Matrix CreateLookAt(
+		/// <returns>The viewing <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateLookAt(
 			Vector3 cameraPosition,
 			Vector3 cameraTarget,
 			Vector3 cameraUpVector
 		) {
-			Matrix matrix;
+			Matrix4x4 matrix;
 			CreateLookAt(ref cameraPosition, ref cameraTarget, ref cameraUpVector, out matrix);
 			return matrix;
 		}
 
 		/// <summary>
-		/// Creates a new viewing <see cref="Matrix"/>.
+		/// Creates a new viewing <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="cameraPosition">Position of the camera.</param>
 		/// <param name="cameraTarget">Lookup vector of the camera.</param>
 		/// <param name="cameraUpVector">The direction of the upper edge of the camera.</param>
-		/// <param name="result">The viewing <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The viewing <see cref="Matrix4x4"/> as an output parameter.</param>
 		public static void CreateLookAt(
 			ref Vector3 cameraPosition,
 			ref Vector3 cameraTarget,
 			ref Vector3 cameraUpVector,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			Vector3 vectorA = Vector3.Normalize(cameraPosition - cameraTarget);
 			Vector3 vectorB = Vector3.Normalize(Vector3.Cross(cameraUpVector, vectorA));
@@ -941,38 +941,38 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for orthographic view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for orthographic view.
 		/// </summary>
 		/// <param name="width">Width of the viewing volume.</param>
 		/// <param name="height">Height of the viewing volume.</param>
 		/// <param name="zNearPlane">Depth of the near plane.</param>
 		/// <param name="zFarPlane">Depth of the far plane.</param>
-		/// <returns>The new projection <see cref="Matrix"/> for orthographic view.</returns>
-		public static Matrix CreateOrthographic(
+		/// <returns>The new projection <see cref="Matrix4x4"/> for orthographic view.</returns>
+		public static Matrix4x4 CreateOrthographic(
 			float width,
 			float height,
 			float zNearPlane,
 			float zFarPlane
 		) {
-			Matrix matrix;
+			Matrix4x4 matrix;
 			CreateOrthographic(width, height, zNearPlane, zFarPlane, out matrix);
 			return matrix;
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for orthographic view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for orthographic view.
 		/// </summary>
 		/// <param name="width">Width of the viewing volume.</param>
 		/// <param name="height">Height of the viewing volume.</param>
 		/// <param name="zNearPlane">Depth of the near plane.</param>
 		/// <param name="zFarPlane">Depth of the far plane.</param>
-		/// <param name="result">The new projection <see cref="Matrix"/> for orthographic view as an output parameter.</param>
+		/// <param name="result">The new projection <see cref="Matrix4x4"/> for orthographic view as an output parameter.</param>
 		public static void CreateOrthographic(
 			float width,
 			float height,
 			float zNearPlane,
 			float zFarPlane,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			result.M11 = 2f / width;
 			result.M12 = result.M13 = result.M14 = 0f;
@@ -986,7 +986,7 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for customized orthographic view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for customized orthographic view.
 		/// </summary>
 		/// <param name="left">Lower x-value at the near plane.</param>
 		/// <param name="right">Upper x-value at the near plane.</param>
@@ -994,8 +994,8 @@ namespace MoonWorks.Math
 		/// <param name="top">Upper y-value at the near plane.</param>
 		/// <param name="zNearPlane">Depth of the near plane.</param>
 		/// <param name="zFarPlane">Depth of the far plane.</param>
-		/// <returns>The new projection <see cref="Matrix"/> for customized orthographic view.</returns>
-		public static Matrix CreateOrthographicOffCenter(
+		/// <returns>The new projection <see cref="Matrix4x4"/> for customized orthographic view.</returns>
+		public static Matrix4x4 CreateOrthographicOffCenter(
 			float left,
 			float right,
 			float bottom,
@@ -1003,7 +1003,7 @@ namespace MoonWorks.Math
 			float zNearPlane,
 			float zFarPlane
 		) {
-			Matrix matrix;
+			Matrix4x4 matrix;
 			CreateOrthographicOffCenter(
 				left,
 				right,
@@ -1017,7 +1017,7 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for customized orthographic view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for customized orthographic view.
 		/// </summary>
 		/// <param name="left">Lower x-value at the near plane.</param>
 		/// <param name="right">Upper x-value at the near plane.</param>
@@ -1025,7 +1025,7 @@ namespace MoonWorks.Math
 		/// <param name="top">Upper y-value at the near plane.</param>
 		/// <param name="zNearPlane">Depth of the near plane.</param>
 		/// <param name="zFarPlane">Depth of the far plane.</param>
-		/// <param name="result">The new projection <see cref="Matrix"/> for customized orthographic view as an output parameter.</param>
+		/// <param name="result">The new projection <see cref="Matrix4x4"/> for customized orthographic view as an output parameter.</param>
 		public static void CreateOrthographicOffCenter(
 			float left,
 			float right,
@@ -1033,7 +1033,7 @@ namespace MoonWorks.Math
 			float top,
 			float zNearPlane,
 			float zFarPlane,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			result.M11 = (float) (2.0 / ((double) right - (double) left));
 			result.M12 = 0.0f;
@@ -1063,38 +1063,38 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for perspective view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for perspective view.
 		/// </summary>
 		/// <param name="width">Width of the viewing volume.</param>
 		/// <param name="height">Height of the viewing volume.</param>
 		/// <param name="nearPlaneDistance">Distance to the near plane.</param>
 		/// <param name="farPlaneDistance">Distance to the far plane.</param>
-		/// <returns>The new projection <see cref="Matrix"/> for perspective view.</returns>
-		public static Matrix CreatePerspective(
+		/// <returns>The new projection <see cref="Matrix4x4"/> for perspective view.</returns>
+		public static Matrix4x4 CreatePerspective(
 			float width,
 			float height,
 			float nearPlaneDistance,
 			float farPlaneDistance
 		) {
-			Matrix matrix;
+			Matrix4x4 matrix;
 			CreatePerspective(width, height, nearPlaneDistance, farPlaneDistance, out matrix);
 			return matrix;
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for perspective view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for perspective view.
 		/// </summary>
 		/// <param name="width">Width of the viewing volume.</param>
 		/// <param name="height">Height of the viewing volume.</param>
 		/// <param name="nearPlaneDistance">Distance to the near plane.</param>
 		/// <param name="farPlaneDistance">Distance to the far plane.</param>
-		/// <param name="result">The new projection <see cref="Matrix"/> for perspective view as an output parameter.</param>
+		/// <param name="result">The new projection <see cref="Matrix4x4"/> for perspective view as an output parameter.</param>
 		public static void CreatePerspective(
 			float width,
 			float height,
 			float nearPlaneDistance,
 			float farPlaneDistance,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			if (nearPlaneDistance <= 0f)
 			{
@@ -1123,20 +1123,20 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for perspective view with field of view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for perspective view with field of view.
 		/// </summary>
 		/// <param name="fieldOfView">Field of view in the y direction in radians.</param>
 		/// <param name="aspectRatio">Width divided by height of the viewing volume.</param>
 		/// <param name="nearPlaneDistance">Distance to the near plane.</param>
 		/// <param name="farPlaneDistance">Distance to the far plane.</param>
-		/// <returns>The new projection <see cref="Matrix"/> for perspective view with FOV.</returns>
-		public static Matrix CreatePerspectiveFieldOfView(
+		/// <returns>The new projection <see cref="Matrix4x4"/> for perspective view with FOV.</returns>
+		public static Matrix4x4 CreatePerspectiveFieldOfView(
 			float fieldOfView,
 			float aspectRatio,
 			float nearPlaneDistance,
 			float farPlaneDistance
 		) {
-			Matrix result;
+			Matrix4x4 result;
 			CreatePerspectiveFieldOfView(
 				fieldOfView,
 				aspectRatio,
@@ -1148,19 +1148,19 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for perspective view with field of view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for perspective view with field of view.
 		/// </summary>
 		/// <param name="fieldOfView">Field of view in the y direction in radians.</param>
 		/// <param name="aspectRatio">Width divided by height of the viewing volume.</param>
 		/// <param name="nearPlaneDistance">Distance of the near plane.</param>
 		/// <param name="farPlaneDistance">Distance of the far plane.</param>
-		/// <param name="result">The new projection <see cref="Matrix"/> for perspective view with FOV as an output parameter.</param>
+		/// <param name="result">The new projection <see cref="Matrix4x4"/> for perspective view with FOV as an output parameter.</param>
 		public static void CreatePerspectiveFieldOfView(
 			float fieldOfView,
 			float aspectRatio,
 			float nearPlaneDistance,
 			float farPlaneDistance,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			if ((fieldOfView <= 0f) || (fieldOfView >= 3.141593f))
 			{
@@ -1194,7 +1194,7 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for customized perspective view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for customized perspective view.
 		/// </summary>
 		/// <param name="left">Lower x-value at the near plane.</param>
 		/// <param name="right">Upper x-value at the near plane.</param>
@@ -1202,8 +1202,8 @@ namespace MoonWorks.Math
 		/// <param name="top">Upper y-value at the near plane.</param>
 		/// <param name="nearPlaneDistance">Distance to the near plane.</param>
 		/// <param name="farPlaneDistance">Distance to the far plane.</param>
-		/// <returns>The new <see cref="Matrix"/> for customized perspective view.</returns>
-		public static Matrix CreatePerspectiveOffCenter(
+		/// <returns>The new <see cref="Matrix4x4"/> for customized perspective view.</returns>
+		public static Matrix4x4 CreatePerspectiveOffCenter(
 			float left,
 			float right,
 			float bottom,
@@ -1211,7 +1211,7 @@ namespace MoonWorks.Math
 			float nearPlaneDistance,
 			float farPlaneDistance
 		) {
-			Matrix result;
+			Matrix4x4 result;
 			CreatePerspectiveOffCenter(
 				left,
 				right,
@@ -1225,7 +1225,7 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new projection <see cref="Matrix"/> for customized perspective view.
+		/// Creates a new projection <see cref="Matrix4x4"/> for customized perspective view.
 		/// </summary>
 		/// <param name="left">Lower x-value at the near plane.</param>
 		/// <param name="right">Upper x-value at the near plane.</param>
@@ -1233,7 +1233,7 @@ namespace MoonWorks.Math
 		/// <param name="top">Upper y-value at the near plane.</param>
 		/// <param name="nearPlaneDistance">Distance to the near plane.</param>
 		/// <param name="farPlaneDistance">Distance to the far plane.</param>
-		/// <param name="result">The new <see cref="Matrix"/> for customized perspective view as an output parameter.</param>
+		/// <param name="result">The new <see cref="Matrix4x4"/> for customized perspective view as an output parameter.</param>
 		public static void CreatePerspectiveOffCenter(
 			float left,
 			float right,
@@ -1241,7 +1241,7 @@ namespace MoonWorks.Math
 			float top,
 			float nearPlaneDistance,
 			float farPlaneDistance,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			if (nearPlaneDistance <= 0f)
 			{
@@ -1271,25 +1271,25 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around X axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around X axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <returns>The rotation <see cref="Matrix"/> around X axis.</returns>
-		public static Matrix CreateRotationX(float radians)
+		/// <returns>The rotation <see cref="Matrix4x4"/> around X axis.</returns>
+		public static Matrix4x4 CreateRotationX(float radians)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateRotationX(radians, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around X axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around X axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> around X axis as an output parameter.</param>
-		public static void CreateRotationX(float radians, out Matrix result)
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> around X axis as an output parameter.</param>
+		public static void CreateRotationX(float radians, out Matrix4x4 result)
 		{
-			result = Matrix.Identity;
+			result = Matrix4x4.Identity;
 
 			float val1 = (float) System.Math.Cos(radians);
 			float val2 = (float) System.Math.Sin(radians);
@@ -1301,25 +1301,25 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around Y axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around Y axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <returns>The rotation <see cref="Matrix"/> around Y axis.</returns>
-		public static Matrix CreateRotationY(float radians)
+		/// <returns>The rotation <see cref="Matrix4x4"/> around Y axis.</returns>
+		public static Matrix4x4 CreateRotationY(float radians)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateRotationY(radians, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around Y axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around Y axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> around Y axis as an output parameter.</param>
-		public static void CreateRotationY(float radians, out Matrix result)
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> around Y axis as an output parameter.</param>
+		public static void CreateRotationY(float radians, out Matrix4x4 result)
 		{
-			result = Matrix.Identity;
+			result = Matrix4x4.Identity;
 
 			float val1 = (float) System.Math.Cos(radians);
 			float val2 = (float) System.Math.Sin(radians);
@@ -1331,25 +1331,25 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around Z axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around Z axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <returns>The rotation <see cref="Matrix"/> around Z axis.</returns>
-		public static Matrix CreateRotationZ(float radians)
+		/// <returns>The rotation <see cref="Matrix4x4"/> around Z axis.</returns>
+		public static Matrix4x4 CreateRotationZ(float radians)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateRotationZ(radians, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new rotation <see cref="Matrix"/> around Z axis.
+		/// Creates a new rotation <see cref="Matrix4x4"/> around Z axis.
 		/// </summary>
 		/// <param name="radians">Angle in radians.</param>
-		/// <param name="result">The rotation <see cref="Matrix"/> around Z axis as an output parameter.</param>
-		public static void CreateRotationZ(float radians, out Matrix result)
+		/// <param name="result">The rotation <see cref="Matrix4x4"/> around Z axis as an output parameter.</param>
+		public static void CreateRotationZ(float radians, out Matrix4x4 result)
 		{
-			result = Matrix.Identity;
+			result = Matrix4x4.Identity;
 
 			float val1 = (float) System.Math.Cos(radians);
 			float val2 = (float) System.Math.Sin(radians);
@@ -1361,53 +1361,53 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="scale">Scale value for all three axises.</param>
-		/// <returns>The scaling <see cref="Matrix"/>.</returns>
-		public static Matrix CreateScale(float scale)
+		/// <returns>The scaling <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateScale(float scale)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateScale(scale, scale, scale, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="scale">Scale value for all three axises.</param>
-		/// <param name="result">The scaling <see cref="Matrix"/> as an output parameter.</param>
-		public static void CreateScale(float scale, out Matrix result)
+		/// <param name="result">The scaling <see cref="Matrix4x4"/> as an output parameter.</param>
+		public static void CreateScale(float scale, out Matrix4x4 result)
 		{
 			CreateScale(scale, scale, scale, out result);
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="xScale">Scale value for X axis.</param>
 		/// <param name="yScale">Scale value for Y axis.</param>
 		/// <param name="zScale">Scale value for Z axis.</param>
-		/// <returns>The scaling <see cref="Matrix"/>.</returns>
-		public static Matrix CreateScale(float xScale, float yScale, float zScale)
+		/// <returns>The scaling <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateScale(float xScale, float yScale, float zScale)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateScale(xScale, yScale, zScale, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="xScale">Scale value for X axis.</param>
 		/// <param name="yScale">Scale value for Y axis.</param>
 		/// <param name="zScale">Scale value for Z axis.</param>
-		/// <param name="result">The scaling <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The scaling <see cref="Matrix4x4"/> as an output parameter.</param>
 		public static void CreateScale(
 			float xScale,
 			float yScale,
 			float zScale,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			result.M11 = xScale;
 			result.M12 = 0;
@@ -1428,23 +1428,23 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="scales"><see cref="Vector3"/> representing x,y and z scale values.</param>
-		/// <returns>The scaling <see cref="Matrix"/>.</returns>
-		public static Matrix CreateScale(Vector3 scales)
+		/// <returns>The scaling <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateScale(Vector3 scales)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateScale(ref scales, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new scaling <see cref="Matrix"/>.
+		/// Creates a new scaling <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="scales"><see cref="Vector3"/> representing x,y and z scale values.</param>
-		/// <param name="result">The scaling <see cref="Matrix"/> as an output parameter.</param>
-		public static void CreateScale(ref Vector3 scales, out Matrix result)
+		/// <param name="result">The scaling <see cref="Matrix4x4"/> as an output parameter.</param>
+		public static void CreateScale(ref Vector3 scales, out Matrix4x4 result)
 		{
 			result.M11 = scales.X;
 			result.M12 = 0;
@@ -1465,28 +1465,28 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that flattens geometry into a specified <see cref="Plane"/> as if casting a shadow from a specified light source.
+		/// Creates a new <see cref="Matrix4x4"/> that flattens geometry into a specified <see cref="Plane"/> as if casting a shadow from a specified light source.
 		/// </summary>
 		/// <param name="lightDirection">A vector specifying the direction from which the light that will cast the shadow is coming.</param>
 		/// <param name="plane">The plane onto which the new matrix should flatten geometry so as to cast a shadow.</param>
-		/// <returns>A <see cref="Matrix"/> that can be used to flatten geometry onto the specified plane from the specified direction. </returns>
-		public static Matrix CreateShadow(Vector3 lightDirection, Plane plane)
+		/// <returns>A <see cref="Matrix4x4"/> that can be used to flatten geometry onto the specified plane from the specified direction. </returns>
+		public static Matrix4x4 CreateShadow(Vector3 lightDirection, Plane plane)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateShadow(ref lightDirection, ref plane, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that flattens geometry into a specified <see cref="Plane"/> as if casting a shadow from a specified light source.
+		/// Creates a new <see cref="Matrix4x4"/> that flattens geometry into a specified <see cref="Plane"/> as if casting a shadow from a specified light source.
 		/// </summary>
 		/// <param name="lightDirection">A vector specifying the direction from which the light that will cast the shadow is coming.</param>
 		/// <param name="plane">The plane onto which the new matrix should flatten geometry so as to cast a shadow.</param>
-		/// <param name="result">A <see cref="Matrix"/> that can be used to flatten geometry onto the specified plane from the specified direction as an output parameter.</param>
+		/// <param name="result">A <see cref="Matrix4x4"/> that can be used to flatten geometry onto the specified plane from the specified direction as an output parameter.</param>
 		public static void CreateShadow(
 			ref Vector3 lightDirection,
 			ref Plane plane,
-			out Matrix result)
+			out Matrix4x4 result)
 		{
 			float dot = (
 				(plane.Normal.X * lightDirection.X) +
@@ -1517,28 +1517,28 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new translation <see cref="Matrix"/>.
+		/// Creates a new translation <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="xPosition">X coordinate of translation.</param>
 		/// <param name="yPosition">Y coordinate of translation.</param>
 		/// <param name="zPosition">Z coordinate of translation.</param>
-		/// <returns>The translation <see cref="Matrix"/>.</returns>
-		public static Matrix CreateTranslation(
+		/// <returns>The translation <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateTranslation(
 			float xPosition,
 			float yPosition,
 			float zPosition
 		) {
-			Matrix result;
+			Matrix4x4 result;
 			CreateTranslation(xPosition, yPosition, zPosition, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new translation <see cref="Matrix"/>.
+		/// Creates a new translation <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">X,Y and Z coordinates of translation.</param>
-		/// <param name="result">The translation <see cref="Matrix"/> as an output parameter.</param>
-		public static void CreateTranslation(ref Vector3 position, out Matrix result)
+		/// <param name="result">The translation <see cref="Matrix4x4"/> as an output parameter.</param>
+		public static void CreateTranslation(ref Vector3 position, out Matrix4x4 result)
 		{
 			result.M11 = 1;
 			result.M12 = 0;
@@ -1559,29 +1559,29 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new translation <see cref="Matrix"/>.
+		/// Creates a new translation <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">X,Y and Z coordinates of translation.</param>
-		/// <returns>The translation <see cref="Matrix"/>.</returns>
-		public static Matrix CreateTranslation(Vector3 position)
+		/// <returns>The translation <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateTranslation(Vector3 position)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateTranslation(ref position, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new translation <see cref="Matrix"/>.
+		/// Creates a new translation <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="xPosition">X coordinate of translation.</param>
 		/// <param name="yPosition">Y coordinate of translation.</param>
 		/// <param name="zPosition">Z coordinate of translation.</param>
-		/// <param name="result">The translation <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The translation <see cref="Matrix4x4"/> as an output parameter.</param>
 		public static void CreateTranslation(
 			float xPosition,
 			float yPosition,
 			float zPosition,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			result.M11 = 1;
 			result.M12 = 0;
@@ -1602,23 +1602,23 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new reflection <see cref="Matrix"/>.
+		/// Creates a new reflection <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">The plane that used for reflection calculation.</param>
-		/// <returns>The reflection <see cref="Matrix"/>.</returns>
-		public static Matrix CreateReflection(Plane value)
+		/// <returns>The reflection <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateReflection(Plane value)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			CreateReflection(ref value, out result);
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a new reflection <see cref="Matrix"/>.
+		/// Creates a new reflection <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="value">The plane that used for reflection calculation.</param>
-		/// <param name="result">The reflection <see cref="Matrix"/> as an output parameter.</param>
-		public static void CreateReflection(ref Plane value, out Matrix result)
+		/// <param name="result">The reflection <see cref="Matrix4x4"/> as an output parameter.</param>
+		public static void CreateReflection(ref Plane value, out Matrix4x4 result)
 		{
 			Plane plane;
 			Plane.Normalize(ref value, out plane);
@@ -1647,31 +1647,31 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new world <see cref="Matrix"/>.
+		/// Creates a new world <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">The position vector.</param>
 		/// <param name="forward">The forward direction vector.</param>
 		/// <param name="up">The upward direction vector. Usually <see cref="Vector3.Up"/>.</param>
-		/// <returns>The world <see cref="Matrix"/>.</returns>
-		public static Matrix CreateWorld(Vector3 position, Vector3 forward, Vector3 up)
+		/// <returns>The world <see cref="Matrix4x4"/>.</returns>
+		public static Matrix4x4 CreateWorld(Vector3 position, Vector3 forward, Vector3 up)
 		{
-			Matrix ret;
+			Matrix4x4 ret;
 			CreateWorld(ref position, ref forward, ref up, out ret);
 			return ret;
 		}
 
 		/// <summary>
-		/// Creates a new world <see cref="Matrix"/>.
+		/// Creates a new world <see cref="Matrix4x4"/>.
 		/// </summary>
 		/// <param name="position">The position vector.</param>
 		/// <param name="forward">The forward direction vector.</param>
 		/// <param name="up">The upward direction vector. Usually <see cref="Vector3.Up"/>.</param>
-		/// <param name="result">The world <see cref="Matrix"/> as an output parameter.</param>
+		/// <param name="result">The world <see cref="Matrix4x4"/> as an output parameter.</param>
 		public static void CreateWorld(
 			ref Vector3 position,
 			ref Vector3 forward,
 			ref Vector3 up,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			Vector3 x, y, z;
 			Vector3.Normalize(ref forward, out z);
@@ -1680,7 +1680,7 @@ namespace MoonWorks.Math
 			x.Normalize();
 			y.Normalize();
 
-			result = new Matrix();
+			result = new Matrix4x4();
 			result.Right = x;
 			result.Up = y;
 			result.Forward = z;
@@ -1689,12 +1689,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by the elements of another matrix.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by the elements of another matrix.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">Divisor <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">Divisor <see cref="Matrix4x4"/>.</param>
 		/// <returns>The result of dividing the matrix.</returns>
-		public static Matrix Divide(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 Divide(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			matrix1.M11 = matrix1.M11 / matrix2.M11;
 			matrix1.M12 = matrix1.M12 / matrix2.M12;
@@ -1716,12 +1716,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by the elements of another matrix.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by the elements of another matrix.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">Divisor <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">Divisor <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">The result of dividing the matrix as an output parameter.</param>
-		public static void Divide(ref Matrix matrix1, ref Matrix matrix2, out Matrix result)
+		public static void Divide(ref Matrix4x4 matrix1, ref Matrix4x4 matrix2, out Matrix4x4 result)
 		{
 			result.M11 = matrix1.M11 / matrix2.M11;
 			result.M12 = matrix1.M12 / matrix2.M12;
@@ -1742,12 +1742,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by a scalar.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by a scalar.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="divider">Divisor scalar.</param>
 		/// <returns>The result of dividing a matrix by a scalar.</returns>
-		public static Matrix Divide(Matrix matrix1, float divider)
+		public static Matrix4x4 Divide(Matrix4x4 matrix1, float divider)
 		{
 			float num = 1f / divider;
 			matrix1.M11 = matrix1.M11 * num;
@@ -1770,12 +1770,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by a scalar.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by a scalar.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="divider">Divisor scalar.</param>
 		/// <param name="result">The result of dividing a matrix by a scalar as an output parameter.</param>
-		public static void Divide(ref Matrix matrix1, float divider, out Matrix result)
+		public static void Divide(ref Matrix4x4 matrix1, float divider, out Matrix4x4 result)
 		{
 			float num = 1f / divider;
 			result.M11 = matrix1.M11 * num;
@@ -1797,22 +1797,22 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains inversion of the specified matrix.
+		/// Creates a new <see cref="Matrix4x4"/> which contains inversion of the specified matrix.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/>.</param>
 		/// <returns>The inverted matrix.</returns>
-		public static Matrix Invert(Matrix matrix)
+		public static Matrix4x4 Invert(Matrix4x4 matrix)
 		{
 			Invert(ref matrix, out matrix);
 			return matrix;
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> which contains inversion of the specified matrix.
+		/// Creates a new <see cref="Matrix4x4"/> which contains inversion of the specified matrix.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">The inverted matrix as output parameter.</param>
-		public static void Invert(ref Matrix matrix, out Matrix result)
+		public static void Invert(ref Matrix4x4 matrix, out Matrix4x4 result)
 		{
 			/*
 			 * Use Laplace expansion theorem to calculate the inverse of a 4x4 matrix.
@@ -2030,13 +2030,13 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains linear interpolation of the values in specified matrixes.
+		/// Creates a new <see cref="Matrix4x4"/> that contains linear interpolation of the values in specified matrixes.
 		/// </summary>
-		/// <param name="matrix1">The first <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">The first <see cref="Matrix4x4"/>.</param>
 		/// <param name="matrix2">The second <see cref="Vector2"/>.</param>
 		/// <param name="amount">Weighting value(between 0.0 and 1.0).</param>
 		/// <returns>>The result of linear interpolation of the specified matrixes.</returns>
-		public static Matrix Lerp(Matrix matrix1, Matrix matrix2, float amount)
+		public static Matrix4x4 Lerp(Matrix4x4 matrix1, Matrix4x4 matrix2, float amount)
 		{
 			matrix1.M11 = matrix1.M11 + ((matrix2.M11 - matrix1.M11) * amount);
 			matrix1.M12 = matrix1.M12 + ((matrix2.M12 - matrix1.M12) * amount);
@@ -2058,17 +2058,17 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains linear interpolation of the values in specified matrixes.
+		/// Creates a new <see cref="Matrix4x4"/> that contains linear interpolation of the values in specified matrixes.
 		/// </summary>
-		/// <param name="matrix1">The first <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">The first <see cref="Matrix4x4"/>.</param>
 		/// <param name="matrix2">The second <see cref="Vector2"/>.</param>
 		/// <param name="amount">Weighting value(between 0.0 and 1.0).</param>
 		/// <param name="result">The result of linear interpolation of the specified matrixes as an output parameter.</param>
 		public static void Lerp(
-			ref Matrix matrix1,
-			ref Matrix matrix2,
+			ref Matrix4x4 matrix1,
+			ref Matrix4x4 matrix2,
 			float amount,
-			out Matrix result
+			out Matrix4x4 result
 		) {
 			result.M11 = matrix1.M11 + ((matrix2.M11 - matrix1.M11) * amount);
 			result.M12 = matrix1.M12 + ((matrix2.M12 - matrix1.M12) * amount);
@@ -2089,14 +2089,14 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains a multiplication of two matrix.
+		/// Creates a new <see cref="Matrix4x4"/> that contains a multiplication of two matrix.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/>.</param>
 		/// <returns>Result of the matrix multiplication.</returns>
-		public static Matrix Multiply(
-			Matrix matrix1,
-			Matrix matrix2
+		public static Matrix4x4 Multiply(
+			Matrix4x4 matrix1,
+			Matrix4x4 matrix2
 		) {
 			float m11 = (
 				(matrix1.M11 * matrix2.M11) +
@@ -2214,12 +2214,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains a multiplication of two matrix.
+		/// Creates a new <see cref="Matrix4x4"/> that contains a multiplication of two matrix.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Result of the matrix multiplication as an output parameter.</param>
-		public static void Multiply(ref Matrix matrix1, ref Matrix matrix2, out Matrix result)
+		public static void Multiply(ref Matrix4x4 matrix1, ref Matrix4x4 matrix2, out Matrix4x4 result)
 		{
 			float m11 = (
 				(matrix1.M11 * matrix2.M11) +
@@ -2336,12 +2336,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains a multiplication of <see cref="Matrix"/> and a scalar.
+		/// Creates a new <see cref="Matrix4x4"/> that contains a multiplication of <see cref="Matrix4x4"/> and a scalar.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="scaleFactor">Scalar value.</param>
 		/// <returns>Result of the matrix multiplication with a scalar.</returns>
-		public static Matrix Multiply(Matrix matrix1, float scaleFactor)
+		public static Matrix4x4 Multiply(Matrix4x4 matrix1, float scaleFactor)
 		{
 			matrix1.M11 *= scaleFactor;
 			matrix1.M12 *= scaleFactor;
@@ -2363,12 +2363,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains a multiplication of <see cref="Matrix"/> and a scalar.
+		/// Creates a new <see cref="Matrix4x4"/> that contains a multiplication of <see cref="Matrix4x4"/> and a scalar.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="scaleFactor">Scalar value.</param>
 		/// <param name="result">Result of the matrix multiplication with a scalar as an output parameter.</param>
-		public static void Multiply(ref Matrix matrix1, float scaleFactor, out Matrix result)
+		public static void Multiply(ref Matrix4x4 matrix1, float scaleFactor, out Matrix4x4 result)
 		{
 			result.M11 = matrix1.M11 * scaleFactor;
 			result.M12 = matrix1.M12 * scaleFactor;
@@ -2392,9 +2392,9 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Returns a matrix with the all values negated.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/>.</param>
 		/// <returns>Result of the matrix negation.</returns>
-		public static Matrix Negate(Matrix matrix)
+		public static Matrix4x4 Negate(Matrix4x4 matrix)
 		{
 			matrix.M11 = -matrix.M11;
 			matrix.M12 = -matrix.M12;
@@ -2418,9 +2418,9 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Returns a matrix with the all values negated.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/>.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">Result of the matrix negation as an output parameter.</param>
-		public static void Negate(ref Matrix matrix, out Matrix result)
+		public static void Negate(ref Matrix4x4 matrix, out Matrix4x4 result)
 		{
 			result.M11 = -matrix.M11;
 			result.M12 = -matrix.M12;
@@ -2441,12 +2441,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains subtraction of one matrix from another.
+		/// Creates a new <see cref="Matrix4x4"/> that contains subtraction of one matrix from another.
 		/// </summary>
-		/// <param name="matrix1">The first <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">The second <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">The first <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">The second <see cref="Matrix4x4"/>.</param>
 		/// <returns>The result of the matrix subtraction.</returns>
-		public static Matrix Subtract(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 Subtract(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			matrix1.M11 -= matrix2.M11;
 			matrix1.M12 -= matrix2.M12;
@@ -2468,12 +2468,12 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Matrix"/> that contains subtraction of one matrix from another.
+		/// Creates a new <see cref="Matrix4x4"/> that contains subtraction of one matrix from another.
 		/// </summary>
-		/// <param name="matrix1">The first <see cref="Matrix"/>.</param>
-		/// <param name="matrix2">The second <see cref="Matrix"/>.</param>
+		/// <param name="matrix1">The first <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix2">The second <see cref="Matrix4x4"/>.</param>
 		/// <param name="result">The result of the matrix subtraction as an output parameter.</param>
-		public static void Subtract(ref Matrix matrix1, ref Matrix matrix2, out Matrix result)
+		public static void Subtract(ref Matrix4x4 matrix1, ref Matrix4x4 matrix2, out Matrix4x4 result)
 		{
 			result.M11 = matrix1.M11 - matrix2.M11;
 			result.M12 = matrix1.M12 - matrix2.M12;
@@ -2497,10 +2497,10 @@ namespace MoonWorks.Math
 		/// Swap the matrix rows and columns.
 		/// </summary>
 		/// <param name="matrix">The matrix for transposing operation.</param>
-		/// <returns>The new <see cref="Matrix"/> which contains the transposing result.</returns>
-		public static Matrix Transpose(Matrix matrix)
+		/// <returns>The new <see cref="Matrix4x4"/> which contains the transposing result.</returns>
+		public static Matrix4x4 Transpose(Matrix4x4 matrix)
 		{
-			Matrix ret;
+			Matrix4x4 ret;
 			Transpose(ref matrix, out ret);
 			return ret;
 		}
@@ -2509,10 +2509,10 @@ namespace MoonWorks.Math
 		/// Swap the matrix rows and columns.
 		/// </summary>
 		/// <param name="matrix">The matrix for transposing operation.</param>
-		/// <param name="result">The new <see cref="Matrix"/> which contains the transposing result as an output parameter.</param>
-		public static void Transpose(ref Matrix matrix, out Matrix result)
+		/// <param name="result">The new <see cref="Matrix4x4"/> which contains the transposing result as an output parameter.</param>
+		public static void Transpose(ref Matrix4x4 matrix, out Matrix4x4 result)
 		{
-			Matrix ret;
+			Matrix4x4 ret;
 
 			ret.M11 = matrix.M11;
 			ret.M12 = matrix.M21;
@@ -2537,19 +2537,19 @@ namespace MoonWorks.Math
 			result = ret;
 		}
 
-		public static Matrix Transform(Matrix value, Quaternion rotation)
+		public static Matrix4x4 Transform(Matrix4x4 value, Quaternion rotation)
 		{
-			Matrix result;
+			Matrix4x4 result;
 			Transform(ref value, ref rotation, out result);
 			return result;
 		}
 
 		public static void Transform(
-			ref Matrix value,
+			ref Matrix4x4 value,
 			ref Quaternion rotation,
-			out Matrix result
+			out Matrix4x4 result
 		) {
-			Matrix rotMatrix = CreateFromQuaternion(rotation);
+			Matrix4x4 rotMatrix = CreateFromQuaternion(rotation);
 			Multiply(ref value, ref rotMatrix, out result);
 		}
 
@@ -2560,54 +2560,54 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Adds two matrixes.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the add sign.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/> on the right of the add sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the add sign.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/> on the right of the add sign.</param>
 		/// <returns>Sum of the matrixes.</returns>
-		public static Matrix operator +(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 operator +(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
-			return Matrix.Add(matrix1, matrix2);
+			return Matrix4x4.Add(matrix1, matrix2);
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by the elements of another <see cref="Matrix"/>.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by the elements of another <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the div sign.</param>
-		/// <param name="matrix2">Divisor <see cref="Matrix"/> on the right of the div sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the div sign.</param>
+		/// <param name="matrix2">Divisor <see cref="Matrix4x4"/> on the right of the div sign.</param>
 		/// <returns>The result of dividing the matrixes.</returns>
-		public static Matrix operator /(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 operator /(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
-			return Matrix.Divide(matrix1, matrix2);
+			return Matrix4x4.Divide(matrix1, matrix2);
 		}
 
 		/// <summary>
-		/// Divides the elements of a <see cref="Matrix"/> by a scalar.
+		/// Divides the elements of a <see cref="Matrix4x4"/> by a scalar.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/> on the left of the div sign.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/> on the left of the div sign.</param>
 		/// <param name="divider">Divisor scalar on the right of the div sign.</param>
 		/// <returns>The result of dividing a matrix by a scalar.</returns>
-		public static Matrix operator /(Matrix matrix, float divider)
+		public static Matrix4x4 operator /(Matrix4x4 matrix, float divider)
 		{
-			return Matrix.Divide(matrix, divider);
+			return Matrix4x4.Divide(matrix, divider);
 		}
 
 		/// <summary>
-		/// Compares whether two <see cref="Matrix"/> instances are equal without any tolerance.
+		/// Compares whether two <see cref="Matrix4x4"/> instances are equal without any tolerance.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the equal sign.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/> on the right of the equal sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the equal sign.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/> on the right of the equal sign.</param>
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
-		public static bool operator ==(Matrix matrix1, Matrix matrix2)
+		public static bool operator ==(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			return matrix1.Equals(matrix2);
 		}
 
 		/// <summary>
-		/// Compares whether two <see cref="Matrix"/> instances are not equal without any tolerance.
+		/// Compares whether two <see cref="Matrix4x4"/> instances are not equal without any tolerance.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the not equal sign.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/> on the right of the not equal sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the not equal sign.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/> on the right of the not equal sign.</param>
 		/// <returns><c>true</c> if the instances are not equal; <c>false</c> otherwise.</returns>
-		public static bool operator !=(Matrix matrix1, Matrix matrix2)
+		public static bool operator !=(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			return !matrix1.Equals(matrix2);
 		}
@@ -2615,13 +2615,13 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Multiplies two matrixes.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the mul sign.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/> on the right of the mul sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the mul sign.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/> on the right of the mul sign.</param>
 		/// <returns>Result of the matrix multiplication.</returns>
 		/// <remarks>
 		/// Using matrix multiplication algorithm - see http://en.wikipedia.org/wiki/Matrix_multiplication.
 		/// </remarks>
-		public static Matrix operator *(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 operator *(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			return Multiply(matrix1, matrix2);
 		}
@@ -2629,31 +2629,31 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Multiplies the elements of matrix by a scalar.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/> on the left of the mul sign.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/> on the left of the mul sign.</param>
 		/// <param name="scaleFactor">Scalar value on the right of the mul sign.</param>
 		/// <returns>Result of the matrix multiplication with a scalar.</returns>
-		public static Matrix operator *(Matrix matrix, float scaleFactor)
+		public static Matrix4x4 operator *(Matrix4x4 matrix, float scaleFactor)
 		{
 			return Multiply(matrix, scaleFactor);
 		}
 
 		/// <summary>
-		/// Subtracts the values of one <see cref="Matrix"/> from another <see cref="Matrix"/>.
+		/// Subtracts the values of one <see cref="Matrix4x4"/> from another <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <param name="matrix1">Source <see cref="Matrix"/> on the left of the sub sign.</param>
-		/// <param name="matrix2">Source <see cref="Matrix"/> on the right of the sub sign.</param>
+		/// <param name="matrix1">Source <see cref="Matrix4x4"/> on the left of the sub sign.</param>
+		/// <param name="matrix2">Source <see cref="Matrix4x4"/> on the right of the sub sign.</param>
 		/// <returns>Result of the matrix subtraction.</returns>
-		public static Matrix operator -(Matrix matrix1, Matrix matrix2)
+		public static Matrix4x4 operator -(Matrix4x4 matrix1, Matrix4x4 matrix2)
 		{
 			return Subtract(matrix1, matrix2);
 		}
 
 		/// <summary>
-		/// Inverts values in the specified <see cref="Matrix"/>.
+		/// Inverts values in the specified <see cref="Matrix4x4"/>.
 		/// </summary>
-		/// <param name="matrix">Source <see cref="Matrix"/> on the right of the sub sign.</param>
+		/// <param name="matrix">Source <see cref="Matrix4x4"/> on the right of the sub sign.</param>
 		/// <returns>Result of the inversion.</returns>
-		public static Matrix operator -(Matrix matrix)
+		public static Matrix4x4 operator -(Matrix4x4 matrix)
 		{
 			return Negate(matrix);
 		}
