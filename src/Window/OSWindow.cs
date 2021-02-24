@@ -48,5 +48,16 @@ namespace MoonWorks.Window
 
             SDL.SDL_SetWindowFullscreen(Handle, (uint) windowFlag);
         }
+
+        /// <summary>
+        /// Resizes the window.
+        /// Note that you are responsible for recreating any graphics resources that need to change as a result of the size change.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public void SetWindowSize(uint width, uint height)
+        {
+            SDL.SDL_SetWindowSize(Handle, (int)width, (int)height);
+        }
     }
 }
