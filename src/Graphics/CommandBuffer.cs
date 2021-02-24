@@ -1,10 +1,13 @@
 using System;
-using System.Runtime.InteropServices;
 using MoonWorks.Math;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// Command buffers are used to apply render state and issue draw calls.
+    /// NOTE: it is not recommended to hold references to command buffers long term.
+    /// </summary>
     public class CommandBuffer
     {
         public GraphicsDevice Device { get; }
@@ -17,6 +20,15 @@ namespace MoonWorks.Graphics
             Handle = IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Begins a render pass.
+        /// All render state, resource binding, and draw commands must be made within a render pass.
+        /// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+        /// </summary>
+        /// <param name="renderPass">The render pass object to begin.</param>
+        /// <param name="framebuffer">The framebuffer used by the render pass.</param>
+        /// <param name="renderArea">The screen area of the render pass.</param>
+        /// <param name="depthStencilClearValue">Clear values for the depth/stencil buffer. This is ignored if the render pass does not clear.</param>
         public unsafe void BeginRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
@@ -35,6 +47,16 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Begins a render pass.
+        /// All render state, resource binding, and draw commands must be made within a render pass.
+        /// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+        /// </summary>
+        /// <param name="renderPass">The render pass object to begin.</param>
+        /// <param name="framebuffer">The framebuffer used by the render pass.</param>
+        /// <param name="renderArea">The screen area of the render pass.</param>
+        /// <param name="depthStencilClearValue">Clear values for the depth/stencil buffer. This is ignored if the render pass does not clear.</param>
+        /// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
         public unsafe void BeginRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
@@ -65,9 +87,17 @@ namespace MoonWorks.Graphics
                 (uint)clearColors.Length,
                 depthStencilClearValue.ToRefresh()
             );
-
         }
 
+        /// <summary>
+        /// Begins a render pass.
+        /// All render state, resource binding, and draw commands must be made within a render pass.
+        /// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+        /// </summary>
+        /// <param name="renderPass">The render pass object to begin.</param>
+        /// <param name="framebuffer">The framebuffer used by the render pass.</param>
+        /// <param name="renderArea">The screen area of the render pass.</param>
+        /// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
         public unsafe void BeginRenderPass(
             RenderPass renderPass,
             Framebuffer framebuffer,
@@ -99,6 +129,35 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Begins a render pass.
+        /// All render state, resource binding, and draw commands must be made within a render pass.
+        /// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+        /// </summary>
+        /// <param name="renderPass">The render pass object to begin.</param>
+        /// <param name="framebuffer">The framebuffer used by the render pass.</param>
+        /// <param name="renderArea">The screen area of the render pass.</param>
+        public unsafe void BeginRenderPass(
+            RenderPass renderPass,
+            Framebuffer framebuffer,
+            in Rect renderArea
+        ) {
+            Refresh.Refresh_BeginRenderPass(
+                Device.Handle,
+                Handle,
+                renderPass.Handle,
+                framebuffer.Handle,
+                renderArea.ToRefresh(),
+                IntPtr.Zero,
+                0,
+                IntPtr.Zero
+            );
+        }
+
+        /// <summary>
+        /// Binds a compute pipeline so that compute work may be dispatched.
+        /// </summary>
+        /// <param name="computePipeline">The compute pipeline to bind.</param>
         public void BindComputePipeline(
             ComputePipeline computePipeline
         ) {
@@ -109,6 +168,10 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds buffers to be used in the compute shader.
+        /// </summary>
+        /// <param name="buffers">A set of buffers to bind.</param>
         public unsafe void BindComputeBuffers(
             params Buffer[] buffers
         ) {
@@ -126,6 +189,10 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds textures to be used in the compute shader.
+        /// </summary>
+        /// <param name="textures">A set of textures to bind.</param>
         public unsafe void BindComputeTextures(
             params Texture[] textures
         ) {
@@ -143,6 +210,10 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds a graphics pipeline so that rendering work may be performed.
+        /// </summary>
+        /// <param name="graphicsPipeline">The graphics pipeline to bind.</param>
         public void BindGraphicsPipeline(
             GraphicsPipeline graphicsPipeline
         ) {
@@ -153,6 +224,11 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds vertex buffers to be used by subsequent draw calls.
+        /// </summary>
+        /// <param name="firstBinding">The index of the first buffer to bind.</param>
+        /// <param name="bufferBindings">Buffers to bind and their associated offsets.</param>
         public unsafe void BindVertexBuffers(
             uint firstBinding,
             params BufferBinding[] bufferBindings
@@ -176,6 +252,10 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds vertex buffers to be used by subsequent draw calls.
+        /// </summary>
+        /// <param name="buffers">The buffers to bind.</param>
         public unsafe void BindVertexBuffers(
             params Buffer[] buffers
         ) {
@@ -198,6 +278,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds an index buffer to be used by subsequent draw calls.
+        /// </summary>
+        /// <param name="indexBuffer">The index buffer to bind.</param>
+        /// <param name="indexElementSize">The size in bytes of the index buffer elements.</param>
+        /// <param name="offset">The offset index for the buffer.</param>
         public void BindIndexBuffer(
             Buffer indexBuffer,
             IndexElementSize indexElementSize,
@@ -212,6 +298,11 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds samplers to be used by the vertex shader.
+        /// </summary>
+        /// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
+        /// <param name="length">The number of texture-sampler pairs from the array to bind.</param>
         public unsafe void BindVertexSamplers(
             TextureSamplerBinding[] textureSamplerBindings,
             int length
@@ -233,12 +324,21 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds samplers to be used by the vertex shader.
+        /// </summary>
+        /// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
         public unsafe void BindVertexSamplers(
             params TextureSamplerBinding[] textureSamplerBindings
         ) {
             BindVertexSamplers(textureSamplerBindings, textureSamplerBindings.Length);
         }
 
+        /// <summary>
+        /// Binds samplers to be used by the fragment shader.
+        /// </summary>
+        /// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
+        /// <param name="length">The number of texture-sampler pairs from the given array to bind.</param>
         public unsafe void BindFragmentSamplers(
             TextureSamplerBinding[] textureSamplerBindings,
             int length
@@ -260,12 +360,24 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Binds samplers to be used by the fragment shader.
+        /// </summary>
+        /// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
         public unsafe void BindFragmentSamplers(
             params TextureSamplerBinding[] textureSamplerBindings
         ) {
             BindFragmentSamplers(textureSamplerBindings, textureSamplerBindings.Length);
         }
 
+        /// <summary>
+        /// Clears the render targets on the current framebuffer to a single color or depth/stencil value.
+        /// NOTE: It is recommended that you clear when beginning render passes unless you have a good reason to clear mid-pass.
+        /// </summary>
+        /// <param name="clearRect">The area of the framebuffer to clear.</param>
+        /// <param name="clearOptions">Whether to clear colors, depth, or stencil value, or multiple.</param>
+        /// <param name="depthStencilClearValue">The depth/stencil clear values. Will be ignored if color is not provided in ClearOptions.</param>
+        /// <param name="clearColors">The color clear values. Must provide one per render target. Can be omitted if depth/stencil is not cleared.</param>
         public unsafe void Clear(
             in Rect clearRect,
             ClearOptionsFlags clearOptions,
@@ -295,6 +407,16 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Draws using instanced rendering.
+        /// It is an error to call this method unless two vertex buffers have been bound.
+        /// </summary>
+        /// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
+        /// <param name="startIndex">The starting index offset for the index buffer.</param>
+        /// <param name="primitiveCount">The number of primitives to draw.</param>
+        /// <param name="instanceCount">The number of instances to draw.</param>
+        /// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
+        /// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
         public void DrawInstancedPrimitives(
             uint baseVertex,
             uint startIndex,
@@ -315,6 +437,14 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Draws using a vertex buffer and an index buffer.
+        /// </summary>
+        /// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
+        /// <param name="startIndex">The starting index offset for the index buffer.</param>
+        /// <param name="primitiveCount">The number of primitives to draw.</param>
+        /// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
+        /// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
         public void DrawIndexedPrimitives(
             uint baseVertex,
             uint startIndex,
@@ -333,6 +463,13 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Draws using a vertex buffer.
+        /// </summary>
+        /// <param name="vertexStart"></param>
+        /// <param name="primitiveCount"></param>
+        /// <param name="vertexParamOffset"></param>
+        /// <param name="fragmentParamOffset"></param>
         public void DrawPrimitives(
             uint vertexStart,
             uint primitiveCount,
@@ -349,6 +486,10 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Ends the current render pass.
+        /// This must be called before beginning another render pass or submitting the command buffer.
+        /// </summary>
         public void EndRenderPass()
         {
             Refresh.Refresh_EndRenderPass(
@@ -357,12 +498,17 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Prepares a texture to be presented to the screen.
+        /// </summary>
+        /// <param name="texture">The texture to present.</param>
+        /// <param name="destinationRectangle">The area of the screen to present to.</param>
+        /// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
         public void QueuePresent(
             in Texture texture,
             in Rect destinationRectangle,
             Filter filter
-        )
-        {
+        ) {
             var refreshRect = destinationRectangle.ToRefresh();
             var refreshTextureSlice = new Refresh.TextureSlice
             {
@@ -388,6 +534,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Prepares a texture slice to be presented to the screen.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to present.</param>
+        /// <param name="destinationRectangle">The area of the screen to present to.</param>
+        /// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
         public void QueuePresent(
             in TextureSlice textureSlice,
             in Rect destinationRectangle,
@@ -405,6 +557,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Prepares a texture slice to be presented to the screen.
+        /// This particular variant of this method will present to the entire window area.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to present.</param>
+        /// <param name="filter">The filter to use when the texture size differs from the window size.</param>
         public void QueuePresent(
             in TextureSlice textureSlice,
             Filter filter
@@ -418,6 +576,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Prepares a texture to be presented to the screen.
+        /// This particular variant of this method will present to the entire window area.
+        /// </summary>
+        /// <param name="texture">The texture to present.</param>
+        /// <param name="filter">The filter to use when the texture size differs from the window size.</param>
         public void QueuePresent(
             Texture texture,
             Filter filter
@@ -446,6 +610,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Performs an asynchronous texture-to-texture copy on the GPU.
+        /// </summary>
+        /// <param name="sourceTextureSlice">The texture slice to copy from.</param>
+        /// <param name="destinationTextureSlice">The texture slice to copy to.</param>
+        /// <param name="filter">The filter to use if the sizes of the texture slices differ.</param>
         public void CopyTextureToTexture(
             in TextureSlice sourceTextureSlice,
             in TextureSlice destinationTextureSlice,
@@ -463,6 +633,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Performs an asynchronous texture-to-buffer copy.
+        /// Note that the buffer is not guaranteed to be filled until you call GraphicsDevice.Wait()
+        /// </summary>
+        /// <param name="textureSlice"></param>
+        /// <param name="buffer"></param>
         public void CopyTextureToBuffer(
             in TextureSlice textureSlice,
             Buffer buffer
