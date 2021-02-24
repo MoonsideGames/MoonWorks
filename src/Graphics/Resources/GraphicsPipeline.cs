@@ -4,6 +4,10 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// Graphics pipelines encapsulate all of the render state in a single object.
+    /// These pipelines are bound before draw calls are issued.
+    /// </summary>
     public class GraphicsPipeline : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;

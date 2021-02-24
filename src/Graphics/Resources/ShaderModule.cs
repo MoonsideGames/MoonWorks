@@ -1,9 +1,11 @@
 ﻿using RefreshCS;
 using System;
-using System.IO;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// Shader modules expect input in SPIR-V bytecode format.
+    /// </summary>
     public class ShaderModule : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyShaderModule;

@@ -4,10 +4,19 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// Buffers are generic data containers that can be used by the GPU.
+    /// </summary>
     public class Buffer : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
 
+        /// <summary>
+        /// Creates a buffer.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="usageFlags">Specifies how the buffer will be used.</param>
+        /// <param name="sizeInBytes">The length of the array. Cannot be resized.</param>
         public Buffer(
             GraphicsDevice device,
             BufferUsageFlags usageFlags,
@@ -21,6 +30,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the buffer.
+        /// </summary>
+        /// <param name="data">An array of data to copy into the buffer.</param>
+        /// <param name="offsetInElements">Specifies where to start copying out of the array.</param>
+        /// <param name="lengthInElements">Specifies how many elements to copy.</param>
         public unsafe void SetData<T>(
             T[] data,
             uint offsetInElements,
@@ -41,6 +56,11 @@ namespace MoonWorks.Graphics
             }
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the buffer.
+        /// This variant of this method copies the entire array.
+        /// </summary>
+        /// <param name="data">An array of data to copy.</param>
         public unsafe void SetData<T>(
             T[] data
         ) where T : unmanaged
@@ -57,6 +77,12 @@ namespace MoonWorks.Graphics
             }
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the buffer.
+        /// </summary>
+        /// <param name="data">A pointer to an array.</param>
+        /// <param name="offsetInBytes">Specifies where to start copying the data, in bytes.</param>
+        /// <param name="dataLengthInBytes">Specifies how many bytes of data to copy.</param>
         public void SetData(
             IntPtr data,
             uint offsetInBytes,
@@ -71,6 +97,12 @@ namespace MoonWorks.Graphics
             );
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the buffer.
+        /// </summary>
+        /// <param name="data">A pointer to an array.</param>
+        /// <param name="offsetInBytes">Specifies where to start copying the data, in bytes.</param>
+        /// <param name="dataLengthInBytes">Specifies how many bytes of data to copy.</param>
         public unsafe void SetData<T>(
             T* data,
             uint offsetInElements,
@@ -86,7 +118,12 @@ namespace MoonWorks.Graphics
             );
         }
 
-        // NOTE: You want to wait on the device before calling this
+        /// <summary>
+        /// Reads data out of a buffer and into an array.
+        /// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
+        /// </summary>
+        /// <param name="data">The array that data will be copied to.</param>
+        /// <param name="dataLengthInBytes">The length of the data to read.</param>
         public unsafe void GetData<T>(
             T[] data,
             uint dataLengthInBytes

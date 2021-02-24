@@ -1,5 +1,8 @@
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// Specifies how many samples should be used in rasterization.
+    /// </summary>
     public struct MultisampleState
     {
         public SampleCount MultisampleCount;

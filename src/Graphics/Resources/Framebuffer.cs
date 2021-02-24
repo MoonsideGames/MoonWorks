@@ -4,6 +4,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A framebuffer is a collection of render targets that is rendered to during a render pass.
+    /// </summary>
     public class Framebuffer : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyFramebuffer;
@@ -15,12 +18,21 @@ namespace MoonWorks.Graphics
 
         public RenderPass RenderPass { get; }
 
+        /// <summary>
+        /// Creates a framebuffer.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="width">The width of the framebuffer.</param>
+        /// <param name="height">The height of the framebuffer.</param>
+        /// <param name="renderPass">The reference render pass for the framebuffer.</param>
+        /// <param name="depthStencilTarget">The depth stencil target. Can be null.</param>
+        /// <param name="colorTargets">Anywhere from 0-4 color targets can be provided.</param>
         public unsafe Framebuffer(
             GraphicsDevice device,
             uint width,
             uint height,
             RenderPass renderPass,
-            RenderTarget depthStencilTarget, /* can be NULL */
+            RenderTarget depthStencilTarget,
             params RenderTarget[] colorTargets
         ) : base(device)
         {

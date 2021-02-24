@@ -3,6 +3,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A sampler specifies how a texture will be sampled in a shader.
+    /// </summary>
     public class Sampler : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroySampler;

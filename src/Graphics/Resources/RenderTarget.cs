@@ -3,6 +3,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A render target is a structure that wraps a texture so that it can be rendered to.
+    /// </summary>
     public class RenderTarget : GraphicsResource
     {
         public TextureSlice TextureSlice { get; }
@@ -10,6 +13,17 @@ namespace MoonWorks.Graphics
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
 
+        /// <summary>
+        /// Creates a render target backed by a texture.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="width">The width of the render target.</param>
+        /// <param name="height">The height of the render target.</param>
+        /// <param name="format">The format of the render target.</param>
+        /// <param name="canBeSampled">Whether the render target can be used by a sampler.</param>
+        /// <param name="sampleCount">The multisample count of the render target.</param>
+        /// <param name="levelCount">The mip level of the render target.</param>
+        /// <returns></returns>
         public static RenderTarget CreateBackedRenderTarget(
             GraphicsDevice device,
             uint width,
@@ -52,7 +66,17 @@ namespace MoonWorks.Graphics
             return new RenderTarget(device, new TextureSlice(texture), sampleCount);
         }
 
-        public RenderTarget(GraphicsDevice device, in TextureSlice textureSlice, SampleCount sampleCount = SampleCount.One) : base(device)
+        /// <summary>
+        /// Creates a render target using a texture slice and an optional sample count.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="textureSlice">The texture slice that will be rendered to.</param>
+        /// <param name="sampleCount">The desired multisample count of the render target.</param>
+        public RenderTarget(
+            GraphicsDevice device,
+            in TextureSlice textureSlice,
+            SampleCount sampleCount = SampleCount.One
+        ) : base(device)
         {
             Handle = Refresh.Refresh_CreateRenderTarget(
                 device.Handle,

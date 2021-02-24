@@ -2,6 +2,10 @@
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A texture slice specifies a subregion of a texture.
+    /// Many operations can use texture slices in place of textures for the sake of convenience.
+    /// </summary>
     public struct TextureSlice
     {
         public Texture Texture { get; }

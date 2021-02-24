@@ -3,10 +3,18 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A render pass describes the kind of render targets that will be used in rendering.
+    /// </summary>
     public class RenderPass : GraphicsResource
     {
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderPass;
 
+        /// <summary>
+        /// Creates a render pass using color target descriptions.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="colorTargetDescriptions">Up to 4 color target descriptions may be provided.</param>
         public unsafe RenderPass(
             GraphicsDevice device,
             params ColorTargetDescription[] colorTargetDescriptions
@@ -23,6 +31,12 @@ namespace MoonWorks.Graphics
             }
         }
 
+        /// <summary>
+        /// Creates a render pass using a depth/stencil target description and optional color target descriptions.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="depthStencilTargetDescription">A depth/stencil target description.</param>
+        /// <param name="colorTargetDescriptions">Up to 4 color target descriptions may be provided.</param>
         public unsafe RenderPass(
             GraphicsDevice device,
             in DepthStencilTargetDescription depthStencilTargetDescription,

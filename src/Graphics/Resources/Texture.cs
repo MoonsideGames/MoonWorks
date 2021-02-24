@@ -5,6 +5,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+    /// <summary>
+    /// A container for pixel data.
+    /// </summary>
     public class Texture : GraphicsResource
     {
         public uint Width { get; }
@@ -48,6 +51,16 @@ namespace MoonWorks.Graphics
             }
         }
 
+        /// <summary>
+        /// Creates a 2D texture.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="width">The width of the texture.</param>
+        /// <param name="height">The height of the texture.</param>
+        /// <param name="format">The format of the texture.</param>
+        /// <param name="usageFlags">Specifies how the texture will be used.</param>
+        /// <param name="sampleCount">Specifies the multisample count.</param>
+        /// <param name="levelCount">Specifies the number of mip levels.</param>
         public static Texture CreateTexture2D(
             GraphicsDevice device,
             uint width,
@@ -56,8 +69,7 @@ namespace MoonWorks.Graphics
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
-        )
-        {
+        ) {
             var textureCreateInfo = new TextureCreateInfo
             {
                 Width = width,
@@ -73,6 +85,17 @@ namespace MoonWorks.Graphics
             return new Texture(device, textureCreateInfo);
         }
 
+        /// <summary>
+        /// Creates a 3D texture.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="width">The width of the texture.</param>
+        /// <param name="height">The height of the texture.</param>
+        /// <param name="depth">The depth of the texture.</param>
+        /// <param name="format">The format of the texture.</param>
+        /// <param name="usageFlags">Specifies how the texture will be used.</param>
+        /// <param name="sampleCount">Specifies the multisample count.</param>
+        /// <param name="levelCount">Specifies the number of mip levels.</param>
         public static Texture CreateTexture3D(
             GraphicsDevice device,
             uint width,
@@ -82,8 +105,7 @@ namespace MoonWorks.Graphics
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
-        )
-        {
+        ) {
             var textureCreateInfo = new TextureCreateInfo
             {
                 Width = width,
@@ -99,6 +121,15 @@ namespace MoonWorks.Graphics
             return new Texture(device, textureCreateInfo);
         }
 
+        /// <summary>
+        /// Creates a cube texture.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="size">The length of one side of the cube.</param>
+        /// <param name="format">The format of the texture.</param>
+        /// <param name="usageFlags">Specifies how the texture will be used.</param>
+        /// <param name="sampleCount">Specifies the multisample count.</param>
+        /// <param name="levelCount">Specifies the number of mip levels.</param>
         public static Texture CreateTextureCube(
             GraphicsDevice device,
             uint size,
@@ -106,8 +137,7 @@ namespace MoonWorks.Graphics
             TextureUsageFlags usageFlags,
             SampleCount sampleCount = SampleCount.One,
             uint levelCount = 1
-        )
-        {
+        ) {
             var textureCreateInfo = new TextureCreateInfo
             {
                 Width = size,
@@ -123,6 +153,11 @@ namespace MoonWorks.Graphics
             return new Texture(device, textureCreateInfo);
         }
 
+        /// <summary>
+        /// Creates a new texture using a TextureCreateInfo struct.
+        /// </summary>
+        /// <param name="device">An initialized GraphicsDevice.</param>
+        /// <param name="textureCreateInfo">The parameters to use when creating the texture.</param>
         public Texture(
             GraphicsDevice device,
             in TextureCreateInfo textureCreateInfo
@@ -138,21 +173,38 @@ namespace MoonWorks.Graphics
             Height = textureCreateInfo.Height;
         }
 
-        public void SetData(in TextureSlice textureSlice, IntPtr data, uint dataLengthInBytes)
+        /// <summary>
+        /// Asynchronously copies data into the texture.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to copy into.</param>
+        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+        public void SetData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
         {
             Refresh.Refresh_SetTextureData(
                 Device.Handle,
                 textureSlice.ToRefreshTextureSlice(),
-                data,
+                dataPtr,
                 dataLengthInBytes
             );
         }
 
-        public void SetData(IntPtr data, uint dataLengthInBytes)
+        /// <summary>
+        /// Asynchronously copies data into the texture.
+        /// This variant copies into the entire texture.
+        /// </summary>
+        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+        public void SetData(IntPtr dataPtr, uint dataLengthInBytes)
         {
-            SetData(new TextureSlice(this), data, dataLengthInBytes);
+            SetData(new TextureSlice(this), dataPtr, dataLengthInBytes);
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the texture.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to copy into.</param>
+        /// <param name="data">An array of data to copy into the texture.</param>
         public unsafe void SetData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
         {
             var size = Marshal.SizeOf<T>();
@@ -168,6 +220,11 @@ namespace MoonWorks.Graphics
             }
         }
 
+        /// <summary>
+        /// Asynchronously copies data into the texture.
+        /// This variant copies data into the entire texture.
+        /// </summary>
+        /// <param name="data">An array of data to copy into the texture.</param>
         public unsafe void SetData<T>(T[] data) where T : unmanaged
         {
             SetData(new TextureSlice(this), data);

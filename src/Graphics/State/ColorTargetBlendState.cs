@@ -4,13 +4,43 @@ namespace MoonWorks.Graphics
 {
     public struct ColorTargetBlendState
     {
+        /// <summary>
+        /// If disabled, no blending will occur.
+        /// </summary>
         public bool BlendEnable;
+
+        /// <summary>
+        /// Selects which blend operation to use with alpha values.
+        /// </summary>
         public BlendOp AlphaBlendOp;
+        /// <summary>
+        /// Selects which blend operation to use with color values.
+        /// </summary>
         public BlendOp ColorBlendOp;
+
+        /// <summary>
+        /// Specifies which of the RGBA components are enabled for writing.
+        /// </summary>
         public ColorComponentFlags ColorWriteMask;
+
+        /// <summary>
+        /// Selects which blend factor is used to determine the alpha destination factor.
+        /// </summary>
         public BlendFactor DestinationAlphaBlendFactor;
+
+        /// <summary>
+        /// Selects which blend factor is used to determine the color destination factor.
+        /// </summary>
         public BlendFactor DestinationColorBlendFactor;
+
+        /// <summary>
+        /// Selects which blend factor is used to determine the alpha source factor.
+        /// </summary>
         public BlendFactor SourceAlphaBlendFactor;
+
+        /// <summary>
+        /// Selects which blend factor is used to determine the color source factor.
+        /// </summary>
         public BlendFactor SourceColorBlendFactor;
 
         public static readonly ColorTargetBlendState Additive = new ColorTargetBlendState

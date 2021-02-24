@@ -22,6 +22,9 @@ namespace MoonWorks.Graphics
         TriangleStrip
     }
 
+    /// <summary>
+    /// Describes the operation that a render pass will use when loading a render target.
+    /// </summary>
     public enum LoadOp
     {
         Load,
@@ -29,6 +32,9 @@ namespace MoonWorks.Graphics
         DontCare
     }
 
+    /// <summary>
+    /// Describes the operation that a render pass will use when storing a render target.
+    /// </summary>
     public enum StoreOp
     {
         Store,
