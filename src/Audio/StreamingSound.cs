@@ -16,8 +16,6 @@ namespace MoonWorks.Audio
 
         public int PendingBufferCount => queuedBuffers.Count;
 
-        private bool IsDisposed;
-
         public StreamingSound(
             AudioDevice device,
             ushort channels,
@@ -172,21 +170,9 @@ namespace MoonWorks.Audio
 
         protected abstract void SeekStart();
 
-        protected override void Dispose(bool disposing)
+        protected override void Destroy()
         {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed state (managed objects)
-                    Stop(true);
-                }
-
-                // dispose unmanaged state
-                IsDisposed = true;
-            }
-
-            base.Dispose(disposing);
+            Stop(true);
         }
     }
 }

@@ -17,6 +17,8 @@ namespace MoonWorks.Audio
         public float SpeedOfSound = 343.5f;
 
         internal FAudio.FAudioVoiceSends ReverbSends;
+
+        private readonly List<WeakReference<AudioResource>> resources = new List<WeakReference<AudioResource>>();
         private readonly List<WeakReference<StreamingSound>> streamingSounds = new List<WeakReference<StreamingSound>>();
 
         private bool IsDisposed;
@@ -214,6 +216,22 @@ namespace MoonWorks.Audio
         internal void AddDynamicSoundInstance(StreamingSound instance)
         {
             streamingSounds.Add(new WeakReference<StreamingSound>(instance));
+        }
+
+        internal void AddResourceReference(WeakReference<AudioResource> resourceReference)
+        {
+            lock (resources)
+            {
+                resources.Add(resourceReference);
+            }
+        }
+
+        internal void RemoveResourceReference(WeakReference<AudioResource> resourceReference)
+        {
+            lock (resources)
+            {
+                resources.Remove(resourceReference);
+            }
         }
 
         protected virtual void Dispose(bool disposing)

@@ -15,8 +15,6 @@ namespace MoonWorks.Audio
 
         public override SoundState State { get; protected set; }
 
-        private bool IsDisposed;
-
         public static StreamingSoundOgg Load(
             AudioDevice device,
             string filePath,
@@ -83,22 +81,9 @@ namespace MoonWorks.Audio
             FAudio.stb_vorbis_seek_start(FileHandle);
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void Destroy()
         {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed state (managed objects)
-                }
-
-                // dispose unmanaged state
-                FAudio.stb_vorbis_close(FileHandle);
-
-                IsDisposed = true;
-            }
-
-            base.Dispose(disposing);
+            FAudio.stb_vorbis_close(FileHandle);
         }
     }
 }

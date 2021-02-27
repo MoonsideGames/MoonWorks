@@ -1,11 +1,11 @@
 using System;
 using System.Runtime.InteropServices;
+using MoonWorks.Math;
 
 namespace MoonWorks.Audio
 {
-    public abstract class SoundInstance : IDisposable
+    public abstract class SoundInstance : AudioResource
     {
-        protected AudioDevice Device { get; }
         internal IntPtr Handle { get; }
         internal FAudio.FAudioWaveFormatEx Format { get; }
         public bool Loop { get; }
@@ -13,7 +13,6 @@ namespace MoonWorks.Audio
         protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
         protected bool is3D;
-        private bool IsDisposed;
 
         public abstract SoundState State { get; protected set; }
 
@@ -54,22 +53,8 @@ namespace MoonWorks.Audio
             get => _pitch;
             set
             {
-                float doppler;
-                if (!is3D || Device.DopplerScale == 0f)
-                {
-                    doppler = 1f;
-                }
-                else
-                {
-                    doppler = dspSettings.DopplerFactor * Device.DopplerScale;
-                }
-
-                _pitch = value;
-                FAudio.FAudioSourceVoice_SetFrequencyRatio(
-                    Handle,
-                    (float) System.Math.Pow(2.0, _pitch) * doppler,
-                    0
-                );
+                _pitch = MathHelper.Clamp(value, -1f, 1f);
+                UpdatePitch();
             }
         }
 
@@ -182,9 +167,8 @@ namespace MoonWorks.Audio
             uint samplesPerSecond,
             bool is3D,
             bool loop
-        ) {
-            Device = device;
-
+        ) : base(device)
+        {
             var blockAlign = (ushort)(4 * channels);
             var format = new FAudio.FAudioWaveFormatEx
             {
@@ -228,6 +212,32 @@ namespace MoonWorks.Audio
             State = SoundState.Stopped;
         }
 
+        public void Apply3D(AudioListener listener, AudioEmitter emitter)
+        {
+            is3D = true;
+
+            emitter.emitterData.CurveDistanceScaler = Device.CurveDistanceScalar;
+            emitter.emitterData.ChannelCount = dspSettings.SrcChannelCount;
+
+            FAudio.F3DAudioCalculate(
+                Device.Handle3D,
+                ref listener.listenerData,
+                ref emitter.emitterData,
+                FAudio.F3DAUDIO_CALCULATE_MATRIX | FAudio.F3DAUDIO_CALCULATE_DOPPLER,
+                ref dspSettings
+            );
+
+            UpdatePitch();
+            FAudio.FAudioVoice_SetOutputMatrix(
+                Handle,
+                Device.MasteringVoice,
+                dspSettings.SrcChannelCount,
+                dspSettings.DstChannelCount,
+                dspSettings.pMatrixCoefficients,
+                0
+            );
+        }
+
         public abstract void Play();
         public abstract void Pause();
         public abstract void Stop(bool immediate);
@@ -256,6 +266,26 @@ namespace MoonWorks.Audio
             }
             SetPanMatrixCoefficients();
         }
+
+		private void UpdatePitch()
+		{
+			float doppler;
+			float dopplerScale = Device.DopplerScale;
+			if (!is3D || dopplerScale == 0.0f)
+			{
+				doppler = 1.0f;
+			}
+			else
+			{
+				doppler = dspSettings.DopplerFactor * dopplerScale;
+			}
+
+			FAudio.FAudioSourceVoice_SetFrequencyRatio(
+				Handle,
+				(float) System.Math.Pow(2.0, _pitch) * doppler,
+				0
+			);
+		}
 
         // Taken from https://github.com/FNA-XNA/FNA/blob/master/src/Audio/SoundEffectInstance.cs
         private unsafe void SetPanMatrixCoefficients()
@@ -311,33 +341,12 @@ namespace MoonWorks.Audio
 			}
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Destroy()
         {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed state (managed objects)
-                    Stop(true);
-                }
+            Stop(true);
 
-                FAudio.FAudioVoice_DestroyVoice(Handle);
-                Marshal.FreeHGlobal(dspSettings.pMatrixCoefficients);
-                IsDisposed = true;
-            }
-        }
-
-        ~SoundInstance()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            FAudio.FAudioVoice_DestroyVoice(Handle);
+            Marshal.FreeHGlobal(dspSettings.pMatrixCoefficients);
         }
     }
 }

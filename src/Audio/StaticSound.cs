@@ -1,20 +1,16 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-    public class StaticSound : IDisposable
+    public class StaticSound : AudioResource
     {
-        internal AudioDevice Device { get; }
         internal FAudio.FAudioBuffer Handle;
         public ushort Channels { get; }
         public uint SamplesPerSecond { get; }
 
         public uint LoopStart { get; set; } = 0;
         public uint LoopLength { get; set; } = 0;
-
-        private bool IsDisposed;
 
         public static StaticSound LoadOgg(AudioDevice device, string filePath)
         {
@@ -54,9 +50,8 @@ namespace MoonWorks.Audio
             float[] buffer,
             uint bufferOffset, /* in floats */
             uint bufferLength  /* in floats */
-        ) {
-            Device = device;
-
+        ) : base(device)
+        {
             Channels = channels;
             SamplesPerSecond = samplesPerSecond;
 
@@ -79,32 +74,9 @@ namespace MoonWorks.Audio
             return new StaticSoundInstance(Device, this, false, loop);
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Destroy()
         {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed state (managed objects)
-                }
-
-                Marshal.FreeHGlobal(Handle.pAudioData);
-                IsDisposed = true;
-            }
-        }
-
-        // override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        ~StaticSound()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            Marshal.FreeHGlobal(Handle.pAudioData);
         }
     }
 }
