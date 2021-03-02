@@ -17,6 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-		<None Include="MoonWorks.dll.config" />
+		<None Include="MoonWorks.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
 	</ItemGroup>
 </Project>
