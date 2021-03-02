@@ -15,4 +15,8 @@
     <ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
     <ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+		<None Include="MoonWorks.dll.config" />
+	</ItemGroup>
 </Project>
