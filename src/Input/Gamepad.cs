@@ -1,4 +1,5 @@
 using System;
+using MoonWorks.Math;
 using SDL2;
 
 namespace MoonWorks.Input
@@ -35,6 +36,16 @@ namespace MoonWorks.Input
             Handle = handle;
         }
 
+        public bool SetVibration(float leftMotor, float rightMotor, uint durationInMilliseconds)
+        {
+            return SDL.SDL_GameControllerRumble(
+                Handle,
+                (ushort)(MathHelper.Clamp(leftMotor, 0f, 1f) * 0xFFFF),
+                (ushort)(MathHelper.Clamp(rightMotor, 0f, 1f) * 0xFFFF),
+                durationInMilliseconds
+            ) == 0;
+        }
+
         internal void Update()
         {
             A.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A));
@@ -69,19 +80,19 @@ namespace MoonWorks.Input
         private float UpdateAxis(SDL.SDL_GameControllerAxis axis)
         {
             var axisValue = SDL.SDL_GameControllerGetAxis(Handle, axis);
-            return Normalize(axisValue, short.MinValue, short.MaxValue);
+            return Normalize(axisValue, short.MinValue, short.MaxValue, -1, 1);
         }
 
         // Triggers only go from 0 to short.MaxValue
         private float UpdateTrigger(SDL.SDL_GameControllerAxis trigger)
         {
             var triggerValue = SDL.SDL_GameControllerGetAxis(Handle, trigger);
-            return Normalize(triggerValue, 0, short.MaxValue);
+            return Normalize(triggerValue, 0, short.MaxValue, 0, 1);
         }
 
-        private float Normalize(float value, short min, short max)
+        private float Normalize(float value, short min, short max, short newMin, short newMax)
         {
-            return (value - min) / (max - min);
+            return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
         }
     }
 }

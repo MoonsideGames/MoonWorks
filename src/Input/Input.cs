@@ -36,6 +36,11 @@ namespace MoonWorks.Input
             }
         }
 
+        public bool GamepadExists(int slot)
+        {
+            return slot < gamepads.Count;
+        }
+
         public Gamepad GetGamepad(int slot)
         {
             return gamepads[slot];

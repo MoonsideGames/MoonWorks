@@ -493,6 +493,19 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
+        /// Clamps the magnitude of the specified vector.
+        /// </summary>
+        /// <param name="value">The vector to clamp.</param>
+        /// <param name="maxLength">The maximum length of the vector.</param>
+        /// <returns></returns>
+		public static Vector3 ClampMagnitude(
+			Vector3 value,
+			float maxLength
+		) {
+            return (value.LengthSquared() > maxLength * maxLength) ? (Vector3.Normalize(value) * maxLength) : value;
+        }
+
+		/// <summary>
 		/// Computes the cross product of two vectors.
 		/// </summary>
 		/// <param name="vector1">The first vector.</param>
