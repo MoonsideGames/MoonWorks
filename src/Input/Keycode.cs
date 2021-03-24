@@ -104,8 +104,10 @@ namespace MoonWorks.Input
         LeftControl = 224,
         LeftShift = 225,
         LeftAlt = 226,
+        LeftMeta = 227, // Windows, Command, Meta
         RightControl = 228,
         RightShift = 229,
-        RightAlt = 230
+        RightAlt = 230,
+        RightMeta = 231 // Windows, Command, Meta
     }
 }
