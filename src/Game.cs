@@ -4,6 +4,7 @@ using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
 using MoonWorks.Window;
+using System.Text;
 
 namespace MoonWorks
 {
@@ -107,6 +108,10 @@ namespace MoonWorks
                     case SDL.SDL_EventType.SDL_QUIT:
                         quit = true;
                         break;
+
+                    case SDL.SDL_EventType.SDL_TEXTINPUT:
+                        HandleTextInput(_event);
+                        break;
                 }
             }
         }
@@ -114,5 +119,40 @@ namespace MoonWorks
         protected abstract void Update(double dt);
 
         protected abstract void Draw(double dt, double alpha);
+
+        private void HandleTextInput(SDL2.SDL.SDL_Event evt)
+        {
+            // Based on the SDL2# LPUtf8StrMarshaler
+            unsafe
+            {
+                int bytes = MeasureStringLength(evt.text.text);
+                if (bytes > 0)
+                {
+                    /* UTF8 will never encode more characters
+                        * than bytes in a string, so bytes is a
+                        * suitable upper estimate of size needed
+                        */
+                    char* charsBuffer = stackalloc char[bytes];
+                    int chars = Encoding.UTF8.GetChars(
+                        evt.text.text,
+                        bytes,
+                        charsBuffer,
+                        bytes
+                    );
+
+                    for (int i = 0; i < chars; i += 1)
+                    {
+                        Inputs.OnTextInput(charsBuffer[i]);
+                    }
+                }
+            }
+        }
+
+		private unsafe static int MeasureStringLength(byte* ptr)
+		{
+			int bytes;
+			for (bytes = 0; *ptr != 0; ptr += 1, bytes += 1);
+			return bytes;
+		}
     }
 }

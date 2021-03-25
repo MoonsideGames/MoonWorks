@@ -1,4 +1,5 @@
 using SDL2;
+using System;
 using System.Collections.Generic;
 
 namespace MoonWorks.Input
@@ -9,6 +10,8 @@ namespace MoonWorks.Input
         public Mouse Mouse { get; }
 
         List<Gamepad> gamepads = new List<Gamepad>();
+
+        public static event Action<char> TextInput;
 
         internal Inputs()
         {
@@ -44,6 +47,14 @@ namespace MoonWorks.Input
         public Gamepad GetGamepad(int slot)
         {
             return gamepads[slot];
+        }
+
+        internal static void OnTextInput(char c)
+        {
+            if (TextInput != null)
+            {
+                TextInput(c);
+            }
         }
     }
 }
