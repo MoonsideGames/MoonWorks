@@ -13,6 +13,8 @@ namespace MoonWorks.Input
         public int DeltaX { get; private set; }
         public int DeltaY { get; private set; }
 
+        public int Wheel { get; internal set; }
+
         private bool relativeMode;
         public bool RelativeMode
         {

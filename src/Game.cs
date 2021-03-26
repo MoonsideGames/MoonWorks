@@ -82,6 +82,8 @@ namespace MoonWorks
                 {
                     while (accumulator >= timestep)
                     {
+                        Inputs.Mouse.Wheel = 0;
+
                         HandleSDLEvents();
 
                         Inputs.Update();
@@ -111,6 +113,10 @@ namespace MoonWorks
 
                     case SDL.SDL_EventType.SDL_TEXTINPUT:
                         HandleTextInput(_event);
+                        break;
+
+                    case SDL.SDL_EventType.SDL_MOUSEWHEEL:
+                        Inputs.Mouse.Wheel += _event.wheel.y;
                         break;
                 }
             }
