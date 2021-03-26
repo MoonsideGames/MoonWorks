@@ -881,6 +881,16 @@ namespace MoonWorks.Math
 			result.W = quaternion.W * num;
 		}
 
+        public static Quaternion LookAt(in Vector3 forward, in Vector3 up)
+        {
+            Matrix4x4 orientation = Matrix4x4.Identity;
+            orientation.Forward = forward;
+            orientation.Right = Vector3.Normalize(Vector3.Cross(forward, up));
+            orientation.Up = Vector3.Cross(orientation.Right, forward);
+
+            return Quaternion.CreateFromRotationMatrix(orientation);
+        }
+
 		#endregion
 
 		#region Public Static Operator Overloads
