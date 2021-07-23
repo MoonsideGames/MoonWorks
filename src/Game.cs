@@ -5,18 +5,28 @@ using MoonWorks.Graphics;
 using MoonWorks.Input;
 using MoonWorks.Window;
 using System.Text;
+using System;
+using System.Diagnostics;
 
 namespace MoonWorks
 {
     public abstract class Game
     {
-        public const double MAX_DELTA_TIME = 0.1;
+        public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 
         private bool quit = false;
-        private double timestep;
-        ulong currentTime = SDL.SDL_GetPerformanceCounter();
-        double accumulator = 0;
         bool debugMode;
+
+		private Stopwatch gameTimer;
+        private TimeSpan timestep;
+		private long previousTicks = 0;
+        TimeSpan accumulatedElapsedTime = TimeSpan.Zero;
+		// must be a power of 2 so we can do a bitmask optimization when checking worst case
+		private const int PREVIOUS_SLEEP_TIME_COUNT = 128;
+		private const int SLEEP_TIME_MASK = PREVIOUS_SLEEP_TIME_COUNT - 1;
+		private TimeSpan[] previousSleepTimes = new TimeSpan[PREVIOUS_SLEEP_TIME_COUNT];
+		private int sleepTimeIndex = 0;
+		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
 
         public OSWindow Window { get; }
         public GraphicsDevice GraphicsDevice { get; }
@@ -37,7 +47,13 @@ namespace MoonWorks
             int targetTimestep = 60,
             bool debugMode = false
         ) {
-            timestep = 1.0 / targetTimestep;
+            timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
+			gameTimer = Stopwatch.StartNew();
+
+			for (int i = 0; i < previousSleepTimes.Length; i += 1)
+			{
+				previousSleepTimes[i] = TimeSpan.FromMilliseconds(1);
+			}
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
             {
@@ -66,35 +82,55 @@ namespace MoonWorks
         {
             while (!quit)
             {
-                var newTime = SDL.SDL_GetPerformanceCounter();
-                double frameTime = (newTime - currentTime) / (double)SDL.SDL_GetPerformanceFrequency();
+				AdvanceElapsedTime();
 
-                if (frameTime > MAX_DELTA_TIME)
+				/* We want to wait until the next frame,
+				 * but we don't want to oversleep. Requesting repeated 1ms sleeps and
+				 * seeing how long we actually slept for lets us estimate the worst case
+				 * sleep precision so we don't oversleep the next frame.
+				 */
+				while (accumulatedElapsedTime + worstCaseSleepPrecision < timestep)
+				{
+					System.Threading.Thread.Sleep(1);
+					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
+					UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
+				}
+
+				/* Now that we have slept into the sleep precision threshold, we need to wait
+				 * for just a little bit longer until the target elapsed time has been reached.
+				 * SpinWait(1) works by pausing the thread for very short intervals, so it is
+				 * an efficient and time-accurate way to wait out the rest of the time.
+				 */
+				while (accumulatedElapsedTime < timestep)
+				{
+					System.Threading.Thread.SpinWait(1);
+					AdvanceElapsedTime();
+				}
+
+				// Now that we are going to perform an update, let's handle SDL events.
+				HandleSDLEvents();
+
+				// Do not let any step take longer than our maximum.
+                if (accumulatedElapsedTime > MAX_DELTA_TIME)
                 {
-                    frameTime = MAX_DELTA_TIME;
+                    accumulatedElapsedTime = MAX_DELTA_TIME;
                 }
-
-                currentTime = newTime;
-
-                accumulator += frameTime;
 
                 if (!quit)
                 {
-                    while (accumulator >= timestep)
+                    while (accumulatedElapsedTime >= timestep)
                     {
                         Inputs.Mouse.Wheel = 0;
-
-                        HandleSDLEvents();
 
                         Inputs.Update();
                         AudioDevice.Update();
 
                         Update(timestep);
 
-                        accumulator -= timestep;
+                        accumulatedElapsedTime -= timestep;
                     }
 
-                    double alpha = accumulator / timestep;
+                    var alpha = accumulatedElapsedTime / timestep;
 
                     Draw(timestep, alpha);
                 }
@@ -122,9 +158,10 @@ namespace MoonWorks
             }
         }
 
-        protected abstract void Update(double dt);
+        protected abstract void Update(TimeSpan dt);
 
-        protected abstract void Draw(double dt, double alpha);
+		// alpha refers to a percentage value between the current and next state
+        protected abstract void Draw(TimeSpan dt, double alpha);
 
         private void HandleTextInput(SDL2.SDL.SDL_Event evt)
         {
@@ -153,6 +190,57 @@ namespace MoonWorks
                 }
             }
         }
+
+		private TimeSpan AdvanceElapsedTime()
+		{
+			long currentTicks = gameTimer.Elapsed.Ticks;
+			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - previousTicks);
+			accumulatedElapsedTime += timeAdvanced;
+			previousTicks = currentTicks;
+			return timeAdvanced;
+		}
+
+		/* To calculate the sleep precision of the OS, we take the worst case
+		 * time spent sleeping over the results of previous requests to sleep 1ms.
+		 */
+		private void UpdateEstimatedSleepPrecision(TimeSpan timeSpentSleeping)
+		{
+			/* It is unlikely that the scheduler will actually be more imprecise than
+			 * 4ms and we don't want to get wrecked by a single long sleep so we cap this
+			 * value at 4ms for sanity.
+			 */
+			var upperTimeBound = TimeSpan.FromMilliseconds(4);
+
+			if (timeSpentSleeping > upperTimeBound)
+			{
+				timeSpentSleeping = upperTimeBound;
+			}
+
+			/* We know the previous worst case - it's saved in worstCaseSleepPrecision.
+			 * We also know the current index. So the only way the worst case changes
+			 * is if we either 1) just got a new worst case, or 2) the worst case was
+			 * the oldest entry on the list.
+			 */
+			if (timeSpentSleeping >= worstCaseSleepPrecision)
+			{
+				worstCaseSleepPrecision = timeSpentSleeping;
+			}
+			else if (previousSleepTimes[sleepTimeIndex] == worstCaseSleepPrecision)
+			{
+				var maxSleepTime = TimeSpan.MinValue;
+				for (int i = 0; i < previousSleepTimes.Length; i++)
+				{
+					if (previousSleepTimes[i] > maxSleepTime)
+					{
+						maxSleepTime = previousSleepTimes[i];
+					}
+				}
+				worstCaseSleepPrecision = maxSleepTime;
+			}
+
+			previousSleepTimes[sleepTimeIndex] = timeSpentSleeping;
+			sleepTimeIndex = (sleepTimeIndex + 1) & SLEEP_TIME_MASK;
+		}
 
 		private unsafe static int MeasureStringLength(byte* ptr)
 		{
