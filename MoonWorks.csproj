@@ -1,24 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Platforms>x64</Platforms>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Platforms>x64</Platforms>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*</DefaultItemExcludes>
-  </PropertyGroup>
+	<PropertyGroup>
+		<DefaultItemExcludes>$(DefaultItemExcludes);lib\**\*</DefaultItemExcludes>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include=".\lib\SDL2-CS\SDL2-CS.Core.csproj" />
-    <ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
-    <ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include=".\lib\SDL2-CS\SDL2-CS.Core.csproj" />
+		<ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
+		<ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
 		<None Include="MoonWorks.dll.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 </Project>
