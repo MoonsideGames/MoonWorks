@@ -16,7 +16,15 @@ namespace MoonWorks.Graphics
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
-        public static Texture LoadPNG(GraphicsDevice device, string filePath)
+        /// <summary>
+        /// Loads a PNG from a file path.
+        /// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="commandBuffer"></param>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static Texture LoadPNG(GraphicsDevice device, CommandBuffer commandBuffer, string filePath)
         {
             var pixels = Refresh.Refresh_Image_Load(
                 filePath,
@@ -24,6 +32,8 @@ namespace MoonWorks.Graphics
                 out var height,
                 out var channels
             );
+
+            var byteCount = (uint)(width * height * channels);
 
             TextureCreateInfo textureCreateInfo;
             textureCreateInfo.Width = (uint)width;
@@ -36,10 +46,10 @@ namespace MoonWorks.Graphics
             textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
 
             var texture = new Texture(device, textureCreateInfo);
-
-            texture.SetData(pixels, (uint)(width * height * 4));
+            commandBuffer.SetTextureData(texture, pixels, byteCount);
 
             Refresh.Refresh_Image_Free(pixels);
+
             return texture;
         }
 
@@ -173,61 +183,6 @@ namespace MoonWorks.Graphics
             Height = textureCreateInfo.Height;
         }
 
-        /// <summary>
-        /// Asynchronously copies data into the texture.
-        /// </summary>
-        /// <param name="textureSlice">The texture slice to copy into.</param>
-        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-        public void SetData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
-        {
-            Refresh.Refresh_SetTextureData(
-                Device.Handle,
-                textureSlice.ToRefreshTextureSlice(),
-                dataPtr,
-                dataLengthInBytes
-            );
-        }
 
-        /// <summary>
-        /// Asynchronously copies data into the texture.
-        /// This variant copies into the entire texture.
-        /// </summary>
-        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-        public void SetData(IntPtr dataPtr, uint dataLengthInBytes)
-        {
-            SetData(new TextureSlice(this), dataPtr, dataLengthInBytes);
-        }
-
-        /// <summary>
-        /// Asynchronously copies data into the texture.
-        /// </summary>
-        /// <param name="textureSlice">The texture slice to copy into.</param>
-        /// <param name="data">An array of data to copy into the texture.</param>
-        public unsafe void SetData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
-        {
-            var size = Marshal.SizeOf<T>();
-
-            fixed (T* ptr = &data[0])
-            {
-                Refresh.Refresh_SetTextureData(
-                    Device.Handle,
-                    textureSlice.ToRefreshTextureSlice(),
-                    (IntPtr) ptr,
-                    (uint) (data.Length * size)
-                );
-            }
-        }
-
-        /// <summary>
-        /// Asynchronously copies data into the texture.
-        /// This variant copies data into the entire texture.
-        /// </summary>
-        /// <param name="data">An array of data to copy into the texture.</param>
-        public unsafe void SetData<T>(T[] data) where T : unmanaged
-        {
-            SetData(new TextureSlice(this), data);
-        }
     }
 }

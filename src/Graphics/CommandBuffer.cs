@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using MoonWorks.Math;
 using RefreshCS;
 
@@ -608,6 +609,65 @@ namespace MoonWorks.Graphics
                 IntPtr.Zero,
                 (Refresh.Filter) filter
             );
+        }
+
+        /// <summary>
+        /// Asynchronously copies data into a texture.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to copy into.</param>
+        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+        public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
+        {
+            Refresh.Refresh_SetTextureData(
+                Device.Handle,
+                Handle,
+                textureSlice.ToRefreshTextureSlice(),
+                dataPtr,
+                dataLengthInBytes
+            );
+        }
+
+        /// <summary>
+        /// Asynchronously copies data into a texture.
+        /// This variant copies into the entire texture.
+        /// </summary>
+        /// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+        /// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+        public void SetTextureData(Texture texture, IntPtr dataPtr, uint dataLengthInBytes)
+        {
+            SetTextureData(new TextureSlice(texture), dataPtr, dataLengthInBytes);
+        }
+
+        /// <summary>
+        /// Asynchronously copies data into the texture.
+        /// </summary>
+        /// <param name="textureSlice">The texture slice to copy into.</param>
+        /// <param name="data">An array of data to copy into the texture.</param>
+        public unsafe void SetTextureData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
+        {
+            var size = Marshal.SizeOf<T>();
+
+            fixed (T* ptr = &data[0])
+            {
+                Refresh.Refresh_SetTextureData(
+                    Device.Handle,
+                    Handle,
+                    textureSlice.ToRefreshTextureSlice(),
+                    (IntPtr) ptr,
+                    (uint) (data.Length * size)
+                );
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously copies data into a texture.
+        /// This variant copies data into the entire texture.
+        /// </summary>
+        /// <param name="data">An array of data to copy into the texture.</param>
+        public unsafe void SetTextureData<T>(Texture texture, T[] data) where T : unmanaged
+        {
+            SetTextureData(new TextureSlice(texture), data);
         }
 
         /// <summary>
