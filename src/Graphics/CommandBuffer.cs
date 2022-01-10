@@ -9,16 +9,16 @@ namespace MoonWorks.Graphics
     /// Command buffers are used to apply render state and issue draw calls.
     /// NOTE: it is not recommended to hold references to command buffers long term.
     /// </summary>
-    public class CommandBuffer
+    public struct CommandBuffer
     {
         public GraphicsDevice Device { get; }
         public IntPtr Handle { get; internal set; }
 
         // called from RefreshDevice
-        internal CommandBuffer(GraphicsDevice device)
+        internal CommandBuffer(GraphicsDevice device, IntPtr handle)
         {
             Device = device;
-            Handle = IntPtr.Zero;
+            Handle = handle;
         }
 
         /// <summary>
