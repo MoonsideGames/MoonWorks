@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -12,7 +10,12 @@ namespace MoonWorks.Graphics
     {
         public uint Width { get; }
         public uint Height { get; }
+        public uint Depth { get; }
         public TextureFormat Format { get; }
+        public bool IsCube { get; }
+        public uint LevelCount { get; }
+        public SampleCount SampleCount { get; }
+        public TextureUsageFlags UsageFlags { get; }
 
         protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
@@ -181,8 +184,12 @@ namespace MoonWorks.Graphics
             Format = textureCreateInfo.Format;
             Width = textureCreateInfo.Width;
             Height = textureCreateInfo.Height;
+            Depth = textureCreateInfo.Depth;
+            IsCube = textureCreateInfo.IsCube;
+            SampleCount = textureCreateInfo.SampleCount;
+            LevelCount = textureCreateInfo.LevelCount;
+            SampleCount = textureCreateInfo.SampleCount;
+            UsageFlags = textureCreateInfo.UsageFlags;
         }
-
-
     }
 }
