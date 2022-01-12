@@ -372,6 +372,63 @@ namespace MoonWorks.Graphics
         }
 
         /// <summary>
+        /// Pushes vertex shader uniforms to the device.
+        /// </summary>
+        /// <returns>A starting offset value to be used with draw calls.</returns>
+        public unsafe uint PushVertexShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushVertexShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
+        }
+
+        /// <summary>
+        /// Pushes fragment shader uniforms to the device.
+        /// </summary>
+        /// <returns>A starting offset to be used with draw calls.</returns>
+        public unsafe uint PushFragmentShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushFragmentShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
+        }
+
+        /// <summary>
+        /// Pushes compute shader uniforms to the device.
+        /// </summary>
+        /// <returns>A starting offset to be used with dispatch calls.</returns>
+        public unsafe uint PushComputeShaderUniforms<T>(
+            params T[] uniforms
+        ) where T : unmanaged
+        {
+            fixed (T* ptr = &uniforms[0])
+            {
+                return Refresh.Refresh_PushComputeShaderUniforms(
+                    Device.Handle,
+                    Handle,
+                    (IntPtr) ptr,
+                    (uint) (uniforms.Length * Marshal.SizeOf<T>())
+                );
+            }
+        }
+
+        /// <summary>
         /// Clears the render targets on the current framebuffer to a single color or depth/stencil value.
         /// NOTE: It is recommended that you clear when beginning render passes unless you have a good reason to clear mid-pass.
         /// </summary>
