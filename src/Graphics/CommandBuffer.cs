@@ -680,8 +680,7 @@ namespace MoonWorks.Graphics
             Buffer buffer,
             IntPtr dataPtr,
             uint bufferOffsetInBytes,
-            uint dataLengthInBytes,
-            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+            uint dataLengthInBytes
         ) {
             Refresh.Refresh_SetBufferData(
                 Device.Handle,
@@ -689,8 +688,7 @@ namespace MoonWorks.Graphics
                 buffer.Handle,
                 bufferOffsetInBytes,
                 dataPtr,
-                dataLengthInBytes,
-                setDataOption
+                dataLengthInBytes
             );
         }
 
@@ -708,8 +706,7 @@ namespace MoonWorks.Graphics
             T[] data,
             uint bufferOffsetInBytes,
             uint startElement,
-            uint numElements,
-            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+            uint numElements
         ) where T : unmanaged
         {
             var elementSize = Marshal.SizeOf<T>();
@@ -724,8 +721,7 @@ namespace MoonWorks.Graphics
                     buffer.Handle,
                     bufferOffsetInBytes,
                     (IntPtr) dataPtr,
-                    (uint) (numElements * elementSize),
-                    setDataOption
+                    (uint) (numElements * elementSize)
                 );
             }
         }
@@ -740,8 +736,7 @@ namespace MoonWorks.Graphics
         public unsafe void SetBufferData<T>(
             Buffer buffer,
             T[] data,
-            uint bufferOffsetInBytes = 0,
-            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+            uint bufferOffsetInBytes = 0
         ) where T : unmanaged
         {
             SetBufferData(
@@ -749,8 +744,7 @@ namespace MoonWorks.Graphics
                 data,
                 bufferOffsetInBytes,
                 0,
-                (uint) data.Length,
-                setDataOption
+                (uint) data.Length
             );
         }
 
