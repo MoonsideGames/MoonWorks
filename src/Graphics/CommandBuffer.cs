@@ -669,6 +669,92 @@ namespace MoonWorks.Graphics
         }
 
         /// <summary>
+        /// Copies arbitrary data into a buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer to copy into.</param>
+        /// <param name="dataPtr">Pointer to the data to copy into the buffer.</param>
+        /// <param name="bufferOffsetInBytes">Specifies where in the buffer to copy data.</param>
+        /// <param name="dataLengthInBytes">The length of data that should be copied.</param>
+        /// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+        public void SetBufferData(
+            Buffer buffer,
+            IntPtr dataPtr,
+            uint bufferOffsetInBytes,
+            uint dataLengthInBytes,
+            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+        ) {
+            Refresh.Refresh_SetBufferData(
+                Device.Handle,
+                Handle,
+                buffer.Handle,
+                bufferOffsetInBytes,
+                dataPtr,
+                dataLengthInBytes,
+                setDataOption
+            );
+        }
+
+        /// <summary>
+        /// Copies array data into a buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer to copy to.</param>
+        /// <param name="data">The array to copy from.</param>
+        /// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
+        /// <param name="startElement">The index of the first element to copy from the array.</param>
+        /// <param name="numElements">How many elements to copy.</param>
+        /// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+        public unsafe void SetBufferData<T>(
+            Buffer buffer,
+            T[] data,
+            uint bufferOffsetInBytes,
+            uint startElement,
+            uint numElements,
+            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+        ) where T : unmanaged
+        {
+            var elementSize = Marshal.SizeOf<T>();
+
+            fixed (T* ptr = &data[0])
+            {
+                var dataPtr = ptr + (startElement * elementSize);
+
+                Refresh.Refresh_SetBufferData(
+                    Device.Handle,
+                    Handle,
+                    buffer.Handle,
+                    bufferOffsetInBytes,
+                    (IntPtr) dataPtr,
+                    (uint) (numElements * elementSize),
+                    setDataOption
+                );
+            }
+        }
+
+        /// <summary>
+        /// Copies array data into a buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer to copy to.</param>
+        /// <param name="data">The array to copy from.</param>
+        /// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
+        /// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+        public unsafe void SetBufferData<T>(
+            Buffer buffer,
+            T[] data,
+            uint bufferOffsetInBytes = 0,
+            Refresh.SetDataOptions setDataOption = Refresh.SetDataOptions.Deferred
+        ) where T : unmanaged
+        {
+            SetBufferData(
+                buffer,
+                data,
+                bufferOffsetInBytes,
+                0,
+                (uint) data.Length,
+                setDataOption
+            );
+        }
+
+        /// <summary>
         /// Asynchronously copies data into a texture.
         /// </summary>
         /// <param name="textureSlice">The texture slice to copy into.</param>
