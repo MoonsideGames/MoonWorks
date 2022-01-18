@@ -212,6 +212,29 @@ namespace MoonWorks.Graphics
         }
 
         /// <summary>
+        /// Dispatches compute work.
+        /// </summary>
+        /// <param name="groupCountX"></param>
+        /// <param name="groupCountY"></param>
+        /// <param name="groupCountZ"></param>
+        /// <param name="computeParamOffset"></param>
+        public void DispatchCompute(
+            uint groupCountX,
+            uint groupCountY,
+            uint groupCountZ,
+            uint computeParamOffset
+        ) {
+            Refresh.Refresh_DispatchCompute(
+                Device.Handle,
+                Handle,
+                groupCountX,
+                groupCountY,
+                groupCountZ,
+                computeParamOffset
+            );
+        }
+
+        /// <summary>
         /// Binds a graphics pipeline so that rendering work may be performed.
         /// </summary>
         /// <param name="graphicsPipeline">The graphics pipeline to bind.</param>
