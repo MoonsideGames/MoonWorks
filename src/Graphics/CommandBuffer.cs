@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using MoonWorks.Math;
+using MoonWorks.Window;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -580,15 +581,16 @@ namespace MoonWorks.Graphics
         }
 
         /// <summary>
-        /// Prepares a texture to be presented to the screen.
+        /// Prepares a texture to be presented to a window.
         /// </summary>
         /// <param name="texture">The texture to present.</param>
-        /// <param name="destinationRectangle">The area of the screen to present to.</param>
+        /// <param name="destinationRectangle">The area of the window to present to.</param>
         /// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
         public void QueuePresent(
             in Texture texture,
             in Rect destinationRectangle,
-            Filter filter
+            Filter filter,
+			OSWindow window
         ) {
             var refreshRect = destinationRectangle.ToRefresh();
             var refreshTextureSlice = new Refresh.TextureSlice
@@ -611,20 +613,22 @@ namespace MoonWorks.Graphics
                 Handle,
                 refreshTextureSlice,
                 refreshRect,
-                (Refresh.Filter)filter
+                (Refresh.Filter)filter,
+				window.Handle
             );
         }
 
         /// <summary>
-        /// Prepares a texture slice to be presented to the screen.
+        /// Prepares a texture slice to be presented to a window.
         /// </summary>
         /// <param name="textureSlice">The texture slice to present.</param>
-        /// <param name="destinationRectangle">The area of the screen to present to.</param>
+        /// <param name="destinationRectangle">The area of the window to present to.</param>
         /// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
         public void QueuePresent(
             in TextureSlice textureSlice,
             in Rect destinationRectangle,
-            Filter filter
+            Filter filter,
+			OSWindow window
         ) {
             var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
             var refreshRect = destinationRectangle.ToRefresh();
@@ -634,38 +638,42 @@ namespace MoonWorks.Graphics
                 Handle,
                 refreshTextureSlice,
                 refreshRect,
-                (Refresh.Filter) filter
+                (Refresh.Filter) filter,
+				window.Handle
             );
         }
 
         /// <summary>
-        /// Prepares a texture slice to be presented to the screen.
+        /// Prepares a texture slice to be presented to a window.
         /// This particular variant of this method will present to the entire window area.
         /// </summary>
         /// <param name="textureSlice">The texture slice to present.</param>
         /// <param name="filter">The filter to use when the texture size differs from the window size.</param>
         public void QueuePresent(
             in TextureSlice textureSlice,
-            Filter filter
+            Filter filter,
+			OSWindow window
         ) {
             Refresh.Refresh_QueuePresent(
                 Device.Handle,
                 Handle,
                 textureSlice.ToRefreshTextureSlice(),
                 IntPtr.Zero,
-                (Refresh.Filter) filter
+                (Refresh.Filter) filter,
+				window.Handle
             );
         }
 
         /// <summary>
-        /// Prepares a texture to be presented to the screen.
+        /// Prepares a texture to be presented to a window.
         /// This particular variant of this method will present to the entire window area.
         /// </summary>
         /// <param name="texture">The texture to present.</param>
         /// <param name="filter">The filter to use when the texture size differs from the window size.</param>
         public void QueuePresent(
             Texture texture,
-            Filter filter
+            Filter filter,
+			OSWindow window
         ) {
             var refreshTextureSlice = new Refresh.TextureSlice
             {
@@ -687,7 +695,8 @@ namespace MoonWorks.Graphics
                 Handle,
                 refreshTextureSlice,
                 IntPtr.Zero,
-                (Refresh.Filter) filter
+                (Refresh.Filter) filter,
+				window.Handle
             );
         }
 
