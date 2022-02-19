@@ -133,6 +133,8 @@ namespace MoonWorks
                     var alpha = accumulatedElapsedTime / timestep;
 
                     Draw(timestep, alpha);
+
+					GraphicsDevice.SubmitDestroyCommandBuffer();
                 }
             }
         }

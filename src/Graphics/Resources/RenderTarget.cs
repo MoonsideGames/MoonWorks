@@ -11,7 +11,7 @@ namespace MoonWorks.Graphics
         public TextureSlice TextureSlice { get; }
         public TextureFormat Format => TextureSlice.Texture.Format;
 
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
+        protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
 
         /// <summary>
         /// Creates a render target backed by a texture.

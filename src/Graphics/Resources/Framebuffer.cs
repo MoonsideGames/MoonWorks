@@ -9,7 +9,7 @@ namespace MoonWorks.Graphics
     /// </summary>
     public class Framebuffer : GraphicsResource
     {
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyFramebuffer;
+        protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyFramebuffer;
 
         public RenderTarget DepthStencilTarget { get; }
 

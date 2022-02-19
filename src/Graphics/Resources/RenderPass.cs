@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
     /// </summary>
     public class RenderPass : GraphicsResource
     {
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderPass;
+        protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderPass;
 
         /// <summary>
         /// Creates a render pass using color target descriptions.

@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
     /// </summary>
     public class GraphicsPipeline : GraphicsResource
     {
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
+        protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 
         public ShaderStageState VertexShaderState { get; }
         public ShaderStageState FragmentShaderState { get; }

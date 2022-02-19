@@ -17,7 +17,7 @@ namespace MoonWorks.Graphics
         public SampleCount SampleCount { get; }
         public TextureUsageFlags UsageFlags { get; }
 
-        protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
+        protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
         /// <summary>
         /// Loads a PNG from a file path.
