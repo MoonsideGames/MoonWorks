@@ -134,9 +134,12 @@ namespace MoonWorks
 
                     Draw(timestep, alpha);
 
-					GraphicsDevice.SubmitDestroyCommandBuffer();
                 }
+
+				GraphicsDevice.SubmitDestroyCommandBuffer();
             }
+
+			GraphicsDevice.Dispose();
         }
 
         private void HandleSDLEvents()

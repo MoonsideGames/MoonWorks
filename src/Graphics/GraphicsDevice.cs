@@ -101,16 +101,18 @@ namespace MoonWorks.Graphics
                 {
                     lock (resources)
                     {
-                        foreach (var resource in resources)
-                        {
-                            if (resource.TryGetTarget(out var target))
+						for (var i = resources.Count - 1; i >= 0; i--)
+						{
+							var resource = resources[i];
+							if (resource.TryGetTarget(out var target))
                             {
                                 target.Dispose();
                             }
-                        }
+						}
                         resources.Clear();
                     }
 
+					SubmitDestroyCommandBuffer();
                     Refresh.Refresh_DestroyDevice(Handle);
                 }
 
@@ -118,7 +120,6 @@ namespace MoonWorks.Graphics
             }
         }
 
-        // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
         ~GraphicsDevice()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
