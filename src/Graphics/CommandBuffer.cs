@@ -29,6 +29,105 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="renderPass">The render pass object to begin.</param>
 		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
+		public unsafe void BeginRenderPass(
+			RenderPass renderPass,
+			Framebuffer framebuffer
+		)
+		{
+			var renderArea = new Rect
+			{
+				X = 0,
+				Y = 0,
+				W = (int) framebuffer.Width,
+				H = (int) framebuffer.Height
+			};
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				renderPass.Handle,
+				framebuffer.Handle,
+				renderArea.ToRefresh(),
+				IntPtr.Zero,
+				0,
+				IntPtr.Zero
+			);
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="renderPass">The render pass object to begin.</param>
+		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
+		/// <param name="renderArea">The screen area of the render pass.</param>
+		public unsafe void BeginRenderPass(
+			RenderPass renderPass,
+			Framebuffer framebuffer,
+			in Rect renderArea
+		)
+		{
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				renderPass.Handle,
+				framebuffer.Handle,
+				renderArea.ToRefresh(),
+				IntPtr.Zero,
+				0,
+				IntPtr.Zero
+			);
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="renderPass">The render pass object to begin.</param>
+		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
+		/// <param name="renderArea">The screen area of the render pass.</param>
+		/// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
+		public unsafe void BeginRenderPass(
+			RenderPass renderPass,
+			Framebuffer framebuffer,
+			in Rect renderArea,
+			params Vector4[] clearColors
+		)
+		{
+			Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
+
+			for (var i = 0; i < clearColors.Length; i++)
+			{
+				colors[i] = new Refresh.Vec4
+				{
+					x = clearColors[i].X,
+					y = clearColors[i].Y,
+					z = clearColors[i].Z,
+					w = clearColors[i].W
+				};
+			}
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				renderPass.Handle,
+				framebuffer.Handle,
+				renderArea.ToRefresh(),
+				(IntPtr) colors,
+				(uint) clearColors.Length,
+				IntPtr.Zero
+			);
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="renderPass">The render pass object to begin.</param>
+		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
 		/// <param name="renderArea">The screen area of the render pass.</param>
 		/// <param name="depthStencilClearValue">Clear values for the depth/stencil buffer. This is ignored if the render pass does not clear.</param>
 		public unsafe void BeginRenderPass(
@@ -90,73 +189,6 @@ namespace MoonWorks.Graphics
 				(IntPtr) colors,
 				(uint) clearColors.Length,
 				depthStencilClearValue.ToRefresh()
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		/// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea,
-			params Vector4[] clearColors
-		)
-		{
-			Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
-
-			for (var i = 0; i < clearColors.Length; i++)
-			{
-				colors[i] = new Refresh.Vec4
-				{
-					x = clearColors[i].X,
-					y = clearColors[i].Y,
-					z = clearColors[i].Z,
-					w = clearColors[i].W
-				};
-			}
-
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				(IntPtr) colors,
-				(uint) clearColors.Length,
-				IntPtr.Zero
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea
-		)
-		{
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				IntPtr.Zero,
-				0,
-				IntPtr.Zero
 			);
 		}
 
@@ -602,6 +634,65 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Prepares a texture to be presented to a window.
+		/// This particular variant of this method will present to the entire window area.
+		/// </summary>
+		/// <param name="texture">The texture to present.</param>
+		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
+		public void QueuePresent(
+			Texture texture,
+			Filter filter,
+			OSWindow window
+		)
+		{
+			var refreshTextureSlice = new Refresh.TextureSlice
+			{
+				texture = texture.Handle,
+				rectangle = new Refresh.Rect
+				{
+					x = 0,
+					y = 0,
+					w = (int) texture.Width,
+					h = (int) texture.Height
+				},
+				layer = 0,
+				level = 0,
+				depth = 0
+			};
+
+			Refresh.Refresh_QueuePresent(
+				Device.Handle,
+				Handle,
+				refreshTextureSlice,
+				IntPtr.Zero,
+				(Refresh.Filter) filter,
+				window.Handle
+			);
+		}
+
+		/// <summary>
+		/// Prepares a texture slice to be presented to a window.
+		/// This particular variant of this method will present to the entire window area.
+		/// </summary>
+		/// <param name="textureSlice">The texture slice to present.</param>
+		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
+		public void QueuePresent(
+			in TextureSlice textureSlice,
+			Filter filter,
+			OSWindow window
+		)
+		{
+			Refresh.Refresh_QueuePresent(
+				Device.Handle,
+				Handle,
+				textureSlice.ToRefreshTextureSlice(),
+				IntPtr.Zero,
+				(Refresh.Filter) filter,
+				window.Handle
+			);
+		}
+
+		/// <summary>
+		/// Prepares a texture to be presented to a window.
 		/// </summary>
 		/// <param name="texture">The texture to present.</param>
 		/// <param name="destinationRectangle">The area of the window to present to.</param>
@@ -666,61 +757,24 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Prepares a texture slice to be presented to a window.
-		/// This particular variant of this method will present to the entire window area.
+		/// Copies array data into a buffer.
 		/// </summary>
-		/// <param name="textureSlice">The texture slice to present.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
-		public void QueuePresent(
-			in TextureSlice textureSlice,
-			Filter filter,
-			OSWindow window
-		)
+		/// <param name="buffer">The buffer to copy to.</param>
+		/// <param name="data">The array to copy from.</param>
+		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
+		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+		public unsafe void SetBufferData<T>(
+			Buffer buffer,
+			T[] data,
+			uint bufferOffsetInBytes = 0
+		) where T : unmanaged
 		{
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				textureSlice.ToRefreshTextureSlice(),
-				IntPtr.Zero,
-				(Refresh.Filter) filter,
-				window.Handle
-			);
-		}
-
-		/// <summary>
-		/// Prepares a texture to be presented to a window.
-		/// This particular variant of this method will present to the entire window area.
-		/// </summary>
-		/// <param name="texture">The texture to present.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
-		public void QueuePresent(
-			Texture texture,
-			Filter filter,
-			OSWindow window
-		)
-		{
-			var refreshTextureSlice = new Refresh.TextureSlice
-			{
-				texture = texture.Handle,
-				rectangle = new Refresh.Rect
-				{
-					x = 0,
-					y = 0,
-					w = (int) texture.Width,
-					h = (int) texture.Height
-				},
-				layer = 0,
-				level = 0,
-				depth = 0
-			};
-
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				refreshTextureSlice,
-				IntPtr.Zero,
-				(Refresh.Filter) filter,
-				window.Handle
+			SetBufferData(
+				buffer,
+				data,
+				bufferOffsetInBytes,
+				0,
+				(uint) data.Length
 			);
 		}
 
@@ -784,57 +838,16 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Copies array data into a buffer.
-		/// </summary>
-		/// <param name="buffer">The buffer to copy to.</param>
-		/// <param name="data">The array to copy from.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			T[] data,
-			uint bufferOffsetInBytes = 0
-		) where T : unmanaged
-		{
-			SetBufferData(
-				buffer,
-				data,
-				bufferOffsetInBytes,
-				0,
-				(uint) data.Length
-			);
-		}
-
-		/// <summary>
 		/// Asynchronously copies data into a texture.
 		/// </summary>
-		/// <param name="textureSlice">The texture slice to copy into.</param>
-		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-		public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
+		/// <param name="data">An array of data to copy into the texture.</param>
+		public unsafe void SetTextureData<T>(Texture texture, T[] data) where T : unmanaged
 		{
-			Refresh.Refresh_SetTextureData(
-				Device.Handle,
-				Handle,
-				textureSlice.ToRefreshTextureSlice(),
-				dataPtr,
-				dataLengthInBytes
-			);
+			SetTextureData(new TextureSlice(texture), data);
 		}
 
 		/// <summary>
-		/// Asynchronously copies data into a texture.
-		/// This variant copies into the entire texture.
-		/// </summary>
-		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-		public void SetTextureData(Texture texture, IntPtr dataPtr, uint dataLengthInBytes)
-		{
-			SetTextureData(new TextureSlice(texture), dataPtr, dataLengthInBytes);
-		}
-
-		/// <summary>
-		/// Asynchronously copies data into the texture.
+		/// Asynchronously copies data into a texture slice.
 		/// </summary>
 		/// <param name="textureSlice">The texture slice to copy into.</param>
 		/// <param name="data">An array of data to copy into the texture.</param>
@@ -855,13 +868,30 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Asynchronously copies data into a texture.
-		/// This variant copies data into the entire texture.
+		/// Asynchronously copies data into a texture slice.
 		/// </summary>
-		/// <param name="data">An array of data to copy into the texture.</param>
-		public unsafe void SetTextureData<T>(Texture texture, T[] data) where T : unmanaged
+		/// <param name="textureSlice">The texture slice to copy into.</param>
+		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+		public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
 		{
-			SetTextureData(new TextureSlice(texture), data);
+			Refresh.Refresh_SetTextureData(
+				Device.Handle,
+				Handle,
+				textureSlice.ToRefreshTextureSlice(),
+				dataPtr,
+				dataLengthInBytes
+			);
+		}
+
+		/// <summary>
+		/// Asynchronously copies data into a texture.
+		/// </summary>
+		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
+		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
+		public void SetTextureData(Texture texture, IntPtr dataPtr, uint dataLengthInBytes)
+		{
+			SetTextureData(new TextureSlice(texture), dataPtr, dataLengthInBytes);
 		}
 
 		/// <summary>

@@ -16,8 +16,7 @@ namespace MoonWorks.Graphics
 		public GraphicsDevice(
 			IntPtr deviceWindowHandle,
 			Refresh.PresentMode presentMode,
-			bool debugMode,
-			int initialCommandBufferPoolSize = 4
+			bool debugMode
 		)
 		{
 			var presentationParameters = new Refresh.PresentationParameters

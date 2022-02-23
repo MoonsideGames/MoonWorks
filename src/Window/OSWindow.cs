@@ -7,6 +7,8 @@ namespace MoonWorks.Window
 	{
 		internal IntPtr Handle { get; }
 		public ScreenMode ScreenMode { get; }
+		public uint Width { get; }
+		public uint Height { get; }
 
 		private bool IsDisposed;
 
@@ -33,6 +35,9 @@ namespace MoonWorks.Window
 				(int) windowCreateInfo.WindowHeight,
 				windowFlags
 			);
+
+			Width = windowCreateInfo.WindowWidth;
+			Height = windowCreateInfo.WindowHeight;
 		}
 
 		public void ChangeScreenMode(ScreenMode screenMode)

@@ -17,6 +17,8 @@ namespace MoonWorks.Graphics
 		public IEnumerable<RenderTarget> ColorTargets => colorTargets;
 
 		public RenderPass RenderPass { get; }
+		public uint Width { get; }
+		public uint Height { get; }
 
 		/// <summary>
 		/// Creates a framebuffer.
@@ -76,6 +78,9 @@ namespace MoonWorks.Graphics
 			}
 
 			RenderPass = renderPass;
+
+			Width = width;
+			Height = height;
 		}
 	}
 }
