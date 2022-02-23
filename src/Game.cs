@@ -139,7 +139,13 @@ namespace MoonWorks
 				GraphicsDevice.SubmitDestroyCommandBuffer();
             }
 
+			OnDestroy();
+
+			AudioDevice.Dispose();
 			GraphicsDevice.Dispose();
+			Window.Dispose();
+
+			SDL.SDL_Quit();
         }
 
         private void HandleSDLEvents()
@@ -167,6 +173,9 @@ namespace MoonWorks
 
 		// alpha refers to a percentage value between the current and next state
         protected abstract void Draw(TimeSpan dt, double alpha);
+
+		// Clean up any objects you created in this function
+		protected abstract void OnDestroy();
 
         private void HandleTextInput(SDL2.SDL.SDL_Event evt)
         {

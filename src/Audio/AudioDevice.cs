@@ -240,17 +240,20 @@ namespace MoonWorks.Audio
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects)
-                    foreach (var weakReference in streamingSounds)
-                    {
-                        if (weakReference.TryGetTarget(out var streamingSound))
+					for (var i = streamingSounds.Count - 1; i >= 0; i--)
+					{
+						var weakReference = streamingSounds[i];
+
+						if (weakReference.TryGetTarget(out var streamingSound))
                         {
                             streamingSound.Dispose();
                         }
-                    }
-                    streamingSounds.Clear();
+					}
+					streamingSounds.Clear();
                 }
 
+				FAudio.FAudioVoice_DestroyVoice(ReverbVoice);
+				FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
                 FAudio.FAudio_Release(Handle);
 
                 IsDisposed = true;

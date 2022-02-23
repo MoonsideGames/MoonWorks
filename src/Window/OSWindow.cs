@@ -3,10 +3,12 @@ using SDL2;
 
 namespace MoonWorks.Window
 {
-    public class OSWindow
+    public class OSWindow : IDisposable
     {
-        internal IntPtr Handle { get; }
+		internal IntPtr Handle { get; }
         public ScreenMode ScreenMode { get; }
+
+		private bool IsDisposed;
 
         public OSWindow(WindowCreateInfo windowCreateInfo)
         {
@@ -59,5 +61,33 @@ namespace MoonWorks.Window
         {
             SDL.SDL_SetWindowSize(Handle, (int)width, (int)height);
         }
-    }
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				if (disposing)
+				{
+					// dispose managed state (managed objects)
+				}
+
+				SDL.SDL_DestroyWindow(Handle);
+
+				IsDisposed = true;
+			}
+		}
+
+		~OSWindow()
+		{
+		    // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		    Dispose(disposing: false);
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+	}
 }
