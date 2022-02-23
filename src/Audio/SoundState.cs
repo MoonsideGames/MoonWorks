@@ -1,9 +1,9 @@
-namespace MoonWorks.Audio
+﻿namespace MoonWorks.Audio
 {
-    public enum SoundState
-    {
-        Playing,
-        Paused,
-        Stopped
-    }
+	public enum SoundState
+	{
+		Playing,
+		Paused,
+		Stopped
+	}
 }

@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using MoonWorks.Math;
 
 namespace MoonWorks.Audio
 {
-    public class AudioListener : AudioResource
-    {
-        internal FAudio.F3DAUDIO_LISTENER listenerData;
+	public class AudioListener : AudioResource
+	{
+		internal FAudio.F3DAUDIO_LISTENER listenerData;
 
 		public Vector3 Forward
 		{
@@ -80,18 +80,18 @@ namespace MoonWorks.Audio
 			}
 		}
 
-        public AudioListener(AudioDevice device) : base(device)
-        {
-            listenerData = new FAudio.F3DAUDIO_LISTENER();
-            Forward = Vector3.Forward;
-            Position = Vector3.Zero;
-            Up = Vector3.Up;
-            Velocity = Vector3.Zero;
+		public AudioListener(AudioDevice device) : base(device)
+		{
+			listenerData = new FAudio.F3DAUDIO_LISTENER();
+			Forward = Vector3.Forward;
+			Position = Vector3.Zero;
+			Up = Vector3.Up;
+			Velocity = Vector3.Zero;
 
-            /* Unexposed variables, defaults based on XNA behavior */
+			/* Unexposed variables, defaults based on XNA behavior */
 			listenerData.pCone = IntPtr.Zero;
-        }
+		}
 
-        protected override void Destroy() { }
-    }
+		protected override void Destroy() { }
+	}
 }

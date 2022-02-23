@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -104,7 +104,7 @@ namespace MoonWorks.Graphics
 		internal static float Convert(ushort value)
 		{
 			uint rst;
-			uint mantissa = (uint)(value & 1023);
+			uint mantissa = (uint) (value & 1023);
 			uint exp = 0xfffffff2;
 
 			if ((value & -33792) == 0)

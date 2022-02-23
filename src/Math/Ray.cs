@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -70,8 +70,8 @@ namespace MoonWorks.Math
 
 		public bool Equals(Ray other)
 		{
-			return (	this.Position.Equals(other.Position) &&
-					this.Direction.Equals(other.Direction)	);
+			return (this.Position.Equals(other.Position) &&
+					this.Direction.Equals(other.Direction));
 		}
 
 
@@ -124,8 +124,8 @@ namespace MoonWorks.Math
 					tMaxY = temp;
 				}
 
-				if (	(tMin.HasValue && tMin > tMaxY) ||
-					(tMax.HasValue && tMinY > tMax)	)
+				if ((tMin.HasValue && tMin > tMaxY) ||
+					(tMax.HasValue && tMinY > tMax))
 				{
 					return null;
 				}
@@ -153,8 +153,8 @@ namespace MoonWorks.Math
 					tMaxZ = temp;
 				}
 
-				if (	(tMin.HasValue && tMin > tMaxZ) ||
-					(tMax.HasValue && tMinZ > tMax)	)
+				if ((tMin.HasValue && tMin > tMaxZ) ||
+					(tMax.HasValue && tMinZ > tMax))
 				{
 					return null;
 				}

@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -316,7 +316,8 @@ namespace MoonWorks.Math
 			float m21, float m22, float m23, float m24,
 			float m31, float m32, float m33, float m34,
 			float m41, float m42, float m43, float m44
-		) {
+		)
+		{
 			M11 = m11;
 			M12 = m12;
 			M13 = m13;
@@ -350,7 +351,8 @@ namespace MoonWorks.Math
 			out Vector3 scale,
 			out Quaternion rotation,
 			out Vector3 translation
-		) {
+		)
+		{
 			translation.X = M41;
 			translation.Y = M42;
 			translation.Z = M43;
@@ -363,9 +365,9 @@ namespace MoonWorks.Math
 			scale.Y = ys * (float) System.Math.Sqrt(M21 * M21 + M22 * M22 + M23 * M23);
 			scale.Z = zs * (float) System.Math.Sqrt(M31 * M31 + M32 * M32 + M33 * M33);
 
-			if (	MathHelper.WithinEpsilon(scale.X, 0.0f) ||
+			if (MathHelper.WithinEpsilon(scale.X, 0.0f) ||
 				MathHelper.WithinEpsilon(scale.Y, 0.0f) ||
-				MathHelper.WithinEpsilon(scale.Z, 0.0f)	)
+				MathHelper.WithinEpsilon(scale.Z, 0.0f))
 			{
 				rotation = Quaternion.Identity;
 				return false;
@@ -413,7 +415,7 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public bool Equals(Matrix4x4 other)
 		{
-			return (	M11 == other.M11 &&
+			return (M11 == other.M11 &&
 					M12 == other.M12 &&
 					M13 == other.M13 &&
 					M14 == other.M14 &&
@@ -428,7 +430,7 @@ namespace MoonWorks.Math
 					M41 == other.M41 &&
 					M42 == other.M42 &&
 					M43 == other.M43 &&
-					M44 == other.M44	);
+					M44 == other.M44);
 		}
 
 		/// <summary>
@@ -555,7 +557,8 @@ namespace MoonWorks.Math
 			Vector3 cameraPosition,
 			Vector3 cameraUpVector,
 			Nullable<Vector3> cameraForwardVector
-		) {
+		)
+		{
 			Matrix4x4 result;
 
 			// Delegate to the other overload of the function to do the work
@@ -584,7 +587,8 @@ namespace MoonWorks.Math
 			ref Vector3 cameraUpVector,
 			Vector3? cameraForwardVector,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			Vector3 vector;
 			Vector3 vector2;
 			Vector3 vector3;
@@ -642,7 +646,8 @@ namespace MoonWorks.Math
 			Vector3 rotateAxis,
 			Nullable<Vector3> cameraForwardVector,
 			Nullable<Vector3> objectForwardVector
-		) {
+		)
+		{
 			Matrix4x4 result;
 			CreateConstrainedBillboard(
 				ref objectPosition,
@@ -671,7 +676,8 @@ namespace MoonWorks.Math
 			Vector3? cameraForwardVector,
 			Vector3? objectForwardVector,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			float num;
 			Vector3 vector;
 			Vector3 vector2;
@@ -777,7 +783,8 @@ namespace MoonWorks.Math
 			ref Vector3 axis,
 			float angle,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			float x = axis.X;
 			float y = axis.Y;
 			float z = axis.Z;
@@ -883,7 +890,8 @@ namespace MoonWorks.Math
 			float pitch,
 			float roll,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			Quaternion quaternion;
 			Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll, out quaternion);
 			CreateFromQuaternion(ref quaternion, out result);
@@ -900,7 +908,8 @@ namespace MoonWorks.Math
 			Vector3 cameraPosition,
 			Vector3 cameraTarget,
 			Vector3 cameraUpVector
-		) {
+		)
+		{
 			Matrix4x4 matrix;
 			CreateLookAt(ref cameraPosition, ref cameraTarget, ref cameraUpVector, out matrix);
 			return matrix;
@@ -918,7 +927,8 @@ namespace MoonWorks.Math
 			ref Vector3 cameraTarget,
 			ref Vector3 cameraUpVector,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			Vector3 vectorA = Vector3.Normalize(cameraPosition - cameraTarget);
 			Vector3 vectorB = Vector3.Normalize(Vector3.Cross(cameraUpVector, vectorA));
 			Vector3 vectorC = Vector3.Cross(vectorA, vectorB);
@@ -953,7 +963,8 @@ namespace MoonWorks.Math
 			float height,
 			float zNearPlane,
 			float zFarPlane
-		) {
+		)
+		{
 			Matrix4x4 matrix;
 			CreateOrthographic(width, height, zNearPlane, zFarPlane, out matrix);
 			return matrix;
@@ -973,7 +984,8 @@ namespace MoonWorks.Math
 			float zNearPlane,
 			float zFarPlane,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			result.M11 = 2f / width;
 			result.M12 = result.M13 = result.M14 = 0f;
 			result.M22 = 2f / height;
@@ -1002,7 +1014,8 @@ namespace MoonWorks.Math
 			float top,
 			float zNearPlane,
 			float zFarPlane
-		) {
+		)
+		{
 			Matrix4x4 matrix;
 			CreateOrthographicOffCenter(
 				left,
@@ -1034,7 +1047,8 @@ namespace MoonWorks.Math
 			float zNearPlane,
 			float zFarPlane,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			result.M11 = (float) (2.0 / ((double) right - (double) left));
 			result.M12 = 0.0f;
 			result.M13 = 0.0f;
@@ -1075,7 +1089,8 @@ namespace MoonWorks.Math
 			float height,
 			float nearPlaneDistance,
 			float farPlaneDistance
-		) {
+		)
+		{
 			Matrix4x4 matrix;
 			CreatePerspective(width, height, nearPlaneDistance, farPlaneDistance, out matrix);
 			return matrix;
@@ -1095,7 +1110,8 @@ namespace MoonWorks.Math
 			float nearPlaneDistance,
 			float farPlaneDistance,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			if (nearPlaneDistance <= 0f)
 			{
 				throw new ArgumentException("nearPlaneDistance <= 0");
@@ -1135,7 +1151,8 @@ namespace MoonWorks.Math
 			float aspectRatio,
 			float nearPlaneDistance,
 			float farPlaneDistance
-		) {
+		)
+		{
 			Matrix4x4 result;
 			CreatePerspectiveFieldOfView(
 				fieldOfView,
@@ -1161,7 +1178,8 @@ namespace MoonWorks.Math
 			float nearPlaneDistance,
 			float farPlaneDistance,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			if ((fieldOfView <= 0f) || (fieldOfView >= 3.141593f))
 			{
 				throw new ArgumentException("fieldOfView <= 0 or >= PI");
@@ -1210,7 +1228,8 @@ namespace MoonWorks.Math
 			float top,
 			float nearPlaneDistance,
 			float farPlaneDistance
-		) {
+		)
+		{
 			Matrix4x4 result;
 			CreatePerspectiveOffCenter(
 				left,
@@ -1242,7 +1261,8 @@ namespace MoonWorks.Math
 			float nearPlaneDistance,
 			float farPlaneDistance,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			if (nearPlaneDistance <= 0f)
 			{
 				throw new ArgumentException("nearPlaneDistance <= 0");
@@ -1408,7 +1428,8 @@ namespace MoonWorks.Math
 			float yScale,
 			float zScale,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			result.M11 = xScale;
 			result.M12 = 0;
 			result.M13 = 0;
@@ -1527,7 +1548,8 @@ namespace MoonWorks.Math
 			float xPosition,
 			float yPosition,
 			float zPosition
-		) {
+		)
+		{
 			Matrix4x4 result;
 			CreateTranslation(xPosition, yPosition, zPosition, out result);
 			return result;
@@ -1582,7 +1604,8 @@ namespace MoonWorks.Math
 			float yPosition,
 			float zPosition,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			result.M11 = 1;
 			result.M12 = 0;
 			result.M13 = 0;
@@ -1672,7 +1695,8 @@ namespace MoonWorks.Math
 			ref Vector3 forward,
 			ref Vector3 up,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			Vector3 x, y, z;
 			Vector3.Normalize(ref forward, out z);
 			Vector3.Cross(ref forward, ref up, out x);
@@ -2069,7 +2093,8 @@ namespace MoonWorks.Math
 			ref Matrix4x4 matrix2,
 			float amount,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			result.M11 = matrix1.M11 + ((matrix2.M11 - matrix1.M11) * amount);
 			result.M12 = matrix1.M12 + ((matrix2.M12 - matrix1.M12) * amount);
 			result.M13 = matrix1.M13 + ((matrix2.M13 - matrix1.M13) * amount);
@@ -2097,7 +2122,8 @@ namespace MoonWorks.Math
 		public static Matrix4x4 Multiply(
 			Matrix4x4 matrix1,
 			Matrix4x4 matrix2
-		) {
+		)
+		{
 			float m11 = (
 				(matrix1.M11 * matrix2.M11) +
 				(matrix1.M12 * matrix2.M21) +
@@ -2548,7 +2574,8 @@ namespace MoonWorks.Math
 			ref Matrix4x4 value,
 			ref Quaternion rotation,
 			out Matrix4x4 result
-		) {
+		)
+		{
 			Matrix4x4 rotMatrix = CreateFromQuaternion(rotation);
 			Multiply(ref value, ref rotMatrix, out result);
 		}

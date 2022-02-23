@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -98,7 +98,8 @@ namespace MoonWorks.Math
 			float value3,
 			float amount1,
 			float amount2
-		) {
+		)
+		{
 			return value1 + (value2 - value1) * amount1 + (value3 - value1) * amount2;
 		}
 
@@ -117,7 +118,8 @@ namespace MoonWorks.Math
 			float value3,
 			float value4,
 			float amount
-		) {
+		)
+		{
 			/* Using formula from http://www.mvps.org/directx/articles/catmull/
 			 * Internally using doubles not to lose precision.
 			 */
@@ -184,7 +186,8 @@ namespace MoonWorks.Math
 			float value2,
 			float tangent2,
 			float amount
-		) {
+		)
+		{
 			/* All transformed to double not to lose precision
 			 * Otherwise, for high numbers of param:amount the result is NaN instead
 			 * of Infinity.

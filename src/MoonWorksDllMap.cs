@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -42,7 +42,7 @@ namespace MoonWorks
 			}
 			else if (OperatingSystem.IsMacOS())
 			{
-				return  "osx";
+				return "osx";
 			}
 			else if (OperatingSystem.IsLinux())
 			{
@@ -67,7 +67,8 @@ namespace MoonWorks
 			string libraryName,
 			Assembly assembly,
 			DllImportSearchPath? dllImportSearchPath
-		) {
+		)
+		{
 			string mappedName;
 			if (!mapDictionary.TryGetValue(libraryName, out mappedName))
 			{

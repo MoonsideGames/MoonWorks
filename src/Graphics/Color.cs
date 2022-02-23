@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -41,7 +41,7 @@ namespace MoonWorks.Graphics
 			{
 				unchecked
 				{
-					return (byte)(this.packedValue);
+					return (byte) (this.packedValue);
 				}
 			}
 			set
@@ -59,12 +59,12 @@ namespace MoonWorks.Graphics
 			{
 				unchecked
 				{
-					return (byte)(this.packedValue >> 8);
+					return (byte) (this.packedValue >> 8);
 				}
 			}
 			set
 			{
-				this.packedValue = (this.packedValue & 0xffff00ff) | ((uint)value << 8);
+				this.packedValue = (this.packedValue & 0xffff00ff) | ((uint) value << 8);
 			}
 		}
 
@@ -1538,27 +1538,27 @@ namespace MoonWorks.Graphics
 			RosyBrown = new Color(0xff8f8fbc);
 			RoyalBlue = new Color(0xffe16941);
 			SaddleBrown = new Color(0xff13458b);
-			Salmon= new Color(0xff7280fa);
+			Salmon = new Color(0xff7280fa);
 			SandyBrown = new Color(0xff60a4f4);
 			SeaGreen = new Color(0xff578b2e);
 			SeaShell = new Color(0xffeef5ff);
 			Sienna = new Color(0xff2d52a0);
 			Silver = new Color(0xffc0c0c0);
 			SkyBlue = new Color(0xffebce87);
-			SlateBlue= new Color(0xffcd5a6a);
-			SlateGray= new Color(0xff908070);
-			Snow= new Color(0xfffafaff);
-			SpringGreen= new Color(0xff7fff00);
-			SteelBlue= new Color(0xffb48246);
-			Tan= new Color(0xff8cb4d2);
-			Teal= new Color(0xff808000);
-			Thistle= new Color(0xffd8bfd8);
-			Tomato= new Color(0xff4763ff);
-			Turquoise= new Color(0xffd0e040);
-			Violet= new Color(0xffee82ee);
-			Wheat= new Color(0xffb3def5);
-			White= new Color(uint.MaxValue);
-			WhiteSmoke= new Color(0xfff5f5f5);
+			SlateBlue = new Color(0xffcd5a6a);
+			SlateGray = new Color(0xff908070);
+			Snow = new Color(0xfffafaff);
+			SpringGreen = new Color(0xff7fff00);
+			SteelBlue = new Color(0xffb48246);
+			Tan = new Color(0xff8cb4d2);
+			Teal = new Color(0xff808000);
+			Thistle = new Color(0xffd8bfd8);
+			Tomato = new Color(0xff4763ff);
+			Turquoise = new Color(0xffd0e040);
+			Violet = new Color(0xffee82ee);
+			Wheat = new Color(0xffb3def5);
+			White = new Color(uint.MaxValue);
+			WhiteSmoke = new Color(0xfff5f5f5);
 			Yellow = new Color(0xff00ffff);
 			YellowGreen = new Color(0xff32cd9a);
 		}
@@ -1623,7 +1623,7 @@ namespace MoonWorks.Graphics
 			R = (byte) MathHelper.Clamp(r, Byte.MinValue, Byte.MaxValue);
 			G = (byte) MathHelper.Clamp(g, Byte.MinValue, Byte.MaxValue);
 			B = (byte) MathHelper.Clamp(b, Byte.MinValue, Byte.MaxValue);
-			A = (byte)255;
+			A = (byte) 255;
 		}
 
 		/// <summary>
@@ -1769,10 +1769,10 @@ namespace MoonWorks.Graphics
 		/// <returns><c>True</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public static bool operator ==(Color a, Color b)
 		{
-			return (	a.A == b.A &&
+			return (a.A == b.A &&
 					a.R == b.R &&
 					a.G == b.G &&
-					a.B == b.B	);
+					a.B == b.B);
 		}
 
 		/// <summary>

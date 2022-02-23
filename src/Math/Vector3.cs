@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -270,9 +270,9 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public bool Equals(Vector3 other)
 		{
-			return (	X == other.X &&
+			return (X == other.X &&
 					Y == other.Y &&
-					Z == other.Z	);
+					Z == other.Z);
 		}
 
 		/// <summary>
@@ -383,7 +383,8 @@ namespace MoonWorks.Math
 			Vector3 value3,
 			float amount1,
 			float amount2
-		) {
+		)
+		{
 			return new Vector3(
 				MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2),
 				MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2),
@@ -407,7 +408,8 @@ namespace MoonWorks.Math
 			float amount1,
 			float amount2,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2);
 			result.Y = MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2);
 			result.Z = MathHelper.Barycentric(value1.Z, value2.Z, value3.Z, amount1, amount2);
@@ -428,7 +430,8 @@ namespace MoonWorks.Math
 			Vector3 value3,
 			Vector3 value4,
 			float amount
-		) {
+		)
+		{
 			return new Vector3(
 				MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount),
 				MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount),
@@ -452,7 +455,8 @@ namespace MoonWorks.Math
 			ref Vector3 value4,
 			float amount,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount);
 			result.Y = MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount);
 			result.Z = MathHelper.CatmullRom(value1.Z, value2.Z, value3.Z, value4.Z, amount);
@@ -486,24 +490,26 @@ namespace MoonWorks.Math
 			ref Vector3 min,
 			ref Vector3 max,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.Clamp(value1.X, min.X, max.X);
 			result.Y = MathHelper.Clamp(value1.Y, min.Y, max.Y);
 			result.Z = MathHelper.Clamp(value1.Z, min.Z, max.Z);
 		}
 
 		/// <summary>
-        /// Clamps the magnitude of the specified vector.
-        /// </summary>
-        /// <param name="value">The vector to clamp.</param>
-        /// <param name="maxLength">The maximum length of the vector.</param>
-        /// <returns></returns>
+		/// Clamps the magnitude of the specified vector.
+		/// </summary>
+		/// <param name="value">The vector to clamp.</param>
+		/// <param name="maxLength">The maximum length of the vector.</param>
+		/// <returns></returns>
 		public static Vector3 ClampMagnitude(
 			Vector3 value,
 			float maxLength
-		) {
-            return (value.LengthSquared() > maxLength * maxLength) ? (Vector3.Normalize(value) * maxLength) : value;
-        }
+		)
+		{
+			return (value.LengthSquared() > maxLength * maxLength) ? (Vector3.Normalize(value) * maxLength) : value;
+		}
 
 		/// <summary>
 		/// Computes the cross product of two vectors.
@@ -583,7 +589,8 @@ namespace MoonWorks.Math
 			ref Vector3 value1,
 			ref Vector3 value2,
 			out float result
-		) {
+		)
+		{
 			result = (
 				(value1.X - value2.X) * (value1.X - value2.X) +
 				(value1.Y - value2.Y) * (value1.Y - value2.Y) +
@@ -688,7 +695,8 @@ namespace MoonWorks.Math
 			Vector3 value2,
 			Vector3 tangent2,
 			float amount
-		) {
+		)
+		{
 			Vector3 result = new Vector3();
 			Hermite(ref value1, ref tangent1, ref value2, ref tangent2, amount, out result);
 			return result;
@@ -710,7 +718,8 @@ namespace MoonWorks.Math
 			ref Vector3 tangent2,
 			float amount,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount);
 			result.Y = MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount);
 			result.Z = MathHelper.Hermite(value1.Z, tangent1.Z, value2.Z, tangent2.Z, amount);
@@ -744,7 +753,8 @@ namespace MoonWorks.Math
 			ref Vector3 value2,
 			float amount,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.Lerp(value1.X, value2.X, amount);
 			result.Y = MathHelper.Lerp(value1.Y, value2.Y, amount);
 			result.Z = MathHelper.Lerp(value1.Z, value2.Z, amount);
@@ -992,7 +1002,8 @@ namespace MoonWorks.Math
 			ref Vector3 value2,
 			float amount,
 			out Vector3 result
-		) {
+		)
+		{
 			result.X = MathHelper.SmoothStep(value1.X, value2.X, amount);
 			result.Y = MathHelper.SmoothStep(value1.Y, value2.Y, amount);
 			result.Z = MathHelper.SmoothStep(value1.Z, value2.Z, amount);
@@ -1047,7 +1058,8 @@ namespace MoonWorks.Math
 			ref Vector3 position,
 			ref Matrix4x4 matrix,
 			out Vector3 result
-		) {
+		)
+		{
 			float x = (
 				(position.X * matrix.M11) +
 				(position.Y * matrix.M21) +
@@ -1081,7 +1093,8 @@ namespace MoonWorks.Math
 			Vector3[] sourceArray,
 			ref Matrix4x4 matrix,
 			Vector3[] destinationArray
-		) {
+		)
+		{
 			Debug.Assert(
 				destinationArray.Length >= sourceArray.Length,
 				"The destination array is smaller than the source array."
@@ -1121,7 +1134,8 @@ namespace MoonWorks.Math
 			Vector3[] destinationArray,
 			int destinationIndex,
 			int length
-		) {
+		)
+		{
 			Debug.Assert(
 				sourceArray.Length - sourceIndex >= length,
 				"The source array is too small for the given sourceIndex and length."
@@ -1173,7 +1187,8 @@ namespace MoonWorks.Math
 			ref Vector3 value,
 			ref Quaternion rotation,
 			out Vector3 result
-		) {
+		)
+		{
 			float x = 2 * (rotation.Y * value.Z - rotation.Z * value.Y);
 			float y = 2 * (rotation.Z * value.X - rotation.X * value.Z);
 			float z = 2 * (rotation.X * value.Y - rotation.Y * value.X);
@@ -1193,7 +1208,8 @@ namespace MoonWorks.Math
 			Vector3[] sourceArray,
 			ref Quaternion rotation,
 			Vector3[] destinationArray
-		) {
+		)
+		{
 			Debug.Assert(
 				destinationArray.Length >= sourceArray.Length,
 				"The destination array is smaller than the source array."
@@ -1236,7 +1252,8 @@ namespace MoonWorks.Math
 			Vector3[] destinationArray,
 			int destinationIndex,
 			int length
-		) {
+		)
+		{
 			Debug.Assert(
 				sourceArray.Length - sourceIndex >= length,
 				"The source array is too small for the given sourceIndex and length."
@@ -1289,7 +1306,8 @@ namespace MoonWorks.Math
 			ref Vector3 normal,
 			ref Matrix4x4 matrix,
 			out Vector3 result
-		) {
+		)
+		{
 			float x = (normal.X * matrix.M11) + (normal.Y * matrix.M21) + (normal.Z * matrix.M31);
 			float y = (normal.X * matrix.M12) + (normal.Y * matrix.M22) + (normal.Z * matrix.M32);
 			float z = (normal.X * matrix.M13) + (normal.Y * matrix.M23) + (normal.Z * matrix.M33);
@@ -1308,7 +1326,8 @@ namespace MoonWorks.Math
 			Vector3[] sourceArray,
 			ref Matrix4x4 matrix,
 			Vector3[] destinationArray
-		) {
+		)
+		{
 			Debug.Assert(
 				destinationArray.Length >= sourceArray.Length,
 				"The destination array is smaller than the source array."
@@ -1339,7 +1358,8 @@ namespace MoonWorks.Math
 			Vector3[] destinationArray,
 			int destinationIndex,
 			int length
-		) {
+		)
+		{
 			if (sourceArray == null)
 			{
 				throw new ArgumentNullException("sourceArray");
@@ -1396,9 +1416,9 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public static bool operator ==(Vector3 value1, Vector3 value2)
 		{
-			return (	value1.X == value2.X &&
+			return (value1.X == value2.X &&
 					value1.Y == value2.Y &&
-					value1.Z == value2.Z	);
+					value1.Z == value2.Z);
 		}
 
 		/// <summary>

@@ -1,11 +1,11 @@
-namespace MoonWorks.Graphics
+﻿namespace MoonWorks.Graphics
 {
-    /// <summary>
-    /// Describes the dimensions of viewports and scissor areas.
-    /// </summary>
-    public struct ViewportState
-    {
-        public Viewport[] Viewports;
-        public Rect[] Scissors;
-    }
+	/// <summary>
+	/// Describes the dimensions of viewports and scissor areas.
+	/// </summary>
+	public struct ViewportState
+	{
+		public Viewport[] Viewports;
+		public Rect[] Scissors;
+	}
 }

@@ -1,9 +1,9 @@
-namespace MoonWorks.Window
+﻿namespace MoonWorks.Window
 {
-    public enum ScreenMode
-    {
-        Fullscreen,
-        BorderlessWindow,
-        Windowed
-    }
+	public enum ScreenMode
+	{
+		Fullscreen,
+		BorderlessWindow,
+		Windowed
+	}
 }

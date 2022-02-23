@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -234,10 +234,10 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public bool Equals(Vector4 other)
 		{
-			return (	X == other.X &&
+			return (X == other.X &&
 					Y == other.Y &&
 					Z == other.Z &&
-					W == other.W	);
+					W == other.W);
 		}
 
 		/// <summary>
@@ -344,7 +344,8 @@ namespace MoonWorks.Math
 			Vector4 value3,
 			float amount1,
 			float amount2
-		) {
+		)
+		{
 			return new Vector4(
 				MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2),
 				MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2),
@@ -369,7 +370,8 @@ namespace MoonWorks.Math
 			float amount1,
 			float amount2,
 			out Vector4 result
-		) {
+		)
+		{
 			result.X = MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2);
 			result.Y = MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2);
 			result.Z = MathHelper.Barycentric(value1.Z, value2.Z, value3.Z, amount1, amount2);
@@ -391,7 +393,8 @@ namespace MoonWorks.Math
 			Vector4 value3,
 			Vector4 value4,
 			float amount
-		) {
+		)
+		{
 			return new Vector4(
 				MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount),
 				MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount),
@@ -416,7 +419,8 @@ namespace MoonWorks.Math
 			ref Vector4 value4,
 			float amount,
 			out Vector4 result
-		) {
+		)
+		{
 			result.X = MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount);
 			result.Y = MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount);
 			result.Z = MathHelper.CatmullRom(value1.Z, value2.Z, value3.Z, value4.Z, amount);
@@ -452,7 +456,8 @@ namespace MoonWorks.Math
 			ref Vector4 min,
 			ref Vector4 max,
 			out Vector4 result
-		) {
+		)
+		{
 			result.X = MathHelper.Clamp(value1.X, min.X, max.X);
 			result.Y = MathHelper.Clamp(value1.Y, min.Y, max.Y);
 			result.Z = MathHelper.Clamp(value1.Z, min.Z, max.Z);
@@ -507,7 +512,8 @@ namespace MoonWorks.Math
 			ref Vector4 value1,
 			ref Vector4 value2,
 			out float result
-		) {
+		)
+		{
 			result = (
 				(value1.W - value2.W) * (value1.W - value2.W) +
 				(value1.X - value2.X) * (value1.X - value2.X) +
@@ -572,7 +578,8 @@ namespace MoonWorks.Math
 			ref Vector4 value1,
 			ref Vector4 value2,
 			out Vector4 result
-		) {
+		)
+		{
 			result.W = value1.W / value2.W;
 			result.X = value1.X / value2.X;
 			result.Y = value1.Y / value2.Y;
@@ -626,7 +633,8 @@ namespace MoonWorks.Math
 			Vector4 value2,
 			Vector4 tangent2,
 			float amount
-		) {
+		)
+		{
 			return new Vector4(
 				MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount),
 				MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount),
@@ -651,7 +659,8 @@ namespace MoonWorks.Math
 			ref Vector4 tangent2,
 			float amount,
 			out Vector4 result
-		) {
+		)
+		{
 			result.W = MathHelper.Hermite(value1.W, tangent1.W, value2.W, tangent2.W, amount);
 			result.X = MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount);
 			result.Y = MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount);
@@ -687,7 +696,8 @@ namespace MoonWorks.Math
 			ref Vector4 value2,
 			float amount,
 			out Vector4 result
-		) {
+		)
+		{
 			result.X = MathHelper.Lerp(value1.X, value2.X, amount);
 			result.Y = MathHelper.Lerp(value1.Y, value2.Y, amount);
 			result.Z = MathHelper.Lerp(value1.Z, value2.Z, amount);
@@ -905,7 +915,8 @@ namespace MoonWorks.Math
 			ref Vector4 value2,
 			float amount,
 			out Vector4 result
-		) {
+		)
+		{
 			result.X = MathHelper.SmoothStep(value1.X, value2.X, amount);
 			result.Y = MathHelper.SmoothStep(value1.Y, value2.Y, amount);
 			result.Z = MathHelper.SmoothStep(value1.Z, value2.Z, amount);
@@ -1081,7 +1092,8 @@ namespace MoonWorks.Math
 			Vector4[] sourceArray,
 			ref Matrix4x4 matrix,
 			Vector4[] destinationArray
-		) {
+		)
+		{
 			if (sourceArray == null)
 			{
 				throw new ArgumentNullException("sourceArray");
@@ -1122,7 +1134,8 @@ namespace MoonWorks.Math
 			Vector4[] destinationArray,
 			int destinationIndex,
 			int length
-		) {
+		)
+		{
 			if (sourceArray == null)
 			{
 				throw new ArgumentNullException("sourceArray");
@@ -1202,7 +1215,8 @@ namespace MoonWorks.Math
 			ref Vector2 value,
 			ref Quaternion rotation,
 			out Vector4 result
-		) {
+		)
+		{
 			double xx = rotation.X + rotation.X;
 			double yy = rotation.Y + rotation.Y;
 			double zz = rotation.Z + rotation.Z;
@@ -1240,7 +1254,8 @@ namespace MoonWorks.Math
 			ref Vector3 value,
 			ref Quaternion rotation,
 			out Vector4 result
-		) {
+		)
+		{
 			double xx = rotation.X + rotation.X;
 			double yy = rotation.Y + rotation.Y;
 			double zz = rotation.Z + rotation.Z;
@@ -1281,7 +1296,8 @@ namespace MoonWorks.Math
 			ref Vector4 value,
 			ref Quaternion rotation,
 			out Vector4 result
-		) {
+		)
+		{
 			double xx = rotation.X + rotation.X;
 			double yy = rotation.Y + rotation.Y;
 			double zz = rotation.Z + rotation.Z;
@@ -1322,7 +1338,8 @@ namespace MoonWorks.Math
 			Vector4[] sourceArray,
 			ref Quaternion rotation,
 			Vector4[] destinationArray
-		) {
+		)
+		{
 			if (sourceArray == null)
 			{
 				throw new ArgumentException("sourceArray");
@@ -1363,7 +1380,8 @@ namespace MoonWorks.Math
 			Vector4[] destinationArray,
 			int destinationIndex,
 			int length
-		) {
+		)
+		{
 			if (sourceArray == null)
 			{
 				throw new ArgumentException("sourceArray");
@@ -1405,10 +1423,10 @@ namespace MoonWorks.Math
 
 		public static bool operator ==(Vector4 value1, Vector4 value2)
 		{
-			return (	value1.X == value2.X &&
+			return (value1.X == value2.X &&
 					value1.Y == value2.Y &&
 					value1.Z == value2.Z &&
-					value1.W == value2.W	);
+					value1.W == value2.W);
 		}
 
 		public static bool operator !=(Vector4 value1, Vector4 value2)

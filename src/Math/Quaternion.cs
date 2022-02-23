@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -157,10 +157,10 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public bool Equals(Quaternion other)
 		{
-			return (	X == other.X &&
+			return (X == other.X &&
 					Y == other.Y &&
 					Z == other.Z &&
-					W == other.W	);
+					W == other.W);
 		}
 
 		/// <summary>
@@ -266,7 +266,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			ref Quaternion quaternion2,
 			out Quaternion result
-		) {
+		)
+		{
 			result.X = quaternion1.X + quaternion2.X;
 			result.Y = quaternion1.Y + quaternion2.Y;
 			result.Z = quaternion1.Z + quaternion2.Z;
@@ -296,7 +297,8 @@ namespace MoonWorks.Math
 			ref Quaternion value1,
 			ref Quaternion value2,
 			out Quaternion result
-		) {
+		)
+		{
 			float x1 = value1.X;
 			float y1 = value1.Y;
 			float z1 = value1.Z;
@@ -359,7 +361,8 @@ namespace MoonWorks.Math
 			ref Vector3 axis,
 			float angle,
 			out Quaternion result
-		) {
+		)
+		{
 			float half = angle * 0.5f;
 			float sin = (float) System.Math.Sin((double) half);
 			float cos = (float) System.Math.Cos((double) half);
@@ -415,12 +418,12 @@ namespace MoonWorks.Math
 			else if (matrix.M22 > matrix.M33)
 			{
 				sqrt = (float) System.Math.Sqrt(1.0f + matrix.M22 - matrix.M11 - matrix.M33);
-				half = 0.5f/sqrt;
+				half = 0.5f / sqrt;
 
-				result.X = (matrix.M21 + matrix.M12)*half;
-				result.Y = 0.5f*sqrt;
-				result.Z = (matrix.M32 + matrix.M23)*half;
-				result.W = (matrix.M31 - matrix.M13)*half;
+				result.X = (matrix.M21 + matrix.M12) * half;
+				result.Y = 0.5f * sqrt;
+				result.Z = (matrix.M32 + matrix.M23) * half;
+				result.W = (matrix.M31 - matrix.M13) * half;
 			}
 			else
 			{
@@ -499,7 +502,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			ref Quaternion quaternion2,
 			out Quaternion result
-		) {
+		)
+		{
 			float x = quaternion1.X;
 			float y = quaternion1.Y;
 			float z = quaternion1.Z;
@@ -551,7 +555,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			ref Quaternion quaternion2,
 			out float result
-		) {
+		)
+		{
 			result = (
 				(quaternion1.X * quaternion2.X) +
 				(quaternion1.Y * quaternion2.Y) +
@@ -603,7 +608,8 @@ namespace MoonWorks.Math
 			Quaternion quaternion1,
 			Quaternion quaternion2,
 			float amount
-		) {
+		)
+		{
 			Quaternion quaternion;
 			Lerp(ref quaternion1, ref quaternion2, amount, out quaternion);
 			return quaternion;
@@ -621,7 +627,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion2,
 			float amount,
 			out Quaternion result
-		) {
+		)
+		{
 			float num = amount;
 			float num2 = 1f - num;
 			float num5 = (
@@ -668,7 +675,8 @@ namespace MoonWorks.Math
 			Quaternion quaternion1,
 			Quaternion quaternion2,
 			float amount
-		) {
+		)
+		{
 			Quaternion quaternion;
 			Slerp(ref quaternion1, ref quaternion2, amount, out quaternion);
 			return quaternion;
@@ -686,7 +694,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion2,
 			float amount,
 			out Quaternion result
-		) {
+		)
+		{
 			float num2;
 			float num3;
 			float num = amount;
@@ -743,7 +752,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			ref Quaternion quaternion2,
 			out Quaternion result
-		) {
+		)
+		{
 			result.X = quaternion1.X - quaternion2.X;
 			result.Y = quaternion1.Y - quaternion2.Y;
 			result.Z = quaternion1.Z - quaternion2.Z;
@@ -786,7 +796,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			ref Quaternion quaternion2,
 			out Quaternion result
-		) {
+		)
+		{
 			float x = quaternion1.X;
 			float y = quaternion1.Y;
 			float z = quaternion1.Z;
@@ -815,7 +826,8 @@ namespace MoonWorks.Math
 			ref Quaternion quaternion1,
 			float scaleFactor,
 			out Quaternion result
-		) {
+		)
+		{
 			result.X = quaternion1.X * scaleFactor;
 			result.Y = quaternion1.Y * scaleFactor;
 			result.Z = quaternion1.Z * scaleFactor;
@@ -881,15 +893,15 @@ namespace MoonWorks.Math
 			result.W = quaternion.W * num;
 		}
 
-        public static Quaternion LookAt(in Vector3 forward, in Vector3 up)
-        {
-            Matrix4x4 orientation = Matrix4x4.Identity;
-            orientation.Forward = forward;
-            orientation.Right = Vector3.Normalize(Vector3.Cross(forward, up));
-            orientation.Up = Vector3.Cross(orientation.Right, forward);
+		public static Quaternion LookAt(in Vector3 forward, in Vector3 up)
+		{
+			Matrix4x4 orientation = Matrix4x4.Identity;
+			orientation.Forward = forward;
+			orientation.Right = Vector3.Normalize(Vector3.Cross(forward, up));
+			orientation.Up = Vector3.Cross(orientation.Right, forward);
 
-            return Quaternion.CreateFromRotationMatrix(orientation);
-        }
+			return Quaternion.CreateFromRotationMatrix(orientation);
+		}
 
 		#endregion
 

@@ -1,17 +1,17 @@
-namespace MoonWorks.Graphics
+﻿namespace MoonWorks.Graphics
 {
-    /// <summary>
-    /// Specifies how many samples should be used in rasterization.
-    /// </summary>
-    public struct MultisampleState
-    {
-        public SampleCount MultisampleCount;
-        public uint SampleMask;
+	/// <summary>
+	/// Specifies how many samples should be used in rasterization.
+	/// </summary>
+	public struct MultisampleState
+	{
+		public SampleCount MultisampleCount;
+		public uint SampleMask;
 
-        public static readonly MultisampleState None = new MultisampleState
-        {
-            MultisampleCount = SampleCount.One,
-            SampleMask = uint.MaxValue
-        };
-    }
+		public static readonly MultisampleState None = new MultisampleState
+		{
+			MultisampleCount = SampleCount.One,
+			SampleMask = uint.MaxValue
+		};
+	}
 }

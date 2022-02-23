@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -91,23 +91,23 @@ namespace MoonWorks.Math
 		public ContainmentType Contains(BoundingBox box)
 		{
 			// Test if all corner is in the same side of a face by just checking min and max
-			if (	box.Max.X < Min.X ||
+			if (box.Max.X < Min.X ||
 				box.Min.X > Max.X ||
 				box.Max.Y < Min.Y ||
 				box.Min.Y > Max.Y ||
 				box.Max.Z < Min.Z ||
-				box.Min.Z > Max.Z	)
+				box.Min.Z > Max.Z)
 			{
 				return ContainmentType.Disjoint;
 			}
 
 
-			if (	box.Min.X >= Min.X &&
+			if (box.Min.X >= Min.X &&
 				box.Max.X <= Max.X &&
 				box.Min.Y >= Min.Y &&
 				box.Max.Y <= Max.Y &&
 				box.Min.Z >= Min.Z &&
-				box.Max.Z <= Max.Z	)
+				box.Max.Z <= Max.Z)
 			{
 				return ContainmentType.Contains;
 			}
@@ -172,12 +172,12 @@ namespace MoonWorks.Math
 
 		public ContainmentType Contains(BoundingSphere sphere)
 		{
-			if (	sphere.Center.X - Min.X >= sphere.Radius &&
+			if (sphere.Center.X - Min.X >= sphere.Radius &&
 				sphere.Center.Y - Min.Y >= sphere.Radius &&
 				sphere.Center.Z - Min.Z >= sphere.Radius &&
 				Max.X - sphere.Center.X >= sphere.Radius &&
 				Max.Y - sphere.Center.Y >= sphere.Radius &&
-				Max.Z - sphere.Center.Z >= sphere.Radius	)
+				Max.Z - sphere.Center.Z >= sphere.Radius)
 			{
 				return ContainmentType.Contains;
 			}
@@ -261,12 +261,12 @@ namespace MoonWorks.Math
 		public void Contains(ref Vector3 point, out ContainmentType result)
 		{
 			// Determine if point is outside of this box.
-			if (	point.X < this.Min.X ||
+			if (point.X < this.Min.X ||
 				point.X > this.Max.X ||
 				point.Y < this.Min.Y ||
 				point.Y > this.Max.Y ||
 				point.Z < this.Min.Z ||
-				point.Z > this.Max.Z	)
+				point.Z > this.Max.Z)
 			{
 				result = ContainmentType.Disjoint;
 			}
@@ -380,12 +380,12 @@ namespace MoonWorks.Math
 
 		public bool Intersects(BoundingSphere sphere)
 		{
-			if (	sphere.Center.X - Min.X > sphere.Radius &&
+			if (sphere.Center.X - Min.X > sphere.Radius &&
 				sphere.Center.Y - Min.Y > sphere.Radius &&
 				sphere.Center.Z - Min.Z > sphere.Radius &&
 				Max.X - sphere.Center.X > sphere.Radius &&
 				Max.Y - sphere.Center.Y > sphere.Radius &&
-				Max.Z - sphere.Center.Z > sphere.Radius	)
+				Max.Z - sphere.Center.Z > sphere.Radius)
 			{
 				return true;
 			}

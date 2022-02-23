@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -233,7 +233,8 @@ namespace MoonWorks.Math
 			ref Plane plane,
 			ref Matrix4x4 matrix,
 			out Plane result
-		) {
+		)
+		{
 			/* See "Transforming Normals" in
 			 * http://www.glprogramming.com/red/appendixf.html
 			 * for an explanation of how this works.
@@ -277,7 +278,8 @@ namespace MoonWorks.Math
 			ref Plane plane,
 			ref Quaternion rotation,
 			out Plane result
-		) {
+		)
+		{
 			Vector3.Transform(
 				ref plane.Normal,
 				ref rotation,

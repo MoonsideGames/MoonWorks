@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using MoonWorks.Math;
 
 namespace MoonWorks.Audio
 {
-    public class AudioEmitter : AudioResource
-    {
-        internal FAudio.F3DAUDIO_EMITTER emitterData;
+	public class AudioEmitter : AudioResource
+	{
+		internal FAudio.F3DAUDIO_EMITTER emitterData;
 
 		public float DopplerScale
 		{
@@ -107,17 +107,17 @@ namespace MoonWorks.Audio
 			GCHandleType.Pinned
 		);
 
-        public AudioEmitter(AudioDevice device) : base(device)
-        {
-            emitterData = new FAudio.F3DAUDIO_EMITTER();
+		public AudioEmitter(AudioDevice device) : base(device)
+		{
+			emitterData = new FAudio.F3DAUDIO_EMITTER();
 
-            DopplerScale = 1f;
-            Forward = Vector3.Forward;
-            Position = Vector3.Zero;
-            Up = Vector3.Up;
-            Velocity = Vector3.Zero;
+			DopplerScale = 1f;
+			Forward = Vector3.Forward;
+			Position = Vector3.Zero;
+			Up = Vector3.Up;
+			Velocity = Vector3.Zero;
 
-            /* Unexposed variables, defaults based on XNA behavior */
+			/* Unexposed variables, defaults based on XNA behavior */
 			emitterData.pCone = IntPtr.Zero;
 			emitterData.ChannelCount = 1;
 			emitterData.ChannelRadius = 1.0f;
@@ -128,8 +128,8 @@ namespace MoonWorks.Audio
 			emitterData.pLPFReverbCurve = IntPtr.Zero;
 			emitterData.pReverbCurve = IntPtr.Zero;
 			emitterData.CurveDistanceScaler = 1.0f;
-        }
+		}
 
-        protected override void Destroy() { }
-    }
+		protected override void Destroy() { }
+	}
 }

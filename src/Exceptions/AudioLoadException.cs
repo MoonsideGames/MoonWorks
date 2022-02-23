@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 
 namespace MoonWorks
 {
-    public class AudioLoadException : Exception
-    {
-        public AudioLoadException(string message) : base(message)
-        {
+	public class AudioLoadException : Exception
+	{
+		public AudioLoadException(string message) : base(message)
+		{
 
-        }
-    }
+		}
+	}
 }

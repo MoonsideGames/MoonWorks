@@ -4,58 +4,59 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
-    public class GraphicsDevice : IDisposable
-    {
-        public IntPtr Handle { get; }
+	public class GraphicsDevice : IDisposable
+	{
+		public IntPtr Handle { get; }
 
-        public bool IsDisposed { get; private set; }
+		public bool IsDisposed { get; private set; }
 
-        private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
+		private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
 		private Dictionary<IntPtr, Action<IntPtr, IntPtr, IntPtr>> resourcesToDestroy = new Dictionary<IntPtr, Action<IntPtr, IntPtr, IntPtr>>();
 
-        public GraphicsDevice(
-            IntPtr deviceWindowHandle,
-            Refresh.PresentMode presentMode,
-            bool debugMode,
-            int initialCommandBufferPoolSize = 4
-        ) {
-            var presentationParameters = new Refresh.PresentationParameters
-            {
-                deviceWindowHandle = deviceWindowHandle,
-                presentMode = presentMode
-            };
+		public GraphicsDevice(
+			IntPtr deviceWindowHandle,
+			Refresh.PresentMode presentMode,
+			bool debugMode,
+			int initialCommandBufferPoolSize = 4
+		)
+		{
+			var presentationParameters = new Refresh.PresentationParameters
+			{
+				deviceWindowHandle = deviceWindowHandle,
+				presentMode = presentMode
+			};
 
-            Handle = Refresh.Refresh_CreateDevice(
-                presentationParameters,
-                Conversions.BoolToByte(debugMode)
-            );
-        }
+			Handle = Refresh.Refresh_CreateDevice(
+				presentationParameters,
+				Conversions.BoolToByte(debugMode)
+			);
+		}
 
-        public CommandBuffer AcquireCommandBuffer()
-        {
-            return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle, 0));
-        }
+		public CommandBuffer AcquireCommandBuffer()
+		{
+			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle, 0));
+		}
 
-        public unsafe void Submit(params CommandBuffer[] commandBuffers)
-        {
-            var commandBufferPtrs = stackalloc IntPtr[commandBuffers.Length];
+		public unsafe void Submit(params CommandBuffer[] commandBuffers)
+		{
+			var commandBufferPtrs = stackalloc IntPtr[commandBuffers.Length];
 
-            for (var i = 0; i < commandBuffers.Length; i += 1)
-            {
-                commandBufferPtrs[i] = commandBuffers[i].Handle;
-            }
+			for (var i = 0; i < commandBuffers.Length; i += 1)
+			{
+				commandBufferPtrs[i] = commandBuffers[i].Handle;
+			}
 
-            Refresh.Refresh_Submit(
-                Handle,
-                (uint) commandBuffers.Length,
-                (IntPtr) commandBufferPtrs
-            );
-        }
+			Refresh.Refresh_Submit(
+				Handle,
+				(uint) commandBuffers.Length,
+				(IntPtr) commandBufferPtrs
+			);
+		}
 
-        public void Wait()
-        {
-            Refresh.Refresh_Wait(Handle);
-        }
+		public void Wait()
+		{
+			Refresh.Refresh_Wait(Handle);
+		}
 
 		internal void SubmitDestroyCommandBuffer()
 		{
@@ -77,60 +78,60 @@ namespace MoonWorks.Graphics
 			resourcesToDestroy.Add(resource.Handle, destroyFunction);
 		}
 
-        internal void AddResourceReference(WeakReference<GraphicsResource> resourceReference)
-        {
-            lock (resources)
-            {
-                resources.Add(resourceReference);
-            }
-        }
+		internal void AddResourceReference(WeakReference<GraphicsResource> resourceReference)
+		{
+			lock (resources)
+			{
+				resources.Add(resourceReference);
+			}
+		}
 
-        internal void RemoveResourceReference(WeakReference<GraphicsResource> resourceReference)
-        {
-            lock (resources)
-            {
-                resources.Remove(resourceReference);
-            }
-        }
+		internal void RemoveResourceReference(WeakReference<GraphicsResource> resourceReference)
+		{
+			lock (resources)
+			{
+				resources.Remove(resourceReference);
+			}
+		}
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                {
-                    lock (resources)
-                    {
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				if (disposing)
+				{
+					lock (resources)
+					{
 						for (var i = resources.Count - 1; i >= 0; i--)
 						{
 							var resource = resources[i];
 							if (resource.TryGetTarget(out var target))
-                            {
-                                target.Dispose();
-                            }
+							{
+								target.Dispose();
+							}
 						}
-                        resources.Clear();
-                    }
+						resources.Clear();
+					}
 
 					SubmitDestroyCommandBuffer();
-                    Refresh.Refresh_DestroyDevice(Handle);
-                }
+					Refresh.Refresh_DestroyDevice(Handle);
+				}
 
-                IsDisposed = true;
-            }
-        }
+				IsDisposed = true;
+			}
+		}
 
-        ~GraphicsDevice()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: false);
-        }
+		~GraphicsDevice()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: false);
+		}
 
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-    }
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -117,10 +117,10 @@ namespace MoonWorks.Math
 		{
 			get
 			{
-				return (	(Width == 0) &&
+				return ((Width == 0) &&
 						(Height == 0) &&
 						(X == 0) &&
-						(Y == 0)	);
+						(Y == 0));
 			}
 		}
 
@@ -218,10 +218,10 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the provided coordinates lie inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(int x, int y)
 		{
-			return (	(this.X <= x) &&
+			return ((this.X <= x) &&
 					(x < (this.X + this.Width)) &&
 					(this.Y <= y) &&
-					(y < (this.Y + this.Height))	);
+					(y < (this.Y + this.Height)));
 		}
 
 		/// <summary>
@@ -231,10 +231,10 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the provided <see cref="Point"/> lies inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(Point value)
 		{
-			return (	(this.X <= value.X) &&
+			return ((this.X <= value.X) &&
 					(value.X < (this.X + this.Width)) &&
 					(this.Y <= value.Y) &&
-					(value.Y < (this.Y + this.Height))	);
+					(value.Y < (this.Y + this.Height)));
 		}
 
 		/// <summary>
@@ -244,26 +244,26 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the provided <see cref="Rectangle"/>'s bounds lie entirely inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(Rectangle value)
 		{
-			return (	(this.X <= value.X) &&
+			return ((this.X <= value.X) &&
 					((value.X + value.Width) <= (this.X + this.Width)) &&
 					(this.Y <= value.Y) &&
-					((value.Y + value.Height) <= (this.Y + this.Height))	);
+					((value.Y + value.Height) <= (this.Y + this.Height)));
 		}
 
 		public void Contains(ref Point value, out bool result)
 		{
-			result = (	(this.X <= value.X) &&
+			result = ((this.X <= value.X) &&
 					(value.X < (this.X + this.Width)) &&
 					(this.Y <= value.Y) &&
-					(value.Y < (this.Y + this.Height))	);
+					(value.Y < (this.Y + this.Height)));
 		}
 
 		public void Contains(ref Rectangle value, out bool result)
 		{
-			result = (	(this.X <= value.X) &&
+			result = ((this.X <= value.X) &&
 					((value.X + value.Width) <= (this.X + this.Width)) &&
 					(this.Y <= value.Y) &&
-					((value.Y + value.Height) <= (this.Y + this.Height))	);
+					((value.Y + value.Height) <= (this.Y + this.Height)));
 		}
 
 		/// <summary>
@@ -349,10 +349,10 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if other <see cref="Rectangle"/> intersects with this rectangle; <c>false</c> otherwise.</returns>
 		public bool Intersects(Rectangle value)
 		{
-			return (	value.Left < Right &&
+			return (value.Left < Right &&
 					Left < value.Right &&
 					value.Top < Bottom &&
-					Top < value.Bottom	);
+					Top < value.Bottom);
 		}
 
 		/// <summary>
@@ -362,10 +362,10 @@ namespace MoonWorks.Math
 		/// <param name="result"><c>true</c> if other <see cref="Rectangle"/> intersects with this rectangle; <c>false</c> otherwise. As an output parameter.</param>
 		public void Intersects(ref Rectangle value, out bool result)
 		{
-			result = (	value.Left < Right &&
+			result = (value.Left < Right &&
 					Left < value.Right &&
 					value.Top < Bottom &&
-					Top < value.Bottom	);
+					Top < value.Bottom);
 		}
 
 		#endregion
@@ -374,10 +374,10 @@ namespace MoonWorks.Math
 
 		public static bool operator ==(Rectangle a, Rectangle b)
 		{
-			return (	(a.X == b.X) &&
+			return ((a.X == b.X) &&
 					(a.Y == b.Y) &&
 					(a.Width == b.Width) &&
-					(a.Height == b.Height)	);
+					(a.Height == b.Height));
 		}
 
 		public static bool operator !=(Rectangle a, Rectangle b)
@@ -396,7 +396,8 @@ namespace MoonWorks.Math
 			ref Rectangle value1,
 			ref Rectangle value2,
 			out Rectangle result
-		) {
+		)
+		{
 			if (value1.Intersects(value2))
 			{
 				int right_side = System.Math.Min(

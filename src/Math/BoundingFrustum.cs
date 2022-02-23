@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -230,12 +230,12 @@ namespace MoonWorks.Math
 				box.Intersects(ref this.planes[i], out planeIntersectionType);
 				switch (planeIntersectionType)
 				{
-				case PlaneIntersectionType.Front:
-					result = ContainmentType.Disjoint;
-					return;
-				case PlaneIntersectionType.Intersecting:
-					intersects = true;
-					break;
+					case PlaneIntersectionType.Front:
+						result = ContainmentType.Disjoint;
+						return;
+					case PlaneIntersectionType.Intersecting:
+						intersects = true;
+						break;
 				}
 			}
 			result = intersects ? ContainmentType.Intersects : ContainmentType.Contains;
@@ -269,12 +269,12 @@ namespace MoonWorks.Math
 				sphere.Intersects(ref this.planes[i], out planeIntersectionType);
 				switch (planeIntersectionType)
 				{
-				case PlaneIntersectionType.Front:
-					result = ContainmentType.Disjoint;
-					return;
-				case PlaneIntersectionType.Intersecting:
-					intersects = true;
-					break;
+					case PlaneIntersectionType.Front:
+						result = ContainmentType.Disjoint;
+						return;
+					case PlaneIntersectionType.Intersecting:
+						intersects = true;
+						break;
 				}
 			}
 			result = intersects ? ContainmentType.Intersects : ContainmentType.Contains;
@@ -597,7 +597,8 @@ namespace MoonWorks.Math
 			ref Plane b,
 			ref Plane c,
 			out Vector3 result
-		) {
+		)
+		{
 			/* Formula used
 			 *                d1 ( N2 * N3 ) + d2 ( N3 * N1 ) + d3 ( N1 * N2 )
 			 * P =   -------------------------------------------------------------------

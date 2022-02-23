@@ -10,17 +10,17 @@ using System.Diagnostics;
 
 namespace MoonWorks
 {
-    public abstract class Game
-    {
-        public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
+	public abstract class Game
+	{
+		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 
-        private bool quit = false;
-        bool debugMode;
+		private bool quit = false;
+		bool debugMode;
 
 		private Stopwatch gameTimer;
-        private TimeSpan timestep;
+		private TimeSpan timestep;
 		private long previousTicks = 0;
-        TimeSpan accumulatedElapsedTime = TimeSpan.Zero;
+		TimeSpan accumulatedElapsedTime = TimeSpan.Zero;
 		// must be a power of 2 so we can do a bitmask optimization when checking worst case
 		private const int PREVIOUS_SLEEP_TIME_COUNT = 128;
 		private const int SLEEP_TIME_MASK = PREVIOUS_SLEEP_TIME_COUNT - 1;
@@ -28,26 +28,27 @@ namespace MoonWorks
 		private int sleepTimeIndex = 0;
 		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
 
-        public OSWindow Window { get; }
-        public GraphicsDevice GraphicsDevice { get; }
-        public AudioDevice AudioDevice { get; }
-        public Inputs Inputs { get; }
+		public OSWindow Window { get; }
+		public GraphicsDevice GraphicsDevice { get; }
+		public AudioDevice AudioDevice { get; }
+		public Inputs Inputs { get; }
 
-        private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
-        {
-            { PresentMode.Immediate, RefreshCS.Refresh.PresentMode.Immediate },
-            { PresentMode.Mailbox, RefreshCS.Refresh.PresentMode.Mailbox },
-            { PresentMode.FIFO, RefreshCS.Refresh.PresentMode.FIFO },
-            { PresentMode.FIFORelaxed, RefreshCS.Refresh.PresentMode.FIFORelaxed }
-        };
+		private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
+		{
+			{ PresentMode.Immediate, RefreshCS.Refresh.PresentMode.Immediate },
+			{ PresentMode.Mailbox, RefreshCS.Refresh.PresentMode.Mailbox },
+			{ PresentMode.FIFO, RefreshCS.Refresh.PresentMode.FIFO },
+			{ PresentMode.FIFORelaxed, RefreshCS.Refresh.PresentMode.FIFORelaxed }
+		};
 
-        public Game(
-            WindowCreateInfo windowCreateInfo,
-            PresentMode presentMode,
-            int targetTimestep = 60,
-            bool debugMode = false
-        ) {
-            timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
+		public Game(
+			WindowCreateInfo windowCreateInfo,
+			PresentMode presentMode,
+			int targetTimestep = 60,
+			bool debugMode = false
+		)
+		{
+			timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
 
 			for (int i = 0; i < previousSleepTimes.Length; i += 1)
@@ -55,33 +56,33 @@ namespace MoonWorks
 				previousSleepTimes[i] = TimeSpan.FromMilliseconds(1);
 			}
 
-            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
-            {
-                System.Console.WriteLine("Failed to initialize SDL!");
-                return;
-            }
+			if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
+			{
+				System.Console.WriteLine("Failed to initialize SDL!");
+				return;
+			}
 
-            Logger.Initialize();
+			Logger.Initialize();
 
-            Inputs = new Inputs();
+			Inputs = new Inputs();
 
-            Window = new OSWindow(windowCreateInfo);
+			Window = new OSWindow(windowCreateInfo);
 
-            GraphicsDevice = new GraphicsDevice(
-                Window.Handle,
-                moonWorksToRefreshPresentMode[presentMode],
-                debugMode
-            );
+			GraphicsDevice = new GraphicsDevice(
+				Window.Handle,
+				moonWorksToRefreshPresentMode[presentMode],
+				debugMode
+			);
 
-            AudioDevice = new AudioDevice();
+			AudioDevice = new AudioDevice();
 
-            this.debugMode = debugMode;
-        }
+			this.debugMode = debugMode;
+		}
 
-        public void Run()
-        {
-            while (!quit)
-            {
+		public void Run()
+		{
+			while (!quit)
+			{
 				AdvanceElapsedTime();
 
 				/* We want to wait until the next frame,
@@ -111,33 +112,33 @@ namespace MoonWorks
 				HandleSDLEvents();
 
 				// Do not let any step take longer than our maximum.
-                if (accumulatedElapsedTime > MAX_DELTA_TIME)
-                {
-                    accumulatedElapsedTime = MAX_DELTA_TIME;
-                }
+				if (accumulatedElapsedTime > MAX_DELTA_TIME)
+				{
+					accumulatedElapsedTime = MAX_DELTA_TIME;
+				}
 
-                if (!quit)
-                {
-                    while (accumulatedElapsedTime >= timestep)
-                    {
-                        Inputs.Mouse.Wheel = 0;
+				if (!quit)
+				{
+					while (accumulatedElapsedTime >= timestep)
+					{
+						Inputs.Mouse.Wheel = 0;
 
-                        Inputs.Update();
-                        AudioDevice.Update();
+						Inputs.Update();
+						AudioDevice.Update();
 
-                        Update(timestep);
+						Update(timestep);
 
-                        accumulatedElapsedTime -= timestep;
-                    }
+						accumulatedElapsedTime -= timestep;
+					}
 
-                    var alpha = accumulatedElapsedTime / timestep;
+					var alpha = accumulatedElapsedTime / timestep;
 
-                    Draw(timestep, alpha);
+					Draw(timestep, alpha);
 
-                }
+				}
 
 				GraphicsDevice.SubmitDestroyCommandBuffer();
-            }
+			}
 
 			OnDestroy();
 
@@ -146,64 +147,64 @@ namespace MoonWorks
 			Window.Dispose();
 
 			SDL.SDL_Quit();
-        }
+		}
 
-        private void HandleSDLEvents()
-        {
-            while (SDL.SDL_PollEvent(out var _event) == 1)
-            {
-                switch (_event.type)
-                {
-                    case SDL.SDL_EventType.SDL_QUIT:
-                        quit = true;
-                        break;
+		private void HandleSDLEvents()
+		{
+			while (SDL.SDL_PollEvent(out var _event) == 1)
+			{
+				switch (_event.type)
+				{
+					case SDL.SDL_EventType.SDL_QUIT:
+						quit = true;
+						break;
 
-                    case SDL.SDL_EventType.SDL_TEXTINPUT:
-                        HandleTextInput(_event);
-                        break;
+					case SDL.SDL_EventType.SDL_TEXTINPUT:
+						HandleTextInput(_event);
+						break;
 
-                    case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-                        Inputs.Mouse.Wheel += _event.wheel.y;
-                        break;
-                }
-            }
-        }
+					case SDL.SDL_EventType.SDL_MOUSEWHEEL:
+						Inputs.Mouse.Wheel += _event.wheel.y;
+						break;
+				}
+			}
+		}
 
-        protected abstract void Update(TimeSpan dt);
+		protected abstract void Update(TimeSpan dt);
 
 		// alpha refers to a percentage value between the current and next state
-        protected abstract void Draw(TimeSpan dt, double alpha);
+		protected abstract void Draw(TimeSpan dt, double alpha);
 
 		// Clean up any objects you created in this function
 		protected abstract void OnDestroy();
 
-        private void HandleTextInput(SDL2.SDL.SDL_Event evt)
-        {
-            // Based on the SDL2# LPUtf8StrMarshaler
-            unsafe
-            {
-                int bytes = MeasureStringLength(evt.text.text);
-                if (bytes > 0)
-                {
-                    /* UTF8 will never encode more characters
+		private void HandleTextInput(SDL2.SDL.SDL_Event evt)
+		{
+			// Based on the SDL2# LPUtf8StrMarshaler
+			unsafe
+			{
+				int bytes = MeasureStringLength(evt.text.text);
+				if (bytes > 0)
+				{
+					/* UTF8 will never encode more characters
                         * than bytes in a string, so bytes is a
                         * suitable upper estimate of size needed
                         */
-                    char* charsBuffer = stackalloc char[bytes];
-                    int chars = Encoding.UTF8.GetChars(
-                        evt.text.text,
-                        bytes,
-                        charsBuffer,
-                        bytes
-                    );
+					char* charsBuffer = stackalloc char[bytes];
+					int chars = Encoding.UTF8.GetChars(
+						evt.text.text,
+						bytes,
+						charsBuffer,
+						bytes
+					);
 
-                    for (int i = 0; i < chars; i += 1)
-                    {
-                        Inputs.OnTextInput(charsBuffer[i]);
-                    }
-                }
-            }
-        }
+					for (int i = 0; i < chars; i += 1)
+					{
+						Inputs.OnTextInput(charsBuffer[i]);
+					}
+				}
+			}
+		}
 
 		private TimeSpan AdvanceElapsedTime()
 		{
@@ -259,8 +260,8 @@ namespace MoonWorks
 		private unsafe static int MeasureStringLength(byte* ptr)
 		{
 			int bytes;
-			for (bytes = 0; *ptr != 0; ptr += 1, bytes += 1);
+			for (bytes = 0; *ptr != 0; ptr += 1, bytes += 1) ;
 			return bytes;
 		}
-    }
+	}
 }

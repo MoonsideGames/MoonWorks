@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 
 /* MoonWorks - Game Development Framework
  * Copyright 2021 Evan Hemsley
@@ -297,8 +297,8 @@ namespace MoonWorks.Math
 		/// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
 		public bool Equals(BoundingSphere other)
 		{
-			return (	Center == other.Center &&
-					Radius == other.Radius	);
+			return (Center == other.Center &&
+					Radius == other.Radius);
 		}
 
 		#endregion
@@ -474,7 +474,8 @@ namespace MoonWorks.Math
 			ref BoundingSphere original,
 			ref BoundingSphere additional,
 			out BoundingSphere result
-		) {
+		)
+		{
 			Vector3 ocenterToaCenter = Vector3.Subtract(additional.Center, original.Center);
 			float distance = ocenterToaCenter.Length();
 
