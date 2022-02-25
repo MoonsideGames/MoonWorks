@@ -12,6 +12,6 @@
 		public PrimitiveType PrimitiveType;
 		public VertexInputState VertexInputState;
 		public ViewportState ViewportState;
-		public RenderPass RenderPass;
+		public GraphicsPipelineAttachmentInfo AttachmentInfo;
 	}
 }

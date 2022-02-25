@@ -27,169 +27,187 @@ namespace MoonWorks.Graphics
 		/// All render state, resource binding, and draw commands must be made within a render pass.
 		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
+		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
 		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer
+			params ColorAttachmentInfo[] colorAttachmentInfos
 		)
 		{
-			var renderArea = new Rect
+#if DEBUG
+			if (colorAttachmentInfos.Length == 0)
 			{
-				X = 0,
-				Y = 0,
-				W = (int) framebuffer.Width,
-				H = (int) framebuffer.Height
-			};
-
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				IntPtr.Zero,
-				0,
-				IntPtr.Zero
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea
-		)
-		{
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				IntPtr.Zero,
-				0,
-				IntPtr.Zero
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		/// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea,
-			params Vector4[] clearColors
-		)
-		{
-			Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
-
-			for (var i = 0; i < clearColors.Length; i++)
-			{
-				colors[i] = new Refresh.Vec4
-				{
-					x = clearColors[i].X,
-					y = clearColors[i].Y,
-					z = clearColors[i].Z,
-					w = clearColors[i].W
-				};
+				Logger.LogError("Render pass must contain at least one attachment!");
+				return;
 			}
 
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				(IntPtr) colors,
-				(uint) clearColors.Length,
-				IntPtr.Zero
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		/// <param name="depthStencilClearValue">Clear values for the depth/stencil buffer. This is ignored if the render pass does not clear.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea,
-			in DepthStencilValue depthStencilClearValue
-		)
-		{
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				IntPtr.Zero,
-				0,
-				depthStencilClearValue.ToRefresh()
-			);
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderPass">The render pass object to begin.</param>
-		/// <param name="framebuffer">The framebuffer used by the render pass.</param>
-		/// <param name="renderArea">The screen area of the render pass.</param>
-		/// <param name="depthStencilClearValue">Clear values for the depth/stencil buffer. This is ignored if the render pass does not clear.</param>
-		/// <param name="clearColors">Color clear values for each render target in the framebuffer.</param>
-		public unsafe void BeginRenderPass(
-			RenderPass renderPass,
-			Framebuffer framebuffer,
-			in Rect renderArea,
-			in DepthStencilValue depthStencilClearValue,
-			params Vector4[] clearColors
-		)
-		{
-			Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
-
-			for (var i = 0; i < clearColors.Length; i++)
+			if (colorAttachmentInfos.Length > 4)
 			{
-				colors[i] = new Refresh.Vec4
-				{
-					x = clearColors[i].X,
-					y = clearColors[i].Y,
-					z = clearColors[i].Z,
-					w = clearColors[i].W
-				};
+				Logger.LogError("Render pass cannot have more than 4 color attachments!");
+				return;
+			}
+#endif
+
+			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
+
+			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
+			{
+				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
 			}
 
-			Refresh.Refresh_BeginRenderPass(
-				Device.Handle,
-				Handle,
-				renderPass.Handle,
-				framebuffer.Handle,
-				renderArea.ToRefresh(),
-				(IntPtr) colors,
-				(uint) clearColors.Length,
-				depthStencilClearValue.ToRefresh()
-			);
+			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
+			{
+				Refresh.Refresh_BeginRenderPass(
+					Device.Handle,
+					Handle,
+					colorAttachmentInfos[0].renderTarget.TextureSlice.Rectangle.ToRefresh(),
+					(IntPtr) pColorAttachmentInfos,
+					(uint) colorAttachmentInfos.Length,
+					IntPtr.Zero
+				);
+			}
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			params ColorAttachmentInfo[] colorAttachmentInfos
+		)
+		{
+#if DEBUG
+			if (colorAttachmentInfos.Length == 0)
+			{
+				Logger.LogError("Render pass must contain at least one attachment!");
+				return;
+			}
+
+			if (colorAttachmentInfos.Length > 4)
+			{
+				Logger.LogError("Render pass cannot have more than 4 color attachments!");
+				return;
+			}
+#endif
+
+			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
+
+			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
+			{
+				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
+			}
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
+			{
+				Refresh.Refresh_BeginRenderPass(
+					Device.Handle,
+					Handle,
+					colorAttachmentInfos[0].renderTarget.TextureSlice.Rectangle.ToRefresh(),
+					pColorAttachmentInfos,
+					(uint) colorAttachmentInfos.Length,
+					&refreshDepthStencilAttachmentInfo
+				);
+			}
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="renderArea">The rectangle that should be drawn to on the attachments.</param>
+		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in Rect renderArea,
+			params ColorAttachmentInfo[] colorAttachmentInfos
+		)
+		{
+#if DEBUG
+			if (colorAttachmentInfos.Length == 0)
+			{
+				Logger.LogError("Render pass must contain at least one attachment!");
+				return;
+			}
+
+			if (colorAttachmentInfos.Length > 4)
+			{
+				Logger.LogError("Render pass cannot have more than 4 color attachments!");
+				return;
+			}
+#endif
+
+			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
+
+			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
+			{
+				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
+			}
+
+			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
+			{
+				Refresh.Refresh_BeginRenderPass(
+					Device.Handle,
+					Handle,
+					renderArea.ToRefresh(),
+					(IntPtr) pColorAttachmentInfos,
+					(uint) colorAttachmentInfos.Length,
+					IntPtr.Zero
+				);
+			}
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="renderArea">The rectangle that should be drawn to on the attachments.</param>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in Rect renderArea,
+			DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			params ColorAttachmentInfo[] colorAttachmentInfos
+		)
+		{
+#if DEBUG
+			if (colorAttachmentInfos.Length == 0)
+			{
+				Logger.LogError("Render pass must contain at least one attachment!");
+				return;
+			}
+
+			if (colorAttachmentInfos.Length > 4)
+			{
+				Logger.LogError("Render pass cannot have more than 4 color attachments!");
+				return;
+			}
+#endif
+
+			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
+
+			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
+			{
+				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
+			}
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
+			{
+				Refresh.Refresh_BeginRenderPass(
+					Device.Handle,
+					Handle,
+					renderArea.ToRefresh(),
+					pColorAttachmentInfos,
+					(uint) colorAttachmentInfos.Length,
+					&refreshDepthStencilAttachmentInfo
+				);
+			}
 		}
 
 		/// <summary>

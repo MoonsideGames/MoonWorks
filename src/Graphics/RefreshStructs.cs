@@ -73,25 +73,6 @@ namespace MoonWorks.Graphics
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ColorTargetDescription
-	{
-		public TextureFormat Format;
-		public SampleCount MultisampleCount;
-		public LoadOp LoadOp;
-		public StoreOp StoreOp;
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	public struct DepthStencilTargetDescription
-	{
-		public TextureFormat Format;
-		public LoadOp LoadOp;
-		public StoreOp StoreOp;
-		public LoadOp StencilLoadOp;
-		public StoreOp StencilStoreOp;
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
 	public struct StencilOpState
 	{
 		public StencilOp FailOp;
@@ -116,5 +97,62 @@ namespace MoonWorks.Graphics
 				reference = Reference
 			};
 		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ColorAttachmentInfo
+	{
+		public RenderTarget renderTarget;
+		public Color clearColor;
+		public LoadOp loadOp;
+		public StoreOp storeOp;
+
+		public Refresh.ColorAttachmentInfo ToRefresh()
+		{
+			return new Refresh.ColorAttachmentInfo
+			{
+				renderTarget = renderTarget.Handle,
+				clearColor = new Refresh.Vec4
+				{
+					x = clearColor.R,
+					y = clearColor.G,
+					z = clearColor.B,
+					w = clearColor.A
+				},
+				loadOp = (Refresh.LoadOp) loadOp,
+				storeOp = (Refresh.StoreOp) storeOp
+			};
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct DepthStencilAttachmentInfo
+	{
+		public RenderTarget depthStencilTarget;
+		public DepthStencilValue depthStencilValue;
+		public LoadOp loadOp;
+		public StoreOp storeOp;
+		public LoadOp stencilLoadOp;
+		public StoreOp stencilStoreOp;
+
+		public Refresh.DepthStencilAttachmentInfo ToRefresh()
+		{
+			return new Refresh.DepthStencilAttachmentInfo
+			{
+				depthStencilTarget = depthStencilTarget.Handle,
+				depthStencilValue = depthStencilValue.ToRefresh(),
+				loadOp = (Refresh.LoadOp) loadOp,
+				storeOp = (Refresh.StoreOp) storeOp,
+				stencilLoadOp = (Refresh.LoadOp) stencilLoadOp,
+				stencilStoreOp = (Refresh.StoreOp) stencilStoreOp
+			};
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct ColorAttachmentDescription
+	{
+		public TextureFormat format;
+		public SampleCount sampleCount;
 	}
 }

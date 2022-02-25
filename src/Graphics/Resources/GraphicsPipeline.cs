@@ -14,7 +14,6 @@ namespace MoonWorks.Graphics
 
 		public ShaderStageState VertexShaderState { get; }
 		public ShaderStageState FragmentShaderState { get; }
-		public RenderPass RenderPass { get; }
 
 		public unsafe GraphicsPipeline(
 			GraphicsDevice device,
@@ -31,7 +30,7 @@ namespace MoonWorks.Graphics
 			PrimitiveType primitiveType = graphicsPipelineCreateInfo.PrimitiveType;
 			VertexInputState vertexInputState = graphicsPipelineCreateInfo.VertexInputState;
 			ViewportState viewportState = graphicsPipelineCreateInfo.ViewportState;
-			RenderPass renderPass = graphicsPipelineCreateInfo.RenderPass;
+			GraphicsPipelineAttachmentInfo attachmentInfo = graphicsPipelineCreateInfo.AttachmentInfo;
 
 			var vertexAttributesHandle = GCHandle.Alloc(
 				vertexInputState.VertexAttributes,
@@ -57,6 +56,16 @@ namespace MoonWorks.Graphics
 			for (var i = 0; i < colorBlendState.ColorTargetBlendStates.Length; i += 1)
 			{
 				colorTargetBlendStates[i] = colorBlendState.ColorTargetBlendStates[i].ToRefreshColorTargetBlendState();
+			}
+
+			var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
+				(int) attachmentInfo.colorAttachmentCount
+			];
+
+			for (var i = 0; i < attachmentInfo.colorAttachmentCount; i += 1)
+			{
+				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.colorAttachmentDescriptions[i].format;
+				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.colorAttachmentDescriptions[i].sampleCount;
 			}
 
 			Refresh.GraphicsPipelineCreateInfo refreshGraphicsPipelineCreateInfo;
@@ -115,7 +124,11 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.viewportState.scissorCount = (uint) viewportState.Scissors.Length;
 
 			refreshGraphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
-			refreshGraphicsPipelineCreateInfo.renderPass = renderPass.Handle;
+
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = attachmentInfo.colorAttachmentCount;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentDescriptions = (IntPtr) colorAttachmentDescriptions;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.depthStencilFormat = (Refresh.TextureFormat) attachmentInfo.depthStencilFormat;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.hasDepthStencilAttachment = Conversions.BoolToByte(attachmentInfo.hasDepthStencilAttachment);
 
 			Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, refreshGraphicsPipelineCreateInfo);
 
@@ -126,7 +139,6 @@ namespace MoonWorks.Graphics
 
 			VertexShaderState = vertexShaderState;
 			FragmentShaderState = fragmentShaderState;
-			RenderPass = renderPass;
 		}
 	}
 }

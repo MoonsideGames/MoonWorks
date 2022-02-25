@@ -11,6 +11,9 @@ namespace MoonWorks.Graphics
 		public TextureSlice TextureSlice { get; }
 		public TextureFormat Format => TextureSlice.Texture.Format;
 
+		public uint Width => (uint) TextureSlice.Rectangle.W;
+		public uint Height => (uint) TextureSlice.Rectangle.H;
+
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyRenderTarget;
 
 		/// <summary>

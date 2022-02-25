@@ -9,7 +9,7 @@
 
 		public static bool ByteToBool(byte b)
 		{
-			return b == 0 ? false : true;
+			return b != 0;
 		}
 	}
 }
