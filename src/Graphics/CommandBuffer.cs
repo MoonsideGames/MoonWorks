@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using MoonWorks.Math;
-using MoonWorks.Window;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -659,7 +658,7 @@ namespace MoonWorks.Graphics
 		public void QueuePresent(
 			Texture texture,
 			Filter filter,
-			OSWindow window
+			Window window
 		)
 		{
 			var refreshTextureSlice = new Refresh.TextureSlice
@@ -696,7 +695,7 @@ namespace MoonWorks.Graphics
 		public void QueuePresent(
 			in TextureSlice textureSlice,
 			Filter filter,
-			OSWindow window
+			Window window
 		)
 		{
 			Refresh.Refresh_QueuePresent(
@@ -719,7 +718,7 @@ namespace MoonWorks.Graphics
 			in Texture texture,
 			in Rect destinationRectangle,
 			Filter filter,
-			OSWindow window
+			Window window
 		)
 		{
 			var refreshRect = destinationRectangle.ToRefresh();
@@ -758,7 +757,7 @@ namespace MoonWorks.Graphics
 			in TextureSlice textureSlice,
 			in Rect destinationRectangle,
 			Filter filter,
-			OSWindow window
+			Window window
 		)
 		{
 			var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();

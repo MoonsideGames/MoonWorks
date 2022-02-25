@@ -1,9 +1,9 @@
 ﻿using System;
 using SDL2;
 
-namespace MoonWorks.Window
+namespace MoonWorks
 {
-	public class OSWindow : IDisposable
+	public class Window : IDisposable
 	{
 		internal IntPtr Handle { get; }
 		public ScreenMode ScreenMode { get; }
@@ -12,7 +12,7 @@ namespace MoonWorks.Window
 
 		private bool IsDisposed;
 
-		public OSWindow(WindowCreateInfo windowCreateInfo)
+		public Window(WindowCreateInfo windowCreateInfo)
 		{
 			var windowFlags = SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
 
@@ -82,7 +82,7 @@ namespace MoonWorks.Window
 			}
 		}
 
-		~OSWindow()
+		~Window()
 		{
 			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
 			Dispose(disposing: false);

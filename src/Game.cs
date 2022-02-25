@@ -3,7 +3,6 @@ using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
-using MoonWorks.Window;
 using System.Text;
 using System;
 using System.Diagnostics;
@@ -28,7 +27,7 @@ namespace MoonWorks
 		private int sleepTimeIndex = 0;
 		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
 
-		public OSWindow Window { get; }
+		public Window Window { get; }
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
@@ -66,7 +65,7 @@ namespace MoonWorks
 
 			Inputs = new Inputs();
 
-			Window = new OSWindow(windowCreateInfo);
+			Window = new Window(windowCreateInfo);
 
 			GraphicsDevice = new GraphicsDevice(
 				Window.Handle,
