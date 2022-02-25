@@ -114,10 +114,10 @@ namespace MoonWorks.Graphics
 				renderTarget = renderTarget.Handle,
 				clearColor = new Refresh.Vec4
 				{
-					x = clearColor.R,
-					y = clearColor.G,
-					z = clearColor.B,
-					w = clearColor.A
+					x = clearColor.R / 255f,
+					y = clearColor.G / 255f,
+					z = clearColor.B / 255f,
+					w = clearColor.A / 255f
 				},
 				loadOp = (Refresh.LoadOp) loadOp,
 				storeOp = (Refresh.StoreOp) storeOp
