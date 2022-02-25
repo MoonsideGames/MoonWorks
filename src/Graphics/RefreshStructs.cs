@@ -102,25 +102,25 @@ namespace MoonWorks.Graphics
 	[StructLayout(LayoutKind.Sequential)]
 	public struct ColorAttachmentInfo
 	{
-		public RenderTarget renderTarget;
-		public Color clearColor;
-		public LoadOp loadOp;
-		public StoreOp storeOp;
+		public RenderTarget RenderTarget;
+		public Color ClearColor;
+		public LoadOp LoadOp;
+		public StoreOp StoreOp;
 
 		public Refresh.ColorAttachmentInfo ToRefresh()
 		{
 			return new Refresh.ColorAttachmentInfo
 			{
-				renderTarget = renderTarget.Handle,
+				renderTarget = RenderTarget.Handle,
 				clearColor = new Refresh.Vec4
 				{
-					x = clearColor.R / 255f,
-					y = clearColor.G / 255f,
-					z = clearColor.B / 255f,
-					w = clearColor.A / 255f
+					x = ClearColor.R / 255f,
+					y = ClearColor.G / 255f,
+					z = ClearColor.B / 255f,
+					w = ClearColor.A / 255f
 				},
-				loadOp = (Refresh.LoadOp) loadOp,
-				storeOp = (Refresh.StoreOp) storeOp
+				loadOp = (Refresh.LoadOp) LoadOp,
+				storeOp = (Refresh.StoreOp) StoreOp
 			};
 		}
 	}
@@ -128,23 +128,23 @@ namespace MoonWorks.Graphics
 	[StructLayout(LayoutKind.Sequential)]
 	public struct DepthStencilAttachmentInfo
 	{
-		public RenderTarget depthStencilTarget;
-		public DepthStencilValue depthStencilValue;
-		public LoadOp loadOp;
-		public StoreOp storeOp;
-		public LoadOp stencilLoadOp;
-		public StoreOp stencilStoreOp;
+		public RenderTarget DepthStencilTarget;
+		public DepthStencilValue DepthStencilValue;
+		public LoadOp LoadOp;
+		public StoreOp StoreOp;
+		public LoadOp StencilLoadOp;
+		public StoreOp StencilStoreOp;
 
 		public Refresh.DepthStencilAttachmentInfo ToRefresh()
 		{
 			return new Refresh.DepthStencilAttachmentInfo
 			{
-				depthStencilTarget = depthStencilTarget.Handle,
-				depthStencilValue = depthStencilValue.ToRefresh(),
-				loadOp = (Refresh.LoadOp) loadOp,
-				storeOp = (Refresh.StoreOp) storeOp,
-				stencilLoadOp = (Refresh.LoadOp) stencilLoadOp,
-				stencilStoreOp = (Refresh.StoreOp) stencilStoreOp
+				depthStencilTarget = DepthStencilTarget.Handle,
+				depthStencilValue = DepthStencilValue.ToRefresh(),
+				loadOp = (Refresh.LoadOp) LoadOp,
+				storeOp = (Refresh.StoreOp) StoreOp,
+				stencilLoadOp = (Refresh.LoadOp) StencilLoadOp,
+				stencilStoreOp = (Refresh.StoreOp) StencilStoreOp
 			};
 		}
 	}
@@ -152,7 +152,7 @@ namespace MoonWorks.Graphics
 	[StructLayout(LayoutKind.Sequential)]
 	public struct ColorAttachmentDescription
 	{
-		public TextureFormat format;
-		public SampleCount sampleCount;
+		public TextureFormat Format;
+		public SampleCount SampleCount;
 	}
 }

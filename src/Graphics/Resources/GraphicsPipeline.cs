@@ -59,13 +59,13 @@ namespace MoonWorks.Graphics
 			}
 
 			var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
-				(int) attachmentInfo.colorAttachmentCount
+				(int) attachmentInfo.ColorAttachmentCount
 			];
 
-			for (var i = 0; i < attachmentInfo.colorAttachmentCount; i += 1)
+			for (var i = 0; i < attachmentInfo.ColorAttachmentCount; i += 1)
 			{
-				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.colorAttachmentDescriptions[i].format;
-				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.colorAttachmentDescriptions[i].sampleCount;
+				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.ColorAttachmentDescriptions[i].Format;
+				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.ColorAttachmentDescriptions[i].SampleCount;
 			}
 
 			Refresh.GraphicsPipelineCreateInfo refreshGraphicsPipelineCreateInfo;
@@ -125,10 +125,10 @@ namespace MoonWorks.Graphics
 
 			refreshGraphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
 
-			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = attachmentInfo.colorAttachmentCount;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = attachmentInfo.ColorAttachmentCount;
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentDescriptions = (IntPtr) colorAttachmentDescriptions;
-			refreshGraphicsPipelineCreateInfo.attachmentInfo.depthStencilFormat = (Refresh.TextureFormat) attachmentInfo.depthStencilFormat;
-			refreshGraphicsPipelineCreateInfo.attachmentInfo.hasDepthStencilAttachment = Conversions.BoolToByte(attachmentInfo.hasDepthStencilAttachment);
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.depthStencilFormat = (Refresh.TextureFormat) attachmentInfo.DepthStencilFormat;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.hasDepthStencilAttachment = Conversions.BoolToByte(attachmentInfo.HasDepthStencilAttachment);
 
 			Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, refreshGraphicsPipelineCreateInfo);
 

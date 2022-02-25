@@ -58,7 +58,7 @@ namespace MoonWorks.Graphics
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					colorAttachmentInfos[0].renderTarget.TextureSlice.Rectangle.ToRefresh(),
+					colorAttachmentInfos[0].RenderTarget.TextureSlice.Rectangle.ToRefresh(),
 					(IntPtr) pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					IntPtr.Zero
@@ -106,7 +106,7 @@ namespace MoonWorks.Graphics
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					colorAttachmentInfos[0].renderTarget.TextureSlice.Rectangle.ToRefresh(),
+					colorAttachmentInfos[0].RenderTarget.TextureSlice.Rectangle.ToRefresh(),
 					pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					&refreshDepthStencilAttachmentInfo
