@@ -59,10 +59,10 @@ namespace MoonWorks.Graphics
 			}
 
 			var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
-				(int) attachmentInfo.ColorAttachmentCount
+				(int) attachmentInfo.ColorAttachmentDescriptions.Length
 			];
 
-			for (var i = 0; i < attachmentInfo.ColorAttachmentCount; i += 1)
+			for (var i = 0; i < attachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
 			{
 				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.ColorAttachmentDescriptions[i].Format;
 				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.ColorAttachmentDescriptions[i].SampleCount;
@@ -125,7 +125,7 @@ namespace MoonWorks.Graphics
 
 			refreshGraphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
 
-			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = attachmentInfo.ColorAttachmentCount;
+			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = (uint) attachmentInfo.ColorAttachmentDescriptions.Length;
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentDescriptions = (IntPtr) colorAttachmentDescriptions;
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.depthStencilFormat = (Refresh.TextureFormat) attachmentInfo.DepthStencilFormat;
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.hasDepthStencilAttachment = Conversions.BoolToByte(attachmentInfo.HasDepthStencilAttachment);

@@ -6,7 +6,6 @@ namespace MoonWorks.Graphics
 	public struct GraphicsPipelineAttachmentInfo
 	{
 		public ColorAttachmentDescription[] ColorAttachmentDescriptions;
-		public uint ColorAttachmentCount;
 		public bool HasDepthStencilAttachment;
 		public TextureFormat DepthStencilFormat;
 	}
