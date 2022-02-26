@@ -49,15 +49,6 @@ namespace MoonWorks.Graphics
 				GCHandleType.Pinned
 			);
 
-			var colorTargetBlendStates = stackalloc Refresh.ColorTargetBlendState[
-				colorBlendState.ColorTargetBlendStates.Length
-			];
-
-			for (var i = 0; i < colorBlendState.ColorTargetBlendStates.Length; i += 1)
-			{
-				colorTargetBlendStates[i] = colorBlendState.ColorTargetBlendStates[i].ToRefreshColorTargetBlendState();
-			}
-
 			var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
 				(int) attachmentInfo.ColorAttachmentDescriptions.Length
 			];
@@ -66,14 +57,13 @@ namespace MoonWorks.Graphics
 			{
 				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.ColorAttachmentDescriptions[i].Format;
 				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.ColorAttachmentDescriptions[i].SampleCount;
+				colorAttachmentDescriptions[i].blendState = attachmentInfo.ColorAttachmentDescriptions[i].BlendState.ToRefresh();
 			}
 
 			Refresh.GraphicsPipelineCreateInfo refreshGraphicsPipelineCreateInfo;
 
 			refreshGraphicsPipelineCreateInfo.colorBlendState.logicOpEnable = Conversions.BoolToByte(colorBlendState.LogicOpEnable);
 			refreshGraphicsPipelineCreateInfo.colorBlendState.logicOp = (Refresh.LogicOp) colorBlendState.LogicOp;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendStates = (IntPtr) colorTargetBlendStates;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendStateCount = (uint) colorBlendState.ColorTargetBlendStates.Length;
 			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[0] = colorBlendState.BlendConstants.R;
 			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[1] = colorBlendState.BlendConstants.G;
 			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[2] = colorBlendState.BlendConstants.B;

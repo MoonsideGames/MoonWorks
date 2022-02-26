@@ -2,7 +2,7 @@
 
 namespace MoonWorks.Graphics
 {
-	public struct ColorTargetBlendState
+	public struct ColorAttachmentBlendState
 	{
 		/// <summary>
 		/// If disabled, no blending will occur.
@@ -43,7 +43,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public BlendFactor SourceColorBlendFactor;
 
-		public static readonly ColorTargetBlendState Additive = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState Additive = new ColorAttachmentBlendState
 		{
 			BlendEnable = true,
 			AlphaBlendOp = BlendOp.Add,
@@ -55,7 +55,7 @@ namespace MoonWorks.Graphics
 			DestinationAlphaBlendFactor = BlendFactor.One
 		};
 
-		public static readonly ColorTargetBlendState AlphaBlend = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState AlphaBlend = new ColorAttachmentBlendState
 		{
 			BlendEnable = true,
 			AlphaBlendOp = BlendOp.Add,
@@ -67,7 +67,7 @@ namespace MoonWorks.Graphics
 			DestinationAlphaBlendFactor = BlendFactor.OneMinusSourceAlpha
 		};
 
-		public static readonly ColorTargetBlendState NonPremultiplied = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState NonPremultiplied = new ColorAttachmentBlendState
 		{
 			BlendEnable = true,
 			AlphaBlendOp = BlendOp.Add,
@@ -79,7 +79,7 @@ namespace MoonWorks.Graphics
 			DestinationAlphaBlendFactor = BlendFactor.OneMinusSourceAlpha
 		};
 
-		public static readonly ColorTargetBlendState Opaque = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState Opaque = new ColorAttachmentBlendState
 		{
 			BlendEnable = true,
 			AlphaBlendOp = BlendOp.Add,
@@ -91,21 +91,21 @@ namespace MoonWorks.Graphics
 			DestinationAlphaBlendFactor = BlendFactor.Zero
 		};
 
-		public static readonly ColorTargetBlendState None = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState None = new ColorAttachmentBlendState
 		{
 			BlendEnable = false,
 			ColorWriteMask = ColorComponentFlags.RGBA
 		};
 
-		public static readonly ColorTargetBlendState Disable = new ColorTargetBlendState
+		public static readonly ColorAttachmentBlendState Disable = new ColorAttachmentBlendState
 		{
 			BlendEnable = false,
 			ColorWriteMask = ColorComponentFlags.None
 		};
 
-		public Refresh.ColorTargetBlendState ToRefreshColorTargetBlendState()
+		public Refresh.ColorAttachmentBlendState ToRefresh()
 		{
-			return new Refresh.ColorTargetBlendState
+			return new Refresh.ColorAttachmentBlendState
 			{
 				blendEnable = Conversions.BoolToByte(BlendEnable),
 				alphaBlendOp = (Refresh.BlendOp) AlphaBlendOp,

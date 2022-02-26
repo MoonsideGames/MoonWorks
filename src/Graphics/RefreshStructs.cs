@@ -154,5 +154,6 @@ namespace MoonWorks.Graphics
 	{
 		public TextureFormat Format;
 		public SampleCount SampleCount;
+		public ColorAttachmentBlendState BlendState;
 	}
 }
