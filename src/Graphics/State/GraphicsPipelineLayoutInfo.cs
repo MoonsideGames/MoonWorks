@@ -7,5 +7,14 @@
 	{
 		public uint VertexSamplerBindingCount;
 		public uint FragmentSamplerBindingCount;
+
+		public GraphicsPipelineLayoutInfo(
+			uint vertexSamplerBindingCount,
+			uint fragmentSamplerBindingCount
+		)
+		{
+			VertexSamplerBindingCount = vertexSamplerBindingCount;
+			FragmentSamplerBindingCount = fragmentSamplerBindingCount;
+		}
 	}
 }

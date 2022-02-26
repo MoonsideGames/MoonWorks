@@ -31,6 +31,22 @@ namespace MoonWorks.Graphics
 		public int W;
 		public int H;
 
+		public Rect(int x, int y, int w, int h)
+		{
+			X = x;
+			Y = y;
+			W = w;
+			H = h;
+		}
+
+		public Rect(int w, int h)
+		{
+			X = 0;
+			Y = 0;
+			W = w;
+			H = h;
+		}
+
 		// FIXME: can we do an unsafe cast somehow?
 		public Refresh.Rect ToRefresh()
 		{
@@ -53,6 +69,36 @@ namespace MoonWorks.Graphics
 		public float H;
 		public float MinDepth;
 		public float MaxDepth;
+
+		public Viewport(float w, float h)
+		{
+			X = 0;
+			Y = 0;
+			W = w;
+			H = h;
+			MinDepth = 0;
+			MaxDepth = 1;
+		}
+
+		public Viewport(float x, float y, float w, float h)
+		{
+			X = x;
+			Y = y;
+			W = w;
+			H = h;
+			MinDepth = 0;
+			MaxDepth = 1;
+		}
+
+		public Viewport(float x, float y, float w, float h, float minDepth, float maxDepth)
+		{
+			X = x;
+			Y = y;
+			W = w;
+			H = h;
+			MinDepth = minDepth;
+			MaxDepth = maxDepth;
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
