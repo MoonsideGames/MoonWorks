@@ -6,9 +6,9 @@ namespace MoonWorks
 	public class Window : IDisposable
 	{
 		internal IntPtr Handle { get; }
-		public ScreenMode ScreenMode { get; }
-		public uint Width { get; }
-		public uint Height { get; }
+		public ScreenMode ScreenMode { get; private set; }
+		public uint Width { get; private set; }
+		public uint Height { get; private set; }
 
 		private bool IsDisposed;
 
@@ -53,6 +53,8 @@ namespace MoonWorks
 				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
 
+			ScreenMode = screenMode;
+
 			SDL.SDL_SetWindowFullscreen(Handle, (uint) windowFlag);
 		}
 
@@ -65,6 +67,8 @@ namespace MoonWorks
 		public void SetWindowSize(uint width, uint height)
 		{
 			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
+			Width = width;
+			Height = height;
 		}
 
 		protected virtual void Dispose(bool disposing)
