@@ -147,16 +147,14 @@ namespace MoonWorks.Graphics
 	public enum FillMode
 	{
 		Fill,
-		Line,
-		Point
+		Line
 	}
 
 	public enum CullMode
 	{
 		None,
 		Front,
-		Back,
-		FrontAndBack
+		Back
 	}
 
 	public enum FrontFace
@@ -198,26 +196,6 @@ namespace MoonWorks.Graphics
 		Max
 	}
 
-	public enum LogicOp
-	{
-		Clear,
-		And,
-		AndReverse,
-		Copy,
-		AndInverted,
-		NoOp,
-		Xor,
-		Or,
-		Nor,
-		Equivalent,
-		Invert,
-		OrReverse,
-		CopyInverted,
-		OrInverted,
-		Nand,
-		Set
-	}
-
 	public enum BlendFactor
 	{
 		Zero,
@@ -232,8 +210,6 @@ namespace MoonWorks.Graphics
 		OneMinusDestinationAlpha,
 		ConstantColor,
 		OneMinusConstantColor,
-		ConstantAlpha,
-		OneMinusConstantAlpha,
 		SourceAlphaSaturate,
 		SourceOneColor,
 		OneMinusSourceOneColor,
@@ -264,17 +240,10 @@ namespace MoonWorks.Graphics
 		None = 0
 	}
 
-	public enum ShaderStageType
-	{
-		Vertex,
-		Fragment
-	}
-
 	public enum Filter
 	{
 		Nearest,
-		Linear,
-		Cubic
+		Linear
 	}
 
 	public enum SamplerMipmapMode

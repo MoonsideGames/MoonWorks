@@ -2,16 +2,15 @@
 {
 	public struct GraphicsPipelineCreateInfo
 	{
-		public ColorBlendState ColorBlendState;
 		public DepthStencilState DepthStencilState;
-		public ShaderStageState VertexShaderState;
-		public ShaderStageState FragmentShaderState;
+		public GraphicsShaderInfo VertexShaderState;
+		public GraphicsShaderInfo FragmentShaderState;
 		public MultisampleState MultisampleState;
-		public GraphicsPipelineLayoutInfo PipelineLayoutInfo;
 		public RasterizerState RasterizerState;
 		public PrimitiveType PrimitiveType;
 		public VertexInputState VertexInputState;
 		public ViewportState ViewportState;
 		public GraphicsPipelineAttachmentInfo AttachmentInfo;
+		public BlendConstants BlendConstants;
 	}
 }

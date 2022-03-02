@@ -12,25 +12,24 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 
-		public ShaderStageState VertexShaderState { get; }
-		public ShaderStageState FragmentShaderState { get; }
+		public GraphicsShaderInfo VertexShaderState { get; }
+		public GraphicsShaderInfo FragmentShaderState { get; }
 
 		public unsafe GraphicsPipeline(
 			GraphicsDevice device,
 			in GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
 		) : base(device)
 		{
-			ColorBlendState colorBlendState = graphicsPipelineCreateInfo.ColorBlendState;
 			DepthStencilState depthStencilState = graphicsPipelineCreateInfo.DepthStencilState;
-			ShaderStageState vertexShaderState = graphicsPipelineCreateInfo.VertexShaderState;
-			ShaderStageState fragmentShaderState = graphicsPipelineCreateInfo.FragmentShaderState;
+			GraphicsShaderInfo vertexShaderInfo = graphicsPipelineCreateInfo.VertexShaderState;
+			GraphicsShaderInfo fragmentShaderInfo = graphicsPipelineCreateInfo.FragmentShaderState;
 			MultisampleState multisampleState = graphicsPipelineCreateInfo.MultisampleState;
-			GraphicsPipelineLayoutInfo pipelineLayoutInfo = graphicsPipelineCreateInfo.PipelineLayoutInfo;
 			RasterizerState rasterizerState = graphicsPipelineCreateInfo.RasterizerState;
 			PrimitiveType primitiveType = graphicsPipelineCreateInfo.PrimitiveType;
 			VertexInputState vertexInputState = graphicsPipelineCreateInfo.VertexInputState;
 			ViewportState viewportState = graphicsPipelineCreateInfo.ViewportState;
 			GraphicsPipelineAttachmentInfo attachmentInfo = graphicsPipelineCreateInfo.AttachmentInfo;
+			BlendConstants blendConstants = graphicsPipelineCreateInfo.BlendConstants;
 
 			var vertexAttributesHandle = GCHandle.Alloc(
 				vertexInputState.VertexAttributes,
@@ -62,12 +61,10 @@ namespace MoonWorks.Graphics
 
 			Refresh.GraphicsPipelineCreateInfo refreshGraphicsPipelineCreateInfo;
 
-			refreshGraphicsPipelineCreateInfo.colorBlendState.logicOpEnable = Conversions.BoolToByte(colorBlendState.LogicOpEnable);
-			refreshGraphicsPipelineCreateInfo.colorBlendState.logicOp = (Refresh.LogicOp) colorBlendState.LogicOp;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[0] = colorBlendState.BlendConstants.R;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[1] = colorBlendState.BlendConstants.G;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[2] = colorBlendState.BlendConstants.B;
-			refreshGraphicsPipelineCreateInfo.colorBlendState.blendConstants[3] = colorBlendState.BlendConstants.A;
+			refreshGraphicsPipelineCreateInfo.blendConstants[0] = blendConstants.R;
+			refreshGraphicsPipelineCreateInfo.blendConstants[1] = blendConstants.G;
+			refreshGraphicsPipelineCreateInfo.blendConstants[2] = blendConstants.B;
+			refreshGraphicsPipelineCreateInfo.blendConstants[3] = blendConstants.A;
 
 			refreshGraphicsPipelineCreateInfo.depthStencilState.backStencilState = depthStencilState.BackStencilState.ToRefresh();
 			refreshGraphicsPipelineCreateInfo.depthStencilState.compareOp = (Refresh.CompareOp) depthStencilState.CompareOp;
@@ -79,19 +76,18 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.depthStencilState.minDepthBounds = depthStencilState.MinDepthBounds;
 			refreshGraphicsPipelineCreateInfo.depthStencilState.stencilTestEnable = Conversions.BoolToByte(depthStencilState.StencilTestEnable);
 
-			refreshGraphicsPipelineCreateInfo.vertexShaderState.entryPointName = vertexShaderState.EntryPointName;
-			refreshGraphicsPipelineCreateInfo.vertexShaderState.shaderModule = vertexShaderState.ShaderModule.Handle;
-			refreshGraphicsPipelineCreateInfo.vertexShaderState.uniformBufferSize = vertexShaderState.UniformBufferSize;
+			refreshGraphicsPipelineCreateInfo.vertexShaderInfo.entryPointName = vertexShaderInfo.EntryPointName;
+			refreshGraphicsPipelineCreateInfo.vertexShaderInfo.shaderModule = vertexShaderInfo.ShaderModule.Handle;
+			refreshGraphicsPipelineCreateInfo.vertexShaderInfo.uniformBufferSize = vertexShaderInfo.UniformBufferSize;
+			refreshGraphicsPipelineCreateInfo.vertexShaderInfo.samplerBindingCount = vertexShaderInfo.SamplerBindingCount;
 
-			refreshGraphicsPipelineCreateInfo.fragmentShaderState.entryPointName = fragmentShaderState.EntryPointName;
-			refreshGraphicsPipelineCreateInfo.fragmentShaderState.shaderModule = fragmentShaderState.ShaderModule.Handle;
-			refreshGraphicsPipelineCreateInfo.fragmentShaderState.uniformBufferSize = fragmentShaderState.UniformBufferSize;
+			refreshGraphicsPipelineCreateInfo.fragmentShaderInfo.entryPointName = fragmentShaderInfo.EntryPointName;
+			refreshGraphicsPipelineCreateInfo.fragmentShaderInfo.shaderModule = fragmentShaderInfo.ShaderModule.Handle;
+			refreshGraphicsPipelineCreateInfo.fragmentShaderInfo.uniformBufferSize = fragmentShaderInfo.UniformBufferSize;
+			refreshGraphicsPipelineCreateInfo.fragmentShaderInfo.samplerBindingCount = fragmentShaderInfo.SamplerBindingCount;
 
 			refreshGraphicsPipelineCreateInfo.multisampleState.multisampleCount = (Refresh.SampleCount) multisampleState.MultisampleCount;
 			refreshGraphicsPipelineCreateInfo.multisampleState.sampleMask = multisampleState.SampleMask;
-
-			refreshGraphicsPipelineCreateInfo.pipelineLayoutCreateInfo.vertexSamplerBindingCount = pipelineLayoutInfo.VertexSamplerBindingCount;
-			refreshGraphicsPipelineCreateInfo.pipelineLayoutCreateInfo.fragmentSamplerBindingCount = pipelineLayoutInfo.FragmentSamplerBindingCount;
 
 			refreshGraphicsPipelineCreateInfo.rasterizerState.cullMode = (Refresh.CullMode) rasterizerState.CullMode;
 			refreshGraphicsPipelineCreateInfo.rasterizerState.depthBiasClamp = rasterizerState.DepthBiasClamp;
@@ -127,8 +123,8 @@ namespace MoonWorks.Graphics
 			viewportHandle.Free();
 			scissorHandle.Free();
 
-			VertexShaderState = vertexShaderState;
-			FragmentShaderState = fragmentShaderState;
+			VertexShaderState = vertexShaderInfo;
+			FragmentShaderState = fragmentShaderInfo;
 		}
 	}
 }

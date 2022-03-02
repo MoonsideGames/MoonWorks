@@ -8,38 +8,28 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyComputePipeline;
 
-		public ShaderStageState ComputeShaderState { get; }
+		public ComputeShaderInfo ComputeShaderState { get; }
 
 		public unsafe ComputePipeline(
 			GraphicsDevice device,
-			ShaderStageState computeShaderState,
-			uint bufferBindingCount,
-			uint imageBindingCount
+			ComputeShaderInfo computeShaderInfo
 		) : base(device)
 		{
-			var computePipelineLayoutCreateInfo = new Refresh.ComputePipelineLayoutCreateInfo
+			var refreshComputeShaderInfo = new Refresh.ComputeShaderInfo
 			{
-				bufferBindingCount = bufferBindingCount,
-				imageBindingCount = imageBindingCount
-			};
-
-			var computePipelineCreateInfo = new Refresh.ComputePipelineCreateInfo
-			{
-				pipelineLayoutCreateInfo = computePipelineLayoutCreateInfo,
-				computeShaderState = new Refresh.ShaderStageState
-				{
-					entryPointName = computeShaderState.EntryPointName,
-					shaderModule = computeShaderState.ShaderModule.Handle,
-					uniformBufferSize = computeShaderState.UniformBufferSize
-				}
+				entryPointName = computeShaderInfo.EntryPointName,
+				shaderModule = computeShaderInfo.ShaderModule.Handle,
+				uniformBufferSize = computeShaderInfo.UniformBufferSize,
+				bufferBindingCount = computeShaderInfo.bufferBindingCount,
+				imageBindingCount = computeShaderInfo.imageBindingCount
 			};
 
 			Handle = Refresh.Refresh_CreateComputePipeline(
 				device.Handle,
-				computePipelineCreateInfo
+				refreshComputeShaderInfo
 			);
 
-			ComputeShaderState = computeShaderState;
+			ComputeShaderState = computeShaderInfo;
 		}
 	}
 }
