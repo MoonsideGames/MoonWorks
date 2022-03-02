@@ -12,12 +12,15 @@ namespace MoonWorks.Graphics
 
 		private WeakReference<GraphicsResource> selfReference;
 
-		public GraphicsResource(GraphicsDevice device)
+		public GraphicsResource(GraphicsDevice device, bool trackResource = true)
 		{
 			Device = device;
 
-			selfReference = new WeakReference<GraphicsResource>(this);
-			Device.AddResourceReference(selfReference);
+			if (trackResource)
+			{
+				selfReference = new WeakReference<GraphicsResource>(this);
+				Device.AddResourceReference(selfReference);
+			}
 		}
 
 		protected virtual void Dispose(bool disposing)

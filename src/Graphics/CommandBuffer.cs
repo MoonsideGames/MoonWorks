@@ -664,7 +664,7 @@ namespace MoonWorks.Graphics
 			return new Texture(
 				Device,
 				Refresh.Refresh_AcquireSwapchainTexture(Device.Handle, Handle, window.Handle),
-				(TextureFormat) Refresh.Refresh_GetSwapchainFormat(Device.Handle, window.Handle),
+				Device.GetSwapchainFormat(window),
 				window.Width,
 				window.Height
 			);

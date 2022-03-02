@@ -57,6 +57,11 @@ namespace MoonWorks.Graphics
 			Refresh.Refresh_Wait(Handle);
 		}
 
+		public TextureFormat GetSwapchainFormat(Window window)
+		{
+			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
+		}
+
 		internal void SubmitDestroyCommandBuffer()
 		{
 			if (resourcesToDestroy.Count > 0)
