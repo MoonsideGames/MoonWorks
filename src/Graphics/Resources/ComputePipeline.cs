@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyComputePipeline;
 
-		public ComputeShaderInfo ComputeShaderState { get; }
+		public ComputeShaderInfo ComputeShaderInfo { get; }
 
 		public unsafe ComputePipeline(
 			GraphicsDevice device,
@@ -29,7 +29,7 @@ namespace MoonWorks.Graphics
 				refreshComputeShaderInfo
 			);
 
-			ComputeShaderState = computeShaderInfo;
+			ComputeShaderInfo = computeShaderInfo;
 		}
 	}
 }

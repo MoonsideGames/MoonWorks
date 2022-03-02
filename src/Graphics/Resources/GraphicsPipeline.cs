@@ -12,8 +12,8 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 
-		public GraphicsShaderInfo VertexShaderState { get; }
-		public GraphicsShaderInfo FragmentShaderState { get; }
+		public GraphicsShaderInfo VertexShaderInfo { get; }
+		public GraphicsShaderInfo FragmentShaderInfo { get; }
 
 		public unsafe GraphicsPipeline(
 			GraphicsDevice device,
@@ -21,8 +21,8 @@ namespace MoonWorks.Graphics
 		) : base(device)
 		{
 			DepthStencilState depthStencilState = graphicsPipelineCreateInfo.DepthStencilState;
-			GraphicsShaderInfo vertexShaderInfo = graphicsPipelineCreateInfo.VertexShaderState;
-			GraphicsShaderInfo fragmentShaderInfo = graphicsPipelineCreateInfo.FragmentShaderState;
+			GraphicsShaderInfo vertexShaderInfo = graphicsPipelineCreateInfo.VertexShaderInfo;
+			GraphicsShaderInfo fragmentShaderInfo = graphicsPipelineCreateInfo.FragmentShaderInfo;
 			MultisampleState multisampleState = graphicsPipelineCreateInfo.MultisampleState;
 			RasterizerState rasterizerState = graphicsPipelineCreateInfo.RasterizerState;
 			PrimitiveType primitiveType = graphicsPipelineCreateInfo.PrimitiveType;
@@ -123,8 +123,8 @@ namespace MoonWorks.Graphics
 			viewportHandle.Free();
 			scissorHandle.Free();
 
-			VertexShaderState = vertexShaderInfo;
-			FragmentShaderState = fragmentShaderInfo;
+			VertexShaderInfo = vertexShaderInfo;
+			FragmentShaderInfo = fragmentShaderInfo;
 		}
 	}
 }
