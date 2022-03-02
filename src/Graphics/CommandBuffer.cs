@@ -656,6 +656,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Acquires a swapchain texture.
 		/// This texture will be presented to the given window when the command buffer is submitted.
+		/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
+		/// If null is returned, presentation will not occur.
+		/// It is an error to acquire two swapchain textures from the same window in one command buffer.
 		/// </summary>
 		public Texture? AcquireSwapchainTexture(
 			Window window
