@@ -113,6 +113,17 @@ namespace MoonWorks.Graphics
 		public uint Binding;
 		public uint Stride;
 		public VertexInputRate InputRate;
+
+		// Shortcut for the common case of having a single vertex binding.
+		public static VertexBinding Create<T>()
+		{
+			return new VertexBinding
+			{
+				Binding = 0,
+				InputRate = VertexInputRate.Vertex,
+				Stride = (uint) Marshal.SizeOf<T>()
+			};
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -122,6 +133,28 @@ namespace MoonWorks.Graphics
 		public uint Binding;
 		public VertexElementFormat Format;
 		public uint Offset;
+
+		public static VertexAttribute Create<T>(
+			string fieldName,
+			uint location,
+			uint binding = 0
+		)
+		{
+			var fieldInfo = typeof(T).GetField(fieldName);
+
+			if (fieldInfo == null)
+			{
+				throw new System.ArgumentException("Field not recognized!");
+			}
+
+			return new VertexAttribute
+			{
+				Binding = binding,
+				Location = location,
+				Format = Conversions.TypeToVertexElementFormat(fieldInfo.FieldType),
+				Offset = (uint) Marshal.OffsetOf<T>(fieldName)
+			};
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -175,7 +208,7 @@ namespace MoonWorks.Graphics
 			StoreOp = storeOp;
 		}
 
-		public ColorAttachmentInfo(Texture texture, StoreOp storeOp = StoreOp.Store)
+		public ColorAttachmentInfo(Texture texture, LoadOp loadOp = LoadOp.DontCare, StoreOp storeOp = StoreOp.Store)
 		{
 			Texture = texture;
 			Depth = 0;
@@ -183,8 +216,8 @@ namespace MoonWorks.Graphics
 			Level = 0;
 			SampleCount = SampleCount.One;
 			ClearColor = Color.White;
-			LoadOp = LoadOp.DontCare;
-			StoreOp = StoreOp.Store;
+			LoadOp = loadOp;
+			StoreOp = storeOp;
 		}
 
 		public Refresh.ColorAttachmentInfo ToRefresh()
@@ -258,5 +291,15 @@ namespace MoonWorks.Graphics
 		public TextureFormat Format;
 		public SampleCount SampleCount;
 		public ColorAttachmentBlendState BlendState;
+
+		public ColorAttachmentDescription(
+			TextureFormat format,
+			ColorAttachmentBlendState blendState,
+			SampleCount sampleCount = SampleCount.One
+		) {
+			Format = format;
+			SampleCount = sampleCount;
+			BlendState = blendState;
+		}
 	}
 }

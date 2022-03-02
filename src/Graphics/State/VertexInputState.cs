@@ -7,5 +7,13 @@
 	{
 		public VertexBinding[] VertexBindings;
 		public VertexAttribute[] VertexAttributes;
+
+		public VertexInputState(
+			VertexBinding vertexBinding,
+			params VertexAttribute[] vertexAttributes
+		) {
+			VertexBindings = new VertexBinding[] { vertexBinding };
+			VertexAttributes = vertexAttributes;
+		}
 	}
 }

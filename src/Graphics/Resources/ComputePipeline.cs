@@ -20,8 +20,8 @@ namespace MoonWorks.Graphics
 				entryPointName = computeShaderInfo.EntryPointName,
 				shaderModule = computeShaderInfo.ShaderModule.Handle,
 				uniformBufferSize = computeShaderInfo.UniformBufferSize,
-				bufferBindingCount = computeShaderInfo.bufferBindingCount,
-				imageBindingCount = computeShaderInfo.imageBindingCount
+				bufferBindingCount = computeShaderInfo.BufferBindingCount,
+				imageBindingCount = computeShaderInfo.ImageBindingCount
 			};
 
 			Handle = Refresh.Refresh_CreateComputePipeline(

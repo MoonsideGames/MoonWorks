@@ -8,5 +8,22 @@ namespace MoonWorks.Graphics
 		public ColorAttachmentDescription[] ColorAttachmentDescriptions;
 		public bool HasDepthStencilAttachment;
 		public TextureFormat DepthStencilFormat;
+
+		public GraphicsPipelineAttachmentInfo(
+			params ColorAttachmentDescription[] colorAttachmentDescriptions
+		) {
+			ColorAttachmentDescriptions = colorAttachmentDescriptions;
+			HasDepthStencilAttachment = false;
+			DepthStencilFormat = TextureFormat.D16;
+		}
+
+		public GraphicsPipelineAttachmentInfo(
+			TextureFormat depthStencilFormat,
+			params ColorAttachmentDescription[] colorAttachmentDescriptions
+		) {
+			ColorAttachmentDescriptions = colorAttachmentDescriptions;
+			HasDepthStencilAttachment = true;
+			DepthStencilFormat = depthStencilFormat;
+		}
 	}
 }

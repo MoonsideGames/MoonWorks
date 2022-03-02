@@ -1,4 +1,6 @@
-﻿namespace MoonWorks.Graphics
+﻿using System.Runtime.InteropServices;
+
+namespace MoonWorks.Graphics
 {
 	/// <summary>
 	/// Information that the pipeline needs about a shader.
@@ -9,5 +11,34 @@
 		public string EntryPointName;
 		public uint UniformBufferSize;
 		public uint SamplerBindingCount;
+
+		public static GraphicsShaderInfo Create<T>(
+			ShaderModule shaderModule,
+			string entryPointName,
+			uint samplerBindingCount
+		) where T : unmanaged
+		{
+			return new GraphicsShaderInfo
+			{
+				ShaderModule = shaderModule,
+				EntryPointName = entryPointName,
+				UniformBufferSize = (uint) Marshal.SizeOf<T>(),
+				SamplerBindingCount = samplerBindingCount
+			};
+		}
+
+		public static GraphicsShaderInfo Create(
+			ShaderModule shaderModule,
+			string entryPointName,
+			uint samplerBindingCount
+		) {
+			return new GraphicsShaderInfo
+			{
+				ShaderModule = shaderModule,
+				EntryPointName = entryPointName,
+				UniformBufferSize = 0,
+				SamplerBindingCount = samplerBindingCount
+			};
+		}
 	}
 }
