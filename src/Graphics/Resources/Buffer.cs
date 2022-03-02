@@ -12,6 +12,27 @@ namespace MoonWorks.Graphics
 		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
 
 		/// <summary>
+		/// Creates a buffer of appropriate size given a type and element count.
+		/// </summary>
+		/// <typeparam name="T">The type that the buffer will contain.</typeparam>
+		/// <param name="device">The GraphicsDevice.</param>
+		/// <param name="usageFlags">Specifies how the buffer will be used.</param>
+		/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
+		/// <returns></returns>
+		public static Buffer Create<T>(
+			GraphicsDevice device,
+			BufferUsageFlags usageFlags,
+			uint elementCount
+		)
+		{
+			return new Buffer(
+				device,
+				usageFlags,
+				(uint) Marshal.SizeOf<T>() * elementCount
+			);
+		}
+
+		/// <summary>
 		/// Creates a buffer.
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
