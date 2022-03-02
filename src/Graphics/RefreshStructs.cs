@@ -148,7 +148,11 @@ namespace MoonWorks.Graphics
 	[StructLayout(LayoutKind.Sequential)]
 	public struct ColorAttachmentInfo
 	{
-		public RenderTarget RenderTarget;
+		public Texture Texture;
+		public uint Depth;
+		public uint Layer;
+		public uint Level;
+		public SampleCount SampleCount;
 		public Color ClearColor;
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
@@ -157,7 +161,11 @@ namespace MoonWorks.Graphics
 		{
 			return new Refresh.ColorAttachmentInfo
 			{
-				renderTarget = RenderTarget.Handle,
+				texture = Texture.Handle,
+				depth = Depth,
+				layer = Layer,
+				level = Level,
+				sampleCount = (Refresh.SampleCount) SampleCount,
 				clearColor = new Refresh.Vec4
 				{
 					x = ClearColor.R / 255f,
@@ -174,8 +182,11 @@ namespace MoonWorks.Graphics
 	[StructLayout(LayoutKind.Sequential)]
 	public struct DepthStencilAttachmentInfo
 	{
-		public RenderTarget DepthStencilTarget;
-		public DepthStencilValue DepthStencilValue;
+		public Texture Texture;
+		public uint Depth;
+		public uint Layer;
+		public uint Level;
+		public DepthStencilValue DepthStencilClearValue;
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
 		public LoadOp StencilLoadOp;
@@ -185,8 +196,11 @@ namespace MoonWorks.Graphics
 		{
 			return new Refresh.DepthStencilAttachmentInfo
 			{
-				depthStencilTarget = DepthStencilTarget.Handle,
-				depthStencilValue = DepthStencilValue.ToRefresh(),
+				texture = Texture.Handle,
+				depth = Depth,
+				layer = Layer,
+				level = Level,
+				depthStencilClearValue = DepthStencilClearValue.ToRefresh(),
 				loadOp = (Refresh.LoadOp) LoadOp,
 				storeOp = (Refresh.StoreOp) StoreOp,
 				stencilLoadOp = (Refresh.LoadOp) StencilLoadOp,

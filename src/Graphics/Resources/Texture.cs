@@ -56,11 +56,16 @@ namespace MoonWorks.Graphics
 			return texture;
 		}
 
-		public unsafe static void SavePNG(string path, int width, int height, byte[] pixels)
+		public unsafe static void SavePNG(string path, int width, int height, TextureFormat format, byte[] pixels)
 		{
+			if (format != TextureFormat.R8G8B8A8 && format != TextureFormat.B8G8R8A8)
+			{
+				throw new ArgumentException("Texture format must be RGBA8 or BGRA8!", "format");
+			}
+
 			fixed (byte* ptr = &pixels[0])
 			{
-				Refresh.Refresh_Image_SavePNG(path, width, height, (IntPtr) ptr);
+				Refresh.Refresh_Image_SavePNG(path, width, height, Conversions.BoolToByte(format == TextureFormat.B8G8R8A8), (IntPtr) ptr);
 			}
 		}
 
@@ -191,8 +196,28 @@ namespace MoonWorks.Graphics
 			IsCube = textureCreateInfo.IsCube;
 			SampleCount = textureCreateInfo.SampleCount;
 			LevelCount = textureCreateInfo.LevelCount;
-			SampleCount = textureCreateInfo.SampleCount;
 			UsageFlags = textureCreateInfo.UsageFlags;
+		}
+
+		// Used by AcquireSwapchainTexture.
+		internal Texture(
+			GraphicsDevice device,
+			IntPtr handle,
+			TextureFormat format,
+			uint width,
+			uint height
+		) : base(device)
+		{
+			Handle = handle;
+
+			Format = format;
+			Width = width;
+			Height = height;
+			Depth = 1;
+			IsCube = false;
+			SampleCount = SampleCount.One;
+			LevelCount = 1;
+			UsageFlags = TextureUsageFlags.ColorTarget;
 		}
 	}
 }

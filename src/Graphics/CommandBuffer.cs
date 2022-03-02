@@ -52,12 +52,14 @@ namespace MoonWorks.Graphics
 				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
 			}
 
+			Rect renderArea = new Rect((int) colorAttachmentInfos[0].Texture.Width, (int) colorAttachmentInfos[0].Texture.Height);
+
 			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
 			{
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					colorAttachmentInfos[0].RenderTarget.TextureSlice.Rectangle.ToRefresh(),
+					renderArea.ToRefresh(),
 					(IntPtr) pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					IntPtr.Zero
@@ -100,12 +102,14 @@ namespace MoonWorks.Graphics
 
 			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
+			Rect renderArea = new Rect((int) colorAttachmentInfos[0].Texture.Width, (int) colorAttachmentInfos[0].Texture.Height);
+
 			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
 			{
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					colorAttachmentInfos[0].RenderTarget.TextureSlice.Rectangle.ToRefresh(),
+					renderArea.ToRefresh(),
 					pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					&refreshDepthStencilAttachmentInfo
@@ -650,126 +654,19 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Prepares a texture to be presented to a window.
-		/// This particular variant of this method will present to the entire window area.
+		/// Acquires a swapchain texture.
+		/// This texture will be presented to the given window when the command buffer is submitted.
 		/// </summary>
-		/// <param name="texture">The texture to present.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
-		public void QueuePresent(
-			Texture texture,
-			Filter filter,
+		public Texture AcquireSwapchainTexture(
 			Window window
 		)
 		{
-			var refreshTextureSlice = new Refresh.TextureSlice
-			{
-				texture = texture.Handle,
-				rectangle = new Refresh.Rect
-				{
-					x = 0,
-					y = 0,
-					w = (int) texture.Width,
-					h = (int) texture.Height
-				},
-				layer = 0,
-				level = 0,
-				depth = 0
-			};
-
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				refreshTextureSlice,
-				IntPtr.Zero,
-				(Refresh.Filter) filter,
-				window.Handle
-			);
-		}
-
-		/// <summary>
-		/// Prepares a texture slice to be presented to a window.
-		/// This particular variant of this method will present to the entire window area.
-		/// </summary>
-		/// <param name="textureSlice">The texture slice to present.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the window size.</param>
-		public void QueuePresent(
-			in TextureSlice textureSlice,
-			Filter filter,
-			Window window
-		)
-		{
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				textureSlice.ToRefreshTextureSlice(),
-				IntPtr.Zero,
-				(Refresh.Filter) filter,
-				window.Handle
-			);
-		}
-
-		/// <summary>
-		/// Prepares a texture to be presented to a window.
-		/// </summary>
-		/// <param name="texture">The texture to present.</param>
-		/// <param name="destinationRectangle">The area of the window to present to.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
-		public void QueuePresent(
-			in Texture texture,
-			in Rect destinationRectangle,
-			Filter filter,
-			Window window
-		)
-		{
-			var refreshRect = destinationRectangle.ToRefresh();
-			var refreshTextureSlice = new Refresh.TextureSlice
-			{
-				texture = texture.Handle,
-				rectangle = new Refresh.Rect
-				{
-					x = 0,
-					y = 0,
-					w = (int) texture.Width,
-					h = (int) texture.Height
-				},
-				layer = 0,
-				level = 0,
-				depth = 0
-			};
-
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				refreshTextureSlice,
-				refreshRect,
-				(Refresh.Filter) filter,
-				window.Handle
-			);
-		}
-
-		/// <summary>
-		/// Prepares a texture slice to be presented to a window.
-		/// </summary>
-		/// <param name="textureSlice">The texture slice to present.</param>
-		/// <param name="destinationRectangle">The area of the window to present to.</param>
-		/// <param name="filter">The filter to use when the texture size differs from the destination rectangle.</param>
-		public void QueuePresent(
-			in TextureSlice textureSlice,
-			in Rect destinationRectangle,
-			Filter filter,
-			Window window
-		)
-		{
-			var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
-			var refreshRect = destinationRectangle.ToRefresh();
-
-			Refresh.Refresh_QueuePresent(
-				Device.Handle,
-				Handle,
-				refreshTextureSlice,
-				refreshRect,
-				(Refresh.Filter) filter,
-				window.Handle
+			return new Texture(
+				Device,
+				Refresh.Refresh_AcquireSwapchainTexture(Device.Handle, Handle, window.Handle),
+				(TextureFormat) Refresh.Refresh_GetSwapchainFormat(Device.Handle, window.Handle),
+				window.Width,
+				window.Height
 			);
 		}
 

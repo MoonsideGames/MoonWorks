@@ -60,6 +60,7 @@ namespace MoonWorks.Graphics
 	public enum TextureFormat
 	{
 		R8G8B8A8,
+		B8G8R8A8,
 		R5G6B5,
 		A1R5G5B5,
 		B4G4R4A4,
