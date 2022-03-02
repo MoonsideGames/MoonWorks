@@ -27,10 +27,9 @@ namespace MoonWorks.Graphics
 		{
 			if (!IsDisposed)
 			{
-				Device.PrepareDestroyResource(this, QueueDestroyFunction);
-
 				if (selfReference != null)
 				{
+					Device.PrepareDestroyResource(this, QueueDestroyFunction);
 					Device.RemoveResourceReference(selfReference);
 					selfReference = null;
 				}
