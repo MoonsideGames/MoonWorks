@@ -12,6 +12,12 @@ namespace MoonWorks.Graphics
 		public float Depth;
 		public uint Stencil;
 
+		public DepthStencilValue(float depth, uint stencil)
+		{
+			Depth = depth;
+			Stencil = stencil;
+		}
+
 		// FIXME: can we do an unsafe cast somehow?
 		public Refresh.DepthStencilValue ToRefresh()
 		{
@@ -157,6 +163,30 @@ namespace MoonWorks.Graphics
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
 
+		public ColorAttachmentInfo(Texture texture, Color clearColor, StoreOp storeOp = StoreOp.Store)
+		{
+			Texture = texture;
+			Depth = 0;
+			Layer = 0;
+			Level = 0;
+			SampleCount = SampleCount.One;
+			ClearColor = clearColor;
+			LoadOp = LoadOp.Clear;
+			StoreOp = storeOp;
+		}
+
+		public ColorAttachmentInfo(Texture texture, StoreOp storeOp = StoreOp.Store)
+		{
+			Texture = texture;
+			Depth = 0;
+			Layer = 0;
+			Level = 0;
+			SampleCount = SampleCount.One;
+			ClearColor = Color.White;
+			LoadOp = LoadOp.DontCare;
+			StoreOp = StoreOp.Store;
+		}
+
 		public Refresh.ColorAttachmentInfo ToRefresh()
 		{
 			return new Refresh.ColorAttachmentInfo
@@ -191,6 +221,19 @@ namespace MoonWorks.Graphics
 		public StoreOp StoreOp;
 		public LoadOp StencilLoadOp;
 		public StoreOp StencilStoreOp;
+
+		public DepthStencilAttachmentInfo(Texture texture, DepthStencilValue clearValue)
+		{
+			Texture = texture;
+			Depth = 0;
+			Layer = 0;
+			Level = 0;
+			DepthStencilClearValue = clearValue;
+			LoadOp = LoadOp.Clear;
+			StoreOp = StoreOp.DontCare;
+			StencilLoadOp = LoadOp.DontCare;
+			StencilStoreOp = StoreOp.DontCare;
+		}
 
 		public Refresh.DepthStencilAttachmentInfo ToRefresh()
 		{
