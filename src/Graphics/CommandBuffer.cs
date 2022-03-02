@@ -657,13 +657,24 @@ namespace MoonWorks.Graphics
 		/// Acquires a swapchain texture.
 		/// This texture will be presented to the given window when the command buffer is submitted.
 		/// </summary>
-		public Texture AcquireSwapchainTexture(
+		public Texture? AcquireSwapchainTexture(
 			Window window
 		)
 		{
+			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
+				Device.Handle,
+				Handle,
+				window.Handle
+			);
+
+			if (texturePtr == IntPtr.Zero)
+			{
+				return null;
+			}
+
 			return new Texture(
 				Device,
-				Refresh.Refresh_AcquireSwapchainTexture(Device.Handle, Handle, window.Handle),
+				texturePtr,
 				Device.GetSwapchainFormat(window),
 				window.Width,
 				window.Height
