@@ -105,6 +105,19 @@ namespace MoonWorks.Graphics
 			MinDepth = minDepth;
 			MaxDepth = maxDepth;
 		}
+
+		public Refresh.Viewport ToRefresh()
+		{
+			return new Refresh.Viewport
+			{
+				x = X,
+				y = Y,
+				w = W,
+				h = H,
+				minDepth = MinDepth,
+				maxDepth = MaxDepth
+			};
+		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]

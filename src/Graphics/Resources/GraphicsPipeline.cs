@@ -27,7 +27,6 @@ namespace MoonWorks.Graphics
 			RasterizerState rasterizerState = graphicsPipelineCreateInfo.RasterizerState;
 			PrimitiveType primitiveType = graphicsPipelineCreateInfo.PrimitiveType;
 			VertexInputState vertexInputState = graphicsPipelineCreateInfo.VertexInputState;
-			ViewportState viewportState = graphicsPipelineCreateInfo.ViewportState;
 			GraphicsPipelineAttachmentInfo attachmentInfo = graphicsPipelineCreateInfo.AttachmentInfo;
 			BlendConstants blendConstants = graphicsPipelineCreateInfo.BlendConstants;
 
@@ -37,14 +36,6 @@ namespace MoonWorks.Graphics
 			);
 			var vertexBindingsHandle = GCHandle.Alloc(
 				vertexInputState.VertexBindings,
-				GCHandleType.Pinned
-			);
-			var viewportHandle = GCHandle.Alloc(
-				viewportState.Viewports,
-				GCHandleType.Pinned
-			);
-			var scissorHandle = GCHandle.Alloc(
-				viewportState.Scissors,
 				GCHandleType.Pinned
 			);
 
@@ -104,11 +95,6 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.vertexInputState.vertexBindings = vertexBindingsHandle.AddrOfPinnedObject();
 			refreshGraphicsPipelineCreateInfo.vertexInputState.vertexBindingCount = (uint) vertexInputState.VertexBindings.Length;
 
-			refreshGraphicsPipelineCreateInfo.viewportState.viewports = viewportHandle.AddrOfPinnedObject();
-			refreshGraphicsPipelineCreateInfo.viewportState.viewportCount = (uint) viewportState.Viewports.Length;
-			refreshGraphicsPipelineCreateInfo.viewportState.scissors = scissorHandle.AddrOfPinnedObject();
-			refreshGraphicsPipelineCreateInfo.viewportState.scissorCount = (uint) viewportState.Scissors.Length;
-
 			refreshGraphicsPipelineCreateInfo.primitiveType = (Refresh.PrimitiveType) primitiveType;
 
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.colorAttachmentCount = (uint) attachmentInfo.ColorAttachmentDescriptions.Length;
@@ -120,8 +106,6 @@ namespace MoonWorks.Graphics
 
 			vertexAttributesHandle.Free();
 			vertexBindingsHandle.Free();
-			viewportHandle.Free();
-			scissorHandle.Free();
 
 			VertexShaderInfo = vertexShaderInfo;
 			FragmentShaderInfo = fragmentShaderInfo;

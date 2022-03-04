@@ -9,7 +9,6 @@
 		public RasterizerState RasterizerState;
 		public PrimitiveType PrimitiveType;
 		public VertexInputState VertexInputState;
-		public ViewportState ViewportState;
 		public GraphicsPipelineAttachmentInfo AttachmentInfo;
 		public BlendConstants BlendConstants;
 	}

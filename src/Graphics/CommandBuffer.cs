@@ -311,6 +311,24 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		public void SetViewport(Viewport viewport)
+		{
+			Refresh.Refresh_SetViewport(
+				Device.Handle,
+				Handle,
+				viewport.ToRefresh()
+			);
+		}
+
+		public void SetScissor(Rect scissor)
+		{
+			Refresh.Refresh_SetScissor(
+				Device.Handle,
+				Handle,
+				scissor.ToRefresh()
+			);
+		}
+
 		/// <summary>
 		/// Binds vertex buffers to be used by subsequent draw calls.
 		/// </summary>
