@@ -311,6 +311,9 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		/// <summary>
+		/// Sets the viewport. Only valid during a render pass.
+		/// </summary>
 		public void SetViewport(Viewport viewport)
 		{
 			Refresh.Refresh_SetViewport(
@@ -320,6 +323,9 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		/// <summary>
+		/// Sets the scissor area. Only valid during a render pass.
+		/// </summary>
 		public void SetScissor(Rect scissor)
 		{
 			Refresh.Refresh_SetScissor(
