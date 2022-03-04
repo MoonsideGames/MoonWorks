@@ -765,6 +765,22 @@ namespace MoonWorks.Graphics
 			}
 		}
 
+		public void SetBufferData<T>(
+			Buffer buffer,
+			IntPtr dataPtr,
+			uint bufferOffsetInElements,
+			uint numElements
+		) {
+			Refresh.Refresh_SetBufferData(
+				Device.Handle,
+				Handle,
+				buffer.Handle,
+				(uint) Marshal.SizeOf<T>() * bufferOffsetInElements,
+				dataPtr,
+				(uint) Marshal.SizeOf<T>() * numElements
+			);
+		}
+
 		/// <summary>
 		/// Asynchronously copies data into a texture.
 		/// </summary>
