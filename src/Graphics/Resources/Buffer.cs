@@ -12,6 +12,11 @@ namespace MoonWorks.Graphics
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
 
 		/// <summary>
+		/// Size in bytes.
+		/// </summary>
+		public uint Size { get; }
+
+		/// <summary>
 		/// Creates a buffer of appropriate size given a type and element count.
 		/// </summary>
 		/// <typeparam name="T">The type that the buffer will contain.</typeparam>
@@ -49,6 +54,7 @@ namespace MoonWorks.Graphics
 				(Refresh.BufferUsageFlags) usageFlags,
 				sizeInBytes
 			);
+			Size = sizeInBytes;
 		}
 
 		/// <summary>
