@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Sampler : GraphicsResource
 	{
-		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroySampler;
+		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroySampler;
 
 		public Sampler(
 			GraphicsDevice device,

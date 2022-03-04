@@ -135,8 +135,6 @@ namespace MoonWorks
 					Draw(timestep, alpha);
 
 				}
-
-				GraphicsDevice.SubmitDestroyCommandBuffer();
 			}
 
 			OnDestroy();

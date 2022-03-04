@@ -9,7 +9,7 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Buffer : GraphicsResource
 	{
-		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
+		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
 
 		/// <summary>
 		/// Creates a buffer of appropriate size given a type and element count.

@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 		public IntPtr Handle { get; protected set; }
 
 		public bool IsDisposed { get; private set; }
-		protected abstract Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction { get; }
+		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
 		private WeakReference<GraphicsResource> selfReference;
 
@@ -29,7 +29,7 @@ namespace MoonWorks.Graphics
 			{
 				if (selfReference != null)
 				{
-					Device.PrepareDestroyResource(this, QueueDestroyFunction);
+					QueueDestroyFunction(Device.Handle, Handle);
 					Device.RemoveResourceReference(selfReference);
 					selfReference = null;
 				}

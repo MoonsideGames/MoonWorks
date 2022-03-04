@@ -11,7 +11,6 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 
 		private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
-		private Dictionary<IntPtr, Action<IntPtr, IntPtr, IntPtr>> resourcesToDestroy = new Dictionary<IntPtr, Action<IntPtr, IntPtr, IntPtr>>();
 
 		public GraphicsDevice(
 			IntPtr deviceWindowHandle,
@@ -62,26 +61,6 @@ namespace MoonWorks.Graphics
 			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
 		}
 
-		internal void SubmitDestroyCommandBuffer()
-		{
-			if (resourcesToDestroy.Count > 0)
-			{
-				var commandBuffer = AcquireCommandBuffer();
-
-				foreach (var kv in resourcesToDestroy)
-				{
-					kv.Value.Invoke(Handle, commandBuffer.Handle, kv.Key);
-				}
-
-				Submit(commandBuffer);
-			}
-		}
-
-		internal void PrepareDestroyResource(GraphicsResource resource, Action<IntPtr, IntPtr, IntPtr> destroyFunction)
-		{
-			resourcesToDestroy.Add(resource.Handle, destroyFunction);
-		}
-
 		internal void AddResourceReference(WeakReference<GraphicsResource> resourceReference)
 		{
 			lock (resources)
@@ -117,7 +96,6 @@ namespace MoonWorks.Graphics
 						resources.Clear();
 					}
 
-					SubmitDestroyCommandBuffer();
 					Refresh.Refresh_DestroyDevice(Handle);
 				}
 

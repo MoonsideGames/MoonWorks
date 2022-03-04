@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class ShaderModule : GraphicsResource
 	{
-		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyShaderModule;
+		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyShaderModule;
 
 		public unsafe ShaderModule(GraphicsDevice device, string filePath) : base(device)
 		{

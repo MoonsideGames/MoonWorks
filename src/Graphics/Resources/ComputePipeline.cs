@@ -6,7 +6,7 @@ namespace MoonWorks.Graphics
 {
 	public class ComputePipeline : GraphicsResource
 	{
-		protected override Action<IntPtr, IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyComputePipeline;
+		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyComputePipeline;
 
 		public ComputeShaderInfo ComputeShaderInfo { get; }
 
