@@ -1,6 +1,6 @@
 ﻿namespace MoonWorks.Input
 {
-	public class ButtonState
+	public struct ButtonState
 	{
 		private ButtonStatus ButtonStatus { get; set; }
 
@@ -9,23 +9,30 @@
 		public bool IsDown => ButtonStatus == ButtonStatus.Pressed || ButtonStatus == ButtonStatus.Held;
 		public bool IsReleased => ButtonStatus == ButtonStatus.Released;
 
-		internal void Update(bool isPressed)
+		public ButtonState(ButtonStatus buttonStatus)
+		{
+			ButtonStatus = buttonStatus;
+		}
+
+		internal ButtonState Update(bool isPressed)
 		{
 			if (isPressed)
 			{
 				if (ButtonStatus == ButtonStatus.Pressed)
 				{
-					ButtonStatus = ButtonStatus.Held;
+					return new ButtonState(ButtonStatus.Held);
 				}
 				else if (ButtonStatus == ButtonStatus.Released)
 				{
-					ButtonStatus = ButtonStatus.Pressed;
+					return new ButtonState(ButtonStatus.Pressed);
+				}
+				else if (ButtonStatus == ButtonStatus.Held)
+				{
+					return new ButtonState(ButtonStatus.Held);
 				}
 			}
-			else
-			{
-				ButtonStatus = ButtonStatus.Released;
-			}
+
+			return new ButtonState(ButtonStatus.Released);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 ﻿namespace MoonWorks.Input
 {
-	internal enum ButtonStatus
+	public enum ButtonStatus
 	{
 		/// <summary>
 		/// Indicates that the input is not pressed.

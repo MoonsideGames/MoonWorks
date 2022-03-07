@@ -8,21 +8,21 @@ namespace MoonWorks.Input
 	{
 		internal IntPtr Handle;
 
-		public ButtonState A { get; } = new ButtonState();
-		public ButtonState B { get; } = new ButtonState();
-		public ButtonState X { get; } = new ButtonState();
-		public ButtonState Y { get; } = new ButtonState();
-		public ButtonState Back { get; } = new ButtonState();
-		public ButtonState Guide { get; } = new ButtonState();
-		public ButtonState Start { get; } = new ButtonState();
-		public ButtonState LeftStick { get; } = new ButtonState();
-		public ButtonState RightStick { get; } = new ButtonState();
-		public ButtonState LeftShoulder { get; } = new ButtonState();
-		public ButtonState RightShoulder { get; } = new ButtonState();
-		public ButtonState DpadUp { get; } = new ButtonState();
-		public ButtonState DpadDown { get; } = new ButtonState();
-		public ButtonState DpadLeft { get; } = new ButtonState();
-		public ButtonState DpadRight { get; } = new ButtonState();
+		public ButtonState A { get; private set; } = new ButtonState();
+		public ButtonState B { get; private set; } = new ButtonState();
+		public ButtonState X { get; private set; } = new ButtonState();
+		public ButtonState Y { get; private set; } = new ButtonState();
+		public ButtonState Back { get; private set; } = new ButtonState();
+		public ButtonState Guide { get; private set; } = new ButtonState();
+		public ButtonState Start { get; private set; } = new ButtonState();
+		public ButtonState LeftStick { get; private set; } = new ButtonState();
+		public ButtonState RightStick { get; private set; } = new ButtonState();
+		public ButtonState LeftShoulder { get; private set; } = new ButtonState();
+		public ButtonState RightShoulder { get; private set; } = new ButtonState();
+		public ButtonState DpadUp { get; private set; } = new ButtonState();
+		public ButtonState DpadDown { get; private set; } = new ButtonState();
+		public ButtonState DpadLeft { get; private set; } = new ButtonState();
+		public ButtonState DpadRight { get; private set; } = new ButtonState();
 
 		public float LeftX { get; private set; }
 		public float LeftY { get; private set; }
@@ -48,21 +48,21 @@ namespace MoonWorks.Input
 
 		internal void Update()
 		{
-			A.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A));
-			B.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B));
-			X.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X));
-			Y.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y));
-			Back.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK));
-			Guide.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE));
-			Start.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START));
-			LeftStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK));
-			RightStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK));
-			LeftShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER));
-			RightShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
-			DpadUp.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP));
-			DpadDown.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN));
-			DpadLeft.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT));
-			DpadRight.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
+			A = A.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A));
+			B = B.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B));
+			X = X.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X));
+			Y = Y.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y));
+			Back = Back.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK));
+			Guide = Guide.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE));
+			Start = Start.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START));
+			LeftStick = LeftStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK));
+			RightStick = RightStick.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK));
+			LeftShoulder = LeftShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER));
+			RightShoulder = RightShoulder.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
+			DpadUp = DpadUp.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP));
+			DpadDown = DpadDown.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN));
+			DpadLeft = DpadLeft.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+			DpadRight = DpadRight.Update(IsPressed(SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
 
 			LeftX = UpdateAxis(SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
 			LeftY = UpdateAxis(SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);

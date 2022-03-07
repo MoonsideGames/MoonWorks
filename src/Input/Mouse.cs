@@ -4,9 +4,9 @@ namespace MoonWorks.Input
 {
 	public class Mouse
 	{
-		public ButtonState LeftButton { get; } = new ButtonState();
-		public ButtonState MiddleButton { get; } = new ButtonState();
-		public ButtonState RightButton { get; } = new ButtonState();
+		public ButtonState LeftButton { get; private set; } = new ButtonState();
+		public ButtonState MiddleButton { get; private set; } = new ButtonState();
+		public ButtonState RightButton { get; private set; } = new ButtonState();
 
 		public int X { get; private set; }
 		public int Y { get; private set; }
@@ -40,9 +40,9 @@ namespace MoonWorks.Input
 			DeltaX = deltaX;
 			DeltaY = deltaY;
 
-			LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
-			MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
-			RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
+			LeftButton = LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
+			MiddleButton = MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
+			RightButton = RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
 		}
 
 		private bool IsPressed(uint buttonMask, uint buttonFlag)

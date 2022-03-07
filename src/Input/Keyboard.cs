@@ -50,7 +50,7 @@ namespace MoonWorks.Input
 			foreach (int keycode in Enum.GetValues(typeof(Keycode)))
 			{
 				var keyDown = Marshal.ReadByte(keyboardState, keycode);
-				Keys[keycode].Update(Conversions.ByteToBool(keyDown));
+				Keys[keycode] = Keys[keycode].Update(Conversions.ByteToBool(keyDown));
 
 				if (Conversions.ByteToBool(keyDown))
 				{
@@ -84,6 +84,11 @@ namespace MoonWorks.Input
 		public bool IsReleased(Keycode keycode)
 		{
 			return Keys[(int) keycode].IsReleased;
+		}
+
+		public ButtonState ButtonState(Keycode keycode)
+		{
+			return Keys[(int) keycode];
 		}
 	}
 }
