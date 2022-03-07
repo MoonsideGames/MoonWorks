@@ -52,14 +52,12 @@ namespace MoonWorks.Graphics
 				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
 			}
 
-			Rect renderArea = new Rect((int) colorAttachmentInfos[0].Texture.Width, (int) colorAttachmentInfos[0].Texture.Height);
-
 			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
 			{
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					renderArea.ToRefresh(),
+					IntPtr.Zero,
 					(IntPtr) pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					IntPtr.Zero
@@ -102,14 +100,12 @@ namespace MoonWorks.Graphics
 
 			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-			Rect renderArea = new Rect((int) colorAttachmentInfos[0].Texture.Width, (int) colorAttachmentInfos[0].Texture.Height);
-
 			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
 			{
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					renderArea.ToRefresh(),
+					IntPtr.Zero,
 					pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					&refreshDepthStencilAttachmentInfo
