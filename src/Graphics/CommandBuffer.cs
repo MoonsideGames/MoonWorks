@@ -542,44 +542,6 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Clears the render targets on the current framebuffer to a single color or depth/stencil value.
-		/// NOTE: It is recommended that you clear when beginning render passes unless you have a good reason to clear mid-pass.
-		/// </summary>
-		/// <param name="clearRect">The area of the framebuffer to clear.</param>
-		/// <param name="clearOptions">Whether to clear colors, depth, or stencil value, or multiple.</param>
-		/// <param name="depthStencilClearValue">The depth/stencil clear values. Will be ignored if color is not provided in ClearOptions.</param>
-		/// <param name="clearColors">The color clear values. Must provide one per render target. Can be omitted if depth/stencil is not cleared.</param>
-		public unsafe void Clear(
-			in Rect clearRect,
-			ClearOptionsFlags clearOptions,
-			in DepthStencilValue depthStencilClearValue,
-			params Vector4[] clearColors
-		)
-		{
-			Refresh.Vec4* colors = stackalloc Refresh.Vec4[clearColors.Length];
-			for (var i = 0; i < clearColors.Length; i++)
-			{
-				colors[i] = new Refresh.Vec4
-				{
-					x = clearColors[i].X,
-					y = clearColors[i].Y,
-					z = clearColors[i].Z,
-					w = clearColors[i].W
-				};
-			}
-
-			Refresh.Refresh_Clear(
-				Device.Handle,
-				Handle,
-				clearRect.ToRefresh(),
-				(Refresh.ClearOptionsFlags) clearOptions,
-				(IntPtr) colors,
-				(uint) clearColors.Length,
-				depthStencilClearValue.ToRefresh()
-			);
-		}
-
-		/// <summary>
 		/// Draws using instanced rendering.
 		/// It is an error to call this method unless two vertex buffers have been bound.
 		/// </summary>
@@ -687,7 +649,9 @@ namespace MoonWorks.Graphics
 			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
 				Device.Handle,
 				Handle,
-				window.Handle
+				window.Handle,
+				out var width,
+				out var height
 			);
 
 			if (texturePtr == IntPtr.Zero)
@@ -699,8 +663,8 @@ namespace MoonWorks.Graphics
 				Device,
 				texturePtr,
 				Device.GetSwapchainFormat(window),
-				window.Width,
-				window.Height
+				width,
+				height
 			);
 		}
 
