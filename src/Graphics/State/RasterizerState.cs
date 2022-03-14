@@ -41,18 +41,12 @@
 		/// </summary>
 		public FrontFace FrontFace;
 
-		/// <summary>
-		/// Describes the width of the line rendering in terms of pixels.
-		/// </summary>
-		public float LineWidth;
-
 		public static readonly RasterizerState CW_CullFront = new RasterizerState
 		{
 			CullMode = CullMode.Front,
 			FrontFace = FrontFace.Clockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CW_CullBack = new RasterizerState
@@ -60,8 +54,7 @@
 			CullMode = CullMode.Back,
 			FrontFace = FrontFace.Clockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CW_CullNone = new RasterizerState
@@ -69,8 +62,7 @@
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.Clockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CW_Wireframe = new RasterizerState
@@ -78,8 +70,7 @@
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.Clockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CCW_CullFront = new RasterizerState
@@ -87,8 +78,7 @@
 			CullMode = CullMode.Front,
 			FrontFace = FrontFace.CounterClockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CCW_CullBack = new RasterizerState
@@ -96,8 +86,7 @@
 			CullMode = CullMode.Back,
 			FrontFace = FrontFace.CounterClockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CCW_CullNone = new RasterizerState
@@ -105,8 +94,7 @@
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.CounterClockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 
 		public static readonly RasterizerState CCW_Wireframe = new RasterizerState
@@ -114,8 +102,7 @@
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.CounterClockwise,
 			FillMode = FillMode.Fill,
-			DepthBiasEnable = false,
-			LineWidth = 1f
+			DepthBiasEnable = false
 		};
 	}
 }

@@ -88,7 +88,6 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.rasterizerState.depthClampEnable = Conversions.BoolToByte(rasterizerState.DepthClampEnable);
 			refreshGraphicsPipelineCreateInfo.rasterizerState.fillMode = (Refresh.FillMode) rasterizerState.FillMode;
 			refreshGraphicsPipelineCreateInfo.rasterizerState.frontFace = (Refresh.FrontFace) rasterizerState.FrontFace;
-			refreshGraphicsPipelineCreateInfo.rasterizerState.lineWidth = rasterizerState.LineWidth;
 
 			refreshGraphicsPipelineCreateInfo.vertexInputState.vertexAttributes = vertexAttributesHandle.AddrOfPinnedObject();
 			refreshGraphicsPipelineCreateInfo.vertexInputState.vertexAttributeCount = (uint) vertexInputState.VertexAttributes.Length;
