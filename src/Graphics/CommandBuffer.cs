@@ -461,6 +461,17 @@ namespace MoonWorks.Graphics
 
 			for (var i = 0; i < length; i += 1)
 			{
+				#if DEBUG
+				if (textureSamplerBindings[i].Texture == null)
+				{
+					throw new NullReferenceException("Texture binding must not be null!");
+				}
+				if (textureSamplerBindings[i].Texture == null)
+				{
+					throw new NullReferenceException("Sampler binding must not be null!");
+				}
+				#endif
+
 				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
 				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
 			}
