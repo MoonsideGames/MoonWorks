@@ -14,9 +14,13 @@
 
 		public static Graphics.VertexElementFormat TypeToVertexElementFormat(System.Type type)
 		{
+			if (type == typeof(uint))
+			{
+				return Graphics.VertexElementFormat.UInt;
+			}
 			if (type == typeof(float))
 			{
-				return Graphics.VertexElementFormat.Single;
+				return Graphics.VertexElementFormat.Float;
 			}
 			else if (type == typeof(Math.Vector2))
 			{

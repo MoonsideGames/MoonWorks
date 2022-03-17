@@ -124,7 +124,8 @@ namespace MoonWorks.Graphics
 
 	public enum VertexElementFormat
 	{
-		Single,
+		UInt,
+		Float,
 		Vector2,
 		Vector3,
 		Vector4,
