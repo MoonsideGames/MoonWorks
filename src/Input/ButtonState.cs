@@ -2,7 +2,7 @@
 {
 	public struct ButtonState
 	{
-		private ButtonStatus ButtonStatus { get; set; }
+		public ButtonStatus ButtonStatus { get; }
 
 		public bool IsPressed => ButtonStatus == ButtonStatus.Pressed;
 		public bool IsHeld => ButtonStatus == ButtonStatus.Held;

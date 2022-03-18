@@ -1,7 +1,7 @@
 ﻿namespace MoonWorks.Input
 {
 	// Enum values are equivalent to the SDL Scancode value.
-	public enum Keycode : int
+	public enum KeyCode : int
 	{
 		Unknown = 0,
 		A = 4,
