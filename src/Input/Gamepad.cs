@@ -9,29 +9,29 @@ namespace MoonWorks.Input
 	{
 		internal IntPtr Handle;
 
-		public Button A { get; private set; } = new Button();
-		public Button B { get; private set; } = new Button();
-		public Button X { get; private set; } = new Button();
-		public Button Y { get; private set; } = new Button();
-		public Button Back { get; private set; } = new Button();
-		public Button Guide { get; private set; } = new Button();
-		public Button Start { get; private set; } = new Button();
-		public Button LeftStick { get; private set; } = new Button();
-		public Button RightStick { get; private set; } = new Button();
-		public Button LeftShoulder { get; private set; } = new Button();
-		public Button RightShoulder { get; private set; } = new Button();
-		public Button DpadUp { get; private set; } = new Button();
-		public Button DpadDown { get; private set; } = new Button();
-		public Button DpadLeft { get; private set; } = new Button();
-		public Button DpadRight { get; private set; } = new Button();
+		public Button A { get; } = new Button();
+		public Button B { get; } = new Button();
+		public Button X { get; } = new Button();
+		public Button Y { get; } = new Button();
+		public Button Back { get; } = new Button();
+		public Button Guide { get; } = new Button();
+		public Button Start { get; } = new Button();
+		public Button LeftStick { get; } = new Button();
+		public Button RightStick { get; } = new Button();
+		public Button LeftShoulder { get; } = new Button();
+		public Button RightShoulder { get; } = new Button();
+		public Button DpadUp { get; } = new Button();
+		public Button DpadDown { get; } = new Button();
+		public Button DpadLeft { get; } = new Button();
+		public Button DpadRight { get; } = new Button();
 
-		public Axis LeftX { get; private set; }
-		public Axis LeftY { get; private set; }
-		public Axis RightX { get; private set; }
-		public Axis RightY { get; private set; }
+		public Axis LeftX { get; } = new Axis();
+		public Axis LeftY { get; } = new Axis();
+		public Axis RightX { get; } = new Axis();
+		public Axis RightY { get; } = new Axis();
 
-		public Trigger TriggerLeft { get; private set; }
-		public Trigger TriggerRight { get; private set; }
+		public Trigger TriggerLeft { get; } = new Trigger();
+		public Trigger TriggerRight { get; } = new Trigger();
 
 		private Dictionary<SDL.SDL_GameControllerButton, Button> EnumToButton;
 		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
@@ -97,6 +97,9 @@ namespace MoonWorks.Input
 			}
 		}
 
+		/// <summary>
+		/// Sets vibration values on the left and right motors.
+		/// </summary>
 		public bool SetVibration(float leftMotor, float rightMotor, uint durationInMilliseconds)
 		{
 			return SDL.SDL_GameControllerRumble(
@@ -107,36 +110,59 @@ namespace MoonWorks.Input
 			) == 0;
 		}
 
+		/// <summary>
+		/// True if the button is pressed or held.
+		/// </summary>
 		public bool IsDown(ButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsDown;
 		}
 
+		/// <summary>
+		/// True if the button was pressed this exact frame.
+		/// </summary>
 		public bool IsPressed(ButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsPressed;
 		}
 
+		/// <summary>
+		/// True if the button has been continuously held for more than one frame.
+		/// </summary>
 		public bool IsHeld(ButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsHeld;
 		}
 
+		/// <summary>
+		/// True if the button is not pressed.
+		/// </summary>
 		public bool IsReleased(ButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsReleased;
 		}
 
+		/// <summary>
+		/// Obtains the button state given a ButtonCode.
+		/// </summary>
 		public ButtonState ButtonState(ButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].State;
 		}
 
+		/// <summary>
+		/// Obtains the axis value given an AxisCode.
+		/// </summary>
+		/// <returns>A value between -1 and 1.</returns>
 		public float AxisValue(AxisCode axisCode)
 		{
 			return EnumToAxis[(SDL.SDL_GameControllerAxis) axisCode].Value;
 		}
 
+		/// <summary>
+		/// Obtains the trigger value given an TriggerCode.
+		/// </summary>
+		/// <returns>A value between 0 and 1.</returns>
 		public float TriggerValue(TriggerCode triggerCode)
 		{
 			return EnumToTrigger[(SDL.SDL_GameControllerAxis) triggerCode].Value;
