@@ -33,6 +33,8 @@ namespace MoonWorks.Input
 		public Trigger TriggerLeft { get; } = new Trigger();
 		public Trigger TriggerRight { get; } = new Trigger();
 
+		public bool IsDummy => Handle == IntPtr.Zero;
+
 		private Dictionary<SDL.SDL_GameControllerButton, Button> EnumToButton;
 		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
 		private Dictionary<SDL.SDL_GameControllerAxis, Trigger> EnumToTrigger;
@@ -77,23 +79,26 @@ namespace MoonWorks.Input
 
 		internal void Update()
 		{
-			foreach (var (sdlEnum, button) in EnumToButton)
+			if (!IsDummy)
 			{
-				button.Update(CheckPressed(sdlEnum));
-			}
+				foreach (var (sdlEnum, button) in EnumToButton)
+				{
+					button.Update(CheckPressed(sdlEnum));
+				}
 
-			foreach (var (sdlEnum, axis) in EnumToAxis)
-			{
-				var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-				var axisValue = Normalize(sdlAxisValue, short.MinValue, short.MaxValue, -1, 1);
-				axis.Update(axisValue);
-			}
+				foreach (var (sdlEnum, axis) in EnumToAxis)
+				{
+					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
+					var axisValue = Normalize(sdlAxisValue, short.MinValue, short.MaxValue, -1, 1);
+					axis.Update(axisValue);
+				}
 
-			foreach (var (sdlEnum, trigger) in EnumToTrigger)
-			{
-				var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-				var axisValue = Normalize(sdlAxisValue, 0, short.MaxValue, 0, 1);
-				trigger.Update(axisValue);
+				foreach (var (sdlEnum, trigger) in EnumToTrigger)
+				{
+					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
+					var axisValue = Normalize(sdlAxisValue, 0, short.MaxValue, 0, 1);
+					trigger.Update(axisValue);
+				}
 			}
 		}
 
