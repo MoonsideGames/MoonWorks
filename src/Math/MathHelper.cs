@@ -331,15 +331,35 @@ namespace MoonWorks.Math
 			return angle;
 		}
 
+		/// <summary>
+		/// Rescales a value within a given range to a new range.
+		/// </summary>
 		public static float Normalize(float value, short min, short max, short newMin, short newMax)
 		{
 			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
 
+		/// <summary>
+		/// Rescales a value within a given range to a new range.
+		/// </summary>
 		public static float Normalize(float value, float min, float max, float newMin, float newMax)
 		{
 			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
+
+		/// <summary>
+        /// Step from start towards end by change.
+        /// </summary>
+        /// <param name="start">Start value.</param>
+        /// <param name="end">End value.</param>
+        /// <param name="change">Change value.</param>
+        /// <returns>The final delta.</returns>
+        public static float Approach(float start, float end, float change)
+        {
+            return (start < end ?
+                System.Math.Min(start + change, end) :
+                System.Math.Max(start - change, end)) - start;
+        }
 
 		#endregion
 

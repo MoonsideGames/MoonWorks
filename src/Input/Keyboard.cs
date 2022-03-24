@@ -7,7 +7,7 @@ namespace MoonWorks.Input
 {
 	public class Keyboard
 	{
-		private ButtonState[] Keys { get; }
+		private Button[] Keys { get; }
 		private int numKeys;
 
 		private static readonly char[] TextInputCharacters = new char[]
@@ -36,10 +36,10 @@ namespace MoonWorks.Input
 		{
 			SDL.SDL_GetKeyboardState(out numKeys);
 
-			Keys = new ButtonState[numKeys];
+			Keys = new Button[numKeys];
 			foreach (KeyCode keycode in Enum.GetValues(typeof(KeyCode)))
 			{
-				Keys[(int) keycode] = new ButtonState();
+				Keys[(int) keycode] = new Button();
 			}
 		}
 
@@ -50,7 +50,7 @@ namespace MoonWorks.Input
 			foreach (int keycode in Enum.GetValues(typeof(KeyCode)))
 			{
 				var keyDown = Marshal.ReadByte(keyboardState, keycode);
-				Keys[keycode] = Keys[keycode].Update(Conversions.ByteToBool(keyDown));
+				Keys[keycode].Update(Conversions.ByteToBool(keyDown));
 
 				if (Conversions.ByteToBool(keyDown))
 				{
@@ -86,9 +86,14 @@ namespace MoonWorks.Input
 			return Keys[(int) keycode].IsReleased;
 		}
 
-		public ButtonState ButtonState(KeyCode keycode)
+		public Button Button(KeyCode keycode)
 		{
 			return Keys[(int) keycode];
+		}
+
+		public ButtonState ButtonState(KeyCode keycode)
+		{
+			return Keys[(int) keycode].State;
 		}
 	}
 }
