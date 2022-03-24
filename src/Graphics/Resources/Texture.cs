@@ -199,6 +199,8 @@ namespace MoonWorks.Graphics
 			UsageFlags = textureCreateInfo.UsageFlags;
 		}
 
+		public static implicit operator TextureSlice(Texture t) => new TextureSlice(t);
+
 		// Used by AcquireSwapchainTexture.
 		// Should not be tracked, because swapchain textures are managed by Vulkan.
 		internal Texture(

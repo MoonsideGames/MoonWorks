@@ -89,14 +89,14 @@ namespace MoonWorks.Input
 				foreach (var (sdlEnum, axis) in EnumToAxis)
 				{
 					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-					var axisValue = Normalize(sdlAxisValue, short.MinValue, short.MaxValue, -1, 1);
+					var axisValue = MathHelper.Normalize(sdlAxisValue, short.MinValue, short.MaxValue, -1, 1);
 					axis.Update(axisValue);
 				}
 
 				foreach (var (sdlEnum, trigger) in EnumToTrigger)
 				{
 					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-					var axisValue = Normalize(sdlAxisValue, 0, short.MaxValue, 0, 1);
+					var axisValue = MathHelper.Normalize(sdlAxisValue, 0, short.MaxValue, 0, 1);
 					trigger.Update(axisValue);
 				}
 			}
@@ -176,11 +176,6 @@ namespace MoonWorks.Input
 		private bool CheckPressed(SDL.SDL_GameControllerButton button)
 		{
 			return MoonWorks.Conversions.ByteToBool(SDL.SDL_GameControllerGetButton(Handle, button));
-		}
-
-		private float Normalize(float value, short min, short max, short newMin, short newMax)
-		{
-			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
 	}
 }

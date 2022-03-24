@@ -878,10 +878,10 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix4x4"/>.
+		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix3x2"/>.
 		/// </summary>
 		/// <param name="position">Source <see cref="Vector2"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix3x2"/>.</param>
 		/// <returns>Transformed <see cref="Vector2"/>.</returns>
 		public static Vector2 Transform(Vector2 position, Matrix3x2 matrix)
 		{
@@ -998,6 +998,19 @@ namespace MoonWorks.Math
 				(normal.X * matrix.M12) + (normal.Y * matrix.M22)
 			);
 		}
+
+		/// <summary>
+		/// Creates a new <see cref="Vector2"/> that contains a transformation of the specified normal by the specified <see cref="Matrix3x2"/>.
+		/// </summary>
+		/// <param name="normal">Source <see cref="Vector2"/> which represents a normal vector.</param>
+		/// <param name="matrix">The transformation <see cref="Matrix3x2"/>.</param>
+		/// <returns>Transformed normal.</returns>
+        public static Vector2 TransformNormal(Vector2 normal, Matrix3x2 matrix)
+        {
+            return new Vector2(
+                normal.X * matrix.M11 + normal.Y * matrix.M21,
+                normal.X * matrix.M12 + normal.Y * matrix.M22);
+        }
 
 		/// <summary>
 		/// Creates a new <see cref="Vector2"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.

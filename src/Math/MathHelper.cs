@@ -331,6 +331,16 @@ namespace MoonWorks.Math
 			return angle;
 		}
 
+		public static float Normalize(float value, short min, short max, short newMin, short newMax)
+		{
+			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
+		}
+
+		public static float Normalize(float value, float min, float max, float newMin, float newMax)
+		{
+			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
+		}
+
 		#endregion
 
 		#region Internal Static Methods
