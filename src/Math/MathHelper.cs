@@ -353,12 +353,11 @@ namespace MoonWorks.Math
         /// <param name="start">Start value.</param>
         /// <param name="end">End value.</param>
         /// <param name="change">Change value.</param>
-        /// <returns>The final delta.</returns>
         public static float Approach(float start, float end, float change)
         {
-            return (start < end ?
+            return start < end ?
                 System.Math.Min(start + change, end) :
-                System.Math.Max(start - change, end)) - start;
+                System.Math.Max(start - change, end);
         }
 
 		#endregion
