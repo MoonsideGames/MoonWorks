@@ -205,6 +205,14 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
+		/// Turns this <see cref="Vector2"/> to an angle in radians.
+		/// </summary>
+		public float Angle()
+		{
+			return MathF.Atan2(Y, X);
+		}
+
+		/// <summary>
 		/// Returns a <see cref="String"/> representation of this <see cref="Vector2"/> in the format:
 		/// {X:[<see cref="X"/>] Y:[<see cref="Y"/>]}
 		/// </summary>
