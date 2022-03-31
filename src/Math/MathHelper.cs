@@ -360,6 +360,19 @@ namespace MoonWorks.Math
                 System.Math.Max(start - change, end);
         }
 
+		/// <summary>
+        /// Step from start towards end by change.
+        /// </summary>
+        /// <param name="start">Start value.</param>
+        /// <param name="end">End value.</param>
+        /// <param name="change">Change value.</param>
+		public static int Approach(int start, int end, int change)
+		{
+			return start < end ?
+                System.Math.Min(start + change, end) :
+                System.Math.Max(start - change, end);
+		}
+
 		#endregion
 
 		#region Internal Static Methods
