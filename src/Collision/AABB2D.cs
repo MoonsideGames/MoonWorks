@@ -68,10 +68,13 @@ namespace MoonWorks.Collision
 		/// <returns></returns>
 		public static AABB2D Transformed(AABB2D aabb, Transform2D transform)
 		{
-			return new AABB2D(
-				Vector2.Transform(aabb.Min, transform.TransformMatrix),
-				Vector2.Transform(aabb.Max, transform.TransformMatrix)
-			);
+            var center = (aabb.Min + aabb.Max) / 2f;
+            var extent = (aabb.Max - aabb.Min) / 2f;
+
+            var newCenter = Vector2.Transform(center, transform.TransformMatrix);
+            var newExtent = Vector2.TransformNormal(extent, AbsoluteMatrix(transform.TransformMatrix));
+
+            return new AABB2D(newCenter - newExtent, newCenter + newExtent);
 		}
 
 		/// <summary>
