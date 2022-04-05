@@ -18,11 +18,14 @@ namespace MoonWorks.Audio
 
 		public StreamingSound(
 			AudioDevice device,
+			ushort formatTag,
+			ushort bitsPerSample,
+			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
 			bool is3D,
 			bool loop
-		) : base(device, channels, samplesPerSecond, is3D, loop) { }
+		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond, is3D, loop) { }
 
 		public override void Play()
 		{

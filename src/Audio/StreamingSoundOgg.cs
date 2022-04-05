@@ -46,7 +46,16 @@ namespace MoonWorks.Audio
 			FAudio.stb_vorbis_info info,
 			bool is3D,
 			bool loop
-		) : base(device, (ushort) info.channels, info.sample_rate, is3D, loop)
+		) : base(
+			device,
+			3, /* float type */
+			32, /* size of float */
+			(ushort) (4 * info.channels),
+			(ushort) info.channels,
+			info.sample_rate,
+			is3D,
+			loop
+		)
 		{
 			FileHandle = fileHandle;
 			Info = info;

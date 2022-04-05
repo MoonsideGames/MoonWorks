@@ -6,8 +6,8 @@ namespace MoonWorks.Audio
 {
 	public abstract class SoundInstance : AudioResource
 	{
-		internal IntPtr Handle { get; }
-		internal FAudio.FAudioWaveFormatEx Format { get; }
+		internal IntPtr Handle;
+		internal FAudio.FAudioWaveFormatEx Format;
 		public bool Loop { get; }
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
@@ -163,17 +163,19 @@ namespace MoonWorks.Audio
 
 		public SoundInstance(
 			AudioDevice device,
+			ushort formatTag,
+			ushort bitsPerSample,
+			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
 			bool is3D,
 			bool loop
 		) : base(device)
 		{
-			var blockAlign = (ushort) (4 * channels);
 			var format = new FAudio.FAudioWaveFormatEx
 			{
-				wFormatTag = 3,
-				wBitsPerSample = 32,
+				wFormatTag = formatTag,
+				wBitsPerSample = bitsPerSample,
 				nChannels = channels,
 				nBlockAlign = blockAlign,
 				nSamplesPerSec = samplesPerSecond,
@@ -184,8 +186,8 @@ namespace MoonWorks.Audio
 
 			FAudio.FAudio_CreateSourceVoice(
 				Device.Handle,
-				out var handle,
-				ref format,
+				out Handle,
+				ref Format,
 				FAudio.FAUDIO_VOICE_USEFILTER,
 				FAudio.FAUDIO_DEFAULT_FREQ_RATIO,
 				IntPtr.Zero,
@@ -193,20 +195,22 @@ namespace MoonWorks.Audio
 				IntPtr.Zero
 			);
 
-			if (handle == IntPtr.Zero)
+			if (Handle == IntPtr.Zero)
 			{
 				Logger.LogError("SoundInstance failed to initialize!");
 				return;
 			}
 
-			Handle = handle;
 			this.is3D = is3D;
 			InitDSPSettings(Format.nChannels);
 
+			// FIXME: not everything should be running through reverb...
+			/*
 			FAudio.FAudioVoice_SetOutputVoices(
-				handle,
+				Handle,
 				ref Device.ReverbSends
 			);
+			*/
 
 			Loop = loop;
 			State = SoundState.Stopped;

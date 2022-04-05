@@ -35,7 +35,7 @@ namespace MoonWorks.Audio
 			StaticSound parent,
 			bool is3D,
 			bool loop
-		) : base(device, parent.Channels, parent.SamplesPerSecond, is3D, loop)
+		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond, is3D, loop)
 		{
 			Parent = parent;
 		}
@@ -91,6 +91,11 @@ namespace MoonWorks.Audio
 			{
 				FAudio.FAudioSourceVoice_ExitLoop(Handle, 0);
 			}
+		}
+
+		public void Free()
+		{
+			Parent.FreeInstance(this);
 		}
 	}
 }
