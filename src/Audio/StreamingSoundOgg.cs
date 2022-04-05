@@ -18,8 +18,7 @@ namespace MoonWorks.Audio
 		public static StreamingSoundOgg Load(
 			AudioDevice device,
 			string filePath,
-			bool is3D = false,
-			bool loop = false
+			bool is3D = false
 		)
 		{
 			var fileHandle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
@@ -35,8 +34,7 @@ namespace MoonWorks.Audio
 				device,
 				fileHandle,
 				info,
-				is3D,
-				loop
+				is3D
 			);
 		}
 
@@ -44,8 +42,7 @@ namespace MoonWorks.Audio
 			AudioDevice device,
 			IntPtr fileHandle,
 			FAudio.stb_vorbis_info info,
-			bool is3D,
-			bool loop
+			bool is3D
 		) : base(
 			device,
 			3, /* float type */
@@ -53,8 +50,7 @@ namespace MoonWorks.Audio
 			(ushort) (4 * info.channels),
 			(ushort) info.channels,
 			info.sample_rate,
-			is3D,
-			loop
+			is3D
 		)
 		{
 			FileHandle = fileHandle;

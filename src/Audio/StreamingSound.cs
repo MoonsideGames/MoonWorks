@@ -23,18 +23,19 @@ namespace MoonWorks.Audio
 			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
-			bool is3D,
-			bool loop
-		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond, is3D, loop) { }
+			bool is3D
+		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond, is3D) { }
 
-		public override void Play()
+		public override void Play(bool loop = false)
 		{
 			if (State == SoundState.Playing)
 			{
 				return;
 			}
 
+			Loop = loop;
 			State = SoundState.Playing;
+
 			Update();
 			FAudio.FAudioSourceVoice_Start(Handle, 0, 0);
 		}

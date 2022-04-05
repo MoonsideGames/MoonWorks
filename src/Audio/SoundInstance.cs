@@ -8,7 +8,7 @@ namespace MoonWorks.Audio
 	{
 		internal IntPtr Handle;
 		internal FAudio.FAudioWaveFormatEx Format;
-		public bool Loop { get; }
+		public bool Loop { get; protected set; } = false;
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
@@ -168,8 +168,7 @@ namespace MoonWorks.Audio
 			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
-			bool is3D,
-			bool loop
+			bool is3D
 		) : base(device)
 		{
 			var format = new FAudio.FAudioWaveFormatEx
@@ -212,7 +211,6 @@ namespace MoonWorks.Audio
 			);
 			*/
 
-			Loop = loop;
 			State = SoundState.Stopped;
 		}
 
@@ -242,7 +240,7 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		public abstract void Play();
+		public abstract void Play(bool loop);
 		public abstract void Pause();
 		public abstract void Stop(bool immediate);
 

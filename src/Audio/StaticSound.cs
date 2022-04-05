@@ -271,11 +271,11 @@ namespace MoonWorks.Audio
 		/// Gets a sound instance from the pool.
 		/// NOTE: If you lose track of instances, you will create garbage collection pressure!
 		/// </summary>
-		public StaticSoundInstance GetInstance(bool loop = false)
+		public StaticSoundInstance GetInstance()
 		{
 			if (Instances.Count == 0)
 			{
-				Instances.Push(new StaticSoundInstance(Device, this, false, loop));
+				Instances.Push(new StaticSoundInstance(Device, this, false));
 			}
 
 			return Instances.Pop();

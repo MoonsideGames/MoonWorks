@@ -33,19 +33,20 @@ namespace MoonWorks.Audio
 		internal StaticSoundInstance(
 			AudioDevice device,
 			StaticSound parent,
-			bool is3D,
-			bool loop
-		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond, is3D, loop)
+			bool is3D
+		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond, is3D)
 		{
 			Parent = parent;
 		}
 
-		public override void Play()
+		public override void Play(bool loop = false)
 		{
 			if (State == SoundState.Playing)
 			{
 				return;
 			}
+
+			Loop = loop;
 
 			if (Loop)
 			{
