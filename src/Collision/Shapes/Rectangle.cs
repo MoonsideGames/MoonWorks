@@ -11,10 +11,10 @@ namespace MoonWorks.Collision
 		public int Width { get; }
 		public int Height { get; }
 
-		public float Right { get; }
-		public float Left { get; }
-		public float Top { get; }
-		public float Bottom { get; }
+		public int Right { get; }
+		public int Left { get; }
+		public int Top { get; }
+		public int Bottom { get; }
 		public Vector2 BottomLeft { get; }
 		public Vector2 TopRight { get; }
 
