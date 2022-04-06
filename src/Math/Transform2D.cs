@@ -8,6 +8,17 @@ namespace MoonWorks.Math
 
 		public Matrix3x2 TransformMatrix { get; }
 
+		public bool IsAxisAligned => Rotation % MathHelper.PiOver2 == 0;
+		public bool IsUniformScale => Scale.X == Scale.Y;
+
+		public Transform2D()
+		{
+			Position = Vector2.Zero;
+			Rotation = 0;
+			Scale = Vector2.One;
+			TransformMatrix = CreateTransformMatrix(Position, Rotation, Scale);
+		}
+
 		public Transform2D(Vector2 position)
 		{
 			Position = position;
