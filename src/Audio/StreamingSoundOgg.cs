@@ -20,12 +20,14 @@ namespace MoonWorks.Audio
 		public static StreamingSoundOgg Load(AudioDevice device, string filePath)
 		{
 			var fileData = File.ReadAllBytes(filePath);
-			var fileDataPtr = (IntPtr) GCHandle.Alloc(fileData, GCHandleType.Pinned);
+			var fileDataPtr = Marshal.AllocHGlobal(fileData.Length);
+			Marshal.Copy(fileData, 0, fileDataPtr, fileData.Length);
 			var vorbisHandle = FAudio.stb_vorbis_open_memory(fileDataPtr, fileData.Length, out int error, IntPtr.Zero);
 			if (error != 0)
 			{
 				((GCHandle) fileDataPtr).Free();
 				Logger.LogError("Error opening OGG file!");
+				Logger.LogError("Error: " + error);
 				throw new AudioLoadException("Error opening OGG file!");
 			}
 			var info = FAudio.stb_vorbis_get_info(vorbisHandle);
@@ -40,7 +42,7 @@ namespace MoonWorks.Audio
 
 		internal StreamingSoundOgg(
 			AudioDevice device,
-			IntPtr fileDataPtr, // MUST BE PINNED!!
+			IntPtr fileDataPtr, // MUST BE AN ALLOCHGLOBAL HANDLE!!
 			IntPtr vorbisHandle,
 			FAudio.stb_vorbis_info info
 		) : base(
@@ -90,7 +92,7 @@ namespace MoonWorks.Audio
 
 		protected override void Destroy()
 		{
-			((GCHandle) FileDataPtr).Free();
+			Marshal.FreeHGlobal(FileDataPtr);
 			FAudio.stb_vorbis_close(VorbisHandle);
 		}
 	}
