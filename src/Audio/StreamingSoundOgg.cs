@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
@@ -8,52 +9,51 @@ namespace MoonWorks.Audio
 		// FIXME: what should this value be?
 		public const int BUFFER_SIZE = 1024 * 128;
 
-		internal IntPtr FileHandle { get; }
-		internal FAudio.stb_vorbis_info Info { get; }
+		private IntPtr VorbisHandle;
+		private IntPtr FileDataPtr;
+		private FAudio.stb_vorbis_info Info;
 
-		private readonly float[] buffer;
+		private readonly float[] buffer; // currently decoded bytes
 
 		public override SoundState State { get; protected set; }
 
-		public static StreamingSoundOgg Load(
-			AudioDevice device,
-			string filePath,
-			bool is3D = false
-		)
+		public static StreamingSoundOgg Load(AudioDevice device, string filePath)
 		{
-			var fileHandle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
+			var fileData = File.ReadAllBytes(filePath);
+			var fileDataPtr = (IntPtr) GCHandle.Alloc(fileData, GCHandleType.Pinned);
+			var vorbisHandle = FAudio.stb_vorbis_open_memory(fileDataPtr, fileData.Length, out int error, IntPtr.Zero);
 			if (error != 0)
 			{
+				((GCHandle) fileDataPtr).Free();
 				Logger.LogError("Error opening OGG file!");
 				throw new AudioLoadException("Error opening OGG file!");
 			}
-
-			var info = FAudio.stb_vorbis_get_info(fileHandle);
+			var info = FAudio.stb_vorbis_get_info(vorbisHandle);
 
 			return new StreamingSoundOgg(
 				device,
-				fileHandle,
-				info,
-				is3D
+				fileDataPtr,
+				vorbisHandle,
+				info
 			);
 		}
 
 		internal StreamingSoundOgg(
 			AudioDevice device,
-			IntPtr fileHandle,
-			FAudio.stb_vorbis_info info,
-			bool is3D
+			IntPtr fileDataPtr, // MUST BE PINNED!!
+			IntPtr vorbisHandle,
+			FAudio.stb_vorbis_info info
 		) : base(
 			device,
 			3, /* float type */
 			32, /* size of float */
 			(ushort) (4 * info.channels),
 			(ushort) info.channels,
-			info.sample_rate,
-			is3D
+			info.sample_rate
 		)
 		{
-			FileHandle = fileHandle;
+			FileDataPtr = fileDataPtr;
+			VorbisHandle = vorbisHandle;
 			Info = info;
 			buffer = new float[BUFFER_SIZE];
 
@@ -71,7 +71,7 @@ namespace MoonWorks.Audio
 
 			/* NOTE: this function returns samples per channel, not total samples */
 			var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
-				FileHandle,
+				VorbisHandle,
 				Info.channels,
 				buffer,
 				buffer.Length
@@ -85,12 +85,13 @@ namespace MoonWorks.Audio
 
 		protected override void SeekStart()
 		{
-			FAudio.stb_vorbis_seek_start(FileHandle);
+			FAudio.stb_vorbis_seek_start(VorbisHandle);
 		}
 
 		protected override void Destroy()
 		{
-			FAudio.stb_vorbis_close(FileHandle);
+			((GCHandle) FileDataPtr).Free();
+			FAudio.stb_vorbis_close(VorbisHandle);
 		}
 	}
 }

@@ -22,9 +22,8 @@ namespace MoonWorks.Audio
 			ushort bitsPerSample,
 			ushort blockAlign,
 			ushort channels,
-			uint samplesPerSecond,
-			bool is3D
-		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond, is3D) { }
+			uint samplesPerSecond
+		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond) { }
 
 		public override void Play(bool loop = false)
 		{

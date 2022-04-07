@@ -32,9 +32,8 @@ namespace MoonWorks.Audio
 
 		internal StaticSoundInstance(
 			AudioDevice device,
-			StaticSound parent,
-			bool is3D
-		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond, is3D)
+			StaticSound parent
+		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond)
 		{
 			Parent = parent;
 		}

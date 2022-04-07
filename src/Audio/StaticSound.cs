@@ -275,7 +275,7 @@ namespace MoonWorks.Audio
 		{
 			if (Instances.Count == 0)
 			{
-				Instances.Push(new StaticSoundInstance(Device, this, false));
+				Instances.Push(new StaticSoundInstance(Device, this));
 			}
 
 			return Instances.Pop();

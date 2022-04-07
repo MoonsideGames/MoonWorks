@@ -12,7 +12,7 @@ namespace MoonWorks.Audio
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
-		protected bool is3D;
+		public bool Is3D { get; protected set; }
 
 		public abstract SoundState State { get; protected set; }
 
@@ -33,7 +33,7 @@ namespace MoonWorks.Audio
 					_pan = 1f;
 				}
 
-				if (is3D) { return; }
+				if (Is3D) { return; }
 
 				SetPanMatrixCoefficients();
 				FAudio.FAudioVoice_SetOutputMatrix(
@@ -167,8 +167,7 @@ namespace MoonWorks.Audio
 			ushort bitsPerSample,
 			ushort blockAlign,
 			ushort channels,
-			uint samplesPerSecond,
-			bool is3D
+			uint samplesPerSecond
 		) : base(device)
 		{
 			var format = new FAudio.FAudioWaveFormatEx
@@ -200,7 +199,6 @@ namespace MoonWorks.Audio
 				return;
 			}
 
-			this.is3D = is3D;
 			InitDSPSettings(Format.nChannels);
 
 			// FIXME: not everything should be running through reverb...
@@ -216,7 +214,7 @@ namespace MoonWorks.Audio
 
 		public void Apply3D(AudioListener listener, AudioEmitter emitter)
 		{
-			is3D = true;
+			Is3D = true;
 
 			emitter.emitterData.CurveDistanceScaler = Device.CurveDistanceScalar;
 			emitter.emitterData.ChannelCount = dspSettings.SrcChannelCount;
@@ -273,7 +271,7 @@ namespace MoonWorks.Audio
 		{
 			float doppler;
 			float dopplerScale = Device.DopplerScale;
-			if (!is3D || dopplerScale == 0.0f)
+			if (!Is3D || dopplerScale == 0.0f)
 			{
 				doppler = 1.0f;
 			}
