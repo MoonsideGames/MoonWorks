@@ -68,7 +68,7 @@ namespace MoonWorks.Collision
 		/// <summary>
 		/// Retrieves all the potential collisions of a shape-transform pair. Excludes any shape-transforms with the given ID.
 		/// </summary>
-		public IEnumerable<(T, IHasAABB2D, Transform2D)> Retrieve(T id, IHasAABB2D shape, Transform2D transform2D, uint collisionMask = uint.MaxValue)
+		public IEnumerable<(T, IHasAABB2D, Transform2D, uint)> Retrieve(T id, IHasAABB2D shape, Transform2D transform2D, uint collisionMask = uint.MaxValue)
 		{
 			var returned = AcquireHashSet();
 
@@ -96,7 +96,7 @@ namespace MoonWorks.Collision
 								if (!id.Equals(t) && ((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(box, otherShape.TransformedAABB(otherTransform)))
 								{
 									returned.Add(t);
-									yield return (t, otherShape, otherTransform);
+									yield return (t, otherShape, otherTransform, collisionGroups);
 								}
 							}
 						}
@@ -113,7 +113,7 @@ namespace MoonWorks.Collision
 		/// </summary>
 		/// <param name="aabb">A transformed AABB.</param>
 		/// <returns></returns>
-		public IEnumerable<(T, IHasAABB2D, Transform2D)> Retrieve(AABB2D aabb, uint collisionMask = uint.MaxValue)
+		public IEnumerable<(T, IHasAABB2D, Transform2D, uint)> Retrieve(AABB2D aabb, uint collisionMask = uint.MaxValue)
 		{
 			var returned = AcquireHashSet();
 
@@ -139,7 +139,7 @@ namespace MoonWorks.Collision
 								var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
 								if (((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(aabb, otherShape.TransformedAABB(otherTransform)))
 								{
-									yield return (t, otherShape, otherTransform);
+									yield return (t, otherShape, otherTransform, collisionGroups);
 								}
 							}
 						}
