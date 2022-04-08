@@ -9,12 +9,11 @@ using System.Diagnostics;
 
 namespace MoonWorks
 {
-	public abstract class Game
+	public class Game
 	{
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 
 		private bool quit = false;
-		bool debugMode;
 
 		private Stopwatch gameTimer;
 		private TimeSpan timestep;
@@ -31,6 +30,8 @@ namespace MoonWorks
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
+
+		private GameState GameState = null;
 
 		private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
 		{
@@ -74,76 +75,89 @@ namespace MoonWorks
 			);
 
 			AudioDevice = new AudioDevice();
-
-			this.debugMode = debugMode;
 		}
 
 		public void Run()
 		{
+			#if DEBUG
+			if (GameState == null)
+			{
+				throw new NullReferenceException("Must call SetState before Run!");
+			}
+			#endif
+
 			while (!quit)
 			{
-				AdvanceElapsedTime();
-
-				/* We want to wait until the next frame,
-				 * but we don't want to oversleep. Requesting repeated 1ms sleeps and
-				 * seeing how long we actually slept for lets us estimate the worst case
-				 * sleep precision so we don't oversleep the next frame.
-				 */
-				while (accumulatedElapsedTime + worstCaseSleepPrecision < timestep)
-				{
-					System.Threading.Thread.Sleep(1);
-					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
-					UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
-				}
-
-				/* Now that we have slept into the sleep precision threshold, we need to wait
-				 * for just a little bit longer until the target elapsed time has been reached.
-				 * SpinWait(1) works by pausing the thread for very short intervals, so it is
-				 * an efficient and time-accurate way to wait out the rest of the time.
-				 */
-				while (accumulatedElapsedTime < timestep)
-				{
-					System.Threading.Thread.SpinWait(1);
-					AdvanceElapsedTime();
-				}
-
-				// Now that we are going to perform an update, let's handle SDL events.
-				HandleSDLEvents();
-
-				// Do not let any step take longer than our maximum.
-				if (accumulatedElapsedTime > MAX_DELTA_TIME)
-				{
-					accumulatedElapsedTime = MAX_DELTA_TIME;
-				}
-
-				if (!quit)
-				{
-					while (accumulatedElapsedTime >= timestep)
-					{
-						Inputs.Mouse.Wheel = 0;
-
-						Inputs.Update();
-						AudioDevice.Update();
-
-						Update(timestep);
-
-						accumulatedElapsedTime -= timestep;
-					}
-
-					var alpha = accumulatedElapsedTime / timestep;
-
-					Draw(timestep, alpha);
-
-				}
+				Tick();
 			}
-
-			OnDestroy();
 
 			AudioDevice.Dispose();
 			GraphicsDevice.Dispose();
 			Window.Dispose();
 
 			SDL.SDL_Quit();
+		}
+
+		public void SetState(GameState gameState)
+		{
+			GameState = gameState;
+			GameState.Start();
+		}
+
+		private void Tick()
+		{
+			AdvanceElapsedTime();
+
+			/* We want to wait until the next frame,
+			 * but we don't want to oversleep. Requesting repeated 1ms sleeps and
+			 * seeing how long we actually slept for lets us estimate the worst case
+			 * sleep precision so we don't oversleep the next frame.
+			 */
+			while (accumulatedElapsedTime + worstCaseSleepPrecision < timestep)
+			{
+				System.Threading.Thread.Sleep(1);
+				TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
+				UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
+			}
+
+			/* Now that we have slept into the sleep precision threshold, we need to wait
+			 * for just a little bit longer until the target elapsed time has been reached.
+			 * SpinWait(1) works by pausing the thread for very short intervals, so it is
+			 * an efficient and time-accurate way to wait out the rest of the time.
+			 */
+			while (accumulatedElapsedTime < timestep)
+			{
+				System.Threading.Thread.SpinWait(1);
+				AdvanceElapsedTime();
+			}
+
+			// Now that we are going to perform an update, let's handle SDL events.
+			HandleSDLEvents();
+
+			// Do not let any step take longer than our maximum.
+			if (accumulatedElapsedTime > MAX_DELTA_TIME)
+			{
+				accumulatedElapsedTime = MAX_DELTA_TIME;
+			}
+
+			if (!quit)
+			{
+				while (accumulatedElapsedTime >= timestep)
+				{
+					Inputs.Mouse.Wheel = 0;
+
+					Inputs.Update();
+					AudioDevice.Update();
+
+					GameState.Update(timestep);
+
+					accumulatedElapsedTime -= timestep;
+				}
+
+				var alpha = accumulatedElapsedTime / timestep;
+
+				GameState.Draw(timestep, alpha);
+			}
 		}
 
 		private void HandleSDLEvents()
@@ -166,14 +180,6 @@ namespace MoonWorks
 				}
 			}
 		}
-
-		protected abstract void Update(TimeSpan dt);
-
-		// alpha refers to a percentage value between the current and next state
-		protected abstract void Draw(TimeSpan dt, double alpha);
-
-		// Clean up any objects you created in this function
-		protected abstract void OnDestroy();
 
 		private void HandleTextInput(SDL2.SDL.SDL_Event evt)
 		{
