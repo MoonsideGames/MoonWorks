@@ -92,8 +92,8 @@ namespace MoonWorks.Audio
 
 		protected override void Destroy()
 		{
-			Marshal.FreeHGlobal(FileDataPtr);
 			FAudio.stb_vorbis_close(VorbisHandle);
+			Marshal.FreeHGlobal(FileDataPtr);
 		}
 	}
 }
