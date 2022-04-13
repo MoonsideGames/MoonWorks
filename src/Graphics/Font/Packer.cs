@@ -10,16 +10,14 @@ namespace MoonWorks.Graphics.Font
 		public IntPtr Handle { get; }
 		public Texture Texture { get; }
 
+		public Font Font { get; }
+
 		private bool IsDisposed;
 
-		public unsafe Packer(GraphicsDevice graphicsDevice, string path, uint textureWidth, uint textureHeight, uint padding = 1)
+		public unsafe Packer(GraphicsDevice graphicsDevice, Font font, float fontSize, uint textureWidth, uint textureHeight, uint padding = 1)
 		{
-			var bytes = File.ReadAllBytes(path);
-			fixed (byte* pByte = &bytes[0])
-			{
-				Handle = Wellspring.Wellspring_CreatePacker((IntPtr) pByte, (uint) bytes.Length, textureWidth, textureHeight, 0, padding);
-			}
-
+			Font = font;
+			Handle = Wellspring.Wellspring_CreatePacker(Font.Handle, fontSize, textureWidth, textureHeight, 0, padding);
 			Texture = Texture.CreateTexture2D(graphicsDevice, textureWidth, textureHeight, TextureFormat.R8, TextureUsageFlags.Sampler);
 		}
 

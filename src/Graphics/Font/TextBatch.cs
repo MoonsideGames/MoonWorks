@@ -26,8 +26,15 @@ namespace MoonWorks.Graphics.Font
 			PrimitiveCount = 0;
 		}
 
-		public unsafe void Draw(float x, float y, float depth, Color color, string text)
-		{
+		public unsafe void Draw(
+			string text,
+			float x,
+			float y,
+			float depth,
+			Color color,
+			HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
+			VerticalAlignment verticalAlignment = VerticalAlignment.Baseline
+		) {
 			fixed (char* chars = text)
 			{
 				var byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
@@ -40,6 +47,8 @@ namespace MoonWorks.Graphics.Font
 					y,
 					depth,
 					new Wellspring.Color { R = color.R, G = color.G, B = color.B, A = color.A },
+					(Wellspring.HorizontalAlignment) horizontalAlignment,
+					(Wellspring.VerticalAlignment) verticalAlignment,
 					(IntPtr) bytes,
 					(uint) byteCount
 				);

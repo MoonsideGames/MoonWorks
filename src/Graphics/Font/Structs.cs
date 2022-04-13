@@ -6,7 +6,6 @@ namespace MoonWorks.Graphics.Font
 	[StructLayout(LayoutKind.Sequential)]
 	public struct FontRange
 	{
-		public uint FontSize;
 		public uint FirstCodepoint;
 		public uint NumChars;
 		public byte OversampleH;
