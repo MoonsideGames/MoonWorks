@@ -7,3 +7,6 @@
 [submodule "lib/RefreshCS"]
 	path = lib/RefreshCS
 	url = https://gitea.moonside.games/MoonsideGames/RefreshCS.git
+[submodule "lib/WellspringCS"]
+	path = lib/WellspringCS
+	url = https://gitea.moonside.games/MoonsideGames/WellspringCS.git

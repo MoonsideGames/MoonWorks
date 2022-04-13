@@ -21,6 +21,8 @@ namespace MoonWorks.Graphics
 			Handle = handle;
 		}
 
+		// FIXME: we can probably use the NativeMemory functions to not have to generate arrays here
+
 		/// <summary>
 		/// Begins a render pass.
 		/// All render state, resource binding, and draw commands must be made within a render pass.
