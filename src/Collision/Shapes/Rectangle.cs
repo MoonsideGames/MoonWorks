@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MoonWorks.Math;
 
 namespace MoonWorks.Collision
@@ -15,11 +16,19 @@ namespace MoonWorks.Collision
 		public int Left { get; }
 		public int Top { get; }
 		public int Bottom { get; }
-		public Vector2 BottomLeft { get; }
-		public Vector2 TopRight { get; }
+		public Vector2 TopLeft { get; }
+		public Vector2 BottomRight { get; }
 
 		public Vector2 Min { get; }
 		public Vector2 Max { get; }
+
+		public IEnumerable<IShape2D> Shapes
+        {
+            get
+            {
+				yield return this;
+			}
+        }
 
 		public Rectangle(int left, int top, int width, int height)
 		{
@@ -30,8 +39,8 @@ namespace MoonWorks.Collision
 			Top = top;
 			Bottom = top + height;
 			AABB = new AABB2D(left, top, Right, Bottom);
-			BottomLeft = new Vector2(Left, Bottom);
-			TopRight = new Vector2(Top, Right);
+			TopLeft = new Vector2(Left, Top);
+			BottomRight = new Vector2(Right, Bottom);
 			Min = AABB.Min;
 			Max = AABB.Max;
 		}

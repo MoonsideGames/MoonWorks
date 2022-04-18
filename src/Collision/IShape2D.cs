@@ -2,7 +2,7 @@ using MoonWorks.Math;
 
 namespace MoonWorks.Collision
 {
-	public interface IShape2D : IHasAABB2D, System.IEquatable<IShape2D>
+	public interface IShape2D : ICollidable, System.IEquatable<IShape2D>
 	{
 		/// <summary>
 		/// A Minkowski support function. Gives the farthest point on the edge of a shape along the given direction.

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MoonWorks.Math;
 
 namespace MoonWorks.Collision
@@ -9,6 +10,13 @@ namespace MoonWorks.Collision
 	{
 		public int Radius { get; }
 		public AABB2D AABB { get; }
+		public IEnumerable<IShape2D> Shapes
+		{
+			get
+			{
+				yield return this;
+			}
+		}
 
 		public Circle(int radius)
 		{

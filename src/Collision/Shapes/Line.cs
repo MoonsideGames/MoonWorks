@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MoonWorks.Math;
 
 namespace MoonWorks.Collision
@@ -12,7 +13,15 @@ namespace MoonWorks.Collision
 
         public AABB2D AABB { get; }
 
-        public Line(Vector2 start, Vector2 end)
+		public IEnumerable<IShape2D> Shapes
+        {
+            get
+            {
+				yield return this;
+			}
+        }
+
+		public Line(Vector2 start, Vector2 end)
         {
             Start = start;
             End = end;

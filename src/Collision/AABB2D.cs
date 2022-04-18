@@ -77,6 +77,33 @@ namespace MoonWorks.Collision
             return new AABB2D(newCenter - newExtent, newCenter + newExtent);
 		}
 
+		public AABB2D Compose(AABB2D aabb)
+		{
+			float left = Left;
+			float top = Top;
+			float right = Right;
+			float bottom = Bottom;
+
+			if (aabb.Left < left)
+			{
+				left = aabb.Left;
+			}
+			if (aabb.Right > right)
+			{
+				right = aabb.Right;
+			}
+			if (aabb.Top < top)
+			{
+				top = aabb.Top;
+			}
+			if (aabb.Bottom > bottom)
+			{
+				bottom = aabb.Bottom;
+			}
+
+			return new AABB2D(left, top, right, bottom);
+		}
+
 		/// <summary>
 		/// Creates an AABB for an arbitrary collection of positions.
 		/// This is less efficient than defining a custom AABB method for most shapes, so avoid using this if possible.

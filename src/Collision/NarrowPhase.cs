@@ -11,6 +11,22 @@ namespace MoonWorks.Collision
 			public int Index;
 		}
 
+        public static bool TestCollision(ICollidable collidableA, Transform2D transformA, ICollidable collidableB, Transform2D transformB)
+        {
+            foreach (var shapeA in collidableA.Shapes)
+            {
+                foreach (var shapeB in collidableB.Shapes)
+                {
+					if (TestCollision(shapeA, transformA, shapeB, transformB))
+                    {
+						return true;
+					}
+				}
+            }
+
+			return false;
+		}
+
 		public static bool TestCollision(IShape2D shapeA, Transform2D transformA, IShape2D shapeB, Transform2D transformB)
 		{
 			// If we can use a fast path check, let's do that!

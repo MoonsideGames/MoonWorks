@@ -12,7 +12,7 @@ namespace MoonWorks.Collision
 		private readonly int cellSize;
 
 		private readonly Dictionary<long, HashSet<T>> hashDictionary = new Dictionary<long, HashSet<T>>();
-		private readonly Dictionary<T, (IHasAABB2D, Transform2D, uint)> IDLookup = new Dictionary<T, (IHasAABB2D, Transform2D, uint)>();
+		private readonly Dictionary<T, (ICollidable, Transform2D, uint)> IDLookup = new Dictionary<T, (ICollidable, Transform2D, uint)>();
 
 		public int MinX { get; private set; } = 0;
 		public int MaxX { get; private set; } = 0;
@@ -38,7 +38,7 @@ namespace MoonWorks.Collision
 		/// <param name="shape"></param>
 		/// <param name="transform2D"></param>
 		/// <param name="collisionGroups">A bitmask value specifying the groups this object belongs to.</param>
-		public void Insert(T id, IHasAABB2D shape, Transform2D transform2D, uint collisionGroups = uint.MaxValue)
+		public void Insert(T id, ICollidable shape, Transform2D transform2D, uint collisionGroups = uint.MaxValue)
 		{
 			var box = shape.TransformedAABB(transform2D);
 			var minHash = Hash(box.Min);
@@ -68,7 +68,7 @@ namespace MoonWorks.Collision
 		/// <summary>
 		/// Retrieves all the potential collisions of a shape-transform pair. Excludes any shape-transforms with the given ID.
 		/// </summary>
-		public IEnumerable<(T, IHasAABB2D, Transform2D, uint)> Retrieve(T id, IHasAABB2D shape, Transform2D transform2D, uint collisionMask = uint.MaxValue)
+		public IEnumerable<(T, ICollidable, Transform2D, uint)> Retrieve(T id, ICollidable shape, Transform2D transform2D, uint collisionMask = uint.MaxValue)
 		{
 			var returned = AcquireHashSet();
 
@@ -113,7 +113,7 @@ namespace MoonWorks.Collision
 		/// </summary>
 		/// <param name="aabb">A transformed AABB.</param>
 		/// <returns></returns>
-		public IEnumerable<(T, IHasAABB2D, Transform2D, uint)> Retrieve(AABB2D aabb, uint collisionMask = uint.MaxValue)
+		public IEnumerable<(T, ICollidable, Transform2D, uint)> Retrieve(AABB2D aabb, uint collisionMask = uint.MaxValue)
 		{
 			var returned = AcquireHashSet();
 
@@ -148,6 +148,14 @@ namespace MoonWorks.Collision
 			}
 
 			FreeHashSet(returned);
+		}
+
+		/// <summary>
+		/// Removes a specific ID from the SpatialHash.
+		/// </summary>
+		public void Remove(T id)
+		{
+
 		}
 
 		/// <summary>
