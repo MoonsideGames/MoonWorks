@@ -241,6 +241,8 @@ namespace MoonWorks.Audio
 		public abstract void Play(bool loop);
 		public abstract void Pause();
 		public abstract void Stop(bool immediate);
+		public abstract void Seek(float seconds);
+		public abstract void Seek(uint sampleFrame);
 
 		private void InitDSPSettings(uint srcChannels)
 		{

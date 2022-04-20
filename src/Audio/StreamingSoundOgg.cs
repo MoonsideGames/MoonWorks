@@ -62,6 +62,35 @@ namespace MoonWorks.Audio
 			device.AddDynamicSoundInstance(this);
 		}
 
+		private void PerformSeek(uint sampleFrame)
+		{
+			if (State == SoundState.Playing)
+			{
+				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+			}
+
+			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+			ClearBuffers();
+			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
+			QueueBuffers();
+
+			if (State == SoundState.Playing)
+			{
+				Play();
+			}
+		}
+
+		public override void Seek(float seconds)
+		{
+			uint sampleFrame = (uint) (Info.sample_rate * seconds);
+			PerformSeek(sampleFrame);
+		}
+
+		public override void Seek(uint sampleFrame)
+		{
+			PerformSeek(sampleFrame);
+		}
+
 		protected override void AddBuffer(
 			out float[] buffer,
 			out uint bufferOffset,

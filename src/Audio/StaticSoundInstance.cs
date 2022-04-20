@@ -93,6 +93,31 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		private void PerformSeek(uint sampleFrame)
+		{
+			if (State == SoundState.Playing)
+			{
+				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+				FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+			}
+
+			Parent.Handle.PlayBegin = sampleFrame;
+			Play();
+		}
+
+		public override void Seek(float seconds)
+		{
+			uint sampleFrame =
+				(uint) (Parent.SamplesPerSecond * seconds);
+
+			PerformSeek(sampleFrame);
+		}
+
+		public override void Seek(uint sampleFrame)
+		{
+			PerformSeek(sampleFrame);
+		}
+
 		public void Free()
 		{
 			Parent.FreeInstance(this);
