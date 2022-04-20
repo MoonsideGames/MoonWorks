@@ -240,16 +240,16 @@ namespace MoonWorks.Audio
 			{
 				if (disposing)
 				{
-					for (var i = streamingSounds.Count - 1; i >= 0; i--)
+					for (var i = resources.Count - 1; i >= 0; i--)
 					{
-						var weakReference = streamingSounds[i];
+						var weakReference = resources[i];
 
-						if (weakReference.TryGetTarget(out var streamingSound))
+						if (weakReference.TryGetTarget(out var resource))
 						{
-							streamingSound.Dispose();
+							resource.Dispose();
 						}
 					}
-					streamingSounds.Clear();
+					resources.Clear();
 				}
 
 				FAudio.FAudioVoice_DestroyVoice(ReverbVoice);
