@@ -44,19 +44,15 @@ namespace MoonWorks.Collision
 			var minHash = Hash(box.Min);
 			var maxHash = Hash(box.Max);
 
-			for (var i = minHash.Item1; i <= maxHash.Item1; i++)
+			foreach (var key in Keys(minHash.Item1, minHash.Item2, maxHash.Item1, maxHash.Item2))
 			{
-				for (var j = minHash.Item2; j <= maxHash.Item2; j++)
+				if (!hashDictionary.ContainsKey(key))
 				{
-					var key = MakeLong(i, j);
-					if (!hashDictionary.ContainsKey(key))
-					{
-						hashDictionary.Add(key, new HashSet<T>());
-					}
-
-					hashDictionary[key].Add(id);
-					IDLookup[id] = (shape, transform2D, collisionGroups);
+					hashDictionary.Add(key, new HashSet<T>());
 				}
+
+				hashDictionary[key].Add(id);
+				IDLookup[id] = (shape, transform2D, collisionGroups);
 			}
 
 			MinX = System.Math.Min(MinX, minHash.Item1);
@@ -81,23 +77,19 @@ namespace MoonWorks.Collision
 			if (minY < MinY) { minY = MinY; }
 			if (maxY > MaxY) { maxY = MaxY; }
 
-			for (var i = minX; i <= maxX; i++)
+			foreach (var key in Keys(minX, minY, maxX, maxY))
 			{
-				for (var j = minY; j <= maxY; j++)
+				if (hashDictionary.ContainsKey(key))
 				{
-					var key = MakeLong(i, j);
-					if (hashDictionary.ContainsKey(key))
+					foreach (var t in hashDictionary[key])
 					{
-						foreach (var t in hashDictionary[key])
+						if (!returned.Contains(t))
 						{
-							if (!returned.Contains(t))
+							var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
+							if (!id.Equals(t) && ((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(box, otherShape.TransformedAABB(otherTransform)))
 							{
-								var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
-								if (!id.Equals(t) && ((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(box, otherShape.TransformedAABB(otherTransform)))
-								{
-									returned.Add(t);
-									yield return (t, otherShape, otherTransform, collisionGroups);
-								}
+								returned.Add(t);
+								yield return (t, otherShape, otherTransform, collisionGroups);
 							}
 						}
 					}
@@ -125,22 +117,18 @@ namespace MoonWorks.Collision
 			if (minY < MinY) { minY = MinY; }
 			if (maxY > MaxY) { maxY = MaxY; }
 
-			for (var i = minX; i <= maxX; i++)
+			foreach (var key in Keys(minX, minY, maxX, maxY))
 			{
-				for (var j = minY; j <= maxY; j++)
+				if (hashDictionary.ContainsKey(key))
 				{
-					var key = MakeLong(i, j);
-					if (hashDictionary.ContainsKey(key))
+					foreach (var t in hashDictionary[key])
 					{
-						foreach (var t in hashDictionary[key])
+						if (!returned.Contains(t))
 						{
-							if (!returned.Contains(t))
+							var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
+							if (((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(aabb, otherShape.TransformedAABB(otherTransform)))
 							{
-								var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
-								if (((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(aabb, otherShape.TransformedAABB(otherTransform)))
-								{
-									yield return (t, otherShape, otherTransform, collisionGroups);
-								}
+								yield return (t, otherShape, otherTransform, collisionGroups);
 							}
 						}
 					}
@@ -150,12 +138,32 @@ namespace MoonWorks.Collision
 			FreeHashSet(returned);
 		}
 
+		public void Update(T id, ICollidable shape, Transform2D transform2D, uint collisionGroups = uint.MaxValue)
+		{
+			Remove(id);
+			Insert(id, shape, transform2D, collisionGroups);
+		}
+
 		/// <summary>
 		/// Removes a specific ID from the SpatialHash.
 		/// </summary>
 		public void Remove(T id)
 		{
+			var (shape, transform, collisionGroups) = IDLookup[id];
 
+			var box = shape.TransformedAABB(transform);
+			var minHash = Hash(box.Min);
+			var maxHash = Hash(box.Max);
+
+			foreach (var key in Keys(minHash.Item1, minHash.Item2, maxHash.Item1, maxHash.Item2))
+			{
+				if (hashDictionary.ContainsKey(key))
+				{
+					hashDictionary[key].Remove(id);
+				}
+			}
+
+			IDLookup.Remove(id);
 		}
 
 		/// <summary>
@@ -174,6 +182,17 @@ namespace MoonWorks.Collision
 		private static long MakeLong(int left, int right)
 		{
 			return ((long) left << 32) | ((uint) right);
+		}
+
+		private IEnumerable<long> Keys(int minX, int minY, int maxX, int maxY)
+		{
+			for (var i = minX; i <= maxX; i++)
+			{
+				for (var j = minY; j <= maxY; j++)
+				{
+					yield return MakeLong(i, j);
+				}
+			}
 		}
 
 		private HashSet<T> AcquireHashSet()

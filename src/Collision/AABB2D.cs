@@ -142,7 +142,7 @@ namespace MoonWorks.Collision
 
 		public static bool TestOverlap(AABB2D a, AABB2D b)
 		{
-			return a.Left <= b.Right && a.Right >= b.Left && a.Top <= b.Bottom && a.Bottom >= b.Top;
+			return a.Left < b.Right && a.Right > b.Left && a.Top < b.Bottom && a.Bottom > b.Top;
 		}
 
 		public override bool Equals(object obj)
