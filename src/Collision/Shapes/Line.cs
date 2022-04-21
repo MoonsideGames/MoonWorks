@@ -8,8 +8,8 @@ namespace MoonWorks.Collision
     /// </summary>
     public struct Line : IShape2D, System.IEquatable<Line>
     {
-        private Vector2 Start { get; }
-        private Vector2 End { get; }
+        public Vector2 Start { get; }
+        public Vector2 End { get; }
 
         public AABB2D AABB { get; }
 

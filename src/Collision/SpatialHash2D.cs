@@ -99,6 +99,43 @@ namespace MoonWorks.Collision
 			FreeHashSet(returned);
 		}
 
+		/// <summary>
+		/// Retrieves all the potential collisions of a shape-transform pair.
+		/// </summary>
+		public IEnumerable<(T, ICollidable, Transform2D, uint)> Retrieve(ICollidable shape, Transform2D transform2D, uint collisionMask = uint.MaxValue)
+		{
+			var returned = AcquireHashSet();
+
+			var box = shape.TransformedAABB(transform2D);
+			var (minX, minY) = Hash(box.Min);
+			var (maxX, maxY) = Hash(box.Max);
+
+			if (minX < MinX) { minX = MinX; }
+			if (maxX > MaxX) { maxX = MaxX; }
+			if (minY < MinY) { minY = MinY; }
+			if (maxY > MaxY) { maxY = MaxY; }
+
+			foreach (var key in Keys(minX, minY, maxX, maxY))
+			{
+				if (hashDictionary.ContainsKey(key))
+				{
+					foreach (var t in hashDictionary[key])
+					{
+						if (!returned.Contains(t))
+						{
+							var (otherShape, otherTransform, collisionGroups) = IDLookup[t];
+							if (((collisionGroups & collisionMask) > 0) && AABB2D.TestOverlap(box, otherShape.TransformedAABB(otherTransform)))
+							{
+								returned.Add(t);
+								yield return (t, otherShape, otherTransform, collisionGroups);
+							}
+						}
+					}
+				}
+			}
+
+			FreeHashSet(returned);
+		}
 
 		/// <summary>
 		/// Retrieves objects based on a pre-transformed AABB.
