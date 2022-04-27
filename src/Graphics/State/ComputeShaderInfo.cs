@@ -13,18 +13,18 @@ namespace MoonWorks.Graphics
 		public uint BufferBindingCount;
 		public uint ImageBindingCount;
 
-		public static ComputeShaderInfo Create<T>(
+		public unsafe static ComputeShaderInfo Create<T>(
 			ShaderModule shaderModule,
 			string entryPointName,
 			uint bufferBindingCount,
 			uint imageBindingCount
-		)
+		) where T : unmanaged
 		{
 			return new ComputeShaderInfo
 			{
 				ShaderModule = shaderModule,
 				EntryPointName = entryPointName,
-				UniformBufferSize = (uint) Marshal.SizeOf<T>(),
+				UniformBufferSize = (uint) sizeof(T),
 				BufferBindingCount = bufferBindingCount,
 				ImageBindingCount = imageBindingCount
 			};

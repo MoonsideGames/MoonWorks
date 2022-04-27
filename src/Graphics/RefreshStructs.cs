@@ -128,13 +128,13 @@ namespace MoonWorks.Graphics
 		public VertexInputRate InputRate;
 
 		// Shortcut for the common case of having a single vertex binding.
-		public static VertexBinding Create<T>()
+		public unsafe static VertexBinding Create<T>() where T : unmanaged
 		{
 			return new VertexBinding
 			{
 				Binding = 0,
 				InputRate = VertexInputRate.Vertex,
-				Stride = (uint) Marshal.SizeOf<T>()
+				Stride = (uint) sizeof(T)
 			};
 		}
 	}

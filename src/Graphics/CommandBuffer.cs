@@ -511,7 +511,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) ptr,
-					(uint) (uniforms.Length * Marshal.SizeOf<T>())
+					(uint) (uniforms.Length * sizeof(T))
 				);
 			}
 		}
@@ -530,7 +530,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) ptr,
-					(uint) (uniforms.Length * Marshal.SizeOf<T>())
+					(uint) (uniforms.Length * sizeof(T))
 				);
 			}
 		}
@@ -549,7 +549,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) ptr,
-					(uint) (uniforms.Length * Marshal.SizeOf<T>())
+					(uint) (uniforms.Length * sizeof(T))
 				);
 			}
 		}
@@ -745,7 +745,7 @@ namespace MoonWorks.Graphics
 			uint numElements
 		) where T : unmanaged
 		{
-			var elementSize = Marshal.SizeOf<T>();
+			var elementSize = sizeof(T);
 
 			fixed (T* ptr = &data[0])
 			{
@@ -762,19 +762,19 @@ namespace MoonWorks.Graphics
 			}
 		}
 
-		public void SetBufferData<T>(
+		public unsafe void SetBufferData<T>(
 			Buffer buffer,
 			IntPtr dataPtr,
 			uint bufferOffsetInElements,
 			uint numElements
-		) {
+		) where T : unmanaged {
 			Refresh.Refresh_SetBufferData(
 				Device.Handle,
 				Handle,
 				buffer.Handle,
-				(uint) Marshal.SizeOf<T>() * bufferOffsetInElements,
+				(uint) sizeof(T) * bufferOffsetInElements,
 				dataPtr,
-				(uint) Marshal.SizeOf<T>() * numElements
+				(uint) sizeof(T) * numElements
 			);
 		}
 
@@ -794,7 +794,7 @@ namespace MoonWorks.Graphics
 		/// <param name="data">An array of data to copy into the texture.</param>
 		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
 		{
-			var size = Marshal.SizeOf<T>();
+			var size = sizeof(T);
 
 			fixed (T* ptr = &data[0])
 			{

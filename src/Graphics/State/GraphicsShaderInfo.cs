@@ -12,7 +12,7 @@ namespace MoonWorks.Graphics
 		public uint UniformBufferSize;
 		public uint SamplerBindingCount;
 
-		public static GraphicsShaderInfo Create<T>(
+		public unsafe static GraphicsShaderInfo Create<T>(
 			ShaderModule shaderModule,
 			string entryPointName,
 			uint samplerBindingCount
@@ -22,7 +22,7 @@ namespace MoonWorks.Graphics
 			{
 				ShaderModule = shaderModule,
 				EntryPointName = entryPointName,
-				UniformBufferSize = (uint) Marshal.SizeOf<T>(),
+				UniformBufferSize = (uint) sizeof(T),
 				SamplerBindingCount = samplerBindingCount
 			};
 		}

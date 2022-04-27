@@ -24,16 +24,16 @@ namespace MoonWorks.Graphics
 		/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 		/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
 		/// <returns></returns>
-		public static Buffer Create<T>(
+		public unsafe static Buffer Create<T>(
 			GraphicsDevice device,
 			BufferUsageFlags usageFlags,
 			uint elementCount
-		)
+		) where T : unmanaged
 		{
 			return new Buffer(
 				device,
 				usageFlags,
-				(uint) Marshal.SizeOf<T>() * elementCount
+				(uint) sizeof(T) * elementCount
 			);
 		}
 
