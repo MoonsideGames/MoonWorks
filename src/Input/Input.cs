@@ -25,11 +25,11 @@ namespace MoonWorks.Input
 			{
 				if (SDL.SDL_IsGameController(i) == SDL.SDL_bool.SDL_TRUE)
 				{
-					gamepads[i] = new Gamepad(SDL.SDL_GameControllerOpen(i));
+					gamepads[i] = new Gamepad(SDL.SDL_GameControllerOpen(i), i);
 				}
 				else
 				{
-					gamepads[i] = new Gamepad(IntPtr.Zero);
+					gamepads[i] = new Gamepad(IntPtr.Zero, -1);
 				}
 			}
 		}
@@ -54,6 +54,27 @@ namespace MoonWorks.Input
 		public Gamepad GetGamepad(int slot)
 		{
 			return gamepads[slot];
+		}
+
+		public ButtonState ButtonState(ButtonIdentifier identifier)
+		{
+			if (identifier.DeviceKind == DeviceKind.Gamepad)
+			{
+				var gamepad = GetGamepad(identifier.Index);
+				return gamepad.ButtonState((ButtonCode) identifier.Code);
+			}
+			else if (identifier.DeviceKind == DeviceKind.Keyboard)
+			{
+				return Keyboard.ButtonState((KeyCode) identifier.Code);
+			}
+			else if (identifier.DeviceKind == DeviceKind.Mouse)
+			{
+				return Mouse.ButtonState((MouseButtonCode) identifier.Code);
+			}
+			else
+			{
+				throw new System.ArgumentException("Invalid button identifier!");
+			}
 		}
 
 		internal static void OnTextInput(char c)

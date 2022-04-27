@@ -8,6 +8,7 @@ namespace MoonWorks.Input
 	public class Gamepad
 	{
 		internal IntPtr Handle;
+		internal int Index;
 
 		public Button A { get; } = new Button();
 		public Button B { get; } = new Button();
@@ -39,9 +40,10 @@ namespace MoonWorks.Input
 		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
 		private Dictionary<SDL.SDL_GameControllerAxis, Trigger> EnumToTrigger;
 
-		internal Gamepad(IntPtr handle)
+		internal Gamepad(IntPtr handle, int index)
 		{
 			Handle = handle;
+			Index = index;
 
 			EnumToButton = new Dictionary<SDL.SDL_GameControllerButton, Button>
 			{

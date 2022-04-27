@@ -1,12 +1,13 @@
-﻿using SDL2;
+﻿using System.Collections.Generic;
+using SDL2;
 
 namespace MoonWorks.Input
 {
 	public class Mouse
 	{
-		public ButtonState LeftButton { get; private set; } = new ButtonState();
-		public ButtonState MiddleButton { get; private set; } = new ButtonState();
-		public ButtonState RightButton { get; private set; } = new ButtonState();
+		public Button LeftButton { get; } = new Button();
+		public Button MiddleButton { get; } = new Button();
+		public Button RightButton { get; } = new Button();
 
 		public int X { get; private set; }
 		public int Y { get; private set; }
@@ -30,6 +31,18 @@ namespace MoonWorks.Input
 			}
 		}
 
+		private readonly Dictionary<MouseButtonCode, Button> CodeToButton;
+
+		public Mouse()
+		{
+			CodeToButton = new Dictionary<MouseButtonCode, Button>
+			{
+				{ MouseButtonCode.Left, LeftButton },
+				{ MouseButtonCode.Right, RightButton },
+				{ MouseButtonCode.Middle, MiddleButton }
+			};
+		}
+
 		internal void Update()
 		{
 			var buttonMask = SDL.SDL_GetMouseState(out var x, out var y);
@@ -40,9 +53,14 @@ namespace MoonWorks.Input
 			DeltaX = deltaX;
 			DeltaY = deltaY;
 
-			LeftButton = LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
-			MiddleButton = MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
-			RightButton = RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
+			LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
+			MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
+			RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
+		}
+
+		public ButtonState ButtonState(MouseButtonCode buttonCode)
+		{
+			return CodeToButton[buttonCode].State;
 		}
 
 		private bool IsPressed(uint buttonMask, uint buttonFlag)
