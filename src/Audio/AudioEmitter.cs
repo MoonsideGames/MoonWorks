@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using MoonWorks.Math;
+using MoonWorks.Math.Float;
 
 namespace MoonWorks.Audio
 {

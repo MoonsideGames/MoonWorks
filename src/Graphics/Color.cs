@@ -19,6 +19,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using MoonWorks.Math;
+using MoonWorks.Math.Float;
 #endregion
 
 namespace MoonWorks.Graphics

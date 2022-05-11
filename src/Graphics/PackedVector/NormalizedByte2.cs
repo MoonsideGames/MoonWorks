@@ -17,6 +17,7 @@
 #region Using Statements
 using System;
 using MoonWorks.Math;
+using MoonWorks.Math.Float;
 #endregion
 
 namespace MoonWorks.Graphics

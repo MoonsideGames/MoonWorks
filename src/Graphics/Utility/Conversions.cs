@@ -22,15 +22,15 @@
 			{
 				return Graphics.VertexElementFormat.Float;
 			}
-			else if (type == typeof(Math.Vector2))
+			else if (type == typeof(Math.Float.Vector2))
 			{
 				return Graphics.VertexElementFormat.Vector2;
 			}
-			else if (type == typeof(Math.Vector3))
+			else if (type == typeof(Math.Float.Vector3))
 			{
 				return Graphics.VertexElementFormat.Vector3;
 			}
-			else if (type == typeof(Math.Vector4))
+			else if (type == typeof(Math.Float.Vector4))
 			{
 				return Graphics.VertexElementFormat.Vector4;
 			}

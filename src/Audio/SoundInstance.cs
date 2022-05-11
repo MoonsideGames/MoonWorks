@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using MoonWorks.Math;
+using MoonWorks.Math.Float;
 
 namespace MoonWorks.Audio
 {
@@ -53,7 +53,7 @@ namespace MoonWorks.Audio
 			get => _pitch;
 			set
 			{
-				_pitch = MathHelper.Clamp(value, -1f, 1f);
+				_pitch = Math.MathHelper.Clamp(value, -1f, 1f);
 				UpdatePitch();
 			}
 		}

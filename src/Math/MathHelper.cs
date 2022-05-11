@@ -334,7 +334,7 @@ namespace MoonWorks.Math
 		/// <summary>
 		/// Rescales a value within a given range to a new range.
 		/// </summary>
-		public static float Normalize(float value, short min, short max, short newMin, short newMax)
+		public static float Normalize(short value, short min, short max, short newMin, short newMax)
 		{
 			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
@@ -372,6 +372,19 @@ namespace MoonWorks.Math
                 System.Math.Min(start + change, end) :
                 System.Math.Max(start - change, end);
 		}
+
+		/// <summary>
+        /// Step from start towards end by change.
+        /// </summary>
+        /// <param name="start">Start value.</param>
+        /// <param name="end">End value.</param>
+        /// <param name="change">Change value.</param>
+        public static Fixed.Fix64 Approach(Fixed.Fix64 start, Fixed.Fix64 end, Fixed.Fix64 change)
+        {
+            return start < end ?
+                Fixed.Fix64.Min(start + change, end) :
+                Fixed.Fix64.Max(start - change, end);
+        }
 
 		#endregion
 
