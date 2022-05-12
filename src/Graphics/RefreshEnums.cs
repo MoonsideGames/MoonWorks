@@ -67,6 +67,7 @@ namespace MoonWorks.Graphics
 		BC1,
 		BC2,
 		BC3,
+		BC7,
 		R8G8_SNORM,
 		R8G8B8A8_SNORM,
 		A2R10G10B10,
