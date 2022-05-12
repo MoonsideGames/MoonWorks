@@ -77,24 +77,39 @@ namespace MoonWorks.Graphics
 		{
 			using (var reader = new BinaryReader(stream))
 			{
-				ParseDDS(reader, out var format, out var width, out var height, out var levels);
-				Texture texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, SampleCount.One, (uint) levels);
+				Texture texture;
+				int faces;
+				ParseDDS(reader, out var format, out var width, out var height, out var levels, out var isCube);
 
-				for (int i = 0; i < levels; i += 1)
+				if (isCube)
 				{
-					var levelWidth = width >> i;
-					var levelHeight = height >> i;
+					texture = CreateTextureCube(graphicsDevice, (uint) width, format, TextureUsageFlags.Sampler, SampleCount.One, (uint) levels);
+					faces = 6;
+				}
+				else
+				{
+					texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, SampleCount.One, (uint) levels);
+					faces = 1;
+				}
 
-					var pixels = reader.ReadBytes(
-						Texture.CalculateDDSLevelSize(
-							levelWidth,
-							levelHeight,
-							format
-						)
-					);
+				for (int i = 0; i < faces; i += 1)
+				{
+					for (int j = 0; j < levels; j += 1)
+					{
+						var levelWidth = width >> i;
+						var levelHeight = height >> i;
 
-					var textureSlice = new TextureSlice(texture, new Rect(0, 0, levelWidth, levelHeight), 0, 0, (uint) i);
-					commandBuffer.SetTextureData(textureSlice, pixels);
+						var pixels = reader.ReadBytes(
+							Texture.CalculateDDSLevelSize(
+								levelWidth,
+								levelHeight,
+								format
+							)
+						);
+
+						var textureSlice = new TextureSlice(texture, new Rect(0, 0, levelWidth, levelHeight), 0, (uint) i, (uint) j);
+						commandBuffer.SetTextureData(textureSlice, pixels);
+					}
 				}
 
 				return texture;
@@ -262,7 +277,8 @@ namespace MoonWorks.Graphics
 			out TextureFormat format,
 			out int width,
 			out int height,
-			out int levels
+			out int levels,
+			out bool isCube
 		) {
 			// A whole bunch of magic numbers, yay DDS!
 			const uint DDS_MAGIC = 0x20534444;
@@ -285,8 +301,7 @@ namespace MoonWorks.Graphics
 			const uint FOURCC_DXT1 = 0x31545844;
 			const uint FOURCC_DXT3 = 0x33545844;
 			const uint FOURCC_DXT5 = 0x35545844;
-			const uint FOURCC_BPTC = 0x30315844;
-			// const uint FOURCC_DX10 = 0x30315844;
+			const uint FOURCC_DX10 = 0x30315844;
 			const uint pitchAndLinear = (
 				DDSD_PITCH | DDSD_LINEARSIZE
 			);
@@ -341,12 +356,22 @@ namespace MoonWorks.Graphics
 			{
 				throw new NotSupportedException("Not a texture!");
 			}
+
+			isCube = false;
+
 			uint caps2 = reader.ReadUInt32();
-			if (	caps2 != 0 &&
-				(caps2 & DDSCAPS2_CUBEMAP) != DDSCAPS2_CUBEMAP	)
+			if (caps2 != 0)
 			{
-				throw new NotSupportedException("Invalid caps2!");
+				if ((caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
+				{
+					isCube = true;
+				}
+				else
+				{
+					throw new NotSupportedException("Invalid caps2!");
+				}
 			}
+
 			reader.ReadUInt32(); // dwCaps3, unused
 			reader.ReadUInt32(); // dwCaps4, unused
 
@@ -364,10 +389,10 @@ namespace MoonWorks.Graphics
 			{
 				switch (formatFourCC)
 				{
-					case 0x71:
+					case 0x71: // D3DFMT_A16B16G16R16F
 						format = TextureFormat.R16G16B16A16_SFLOAT;
 						break;
-					case 0x74:
+					case 0x74: // D3DFMT_A32B32G32R32F
 						format = TextureFormat.R32G32B32A32_SFLOAT;
 						break;
 					case FOURCC_DXT1:
@@ -379,15 +404,76 @@ namespace MoonWorks.Graphics
 					case FOURCC_DXT5:
 						format = TextureFormat.BC3;
 						break;
-					case FOURCC_BPTC:
-						format = TextureFormat.BC7;
-						// These next 5 uints are part of the DX10 DDS header.
-						// They contain a little extra information but aren't that important.
+					case FOURCC_DX10:
+						// If the fourCC is DX10, there is an extra header with additional format information.
 						uint dxgiFormat = reader.ReadUInt32();
+
+						// These values are taken from the DXGI_FORMAT enum.
+						switch (dxgiFormat)
+						{
+							case 2:
+								format = TextureFormat.R32G32B32A32_SFLOAT;
+								break;
+
+							case 10:
+								format = TextureFormat.R16G16B16A16_SFLOAT;
+								break;
+
+							case 71:
+								format = TextureFormat.BC1;
+								break;
+
+							case 74:
+								format = TextureFormat.BC2;
+								break;
+
+							case 77:
+								format = TextureFormat.BC3;
+								break;
+
+							case 98:
+								format = TextureFormat.BC7;
+								break;
+
+							default:
+								throw new NotSupportedException(
+									"Unsupported DDS texture format"
+								);
+						}
+
 						uint resourceDimension = reader.ReadUInt32();
+
+						// These values are taken from the D3D10_RESOURCE_DIMENSION enum.
+						switch (resourceDimension)
+						{
+							case 0: // Unknown
+							case 1: // Buffer
+								throw new NotSupportedException(
+									"Unsupported DDS texture format"
+								);
+						}
+
+						/*
+						 * This flag seemingly only indicates if the texture is a cube map.
+						 * This is already determined above. Cool!
+						 */
 						uint miscFlag = reader.ReadUInt32();
+
+						/*
+						 * Indicates the number of elements in the texture array.
+						 * We don't support texture arrays so just throw if it's greater than 1.
+						 */
 						uint arraySize = reader.ReadUInt32();
+
+						if (arraySize > 1)
+						{
+							throw new NotSupportedException(
+								"Unsupported DDS texture format"
+							);
+						}
+
 						reader.ReadUInt32(); // reserved
+
 						break;
 					default:
 						throw new NotSupportedException(
