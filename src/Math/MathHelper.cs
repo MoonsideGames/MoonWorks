@@ -280,6 +280,11 @@ namespace MoonWorks.Math
 			return result;
 		}
 
+		public static float Quantize(float value, float step)
+		{
+			return (float) System.Math.Floor(value / step) * step;
+		}
+
 		/// <summary>
 		/// Converts radians to degrees.
 		/// </summary>
