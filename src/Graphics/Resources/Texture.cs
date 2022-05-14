@@ -96,8 +96,8 @@ namespace MoonWorks.Graphics
 				{
 					for (int j = 0; j < levels; j += 1)
 					{
-						var levelWidth = width >> i;
-						var levelHeight = height >> i;
+						var levelWidth = width >> j;
+						var levelHeight = height >> j;
 
 						var pixels = reader.ReadBytes(
 							Texture.CalculateDDSLevelSize(
