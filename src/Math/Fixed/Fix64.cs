@@ -25,6 +25,7 @@ namespace MoonWorks.Math.Fixed
 
 		public static readonly Fix64 Pi = new Fix64(PI);
 		public static readonly Fix64 PiOver2 = new Fix64(PI_OVER_2);
+		public static readonly Fix64 PiOver4 = PiOver2 / new Fix64(2);
 		public static readonly Fix64 PiTimes2 = new Fix64(PI_TIMES_2);
 
 		const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
@@ -49,6 +50,24 @@ namespace MoonWorks.Math.Fixed
 		public static Fix64 FromFraction(int numerator, int denominator)
 		{
 			return new Fix64(numerator) / new Fix64(denominator);
+		}
+
+		public static Fix64 Random(System.Random random, int max)
+		{
+			var fractional = random.Next();
+			var integral = random.Next(max);
+			long rawValue = (integral << FRACTIONAL_PLACES) + fractional;
+
+			return new Fix64(rawValue);
+		}
+
+		// Max should be between 0.0 and 1.0.
+		public static Fix64 RandomFraction(System.Random random, Fix64 max)
+		{
+			long fractionalPart = (max.RawValue & 0x00000000FFFFFFFF);
+			long fractional = random.NextInt64(fractionalPart);
+
+			return new Fix64(fractional);
 		}
 
 		/// <summary>
