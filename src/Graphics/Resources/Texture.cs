@@ -451,6 +451,8 @@ namespace MoonWorks.Graphics
 								throw new NotSupportedException(
 									"Unsupported DDS texture format"
 								);
+							default:
+								break;
 						}
 
 						/*
