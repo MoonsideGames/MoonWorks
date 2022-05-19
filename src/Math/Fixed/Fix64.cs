@@ -177,6 +177,11 @@ namespace MoonWorks.Math.Fixed
 			return Fix64.Min(Fix64.Max(value, min), max);
 		}
 
+		public static Fix64 Lerp(Fix64 value1, Fix64 value2, Fix64 amount)
+		{
+			return value1 + (value2 - value1) * amount;
+		}
+
 		// Trigonometry functions
 
 		/// <summary>
