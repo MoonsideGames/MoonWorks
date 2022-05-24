@@ -31,7 +31,9 @@ namespace MoonWorks
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
 
+		// FIXME: maybe the user should just manage this stuff
 		private GameState GameState = null;
+		private GameState NextState = null;
 
 		private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
 		{
@@ -80,7 +82,7 @@ namespace MoonWorks
 		public void Run()
 		{
 			#if DEBUG
-			if (GameState == null)
+			if (NextState == null)
 			{
 				throw new NullReferenceException("Must call SetState before Run!");
 			}
@@ -100,8 +102,7 @@ namespace MoonWorks
 
 		public void SetState(GameState gameState)
 		{
-			GameState = gameState;
-			GameState.Start();
+			NextState = gameState;
 		}
 
 		private void Tick()
@@ -148,6 +149,13 @@ namespace MoonWorks
 
 					Inputs.Update();
 					AudioDevice.Update();
+
+					if (NextState != null)
+					{
+						GameState = NextState;
+						GameState.Start();
+						NextState = null;
+					}
 
 					GameState.Update(timestep);
 
