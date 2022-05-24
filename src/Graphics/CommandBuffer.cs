@@ -425,8 +425,8 @@ namespace MoonWorks.Graphics
 
 			for (var i = 0; i < length; i += 1)
 			{
-				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
-				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
+				texturePtrs[i] = textureSamplerBindings[i].TextureHandle;
+				samplerPtrs[i] = textureSamplerBindings[i].SamplerHandle;
 			}
 
 			Refresh.Refresh_BindVertexSamplers(
@@ -464,18 +464,18 @@ namespace MoonWorks.Graphics
 			for (var i = 0; i < length; i += 1)
 			{
 				#if DEBUG
-				if (textureSamplerBindings[i].Texture == null)
+				if (textureSamplerBindings[i].TextureHandle == IntPtr.Zero)
 				{
 					throw new NullReferenceException("Texture binding must not be null!");
 				}
-				if (textureSamplerBindings[i].Texture == null)
+				if (textureSamplerBindings[i].TextureHandle == IntPtr.Zero)
 				{
 					throw new NullReferenceException("Sampler binding must not be null!");
 				}
 				#endif
 
-				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
-				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
+				texturePtrs[i] = textureSamplerBindings[i].TextureHandle;
+				samplerPtrs[i] = textureSamplerBindings[i].SamplerHandle;
 			}
 
 			Refresh.Refresh_BindFragmentSamplers(
