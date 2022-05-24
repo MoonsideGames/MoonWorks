@@ -197,7 +197,12 @@ namespace MoonWorks.Audio
 			sendDesc[1].pOutputVoice = ReverbVoice;
 		}
 
-		public void Update()
+		public void SetMasteringVolume(float volume)
+		{
+			FAudio.FAudioVoice_SetVolume(MasteringVoice, volume, 0);
+		}
+
+		internal void Update()
 		{
 			for (var i = streamingSounds.Count - 1; i >= 0; i--)
 			{
