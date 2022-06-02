@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace MoonWorks
 {
-	public class Game
+	public abstract class Game
 	{
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 
@@ -30,10 +30,6 @@ namespace MoonWorks
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
-
-		// FIXME: maybe the user should just manage this stuff
-		private GameState GameState = null;
-		private GameState NextState = null;
 
 		private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
 		{
@@ -81,13 +77,6 @@ namespace MoonWorks
 
 		public void Run()
 		{
-			#if DEBUG
-			if (NextState == null)
-			{
-				throw new NullReferenceException("Must call SetState before Run!");
-			}
-			#endif
-
 			while (!quit)
 			{
 				Tick();
@@ -100,10 +89,8 @@ namespace MoonWorks
 			SDL.SDL_Quit();
 		}
 
-		public void SetState(GameState gameState)
-		{
-			NextState = gameState;
-		}
+		protected abstract void Update(TimeSpan delta);
+		protected abstract void Draw(TimeSpan delta, double alpha);
 
 		private void Tick()
 		{
@@ -150,21 +137,14 @@ namespace MoonWorks
 					Inputs.Update();
 					AudioDevice.Update();
 
-					if (NextState != null)
-					{
-						GameState = NextState;
-						GameState.Start();
-						NextState = null;
-					}
-
-					GameState.Update(timestep);
+					Update(timestep);
 
 					accumulatedElapsedTime -= timestep;
 				}
 
 				var alpha = accumulatedElapsedTime / timestep;
 
-				GameState.Draw(timestep, alpha);
+				Draw(timestep, alpha);
 			}
 		}
 
