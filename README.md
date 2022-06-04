@@ -15,6 +15,9 @@ MoonWorks uses strictly Free Open Source Software. It will never have any kind o
 * [SDL2](https://github.com/flibitijibibo/SDL2-CS) - Window management, Input
 * [Refresh](https://gitea.moonside.games/MoonsideGames/Refresh) - Graphics
 * [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
+* [Wellspring](https://gitea.moonside.games/MoonsideGames/Wellspring) - Font Rendering
+
+Prebuilt dependencies can be obtained here: http://moonside.games/files/moonlibs.tar.bz2
 
 ## License
 
