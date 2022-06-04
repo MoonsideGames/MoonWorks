@@ -37,6 +37,7 @@ namespace MoonWorks.Input
 		// Assumes that SDL_PumpEvents has been called!
 		internal void Update()
 		{
+			Mouse.Wheel = 0;
 			Keyboard.Update();
 			Mouse.Update();
 
