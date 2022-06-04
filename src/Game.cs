@@ -18,13 +18,17 @@ namespace MoonWorks
 		private Stopwatch gameTimer;
 		private TimeSpan timestep;
 		private long previousTicks = 0;
-		TimeSpan accumulatedElapsedTime = TimeSpan.Zero;
+		TimeSpan accumulatedUpdateTime = TimeSpan.Zero;
+		TimeSpan accumulatedDrawTime = TimeSpan.Zero;
 		// must be a power of 2 so we can do a bitmask optimization when checking worst case
 		private const int PREVIOUS_SLEEP_TIME_COUNT = 128;
 		private const int SLEEP_TIME_MASK = PREVIOUS_SLEEP_TIME_COUNT - 1;
 		private TimeSpan[] previousSleepTimes = new TimeSpan[PREVIOUS_SLEEP_TIME_COUNT];
 		private int sleepTimeIndex = 0;
 		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
+
+		private bool FramerateCapped = false;
+		private TimeSpan FramerateCapTimeSpan = TimeSpan.Zero;
 
 		public Window Window { get; }
 		public GraphicsDevice GraphicsDevice { get; }
@@ -42,12 +46,20 @@ namespace MoonWorks
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			PresentMode presentMode,
+			FramerateSettings framerateSettings,
 			int targetTimestep = 60,
 			bool debugMode = false
 		)
 		{
 			timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
+
+			FramerateCapped = framerateSettings.Mode == FramerateMode.Capped;
+
+			if (FramerateCapped)
+			{
+				FramerateCapTimeSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / framerateSettings.Cap);
+			}
 
 			for (int i = 0; i < previousSleepTimes.Length; i += 1)
 			{
@@ -90,61 +102,63 @@ namespace MoonWorks
 		}
 
 		protected abstract void Update(TimeSpan delta);
-		protected abstract void Draw(TimeSpan delta, double alpha);
+		protected abstract void Draw(double alpha);
 
 		private void Tick()
 		{
 			AdvanceElapsedTime();
 
-			/* We want to wait until the next frame,
-			 * but we don't want to oversleep. Requesting repeated 1ms sleeps and
-			 * seeing how long we actually slept for lets us estimate the worst case
-			 * sleep precision so we don't oversleep the next frame.
-			 */
-			while (accumulatedElapsedTime + worstCaseSleepPrecision < timestep)
+			if (FramerateCapped)
 			{
-				System.Threading.Thread.Sleep(1);
-				TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
-				UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
-			}
+				/* We want to wait until the framerate cap,
+				* but we don't want to oversleep. Requesting repeated 1ms sleeps and
+				* seeing how long we actually slept for lets us estimate the worst case
+				* sleep precision so we don't oversleep the next frame.
+				*/
+				while (accumulatedDrawTime + worstCaseSleepPrecision < FramerateCapTimeSpan)
+				{
+					System.Threading.Thread.Sleep(1);
+					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
+					UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
+				}
 
-			/* Now that we have slept into the sleep precision threshold, we need to wait
-			 * for just a little bit longer until the target elapsed time has been reached.
-			 * SpinWait(1) works by pausing the thread for very short intervals, so it is
-			 * an efficient and time-accurate way to wait out the rest of the time.
-			 */
-			while (accumulatedElapsedTime < timestep)
-			{
-				System.Threading.Thread.SpinWait(1);
-				AdvanceElapsedTime();
+				/* Now that we have slept into the sleep precision threshold, we need to wait
+				* for just a little bit longer until the target elapsed time has been reached.
+				* SpinWait(1) works by pausing the thread for very short intervals, so it is
+				* an efficient and time-accurate way to wait out the rest of the time.
+				*/
+				while (accumulatedDrawTime < FramerateCapTimeSpan)
+				{
+					System.Threading.Thread.SpinWait(1);
+					AdvanceElapsedTime();
+				}
 			}
 
 			// Now that we are going to perform an update, let's handle SDL events.
 			HandleSDLEvents();
 
 			// Do not let any step take longer than our maximum.
-			if (accumulatedElapsedTime > MAX_DELTA_TIME)
+			if (accumulatedUpdateTime > MAX_DELTA_TIME)
 			{
-				accumulatedElapsedTime = MAX_DELTA_TIME;
+				accumulatedUpdateTime = MAX_DELTA_TIME;
 			}
 
 			if (!quit)
 			{
-				while (accumulatedElapsedTime >= timestep)
+				while (accumulatedUpdateTime >= timestep)
 				{
-					Inputs.Mouse.Wheel = 0;
-
 					Inputs.Update();
 					AudioDevice.Update();
 
 					Update(timestep);
 
-					accumulatedElapsedTime -= timestep;
+					accumulatedUpdateTime -= timestep;
 				}
 
-				var alpha = accumulatedElapsedTime / timestep;
+				var alpha = accumulatedUpdateTime / timestep;
 
-				Draw(timestep, alpha);
+				Draw(alpha);
+				accumulatedDrawTime -= FramerateCapTimeSpan;
 			}
 		}
 
@@ -201,7 +215,8 @@ namespace MoonWorks
 		{
 			long currentTicks = gameTimer.Elapsed.Ticks;
 			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - previousTicks);
-			accumulatedElapsedTime += timeAdvanced;
+			accumulatedUpdateTime += timeAdvanced;
+			accumulatedDrawTime += timeAdvanced;
 			previousTicks = currentTicks;
 			return timeAdvanced;
 		}
