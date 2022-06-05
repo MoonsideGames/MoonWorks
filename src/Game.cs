@@ -206,7 +206,7 @@ namespace MoonWorks
 			}
 		}
 
-		private void HandleTextInput(SDL2.SDL.SDL_Event evt)
+		private void HandleTextInput(SDL.SDL_Event evt)
 		{
 			// Based on the SDL2# LPUtf8StrMarshaler
 			unsafe
@@ -234,7 +234,7 @@ namespace MoonWorks
 			}
 		}
 
-		private unsafe void HandleFileDrop(SDL2.SDL.SDL_Event evt)
+		private void HandleFileDrop(SDL.SDL_Event evt)
 		{
 			// Need to do it this way because SDL2 expects you to free the filename string.
 			string filePath = SDL.UTF8_ToManaged(evt.drop.file, true);
