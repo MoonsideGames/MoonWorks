@@ -104,6 +104,17 @@ namespace MoonWorks
 		protected abstract void Update(TimeSpan delta);
 		protected abstract void Draw(double alpha);
 
+		// Called when a file is dropped on the game window.
+		protected virtual void DropFile(string filePath) {}
+
+		/* Required to distinguish between multiple files dropped at once
+		 * vs multiple files dropped one at a time.
+		 *
+		 * Called once for every multi-file drop.
+		 */
+		protected virtual void DropBegin() {}
+		protected virtual void DropComplete() {}
+
 		private void Tick()
 		{
 			AdvanceElapsedTime();
@@ -179,6 +190,18 @@ namespace MoonWorks
 					case SDL.SDL_EventType.SDL_MOUSEWHEEL:
 						Inputs.Mouse.Wheel += _event.wheel.y;
 						break;
+
+					case SDL.SDL_EventType.SDL_DROPBEGIN:
+						DropBegin();
+						break;
+
+					case SDL.SDL_EventType.SDL_DROPCOMPLETE:
+						DropComplete();
+						break;
+
+					case SDL.SDL_EventType.SDL_DROPFILE:
+						HandleFileDrop(_event);
+						break;
 				}
 			}
 		}
@@ -209,6 +232,13 @@ namespace MoonWorks
 					}
 				}
 			}
+		}
+
+		private unsafe void HandleFileDrop(SDL2.SDL.SDL_Event evt)
+		{
+			// Need to do it this way because SDL2 expects you to free the filename string.
+			string filePath = SDL.UTF8_ToManaged(evt.drop.file, true);
+			DropFile(filePath);
 		}
 
 		private TimeSpan AdvanceElapsedTime()
