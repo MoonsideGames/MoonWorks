@@ -1,5 +1,6 @@
 ﻿using RefreshCS;
 using System;
+using System.IO;
 
 namespace MoonWorks.Graphics
 {
@@ -12,15 +13,29 @@ namespace MoonWorks.Graphics
 
 		public unsafe ShaderModule(GraphicsDevice device, string filePath) : base(device)
 		{
-			var bytecode = Bytecode.ReadBytecodeAsUInt32(filePath);
+			using (FileStream stream = new FileStream(filePath, FileMode.Open))
+			{
+				Handle = CreateFromStream(device, stream);
+			}
+		}
 
-			fixed (uint* ptr = bytecode)
+		public unsafe ShaderModule(GraphicsDevice device, Stream stream) : base(device)
+		{
+			Handle = CreateFromStream(device, stream);
+		}
+
+		private unsafe static IntPtr CreateFromStream(GraphicsDevice device, Stream stream)
+		{
+			var bytecode = new byte[stream.Length];
+			stream.Read(bytecode, 0, (int) stream.Length);
+
+			fixed (byte* ptr = bytecode)
 			{
 				Refresh.ShaderModuleCreateInfo shaderModuleCreateInfo;
-				shaderModuleCreateInfo.codeSize = (UIntPtr) (bytecode.Length * sizeof(uint));
+				shaderModuleCreateInfo.codeSize = (UIntPtr) bytecode.Length;
 				shaderModuleCreateInfo.byteCode = (IntPtr) ptr;
 
-				Handle = Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);
+				return Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);
 			}
 		}
 	}
