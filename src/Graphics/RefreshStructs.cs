@@ -277,7 +277,7 @@ namespace MoonWorks.Graphics
 			DepthStencilClearValue = clearValue;
 			LoadOp = LoadOp.Clear;
 			StoreOp = StoreOp.DontCare;
-			StencilLoadOp = LoadOp.DontCare;
+			StencilLoadOp = LoadOp.Clear;
 			StencilStoreOp = StoreOp.DontCare;
 		}
 
