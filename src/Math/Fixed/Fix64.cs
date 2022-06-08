@@ -52,6 +52,14 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64(numerator) / new Fix64(denominator);
 		}
 
+		/// <summary>
+		/// Gets the fractional component of this Fix64 value.
+		/// </summary>
+		public static Fix64 Fractional(Fix64 number)
+		{
+			return new Fix64(number.RawValue & 0x00000000FFFFFFFF);
+		}
+
 		public static Fix64 Random(System.Random random, int max)
 		{
 			var fractional = random.Next();
@@ -180,6 +188,14 @@ namespace MoonWorks.Math.Fixed
 		public static Fix64 Lerp(Fix64 value1, Fix64 value2, Fix64 amount)
 		{
 			return value1 + (value2 - value1) * amount;
+		}
+
+		/// <summary>
+		/// Rescales a value within a given range to a new range.
+		/// </summary>
+		public static Fix64 Normalize(Fix64 value, Fix64 min, Fix64 max, Fix64 newMin, Fix64 newMax)
+		{
+			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
 
 		// Trigonometry functions
