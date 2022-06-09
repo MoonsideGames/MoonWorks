@@ -268,7 +268,12 @@ namespace MoonWorks.Graphics
 		public LoadOp StencilLoadOp;
 		public StoreOp StencilStoreOp;
 
-		public DepthStencilAttachmentInfo(Texture texture, DepthStencilValue clearValue)
+		public DepthStencilAttachmentInfo(
+			Texture texture,
+			DepthStencilValue clearValue,
+			StoreOp depthStoreOp = StoreOp.Store,
+			StoreOp stencilStoreOp = StoreOp.Store
+		)
 		{
 			Texture = texture;
 			Depth = 0;
@@ -276,9 +281,9 @@ namespace MoonWorks.Graphics
 			Level = 0;
 			DepthStencilClearValue = clearValue;
 			LoadOp = LoadOp.Clear;
-			StoreOp = StoreOp.DontCare;
+			StoreOp = depthStoreOp;
 			StencilLoadOp = LoadOp.Clear;
-			StencilStoreOp = StoreOp.DontCare;
+			StencilStoreOp = stencilStoreOp;
 		}
 
 		public DepthStencilAttachmentInfo(
