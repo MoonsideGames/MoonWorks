@@ -69,6 +69,11 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64(rawValue);
 		}
 
+		public static Fix64 Random(System.Random random, Fix64 min, Fix64 max)
+		{
+			return new Fix64(random.NextInt64(min.RawValue, max.RawValue));
+		}
+
 		// Max should be between 0.0 and 1.0.
 		public static Fix64 RandomFraction(System.Random random, Fix64 max)
 		{
