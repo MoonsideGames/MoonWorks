@@ -62,11 +62,12 @@ namespace MoonWorks.Math.Fixed
 
 		public static Fix64 Random(System.Random random, int max)
 		{
-			var fractional = random.Next();
-			var integral = random.Next(max);
-			long rawValue = (integral << FRACTIONAL_PLACES) + fractional;
+			return new Fix64(random.NextInt64(new Fix64(max).RawValue));
+		}
 
-			return new Fix64(rawValue);
+		public static Fix64 Random(System.Random random, Fix64 max)
+		{
+			return new Fix64(random.NextInt64(max.RawValue));
 		}
 
 		public static Fix64 Random(System.Random random, Fix64 min, Fix64 max)
