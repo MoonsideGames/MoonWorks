@@ -1,4 +1,4 @@
-namespace MoonWorks.Math.Float
+﻿namespace MoonWorks.Math.Float
 {
 	public struct Transform2D : System.IEquatable<Transform2D>
 	{
@@ -6,8 +6,9 @@ namespace MoonWorks.Math.Float
 		public float Rotation { get; }
 		public Vector2 Scale { get; }
 
-		private bool transformMatrixCalculated = false;
-		private Matrix3x2 transformMatrix = Matrix3x2.Identity;
+		private bool transformMatrixCalculated;
+		private Matrix3x2 transformMatrix;
+
 		public Matrix3x2 TransformMatrix
 		{
 			get
@@ -25,18 +26,15 @@ namespace MoonWorks.Math.Float
 		public bool IsAxisAligned => Rotation % MathHelper.PiOver2 == 0;
 		public bool IsUniformScale => Scale.X == Scale.Y;
 
-		public Transform2D()
-		{
-			Position = Vector2.Zero;
-			Rotation = 0;
-			Scale = Vector2.One;
-		}
+		public static readonly Transform2D Identity = new Transform2D(Vector2.Zero, 0, Vector2.One);
 
 		public Transform2D(Vector2 position)
 		{
 			Position = position;
 			Rotation = 0;
 			Scale = Vector2.One;
+			transformMatrixCalculated = false;
+			transformMatrix = Matrix3x2.Identity;
 		}
 
 		public Transform2D(Vector2 position, float rotation)
@@ -44,6 +42,8 @@ namespace MoonWorks.Math.Float
 			Position = position;
 			Rotation = rotation;
 			Scale = Vector2.One;
+			transformMatrixCalculated = false;
+			transformMatrix = Matrix3x2.Identity;
 		}
 
 		public Transform2D(Vector2 position, float rotation, Vector2 scale)
@@ -51,6 +51,8 @@ namespace MoonWorks.Math.Float
 			Position = position;
 			Rotation = rotation;
 			Scale = scale;
+			transformMatrixCalculated = false;
+			transformMatrix = Matrix3x2.Identity;
 		}
 
 		public Transform2D Compose(Transform2D other)

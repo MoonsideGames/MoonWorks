@@ -8,11 +8,11 @@
 		public VertexBinding[] VertexBindings;
 		public VertexAttribute[] VertexAttributes;
 
-		public VertexInputState()
+		public static readonly VertexInputState Empty = new VertexInputState
 		{
-			VertexBindings = new VertexBinding[0];
-			VertexAttributes = new VertexAttribute[0];
-		}
+			VertexBindings = new VertexBinding[0],
+			VertexAttributes = new VertexAttribute[0]
+		};
 
 		public VertexInputState(
 			VertexBinding vertexBinding,
