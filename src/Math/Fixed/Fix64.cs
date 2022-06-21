@@ -322,6 +322,22 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
+		/// Converts degrees to radians.
+		/// </summary>
+		public static Fix64 ToRadians(Fix64 degrees)
+		{
+			return degrees * (Pi / new Fix64(180));
+		}
+
+		/// <summary>
+		/// Converts radians to degrees.
+		/// </summary>
+		public static Fix64 ToDegrees(Fix64 radians)
+		{
+			return radians * (new Fix64(180) / Pi);
+		}
+
+		/// <summary>
 		/// Returns the sine of the specified angle.
 		/// </summary>
 		public static Fix64 Sin(Fix64 x)
