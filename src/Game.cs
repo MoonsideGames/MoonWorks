@@ -94,6 +94,8 @@ namespace MoonWorks
 				Tick();
 			}
 
+			Destroy();
+
 			AudioDevice.Dispose();
 			GraphicsDevice.Dispose();
 			Window.Dispose();
@@ -103,6 +105,7 @@ namespace MoonWorks
 
 		protected abstract void Update(TimeSpan delta);
 		protected abstract void Draw(double alpha);
+		protected virtual void Destroy() {}
 
 		// Called when a file is dropped on the game window.
 		protected virtual void DropFile(string filePath) {}
