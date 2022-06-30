@@ -35,10 +35,16 @@ namespace MoonWorks.Graphics.Font
 			HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
 			VerticalAlignment verticalAlignment = VerticalAlignment.Baseline
 		) {
-			fixed (char* chars = text)
+			var byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
+
+			if (StringBytes.Length < byteCount)
 			{
-				var byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
-				var bytes = stackalloc byte[byteCount];
+				System.Array.Resize(ref StringBytes, byteCount);
+			}
+
+			fixed (char* chars = text)
+			fixed (byte* bytes = StringBytes)
+			{
 				System.Text.Encoding.UTF8.GetBytes(chars, text.Length, bytes, byteCount);
 
 				var result = Wellspring.Wellspring_Draw(
@@ -57,8 +63,6 @@ namespace MoonWorks.Graphics.Font
 				{
 					throw new System.ArgumentException("Could not decode string!");
 				}
-
-				PrimitiveCount += (uint) (text.Length * 2);
 			}
 		}
 
