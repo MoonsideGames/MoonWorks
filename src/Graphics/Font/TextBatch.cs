@@ -13,10 +13,13 @@ namespace MoonWorks.Graphics.Font
 		public Texture Texture { get; protected set; }
 		public uint PrimitiveCount { get; protected set; }
 
+		private byte[] StringBytes;
+
 		public TextBatch(GraphicsDevice graphicsDevice)
 		{
 			GraphicsDevice = graphicsDevice;
 			Handle = Wellspring.Wellspring_CreateTextBatch();
+			StringBytes = new byte[128];
 		}
 
 		public void Start(Packer packer)
@@ -71,6 +74,7 @@ namespace MoonWorks.Graphics.Font
 		{
 			Wellspring.Wellspring_GetBufferData(
 				Handle,
+				out uint vertexCount,
 				out IntPtr vertexDataPointer,
 				out uint vertexDataLengthInBytes,
 				out IntPtr indexDataPointer,
@@ -99,6 +103,8 @@ namespace MoonWorks.Graphics.Font
 
 			commandBuffer.SetBufferData(VertexBuffer, vertexDataPointer, 0, vertexDataLengthInBytes);
 			commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
+
+			PrimitiveCount = vertexCount / 2; // FIXME: is this jank?
 		}
 	}
 }
