@@ -36,6 +36,9 @@ namespace MoonWorks.Input
 
 		public bool IsDummy => Handle == IntPtr.Zero;
 
+		public bool AnyPressed { get; private set; }
+		public ButtonCode AnyPressedButtonCode { get; private set; }
+
 		private Dictionary<SDL.SDL_GameControllerButton, Button> EnumToButton;
 		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
 		private Dictionary<SDL.SDL_GameControllerAxis, Trigger> EnumToTrigger;
@@ -44,6 +47,8 @@ namespace MoonWorks.Input
 		{
 			Handle = handle;
 			Index = index;
+
+			AnyPressed = false;
 
 			EnumToButton = new Dictionary<SDL.SDL_GameControllerButton, Button>
 			{
@@ -81,11 +86,20 @@ namespace MoonWorks.Input
 
 		internal void Update()
 		{
+			AnyPressed = false;
+
 			if (!IsDummy)
 			{
 				foreach (var (sdlEnum, button) in EnumToButton)
 				{
-					button.Update(CheckPressed(sdlEnum));
+					var pressed = CheckPressed(sdlEnum);
+					button.Update(pressed);
+
+					if (button.IsPressed)
+					{
+						AnyPressed = true;
+						AnyPressedButtonCode = (ButtonCode) sdlEnum;
+					}
 				}
 
 				foreach (var (sdlEnum, axis) in EnumToAxis)

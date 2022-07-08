@@ -7,6 +7,9 @@ namespace MoonWorks.Input
 {
 	public class Keyboard
 	{
+		public bool AnyPressed { get; private set; }
+		public KeyCode AnyPressedKeyCode { get; private set; }
+
 		private Button[] Keys { get; }
 		private int numKeys;
 
@@ -45,14 +48,16 @@ namespace MoonWorks.Input
 
 		internal void Update()
 		{
+			AnyPressed = false;
+
 			IntPtr keyboardState = SDL.SDL_GetKeyboardState(out _);
 
 			foreach (int keycode in Enum.GetValues(typeof(KeyCode)))
 			{
-				var keyDown = Marshal.ReadByte(keyboardState, keycode);
-				Keys[keycode].Update(Conversions.ByteToBool(keyDown));
+				var keyDown = Conversions.ByteToBool(Marshal.ReadByte(keyboardState, keycode));
+				Keys[keycode].Update(keyDown);
 
-				if (Conversions.ByteToBool(keyDown))
+				if (keyDown)
 				{
 					if (TextInputBindings.TryGetValue((KeyCode) keycode, out var textIndex))
 					{
@@ -62,6 +67,12 @@ namespace MoonWorks.Input
 					{
 						Inputs.OnTextInput(TextInputCharacters[6]);
 					}
+				}
+
+				if (Keys[keycode].IsPressed)
+				{
+					AnyPressed = true;
+					AnyPressedKeyCode = (KeyCode) keycode;
 				}
 			}
 		}

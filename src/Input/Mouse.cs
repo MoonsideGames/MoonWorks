@@ -16,6 +16,9 @@ namespace MoonWorks.Input
 
 		public int Wheel { get; internal set; }
 
+		public bool AnyPressed { get; private set; }
+		public MouseButtonCode AnyPressedButtonCode { get; private set; }
+
 		private bool relativeMode;
 		public bool RelativeMode
 		{
@@ -32,6 +35,7 @@ namespace MoonWorks.Input
 		}
 
 		private readonly Dictionary<MouseButtonCode, Button> CodeToButton;
+		private readonly Dictionary<uint, MouseButtonCode> MaskToButtonCode;
 
 		public Mouse()
 		{
@@ -41,10 +45,19 @@ namespace MoonWorks.Input
 				{ MouseButtonCode.Right, RightButton },
 				{ MouseButtonCode.Middle, MiddleButton }
 			};
+
+			MaskToButtonCode = new Dictionary<uint, MouseButtonCode>
+			{
+				{ SDL.SDL_BUTTON_LMASK, MouseButtonCode.Left },
+				{ SDL.SDL_BUTTON_MMASK, MouseButtonCode.Middle },
+				{ SDL.SDL_BUTTON_RMASK, MouseButtonCode.Right }
+			};
 		}
 
 		internal void Update()
 		{
+			AnyPressed = false;
+
 			var buttonMask = SDL.SDL_GetMouseState(out var x, out var y);
 			var _ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
 
@@ -53,9 +66,18 @@ namespace MoonWorks.Input
 			DeltaX = deltaX;
 			DeltaY = deltaY;
 
-			LeftButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_LMASK));
-			MiddleButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_MMASK));
-			RightButton.Update(IsPressed(buttonMask, SDL.SDL_BUTTON_RMASK));
+			foreach (var (mask, buttonCode) in MaskToButtonCode)
+			{
+				var pressed = IsPressed(buttonMask, mask);
+				var button = CodeToButton[buttonCode];
+				button.Update(pressed);
+
+				if (button.IsPressed)
+				{
+					AnyPressed = true;
+					AnyPressedButtonCode = buttonCode;
+				}
+			}
 		}
 
 		public ButtonState ButtonState(MouseButtonCode buttonCode)

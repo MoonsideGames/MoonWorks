@@ -14,6 +14,9 @@ namespace MoonWorks.Input
 
 		public static event Action<char> TextInput;
 
+		public bool AnyPressed { get; private set; }
+		public ButtonIdentifier AnyPressedButton { get; private set; }
+
 		internal Inputs()
 		{
 			Keyboard = new Keyboard();
@@ -37,13 +40,34 @@ namespace MoonWorks.Input
 		// Assumes that SDL_PumpEvents has been called!
 		internal void Update()
 		{
+			AnyPressed = false;
+
 			Mouse.Wheel = 0;
 			Keyboard.Update();
+
+			if (Keyboard.AnyPressed)
+			{
+				AnyPressed = true;
+				AnyPressedButton = new ButtonIdentifier(Keyboard.AnyPressedKeyCode);
+			}
+
 			Mouse.Update();
+
+			if (Mouse.AnyPressed)
+			{
+				AnyPressed = true;
+				AnyPressedButton = new ButtonIdentifier(Mouse.AnyPressedButtonCode);
+			}
 
 			foreach (var gamepad in gamepads)
 			{
 				gamepad.Update();
+
+				if (gamepad.AnyPressed)
+				{
+					AnyPressed = true;
+					AnyPressedButton = new ButtonIdentifier(gamepad, gamepad.AnyPressedButtonCode);
+				}
 			}
 		}
 
@@ -71,6 +95,10 @@ namespace MoonWorks.Input
 			else if (identifier.DeviceKind == DeviceKind.Mouse)
 			{
 				return Mouse.ButtonState((MouseButtonCode) identifier.Code);
+			}
+			else if (identifier.DeviceKind == DeviceKind.None)
+			{
+				return new ButtonState(ButtonStatus.Released);
 			}
 			else
 			{
