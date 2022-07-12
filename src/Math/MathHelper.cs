@@ -341,7 +341,7 @@ namespace MoonWorks.Math
 		/// </summary>
 		public static float Normalize(short value, short min, short max, short newMin, short newMax)
 		{
-			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
+			return ((float) (value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
 
 		/// <summary>
