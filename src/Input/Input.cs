@@ -15,7 +15,7 @@ namespace MoonWorks.Input
 		public static event Action<char> TextInput;
 
 		public bool AnyPressed { get; private set; }
-		public ButtonIdentifier AnyPressedButton { get; private set; }
+		public VirtualButton AnyPressedButton { get; private set; }
 
 		internal Inputs()
 		{
@@ -49,7 +49,7 @@ namespace MoonWorks.Input
 			if (Keyboard.AnyPressed)
 			{
 				AnyPressed = true;
-				AnyPressedButton = new ButtonIdentifier(Keyboard.AnyPressedKeyCode);
+				AnyPressedButton = Keyboard.AnyPressedButton;
 			}
 
 			Mouse.Update();
@@ -57,7 +57,7 @@ namespace MoonWorks.Input
 			if (Mouse.AnyPressed)
 			{
 				AnyPressed = true;
-				AnyPressedButton = new ButtonIdentifier(Mouse.AnyPressedButtonCode);
+				AnyPressedButton = Mouse.AnyPressedButton;
 			}
 
 			foreach (var gamepad in gamepads)
@@ -67,7 +67,7 @@ namespace MoonWorks.Input
 				if (gamepad.AnyPressed)
 				{
 					AnyPressed = true;
-					AnyPressedButton = new ButtonIdentifier(gamepad, gamepad.AnyPressedButtonCode);
+					AnyPressedButton = gamepad.AnyPressedButton;
 				}
 			}
 		}
@@ -80,31 +80,6 @@ namespace MoonWorks.Input
 		public Gamepad GetGamepad(int slot)
 		{
 			return gamepads[slot];
-		}
-
-		public ButtonState ButtonState(ButtonIdentifier identifier)
-		{
-			if (identifier.DeviceKind == DeviceKind.Gamepad)
-			{
-				var gamepad = GetGamepad(identifier.Index);
-				return gamepad.ButtonState((ButtonCode) identifier.Code);
-			}
-			else if (identifier.DeviceKind == DeviceKind.Keyboard)
-			{
-				return Keyboard.ButtonState((KeyCode) identifier.Code);
-			}
-			else if (identifier.DeviceKind == DeviceKind.Mouse)
-			{
-				return Mouse.ButtonState((MouseButtonCode) identifier.Code);
-			}
-			else if (identifier.DeviceKind == DeviceKind.None)
-			{
-				return new ButtonState(ButtonStatus.Released);
-			}
-			else
-			{
-				throw new System.ArgumentException("Invalid button identifier!");
-			}
 		}
 
 		internal static void OnTextInput(char c)

@@ -1,7 +1,7 @@
 namespace MoonWorks.Input
 {
 	// Enum values are equivalent to the SDL GameControllerButton value.
-	public enum ButtonCode
+	public enum GamepadButtonCode
 	{
 		A,
 		B,

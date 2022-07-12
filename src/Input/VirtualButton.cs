@@ -1,8 +1,8 @@
 namespace MoonWorks.Input
 {
-	public class Button
+	public abstract class VirtualButton
 	{
-		public ButtonState State { get; private set; }
+		public ButtonState State { get; protected set; }
 
 		/// <summary>
 		/// True if the button is pressed or held.
@@ -24,9 +24,11 @@ namespace MoonWorks.Input
 		/// </summary>
 		public bool IsReleased => State.IsReleased;
 
-		internal void Update(bool isPressed)
+		internal virtual void Update()
 		{
-			State = State.Update(isPressed);
+			State = State.Update(CheckPressed());
 		}
+
+		internal abstract bool CheckPressed();
 	}
 }

@@ -5,9 +5,9 @@ namespace MoonWorks.Input
 {
 	public class Mouse
 	{
-		public Button LeftButton { get; } = new Button();
-		public Button MiddleButton { get; } = new Button();
-		public Button RightButton { get; } = new Button();
+		public MouseButton LeftButton { get; }
+		public MouseButton MiddleButton { get; }
+		public MouseButton RightButton { get; }
 
 		public int X { get; private set; }
 		public int Y { get; private set; }
@@ -17,7 +17,9 @@ namespace MoonWorks.Input
 		public int Wheel { get; internal set; }
 
 		public bool AnyPressed { get; private set; }
-		public MouseButtonCode AnyPressedButtonCode { get; private set; }
+		public MouseButton AnyPressedButton { get; private set; }
+
+		public uint ButtonMask { get; private set; }
 
 		private bool relativeMode;
 		public bool RelativeMode
@@ -34,23 +36,29 @@ namespace MoonWorks.Input
 			}
 		}
 
-		private readonly Dictionary<MouseButtonCode, Button> CodeToButton;
-		private readonly Dictionary<uint, MouseButtonCode> MaskToButtonCode;
+		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
+
+		private IEnumerable<MouseButton> Buttons
+		{
+			get
+			{
+				yield return LeftButton;
+				yield return MiddleButton;
+				yield return RightButton;
+			}
+		}
 
 		public Mouse()
 		{
-			CodeToButton = new Dictionary<MouseButtonCode, Button>
+			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_BUTTON_LMASK);
+			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_BUTTON_MMASK);
+			RightButton = new MouseButton(this, MouseButtonCode.Right, SDL.SDL_BUTTON_RMASK);
+
+			CodeToButton = new Dictionary<MouseButtonCode, MouseButton>
 			{
 				{ MouseButtonCode.Left, LeftButton },
 				{ MouseButtonCode.Right, RightButton },
 				{ MouseButtonCode.Middle, MiddleButton }
-			};
-
-			MaskToButtonCode = new Dictionary<uint, MouseButtonCode>
-			{
-				{ SDL.SDL_BUTTON_LMASK, MouseButtonCode.Left },
-				{ SDL.SDL_BUTTON_MMASK, MouseButtonCode.Middle },
-				{ SDL.SDL_BUTTON_RMASK, MouseButtonCode.Right }
 			};
 		}
 
@@ -58,7 +66,7 @@ namespace MoonWorks.Input
 		{
 			AnyPressed = false;
 
-			var buttonMask = SDL.SDL_GetMouseState(out var x, out var y);
+			ButtonMask = SDL.SDL_GetMouseState(out var x, out var y);
 			var _ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
 
 			X = x;
@@ -66,16 +74,18 @@ namespace MoonWorks.Input
 			DeltaX = deltaX;
 			DeltaY = deltaY;
 
-			foreach (var (mask, buttonCode) in MaskToButtonCode)
+			LeftButton.Update();
+			MiddleButton.Update();
+			RightButton.Update();
+
+			foreach (var button in Buttons)
 			{
-				var pressed = IsPressed(buttonMask, mask);
-				var button = CodeToButton[buttonCode];
-				button.Update(pressed);
+				button.Update();
 
 				if (button.IsPressed)
 				{
 					AnyPressed = true;
-					AnyPressedButtonCode = buttonCode;
+					AnyPressedButton = button;
 				}
 			}
 		}
@@ -83,11 +93,6 @@ namespace MoonWorks.Input
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
 			return CodeToButton[buttonCode].State;
-		}
-
-		private bool IsPressed(uint buttonMask, uint buttonFlag)
-		{
-			return (buttonMask & buttonFlag) != 0;
 		}
 	}
 }

@@ -9,7 +9,7 @@
 		public bool IsDown => ButtonStatus == ButtonStatus.Pressed || ButtonStatus == ButtonStatus.Held;
 		public bool IsReleased => ButtonStatus == ButtonStatus.Released;
 
-		public ButtonState(ButtonStatus buttonStatus)
+		internal ButtonState(ButtonStatus buttonStatus)
 		{
 			ButtonStatus = buttonStatus;
 		}

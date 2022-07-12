@@ -10,38 +10,56 @@ namespace MoonWorks.Input
 		internal IntPtr Handle;
 		internal int Index;
 
-		public Button A { get; } = new Button();
-		public Button B { get; } = new Button();
-		public Button X { get; } = new Button();
-		public Button Y { get; } = new Button();
-		public Button Back { get; } = new Button();
-		public Button Guide { get; } = new Button();
-		public Button Start { get; } = new Button();
-		public Button LeftStick { get; } = new Button();
-		public Button RightStick { get; } = new Button();
-		public Button LeftShoulder { get; } = new Button();
-		public Button RightShoulder { get; } = new Button();
-		public Button DpadUp { get; } = new Button();
-		public Button DpadDown { get; } = new Button();
-		public Button DpadLeft { get; } = new Button();
-		public Button DpadRight { get; } = new Button();
+		public GamepadButton A { get; }
+		public GamepadButton B { get; }
+		public GamepadButton X { get; }
+		public GamepadButton Y { get; }
+		public GamepadButton Back { get; }
+		public GamepadButton Guide { get; }
+		public GamepadButton Start { get; }
+		public GamepadButton LeftStick { get; }
+		public GamepadButton RightStick { get; }
+		public GamepadButton LeftShoulder { get; }
+		public GamepadButton RightShoulder { get; }
+		public GamepadButton DpadUp { get; }
+		public GamepadButton DpadDown { get; }
+		public GamepadButton DpadLeft { get; }
+		public GamepadButton DpadRight { get; }
 
-		public Axis LeftX { get; } = new Axis();
-		public Axis LeftY { get; } = new Axis();
-		public Axis RightX { get; } = new Axis();
-		public Axis RightY { get; } = new Axis();
+		public Axis LeftX { get; }
+		public Axis LeftY { get; }
+		public Axis RightX { get; }
+		public Axis RightY { get; }
 
-		public Trigger TriggerLeft { get; } = new Trigger();
-		public Trigger TriggerRight { get; } = new Trigger();
+		public AxisButton LeftXLeft { get; }
+		public AxisButton LeftXRight { get; }
+		public AxisButton LeftYUp { get; }
+		public AxisButton LeftYDown { get; }
+
+		public AxisButton RightXLeft { get; }
+		public AxisButton RightXRight { get; }
+		public AxisButton RightYUp { get; }
+		public AxisButton RightYDown { get; }
+
+		public Trigger TriggerLeft { get; }
+		public Trigger TriggerRight { get; }
+
+		public TriggerButton TriggerLeftButton { get; }
+		public TriggerButton TriggerRightButton { get; }
 
 		public bool IsDummy => Handle == IntPtr.Zero;
 
 		public bool AnyPressed { get; private set; }
-		public ButtonCode AnyPressedButtonCode { get; private set; }
+		public VirtualButton AnyPressedButton { get; private set; }
 
-		private Dictionary<SDL.SDL_GameControllerButton, Button> EnumToButton;
+		private Dictionary<SDL.SDL_GameControllerButton, GamepadButton> EnumToButton;
 		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
 		private Dictionary<SDL.SDL_GameControllerAxis, Trigger> EnumToTrigger;
+
+		private Dictionary<AxisButtonCode, AxisButton> AxisButtonCodeToAxisButton;
+		private Dictionary<TriggerCode, TriggerButton> TriggerCodeToTriggerButton;
+
+		private VirtualButton[] VirtualButtons;
 
 		internal Gamepad(IntPtr handle, int index)
 		{
@@ -50,7 +68,48 @@ namespace MoonWorks.Input
 
 			AnyPressed = false;
 
-			EnumToButton = new Dictionary<SDL.SDL_GameControllerButton, Button>
+			A = new GamepadButton(handle, GamepadButtonCode.A, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
+			B = new GamepadButton(handle, GamepadButtonCode.B, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
+			X = new GamepadButton(handle, GamepadButtonCode.X, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X);
+			Y = new GamepadButton(handle, GamepadButtonCode.Y, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y);
+
+			Back = new GamepadButton(handle, GamepadButtonCode.Back, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK);
+			Guide = new GamepadButton(handle, GamepadButtonCode.Guide, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE);
+			Start = new GamepadButton(handle, GamepadButtonCode.Start, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START);
+
+			LeftStick = new GamepadButton(handle, GamepadButtonCode.LeftStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
+			RightStick = new GamepadButton(handle, GamepadButtonCode.RightStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+
+			LeftShoulder = new GamepadButton(handle, GamepadButtonCode.LeftShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+			RightShoulder = new GamepadButton(handle, GamepadButtonCode.RightShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+
+			DpadUp = new GamepadButton(handle, GamepadButtonCode.DpadUp, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP);
+			DpadDown = new GamepadButton(handle, GamepadButtonCode.DpadDown, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+			DpadLeft = new GamepadButton(handle, GamepadButtonCode.DpadLeft, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+			DpadRight = new GamepadButton(handle, GamepadButtonCode.DpadRight, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+
+			LeftX = new Axis(handle, AxisCode.LeftX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
+			LeftY = new Axis(handle, AxisCode.LeftY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
+			RightX = new Axis(handle, AxisCode.RightX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX);
+			RightY = new Axis(handle, AxisCode.RightY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY);
+
+			LeftXLeft = new AxisButton(LeftX, false);
+			LeftXRight = new AxisButton(LeftX, true);
+			LeftYUp = new AxisButton(LeftY, false);
+			LeftYDown = new AxisButton(LeftY, true);
+
+			RightXLeft = new AxisButton(RightX, false);
+			RightXRight = new AxisButton(RightX, true);
+			RightYUp = new AxisButton(RightY, false);
+			RightYDown = new AxisButton(RightY, true);
+
+			TriggerLeft = new Trigger(handle, TriggerCode.Left, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+			TriggerRight = new Trigger(handle, TriggerCode.Right, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+
+			TriggerLeftButton = new TriggerButton(TriggerLeft);
+			TriggerRightButton = new TriggerButton(TriggerRight);
+
+			EnumToButton = new Dictionary<SDL.SDL_GameControllerButton, GamepadButton>
 			{
 				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A, A },
 				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B, B },
@@ -82,6 +141,47 @@ namespace MoonWorks.Input
 				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT, TriggerLeft },
 				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT, TriggerRight }
 			};
+
+			AxisButtonCodeToAxisButton = new Dictionary<AxisButtonCode, AxisButton>
+			{
+				{ AxisButtonCode.LeftX_Left, LeftXLeft },
+				{ AxisButtonCode.LeftX_Right, LeftXRight },
+				{ AxisButtonCode.LeftY_Down, LeftYDown },
+				{ AxisButtonCode.LeftY_Up, LeftYUp },
+				{ AxisButtonCode.RightX_Left, RightXLeft },
+				{ AxisButtonCode.RightX_Right, RightXRight },
+				{ AxisButtonCode.RightY_Up, RightYUp },
+				{ AxisButtonCode.RightY_Down, RightYDown }
+			};
+
+			VirtualButtons = new VirtualButton[]
+			{
+				A,
+				B,
+				X,
+				Y,
+				Back,
+				Guide,
+				Start,
+				LeftStick,
+				RightStick,
+				LeftShoulder,
+				RightShoulder,
+				DpadUp,
+				DpadDown,
+				DpadLeft,
+				DpadRight,
+				LeftXLeft,
+				LeftXRight,
+				LeftYUp,
+				LeftYDown,
+				RightXLeft,
+				RightXRight,
+				RightYUp,
+				RightYDown,
+				TriggerLeftButton,
+				TriggerRightButton
+			};
 		}
 
 		internal void Update()
@@ -90,30 +190,41 @@ namespace MoonWorks.Input
 
 			if (!IsDummy)
 			{
-				foreach (var (sdlEnum, button) in EnumToButton)
+				foreach (var button in EnumToButton.Values)
 				{
-					var pressed = CheckPressed(sdlEnum);
-					button.Update(pressed);
+					button.Update();
+				}
 
+				foreach (var axis in EnumToAxis.Values)
+				{
+					axis.Update();
+				}
+
+				foreach (var trigger in EnumToTrigger.Values)
+				{
+					trigger.Update();
+				}
+
+				LeftXLeft.Update();
+				LeftXRight.Update();
+				LeftYUp.Update();
+				LeftYDown.Update();
+				RightXLeft.Update();
+				RightXRight.Update();
+				RightYUp.Update();
+				RightYDown.Update();
+
+				TriggerLeftButton.Update();
+				TriggerRightButton.Update();
+
+				foreach (var button in VirtualButtons)
+				{
 					if (button.IsPressed)
 					{
 						AnyPressed = true;
-						AnyPressedButtonCode = (ButtonCode) sdlEnum;
+						AnyPressedButton = button;
+						break;
 					}
-				}
-
-				foreach (var (sdlEnum, axis) in EnumToAxis)
-				{
-					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-					var axisValue = MathHelper.Normalize(sdlAxisValue, short.MinValue, short.MaxValue, -1, 1);
-					axis.Update(axisValue);
-				}
-
-				foreach (var (sdlEnum, trigger) in EnumToTrigger)
-				{
-					var sdlAxisValue = SDL.SDL_GameControllerGetAxis(Handle, sdlEnum);
-					var axisValue = MathHelper.Normalize(sdlAxisValue, 0, short.MaxValue, 0, 1);
-					trigger.Update(axisValue);
 				}
 			}
 		}
@@ -131,44 +242,19 @@ namespace MoonWorks.Input
 			) == 0;
 		}
 
-		/// <summary>
-		/// True if the button is pressed or held.
-		/// </summary>
-		public bool IsDown(ButtonCode buttonCode)
+		public GamepadButton Button(GamepadButtonCode buttonCode)
 		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsDown;
+			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode];
 		}
 
-		/// <summary>
-		/// True if the button was pressed this exact frame.
-		/// </summary>
-		public bool IsPressed(ButtonCode buttonCode)
+		public AxisButton Button(AxisButtonCode axisButtonCode)
 		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsPressed;
+			return AxisButtonCodeToAxisButton[axisButtonCode];
 		}
 
-		/// <summary>
-		/// True if the button has been continuously held for more than one frame.
-		/// </summary>
-		public bool IsHeld(ButtonCode buttonCode)
+		public TriggerButton Button(TriggerCode triggerCode)
 		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsHeld;
-		}
-
-		/// <summary>
-		/// True if the button is not pressed.
-		/// </summary>
-		public bool IsReleased(ButtonCode buttonCode)
-		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].IsReleased;
-		}
-
-		/// <summary>
-		/// Obtains the button state given a ButtonCode.
-		/// </summary>
-		public ButtonState ButtonState(ButtonCode buttonCode)
-		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode].State;
+			return TriggerCodeToTriggerButton[triggerCode];
 		}
 
 		/// <summary>
