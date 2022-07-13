@@ -274,10 +274,5 @@ namespace MoonWorks.Input
 		{
 			return EnumToTrigger[(SDL.SDL_GameControllerAxis) triggerCode].Value;
 		}
-
-		private bool CheckPressed(SDL.SDL_GameControllerButton button)
-		{
-			return MoonWorks.Conversions.ByteToBool(SDL.SDL_GameControllerGetButton(Handle, button));
-		}
 	}
 }
