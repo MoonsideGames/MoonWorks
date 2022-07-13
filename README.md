@@ -10,6 +10,12 @@ MoonWorks *does not* include things like a built-in physics engine, a GUI editor
 
 MoonWorks uses strictly Free Open Source Software. It will never have any kind of dependency on proprietary products.
 
+## Documentation
+
+High-level documentation is provided here: http://moonside.games/docs/moonworks/
+
+For an actual API reference, the source is documented in doc comments that your preferred IDE can read.
+
 ## Dependencies
 
 * [SDL2](https://github.com/flibitijibibo/SDL2-CS) - Window management, Input
