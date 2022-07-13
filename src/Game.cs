@@ -205,6 +205,14 @@ namespace MoonWorks
 					case SDL.SDL_EventType.SDL_DROPFILE:
 						HandleFileDrop(_event);
 						break;
+
+					case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
+						HandleControllerAdded(_event);
+						break;
+
+					case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
+						HandleControllerRemoved(_event);
+						break;
 				}
 			}
 		}
@@ -242,6 +250,22 @@ namespace MoonWorks
 			// Need to do it this way because SDL2 expects you to free the filename string.
 			string filePath = SDL.UTF8_ToManaged(evt.drop.file, true);
 			DropFile(filePath);
+		}
+
+		private void HandleControllerAdded(SDL.SDL_Event evt)
+		{
+			var index = evt.cdevice.which;
+			if (SDL.SDL_IsGameController(index) == SDL.SDL_bool.SDL_TRUE)
+			{
+				System.Console.WriteLine($"New controller detected!");
+				Inputs.AddGamepad(index);
+			}
+		}
+
+		private void HandleControllerRemoved(SDL.SDL_Event evt)
+		{
+			System.Console.WriteLine($"Controller removal detected!");
+			Inputs.RemoveGamepad(evt.cdevice.which);
 		}
 
 		private TimeSpan AdvanceElapsedTime()

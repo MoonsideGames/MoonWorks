@@ -24,16 +24,10 @@ namespace MoonWorks.Input
 
 			gamepads = new Gamepad[MAX_GAMEPADS];
 
-			for (var i = 0; i < 4; i += 1)
+			// initialize dummy controllers
+			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
 			{
-				if (SDL.SDL_IsGameController(i) == SDL.SDL_bool.SDL_TRUE)
-				{
-					gamepads[i] = new Gamepad(SDL.SDL_GameControllerOpen(i), i);
-				}
-				else
-				{
-					gamepads[i] = new Gamepad(IntPtr.Zero, -1);
-				}
+				gamepads[slot] = new Gamepad(IntPtr.Zero, slot);
 			}
 		}
 
@@ -74,12 +68,47 @@ namespace MoonWorks.Input
 
 		public bool GamepadExists(int slot)
 		{
+			if (slot < 0 || slot >= MAX_GAMEPADS)
+			{
+				return false;
+			}
+
 			return !gamepads[slot].IsDummy;
 		}
 
+		// From 0-4
 		public Gamepad GetGamepad(int slot)
 		{
 			return gamepads[slot];
+		}
+
+		internal void AddGamepad(int index)
+		{
+			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
+			{
+				if (!GamepadExists(slot))
+				{
+					gamepads[slot].Handle = SDL.SDL_GameControllerOpen(index);
+					System.Console.WriteLine($"Gamepad added to slot {slot}!");
+					return;
+				}
+			}
+
+			System.Console.WriteLine("Too many gamepads already!");
+		}
+
+		internal void RemoveGamepad(int joystickInstanceID)
+		{
+			for (int slot = 0; slot < MAX_GAMEPADS; slot += 1)
+			{
+				if (joystickInstanceID == gamepads[slot].JoystickInstanceID)
+				{
+					SDL.SDL_GameControllerClose(gamepads[slot].Handle);
+					gamepads[slot].Handle = IntPtr.Zero;
+					System.Console.WriteLine($"Removing gamepad from slot {slot}!");
+					return;
+				}
+			}
 		}
 
 		internal static void OnTextInput(char c)

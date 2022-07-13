@@ -1,4 +1,3 @@
-using System;
 using MoonWorks.Math;
 using SDL2;
 
@@ -6,7 +5,7 @@ namespace MoonWorks.Input
 {
 	public class Axis
 	{
-		IntPtr GamepadHandle;
+		public Gamepad Parent { get; }
 		SDL.SDL_GameControllerAxis SDL_Axis;
 
 		public AxisCode Code { get; private set; }
@@ -17,11 +16,11 @@ namespace MoonWorks.Input
 		public float Value { get; private set; }
 
 		public Axis(
-			IntPtr gamepadHandle,
+			Gamepad parent,
 			AxisCode code,
 			SDL.SDL_GameControllerAxis sdlAxis
 		) {
-			GamepadHandle = gamepadHandle;
+			Parent = parent;
 			SDL_Axis = sdlAxis;
 			Code = code;
 		}
@@ -29,7 +28,7 @@ namespace MoonWorks.Input
 		internal void Update()
 		{
 			Value = MathHelper.Normalize(
-				SDL.SDL_GameControllerGetAxis(GamepadHandle, SDL_Axis),
+				SDL.SDL_GameControllerGetAxis(Parent.Handle, SDL_Axis),
 				short.MinValue, short.MaxValue,
 				-1, 1
 			);

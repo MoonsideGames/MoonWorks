@@ -8,7 +8,9 @@ namespace MoonWorks.Input
 	public class Gamepad
 	{
 		internal IntPtr Handle;
-		internal int Index;
+		internal int JoystickInstanceID;
+
+		public int Slot { get; internal set; }
 
 		public GamepadButton A { get; }
 		public GamepadButton B { get; }
@@ -61,37 +63,40 @@ namespace MoonWorks.Input
 
 		private VirtualButton[] VirtualButtons;
 
-		internal Gamepad(IntPtr handle, int index)
+		internal Gamepad(IntPtr handle, int slot)
 		{
 			Handle = handle;
-			Index = index;
+			Slot = slot;
+
+			IntPtr joystickHandle = SDL.SDL_GameControllerGetJoystick(Handle);
+			JoystickInstanceID = SDL.SDL_JoystickInstanceID(joystickHandle);
 
 			AnyPressed = false;
 
-			A = new GamepadButton(handle, GamepadButtonCode.A, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
-			B = new GamepadButton(handle, GamepadButtonCode.B, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
-			X = new GamepadButton(handle, GamepadButtonCode.X, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X);
-			Y = new GamepadButton(handle, GamepadButtonCode.Y, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y);
+			A = new GamepadButton(this, GamepadButtonCode.A, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
+			B = new GamepadButton(this, GamepadButtonCode.B, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
+			X = new GamepadButton(this, GamepadButtonCode.X, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X);
+			Y = new GamepadButton(this, GamepadButtonCode.Y, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y);
 
-			Back = new GamepadButton(handle, GamepadButtonCode.Back, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK);
-			Guide = new GamepadButton(handle, GamepadButtonCode.Guide, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE);
-			Start = new GamepadButton(handle, GamepadButtonCode.Start, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START);
+			Back = new GamepadButton(this, GamepadButtonCode.Back, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK);
+			Guide = new GamepadButton(this, GamepadButtonCode.Guide, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE);
+			Start = new GamepadButton(this, GamepadButtonCode.Start, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START);
 
-			LeftStick = new GamepadButton(handle, GamepadButtonCode.LeftStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
-			RightStick = new GamepadButton(handle, GamepadButtonCode.RightStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+			LeftStick = new GamepadButton(this, GamepadButtonCode.LeftStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
+			RightStick = new GamepadButton(this, GamepadButtonCode.RightStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
 
-			LeftShoulder = new GamepadButton(handle, GamepadButtonCode.LeftShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-			RightShoulder = new GamepadButton(handle, GamepadButtonCode.RightShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+			LeftShoulder = new GamepadButton(this, GamepadButtonCode.LeftShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+			RightShoulder = new GamepadButton(this, GamepadButtonCode.RightShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
 
-			DpadUp = new GamepadButton(handle, GamepadButtonCode.DpadUp, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP);
-			DpadDown = new GamepadButton(handle, GamepadButtonCode.DpadDown, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-			DpadLeft = new GamepadButton(handle, GamepadButtonCode.DpadLeft, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-			DpadRight = new GamepadButton(handle, GamepadButtonCode.DpadRight, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+			DpadUp = new GamepadButton(this, GamepadButtonCode.DpadUp, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP);
+			DpadDown = new GamepadButton(this, GamepadButtonCode.DpadDown, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+			DpadLeft = new GamepadButton(this, GamepadButtonCode.DpadLeft, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+			DpadRight = new GamepadButton(this, GamepadButtonCode.DpadRight, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 
-			LeftX = new Axis(handle, AxisCode.LeftX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
-			LeftY = new Axis(handle, AxisCode.LeftY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
-			RightX = new Axis(handle, AxisCode.RightX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX);
-			RightY = new Axis(handle, AxisCode.RightY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY);
+			LeftX = new Axis(this, AxisCode.LeftX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
+			LeftY = new Axis(this, AxisCode.LeftY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
+			RightX = new Axis(this, AxisCode.RightX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX);
+			RightY = new Axis(this, AxisCode.RightY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY);
 
 			LeftXLeft = new AxisButton(LeftX, false);
 			LeftXRight = new AxisButton(LeftX, true);
@@ -103,8 +108,8 @@ namespace MoonWorks.Input
 			RightYUp = new AxisButton(RightY, false);
 			RightYDown = new AxisButton(RightY, true);
 
-			TriggerLeft = new Trigger(handle, TriggerCode.Left, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-			TriggerRight = new Trigger(handle, TriggerCode.Right, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+			TriggerLeft = new Trigger(this, TriggerCode.Left, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+			TriggerRight = new Trigger(this, TriggerCode.Right, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
 			TriggerLeftButton = new TriggerButton(TriggerLeft);
 			TriggerRightButton = new TriggerButton(TriggerRight);
