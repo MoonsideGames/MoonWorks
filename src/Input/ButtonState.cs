@@ -34,5 +34,28 @@
 
 			return new ButtonState(ButtonStatus.Released);
 		}
+
+		public static ButtonState operator |(ButtonState a, ButtonState b)
+		{
+			if (a.ButtonStatus == ButtonStatus.Released)
+			{
+				return b;
+			}
+			else if (a.ButtonStatus == ButtonStatus.Pressed)
+			{
+				if (b.ButtonStatus == ButtonStatus.Held)
+				{
+					return new ButtonState(ButtonStatus.Held);
+				}
+				else
+				{
+					return a;
+				}
+			}
+			else // held
+			{
+				return a;
+			}
+		}
 	}
 }
