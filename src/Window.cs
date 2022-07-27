@@ -25,6 +25,11 @@ namespace MoonWorks
 				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
 
+			if (windowCreateInfo.SystemResizable)
+			{
+				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+			}
+
 			ScreenMode = windowCreateInfo.ScreenMode;
 
 			Handle = SDL.SDL_CreateWindow(
