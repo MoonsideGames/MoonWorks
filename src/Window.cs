@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using SDL2;
 
 namespace MoonWorks
@@ -77,6 +77,12 @@ namespace MoonWorks
 		public void SetWindowSize(uint width, uint height)
 		{
 			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
+			Width = width;
+			Height = height;
+		}
+
+		internal void SizeChanged(uint width, uint height)
+		{
 			Width = width;
 			Height = height;
 		}

@@ -213,7 +213,19 @@ namespace MoonWorks
 					case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
 						HandleControllerRemoved(_event);
 						break;
+
+					case SDL.SDL_EventType.SDL_WINDOWEVENT:
+						HandleWindowEvent(_event);
+						break;
 				}
+			}
+		}
+
+		private void HandleWindowEvent(SDL.SDL_Event evt)
+		{
+			if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
+			{
+				Window.SizeChanged((uint) evt.window.data1, (uint) evt.window.data2);
 			}
 		}
 
