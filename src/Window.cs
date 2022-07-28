@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using SDL2;
 
 namespace MoonWorks
@@ -28,6 +28,11 @@ namespace MoonWorks
 			if (windowCreateInfo.SystemResizable)
 			{
 				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+			}
+
+			if (windowCreateInfo.StartMaximized)
+			{
+				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED;
 			}
 
 			ScreenMode = windowCreateInfo.ScreenMode;

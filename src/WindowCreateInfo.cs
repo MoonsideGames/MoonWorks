@@ -7,19 +7,22 @@
 		public uint WindowHeight;
 		public ScreenMode ScreenMode;
 		public bool SystemResizable;
+		public bool StartMaximized;
 
 		public WindowCreateInfo(
 			string windowTitle,
 			uint windowWidth,
 			uint windowHeight,
 			ScreenMode screenMode,
-			bool systemResizable = false
+			bool systemResizable = false,
+			bool startMaximized = false
 		) {
 			WindowTitle = windowTitle;
 			WindowWidth = windowWidth;
 			WindowHeight = windowHeight;
 			ScreenMode = screenMode;
 			SystemResizable = systemResizable;
+			StartMaximized = startMaximized;
 		}
 	}
 }
