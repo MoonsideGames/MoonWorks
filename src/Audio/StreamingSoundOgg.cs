@@ -56,20 +56,7 @@ namespace MoonWorks.Audio
 
 		public override void Seek(uint sampleFrame)
 		{
-			if (State == SoundState.Playing)
-			{
-				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-			}
-
-			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
-			ClearBuffers();
 			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
-			QueueBuffers();
-
-			if (State == SoundState.Playing)
-			{
-				Play();
-			}
 		}
 
 		protected unsafe override void FillBuffer(
