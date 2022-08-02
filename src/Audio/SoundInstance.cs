@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using MoonWorks.Math.Float;
 
 namespace MoonWorks.Audio
 {
@@ -8,13 +7,12 @@ namespace MoonWorks.Audio
 	{
 		internal IntPtr Handle;
 		internal FAudio.FAudioWaveFormatEx Format;
-		public bool Loop { get; protected set; } = false;
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
 		public bool Is3D { get; protected set; }
 
-		public abstract SoundState State { get; protected set; }
+		public virtual SoundState State { get; protected set; }
 
 		private float _pan = 0;
 		public float Pan
@@ -238,11 +236,10 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		public abstract void Play(bool loop);
+		public abstract void Play();
 		public abstract void Pause();
-		public abstract void Stop(bool immediate);
-		public abstract void Seek(float seconds);
-		public abstract void Seek(uint sampleFrame);
+		public abstract void Stop();
+		public abstract void StopImmediate();
 
 		private void InitDSPSettings(uint srcChannels)
 		{
@@ -345,8 +342,7 @@ namespace MoonWorks.Audio
 
 		protected override void Destroy()
 		{
-			Stop(true);
-
+			StopImmediate();
 			FAudio.FAudioVoice_DestroyVoice(Handle);
 			Marshal.FreeHGlobal(dspSettings.pMatrixCoefficients);
 		}

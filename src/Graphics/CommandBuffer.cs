@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using MoonWorks.Math;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -833,6 +831,26 @@ namespace MoonWorks.Graphics
 		public void SetTextureData(Texture texture, IntPtr dataPtr, uint dataLengthInBytes)
 		{
 			SetTextureData(new TextureSlice(texture), dataPtr, dataLengthInBytes);
+		}
+
+		/// <summary>
+		/// Asynchronously copies YUV data into three textures. Use with compressed video.
+		/// </summary>
+		public void SetTextureDataYUV(Texture yTexture, Texture uTexture, Texture vTexture, IntPtr dataPtr, uint dataLengthInBytes)
+		{
+			Refresh.Refresh_SetTextureDataYUV(
+				Device.Handle,
+				Handle,
+				yTexture.Handle,
+				uTexture.Handle,
+				vTexture.Handle,
+				yTexture.Width,
+				yTexture.Height,
+				uTexture.Width,
+				uTexture.Height,
+				dataPtr,
+				dataLengthInBytes
+			);
 		}
 
 		/// <summary>

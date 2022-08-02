@@ -4,28 +4,23 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-	public class StreamingSoundOgg : StreamingSound
+	public class StreamingSoundOgg : StreamingSoundSeekable
 	{
-		// FIXME: what should this value be?
-		public const int BUFFER_SIZE = 1024 * 128;
-
 		private IntPtr VorbisHandle;
 		private IntPtr FileDataPtr;
 		private FAudio.stb_vorbis_info Info;
 
-		private readonly float[] buffer; // currently decoded bytes
+		protected override int BUFFER_SIZE => 32768;
 
-		public override SoundState State { get; protected set; }
-
-		public static StreamingSoundOgg Load(AudioDevice device, string filePath)
+		public unsafe static StreamingSoundOgg Load(AudioDevice device, string filePath)
 		{
 			var fileData = File.ReadAllBytes(filePath);
-			var fileDataPtr = Marshal.AllocHGlobal(fileData.Length);
-			Marshal.Copy(fileData, 0, fileDataPtr, fileData.Length);
-			var vorbisHandle = FAudio.stb_vorbis_open_memory(fileDataPtr, fileData.Length, out int error, IntPtr.Zero);
+			var fileDataPtr = NativeMemory.Alloc((nuint) fileData.Length);
+			Marshal.Copy(fileData, 0, (IntPtr) fileDataPtr, fileData.Length);
+			var vorbisHandle = FAudio.stb_vorbis_open_memory((IntPtr) fileDataPtr, fileData.Length, out int error, IntPtr.Zero);
 			if (error != 0)
 			{
-				((GCHandle) fileDataPtr).Free();
+				NativeMemory.Free(fileDataPtr);
 				Logger.LogError("Error opening OGG file!");
 				Logger.LogError("Error: " + error);
 				throw new AudioLoadException("Error opening OGG file!");
@@ -34,7 +29,7 @@ namespace MoonWorks.Audio
 
 			return new StreamingSoundOgg(
 				device,
-				fileDataPtr,
+				(IntPtr) fileDataPtr,
 				vorbisHandle,
 				info
 			);
@@ -42,7 +37,7 @@ namespace MoonWorks.Audio
 
 		internal StreamingSoundOgg(
 			AudioDevice device,
-			IntPtr fileDataPtr, // MUST BE AN ALLOCHGLOBAL HANDLE!!
+			IntPtr fileDataPtr, // MUST BE A NATIVE MEMORY HANDLE!!
 			IntPtr vorbisHandle,
 			FAudio.stb_vorbis_info info
 		) : base(
@@ -57,12 +52,9 @@ namespace MoonWorks.Audio
 			FileDataPtr = fileDataPtr;
 			VorbisHandle = vorbisHandle;
 			Info = info;
-			buffer = new float[BUFFER_SIZE];
-
-			device.AddDynamicSoundInstance(this);
 		}
 
-		private void PerformSeek(uint sampleFrame)
+		public override void Seek(uint sampleFrame)
 		{
 			if (State == SoundState.Playing)
 			{
@@ -80,49 +72,32 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public override void Seek(float seconds)
-		{
-			uint sampleFrame = (uint) (Info.sample_rate * seconds);
-			PerformSeek(sampleFrame);
-		}
-
-		public override void Seek(uint sampleFrame)
-		{
-			PerformSeek(sampleFrame);
-		}
-
-		protected override void AddBuffer(
-			out float[] buffer,
-			out uint bufferOffset,
-			out uint bufferLength,
+		protected unsafe override void FillBuffer(
+			void* buffer,
+			int bufferLengthInBytes,
+			out int filledLengthInBytes,
 			out bool reachedEnd
 		)
 		{
-			buffer = this.buffer;
+			var lengthInFloats = bufferLengthInBytes / sizeof(float);
 
 			/* NOTE: this function returns samples per channel, not total samples */
 			var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
 				VorbisHandle,
 				Info.channels,
-				buffer,
-				buffer.Length
+				(IntPtr) buffer,
+				lengthInFloats
 			);
 
 			var sampleCount = samples * Info.channels;
-			bufferOffset = 0;
-			bufferLength = (uint) sampleCount;
-			reachedEnd = sampleCount < buffer.Length;
+			reachedEnd = sampleCount < lengthInFloats;
+			filledLengthInBytes = sampleCount * sizeof(float);
 		}
 
-		protected override void SeekStart()
-		{
-			FAudio.stb_vorbis_seek_start(VorbisHandle);
-		}
-
-		protected override void Destroy()
+		protected unsafe override void Destroy()
 		{
 			FAudio.stb_vorbis_close(VorbisHandle);
-			Marshal.FreeHGlobal(FileDataPtr);
+			NativeMemory.Free((void*) FileDataPtr);
 		}
 	}
 }

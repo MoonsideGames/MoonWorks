@@ -15,11 +15,21 @@
 		<ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
 		<ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
 		<ProjectReference Include=".\lib\WellspringCS\WellspringCS.csproj" />
+		<ProjectReference Include=".\lib\Theorafile\csharp\Theorafile-CS.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="MoonWorks.dll.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="src\Video\Shaders\Compiled\FullscreenVert.spv">
+			<LogicalName>MoonWorks.Shaders.FullscreenVert.spv</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Video\Shaders\Compiled\YUV2RGBAFrag.spv">
+			<LogicalName>MoonWorks.Shaders.YUV2RGBAFrag.spv</LogicalName>
+		</EmbeddedResource>
 	</ItemGroup>
 </Project>

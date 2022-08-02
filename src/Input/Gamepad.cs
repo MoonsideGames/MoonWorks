@@ -159,6 +159,12 @@ namespace MoonWorks.Input
 				{ AxisButtonCode.RightY_Down, RightYDown }
 			};
 
+			TriggerCodeToTriggerButton = new Dictionary<TriggerCode, TriggerButton>
+			{
+				{ TriggerCode.Left, TriggerLeftButton },
+				{ TriggerCode.Right, TriggerRightButton }
+			};
+
 			VirtualButtons = new VirtualButton[]
 			{
 				A,

@@ -196,6 +196,7 @@ namespace MoonWorks
 			NativeLibrary.SetDllImportResolver(typeof(RefreshCS.Refresh).Assembly, MapAndLoad);
 			NativeLibrary.SetDllImportResolver(typeof(FAudio).Assembly, MapAndLoad);
 			NativeLibrary.SetDllImportResolver(typeof(WellspringCS.Wellspring).Assembly, MapAndLoad);
+			NativeLibrary.SetDllImportResolver(typeof(Theorafile).Assembly, MapAndLoad);
 		}
 
 		#endregion

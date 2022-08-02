@@ -10,3 +10,6 @@
 [submodule "lib/WellspringCS"]
 	path = lib/WellspringCS
 	url = https://gitea.moonside.games/MoonsideGames/WellspringCS.git
+[submodule "lib/Theorafile"]
+	path = lib/Theorafile
+	url = https://github.com/FNA-XNA/Theorafile.git

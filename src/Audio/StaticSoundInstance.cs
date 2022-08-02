@@ -6,6 +6,8 @@ namespace MoonWorks.Audio
 	{
 		public StaticSound Parent { get; }
 
+		public bool Loop { get; set; }
+
 		private SoundState _state = SoundState.Stopped;
 		public override SoundState State
 		{
@@ -18,7 +20,7 @@ namespace MoonWorks.Audio
 				);
 				if (state.BuffersQueued == 0)
 				{
-					Stop(true);
+					StopImmediate();
 				}
 
 				return _state;
@@ -38,14 +40,12 @@ namespace MoonWorks.Audio
 			Parent = parent;
 		}
 
-		public override void Play(bool loop = false)
+		public override void Play()
 		{
 			if (State == SoundState.Playing)
 			{
 				return;
 			}
-
-			Loop = loop;
 
 			if (Loop)
 			{
@@ -79,21 +79,20 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public override void Stop(bool immediate = true)
+		public override void Stop()
 		{
-			if (immediate)
-			{
-				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-				FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
-				State = SoundState.Stopped;
-			}
-			else
-			{
-				FAudio.FAudioSourceVoice_ExitLoop(Handle, 0);
-			}
+			FAudio.FAudioSourceVoice_ExitLoop(Handle, 0);
+			State = SoundState.Stopped;
 		}
 
-		private void PerformSeek(uint sampleFrame)
+		public override void StopImmediate()
+		{
+			FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+			State = SoundState.Stopped;
+		}
+
+		public void Seek(uint sampleFrame)
 		{
 			if (State == SoundState.Playing)
 			{
@@ -102,20 +101,6 @@ namespace MoonWorks.Audio
 			}
 
 			Parent.Handle.PlayBegin = sampleFrame;
-			Play();
-		}
-
-		public override void Seek(float seconds)
-		{
-			uint sampleFrame =
-				(uint) (Parent.SamplesPerSecond * seconds);
-
-			PerformSeek(sampleFrame);
-		}
-
-		public override void Seek(uint sampleFrame)
-		{
-			PerformSeek(sampleFrame);
 		}
 
 		public void Free()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -7,6 +8,11 @@ namespace MoonWorks.Graphics
 	public class GraphicsDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
+
+		// Built-in video pipeline
+		private ShaderModule VideoVertexShader { get; }
+		private ShaderModule VideoFragmentShader { get; }
+		internal GraphicsPipeline VideoPipeline { get; }
 
 		public bool IsDisposed { get; private set; }
 
@@ -27,6 +33,26 @@ namespace MoonWorks.Graphics
 			Handle = Refresh.Refresh_CreateDevice(
 				presentationParameters,
 				Conversions.BoolToByte(debugMode)
+			);
+
+			VideoVertexShader = new ShaderModule(this, GetEmbeddedResource("MoonWorks.Shaders.FullscreenVert.spv"));
+			VideoFragmentShader = new ShaderModule(this, GetEmbeddedResource("MoonWorks.Shaders.YUV2RGBAFrag.spv"));
+
+			VideoPipeline = new GraphicsPipeline(
+				this,
+				new GraphicsPipelineCreateInfo
+				{
+					AttachmentInfo = new GraphicsPipelineAttachmentInfo(
+						new ColorAttachmentDescription(TextureFormat.R8G8B8A8, ColorAttachmentBlendState.None)
+					),
+					DepthStencilState = DepthStencilState.Disable,
+					VertexShaderInfo = GraphicsShaderInfo.Create(VideoVertexShader, "main", 0),
+					FragmentShaderInfo = GraphicsShaderInfo.Create(VideoFragmentShader, "main", 3),
+					VertexInputState = VertexInputState.Empty,
+					RasterizerState = RasterizerState.CCW_CullNone,
+					PrimitiveType = PrimitiveType.TriangleList,
+					MultisampleState = MultisampleState.None
+				}
 			);
 		}
 
@@ -75,6 +101,11 @@ namespace MoonWorks.Graphics
 			{
 				resources.Remove(resourceReference);
 			}
+		}
+
+		private static Stream GetEmbeddedResource(string name)
+		{
+			return typeof(GraphicsDevice).Assembly.GetManifestResourceStream(name);
 		}
 
 		protected virtual void Dispose(bool disposing)
