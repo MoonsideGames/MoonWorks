@@ -572,8 +572,8 @@ namespace MoonWorks.Math.Fixed
 			Fix64 x = axis.X;
 			Fix64 y = axis.Y;
 			Fix64 z = axis.Z;
-			Fix64 num2 = (Fix64) System.Math.Sin((double) angle);
-			Fix64 num = (Fix64) System.Math.Cos((double) angle);
+			Fix64 num2 = Fix64.Sin(angle);
+			Fix64 num = Fix64.Cos(angle);
 			Fix64 num11 = x * x;
 			Fix64 num10 = y * y;
 			Fix64 num9 = z * z;
