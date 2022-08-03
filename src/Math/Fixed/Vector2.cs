@@ -674,6 +674,19 @@ namespace MoonWorks.Math.Fixed
 			}
 		}
 
+		/// <summary>
+		/// Rotates a Vector2 by an angle.
+		/// </summary>
+		/// <param name="vector">The vector to rotate.</param>
+		/// <param name="angle">The angle in radians.</param>
+		public static Vector2 Rotate(Vector2 vector, Fix64 angle)
+		{
+			return new Vector2(
+				vector.X * Fix64.Cos(angle) - vector.Y * Fix64.Sin(angle),
+				vector.X * Fix64.Sin(angle) + vector.Y * Fix64.Cos(angle)
+			);
+		}
+
 		#endregion
 
 		#region Public Static Operators

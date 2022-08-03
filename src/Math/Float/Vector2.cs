@@ -1088,6 +1088,19 @@ namespace MoonWorks.Math.Float
 			}
 		}
 
+		/// <summary>
+		/// Rotates a Vector2 by an angle.
+		/// </summary>
+		/// <param name="vector">The vector to rotate.</param>
+		/// <param name="angle">The angle in radians.</param>
+		public static Vector2 Rotate(Vector2 vector, float angle)
+		{
+			return new Vector2(
+				vector.X * (float) System.Math.Cos(angle) - vector.Y * (float) System.Math.Sin(angle),
+				vector.X * (float) System.Math.Sin(angle) + vector.Y * (float) System.Math.Cos(angle)
+			);
+		}
+
 		#endregion
 
 		#region Public Static Operators
