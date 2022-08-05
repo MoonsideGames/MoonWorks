@@ -488,14 +488,14 @@ namespace MoonWorks.Math.Fixed
 			var z = y / x;
 
 			// Deal with overflow
-			if (One + (Fix64)0.28M * z * z == MaxValue)
+			if (One + Fix64.FromFraction(28, 100) * z * z == MaxValue)
 			{
 				return y < Zero ? -PiOver2 : PiOver2;
 			}
 
 			if (Abs(z) < One)
 			{
-				atan = z / (One + (Fix64)0.28M * z * z);
+				atan = z / (One + Fix64.FromFraction(28, 100) * z * z);
 				if (xl < 0)
 				{
 					if (yl < 0)
@@ -507,7 +507,7 @@ namespace MoonWorks.Math.Fixed
 			}
 			else
 			{
-				atan = PiOver2 - z / (z * z + (Fix64)0.28M);
+				atan = PiOver2 - z / (z * z + Fix64.FromFraction(28, 100));
 				if (yl < 0)
 				{
 					return atan - Pi;
