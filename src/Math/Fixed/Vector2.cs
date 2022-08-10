@@ -227,6 +227,21 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
+		/// Creates a new <see cref="Vector2"/> that contains linear interpolation of the specified vectors.
+		/// </summary>
+		/// <param name="value1">The first vector.</param>
+		/// <param name="value2">The second vector.</param>
+		/// <param name="amount">Weighting value(between 0.0 and 1.0).</param>
+		/// <returns>The result of linear interpolation of the specified vectors.</returns>
+		public static Vector2 Lerp(Vector2 value1, Vector2 value2, Fix64 amount)
+		{
+			return new Vector2(
+				Fix64.Lerp(value1.X, value2.X, amount),
+				Fix64.Lerp(value1.Y, value2.Y, amount)
+			);
+		}
+
+		/// <summary>
 		/// Returns a <see cref="String"/> representation of this <see cref="Vector2"/> in the format:
 		/// {X:[<see cref="X"/>] Y:[<see cref="Y"/>]}
 		/// </summary>
