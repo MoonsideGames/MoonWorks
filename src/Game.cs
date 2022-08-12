@@ -12,11 +12,10 @@ namespace MoonWorks
 	public abstract class Game
 	{
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
+		public TimeSpan Timestep { get; private set; }
 
 		private bool quit = false;
-
 		private Stopwatch gameTimer;
-		private TimeSpan timestep;
 		private long previousTicks = 0;
 		TimeSpan accumulatedUpdateTime = TimeSpan.Zero;
 		TimeSpan accumulatedDrawTime = TimeSpan.Zero;
@@ -51,7 +50,7 @@ namespace MoonWorks
 			bool debugMode = false
 		)
 		{
-			timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
+			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
 
 			FramerateCapped = framerateSettings.Mode == FramerateMode.Capped;
@@ -159,17 +158,17 @@ namespace MoonWorks
 
 			if (!quit)
 			{
-				while (accumulatedUpdateTime >= timestep)
+				while (accumulatedUpdateTime >= Timestep)
 				{
 					Inputs.Update();
 					AudioDevice.Update();
 
-					Update(timestep);
+					Update(Timestep);
 
-					accumulatedUpdateTime -= timestep;
+					accumulatedUpdateTime -= Timestep;
 				}
 
-				var alpha = accumulatedUpdateTime / timestep;
+				var alpha = accumulatedUpdateTime / Timestep;
 
 				Draw(alpha);
 				accumulatedDrawTime -= FramerateCapTimeSpan;
