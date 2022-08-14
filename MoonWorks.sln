@@ -4,19 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoonWorks", "MoonWorks.csproj", "{DDC9BA9B-4440-4CB3-BDB4-D5F91DE1686B}"
-	ProjectSection(ProjectDependencies) = postProject
-		{608AA31D-F163-4096-B4EF-B9C7D21D52BB} = {608AA31D-F163-4096-B4EF-B9C7D21D52BB}
-	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDL2-CS.Core", "lib\SDL2-CS\SDL2-CS.Core.csproj", "{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FAudio-CS.Core", "lib\FAudio\csharp\FAudio-CS.Core.csproj", "{608AA31D-F163-4096-B4EF-B9C7D21D52BB}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RefreshCS", "lib\RefreshCS\RefreshCS.csproj", "{AD7C94E4-0AFA-44CA-889C-110142369893}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{69D3788D-6C57-44F7-A912-B201AE6D7C04}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WellspringCS", "lib\WellspringCS\WellspringCS.csproj", "{0DD7B866-773C-4A86-8580-F436DAA28989}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,30 +15,11 @@ Global
 		{DDC9BA9B-4440-4CB3-BDB4-D5F91DE1686B}.Debug|x64.Build.0 = Debug|x64
 		{DDC9BA9B-4440-4CB3-BDB4-D5F91DE1686B}.Release|x64.ActiveCfg = Release|x64
 		{DDC9BA9B-4440-4CB3-BDB4-D5F91DE1686B}.Release|x64.Build.0 = Release|x64
-		{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}.Debug|x64.ActiveCfg = Debug|x64
-		{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}.Debug|x64.Build.0 = Debug|x64
-		{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}.Release|x64.ActiveCfg = Release|x64
-		{0929F2D8-8FE4-4452-AD1E-50760A1A19A5}.Release|x64.Build.0 = Release|x64
-		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Debug|x64.ActiveCfg = Debug|x64
-		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Debug|x64.Build.0 = Debug|x64
-		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Release|x64.ActiveCfg = Release|x64
-		{608AA31D-F163-4096-B4EF-B9C7D21D52BB}.Release|x64.Build.0 = Release|x64
-		{AD7C94E4-0AFA-44CA-889C-110142369893}.Debug|x64.ActiveCfg = Debug|x64
-		{AD7C94E4-0AFA-44CA-889C-110142369893}.Debug|x64.Build.0 = Debug|x64
-		{AD7C94E4-0AFA-44CA-889C-110142369893}.Release|x64.ActiveCfg = Release|x64
-		{AD7C94E4-0AFA-44CA-889C-110142369893}.Release|x64.Build.0 = Release|x64
-		{0DD7B866-773C-4A86-8580-F436DAA28989}.Debug|x64.ActiveCfg = Debug|x64
-		{0DD7B866-773C-4A86-8580-F436DAA28989}.Debug|x64.Build.0 = Debug|x64
-		{0DD7B866-773C-4A86-8580-F436DAA28989}.Release|x64.ActiveCfg = Release|x64
-		{0DD7B866-773C-4A86-8580-F436DAA28989}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C3D68FAA-3165-43C7-95B3-D845F0DAA918}
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{0DD7B866-773C-4A86-8580-F436DAA28989} = {69D3788D-6C57-44F7-A912-B201AE6D7C04}
 	EndGlobalSection
 EndGlobal

@@ -11,11 +11,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include=".\lib\SDL2-CS\SDL2-CS.Core.csproj" />
-		<ProjectReference Include=".\lib\RefreshCS\RefreshCS.csproj" />
-		<ProjectReference Include=".\lib\FAudio\csharp\FAudio-CS.Core.csproj" />
-		<ProjectReference Include=".\lib\WellspringCS\WellspringCS.csproj" />
-		<ProjectReference Include=".\lib\Theorafile\csharp\Theorafile-CS.Core.csproj" />
+		<Compile Include="lib\FAudio\csharp\FAudio.cs" />
+		<Compile Include="lib\RefreshCS\src\Refresh.cs" />
+		<Compile Include="lib\SDL2-CS\src\SDL2.cs" />
+		<Compile Include="lib\Theorafile\csharp\Theorafile.cs" />
+		<Compile Include="lib\WellspringCS\WellspringCS.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
