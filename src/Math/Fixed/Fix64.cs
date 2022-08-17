@@ -531,6 +531,16 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64(sum);
 		}
 
+		public static Fix64 operator +(Fix64 x, int y)
+		{
+			return x + new Fix64(y);
+		}
+
+		public static Fix64 operator +(int x, Fix64 y)
+		{
+			return new Fix64(x) + y;
+		}
+
 		public static Fix64 operator -(Fix64 x, Fix64 y)
 		{
 			var xl = x.RawValue;
@@ -542,6 +552,16 @@ namespace MoonWorks.Math.Fixed
 				diff = xl < 0 ? MIN_VALUE : MAX_VALUE;
 			}
 			return new Fix64(diff);
+		}
+
+		public static Fix64 operator -(Fix64 x, int y)
+		{
+			return x - new Fix64(y);
+		}
+
+		public static Fix64 operator -(int x, Fix64 y)
+		{
+			return new Fix64(x) - y;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -668,6 +688,16 @@ namespace MoonWorks.Math.Fixed
 			return result;
 		}
 
+		public static Fix64 operator *(Fix64 x, int y)
+		{
+			return x * new Fix64(y);
+		}
+
+		public static Fix64 operator *(int x, Fix64 y)
+		{
+			return new Fix64(x) * y;
+		}
+
 		public static Fix64 operator /(Fix64 x, Fix64 y)
 		{
 			var xl = x.RawValue;
@@ -726,12 +756,32 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64(result);
 		}
 
+		public static Fix64 operator /(Fix64 x, int y)
+		{
+			return x / new Fix64(y);
+		}
+
+		public static Fix64 operator /(int x, Fix64 y)
+		{
+			return new Fix64(x) / y;
+		}
+
 		public static Fix64 operator %(Fix64 x, Fix64 y)
 		{
 			return new Fix64(
 				x.RawValue == MIN_VALUE & y.RawValue == -1 ?
 				0 :
 				x.RawValue % y.RawValue);
+		}
+
+		public static Fix64 operator %(Fix64 x, int y)
+		{
+			return x % new Fix64(y);
+		}
+
+		public static Fix64 operator %(int x, Fix64 y)
+		{
+			return new Fix64(x) % y;
 		}
 
 		public static Fix64 operator -(Fix64 x)
