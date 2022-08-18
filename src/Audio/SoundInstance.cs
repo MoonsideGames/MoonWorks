@@ -45,7 +45,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private float _pitch = 1;
+		private float _pitch = 0;
 		public float Pitch
 		{
 			get => _pitch;
