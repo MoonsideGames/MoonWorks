@@ -30,7 +30,7 @@ namespace MoonWorks.Video
 				}
 			}
 		}
-		public float PlaybackSpeed { get; set; }
+		public float PlaybackSpeed { get; set; } = 1;
 		public double FramesPerSecond => fps;
 		private VideoState State = VideoState.Stopped;
 
