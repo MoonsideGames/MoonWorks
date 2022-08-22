@@ -84,6 +84,12 @@ namespace MoonWorks
 		[ModuleInitializer]
 		public static void Init()
 		{
+			// Ignore NativeAOT platforms since they don't perform dynamic loading.
+			if (!RuntimeFeature.IsDynamicCodeSupported)
+			{
+				return;
+			}
+
 			// Get the platform and architecture
 			string os = GetPlatformName();
 			string cpu = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
