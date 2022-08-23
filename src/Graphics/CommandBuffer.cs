@@ -34,14 +34,12 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			if (colorAttachmentInfos.Length == 0)
 			{
-				Logger.LogError("Render pass must contain at least one attachment!");
-				return;
+				throw new System.ArgumentException("Render pass must contain at least one attachment!");
 			}
 
 			if (colorAttachmentInfos.Length > 4)
 			{
-				Logger.LogError("Render pass cannot have more than 4 color attachments!");
-				return;
+				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
 			}
 #endif
 
@@ -78,16 +76,9 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length == 0)
-			{
-				Logger.LogError("Render pass must contain at least one attachment!");
-				return;
-			}
-
 			if (colorAttachmentInfos.Length > 4)
 			{
-				Logger.LogError("Render pass cannot have more than 4 color attachments!");
-				return;
+				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
 			}
 #endif
 
@@ -128,14 +119,12 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			if (colorAttachmentInfos.Length == 0)
 			{
-				Logger.LogError("Render pass must contain at least one attachment!");
-				return;
+				throw new System.ArgumentException("Render pass must contain at least one attachment!");
 			}
 
 			if (colorAttachmentInfos.Length > 4)
 			{
-				Logger.LogError("Render pass cannot have more than 4 color attachments!");
-				return;
+				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
 			}
 #endif
 
@@ -174,16 +163,9 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length == 0)
-			{
-				Logger.LogError("Render pass must contain at least one attachment!");
-				return;
-			}
-
 			if (colorAttachmentInfos.Length > 4)
 			{
-				Logger.LogError("Render pass cannot have more than 4 color attachments!");
-				return;
+				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
 			}
 #endif
 
