@@ -69,7 +69,7 @@
 		{
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.Clockwise,
-			FillMode = FillMode.Fill,
+			FillMode = FillMode.Line,
 			DepthBiasEnable = false
 		};
 
@@ -101,7 +101,7 @@
 		{
 			CullMode = CullMode.None,
 			FrontFace = FrontFace.CounterClockwise,
-			FillMode = FillMode.Fill,
+			FillMode = FillMode.Line,
 			DepthBiasEnable = false
 		};
 	}

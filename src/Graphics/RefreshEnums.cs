@@ -91,7 +91,8 @@ namespace MoonWorks.Graphics
 	{
 		Sampler = 1,
 		ColorTarget = 2,
-		DepthStencilTarget = 4
+		DepthStencilTarget = 4,
+		Compute = 8
 	}
 
 	public enum SampleCount
@@ -120,7 +121,8 @@ namespace MoonWorks.Graphics
 	{
 		Vertex = 1,
 		Index = 2,
-		Compute = 4
+		Compute = 4,
+		Indirect = 8
 	}
 
 	public enum VertexElementFormat

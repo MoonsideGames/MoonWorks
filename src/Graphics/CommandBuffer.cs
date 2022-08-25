@@ -617,6 +617,36 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
+		/// Similar to DrawPrimitives, but parameters are set from a buffer.
+		/// </summary>
+		/// <param name="buffer">The draw parameters buffer.</param>
+		/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
+		/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
+		/// <param name="stride">The byte stride between sets of draw parameters.</param>
+		/// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
+		/// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
+		public void DrawPrimitivesIndirect(
+			Buffer buffer,
+			uint offsetInBytes,
+			uint drawCount,
+			uint stride,
+			uint vertexParamOffset,
+			uint fragmentParamOffset
+		)
+		{
+			Refresh.Refresh_DrawPrimitivesIndirect(
+				Device.Handle,
+				Handle,
+				buffer.Handle,
+				offsetInBytes,
+				drawCount,
+				stride,
+				vertexParamOffset,
+				fragmentParamOffset
+			);
+		}
+
+		/// <summary>
 		/// Ends the current render pass.
 		/// This must be called before beginning another render pass or submitting the command buffer.
 		/// </summary>
