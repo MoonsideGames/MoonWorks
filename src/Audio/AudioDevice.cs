@@ -25,7 +25,7 @@ namespace MoonWorks.Audio
 
 		public unsafe AudioDevice()
 		{
-			FAudio.FAudioCreate(out var handle, 0, 0);
+			FAudio.FAudioCreate(out var handle, 0, FAudio.FAUDIO_DEFAULT_PROCESSOR);
 			Handle = handle;
 
 			/* Find a suitable device */
