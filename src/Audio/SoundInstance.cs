@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
@@ -14,21 +14,21 @@ namespace MoonWorks.Audio
 
 		public virtual SoundState State { get; protected set; }
 
-		private float _pan = 0;
+		private float pan = 0;
 		public float Pan
 		{
-			get => _pan;
+			get => pan;
 			set
 			{
-				_pan = value;
+				pan = value;
 
-				if (_pan < -1f)
+				if (pan < -1f)
 				{
-					_pan = -1f;
+					pan = -1f;
 				}
-				if (_pan > 1f)
+				if (pan > 1f)
 				{
-					_pan = 1f;
+					pan = 1f;
 				}
 
 				if (Is3D) { return; }
@@ -45,41 +45,41 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private float _pitch = 0;
+		private float pitch = 0;
 		public float Pitch
 		{
-			get => _pitch;
+			get => pitch;
 			set
 			{
-				_pitch = Math.MathHelper.Clamp(value, -1f, 1f);
+				pitch = Math.MathHelper.Clamp(value, -1f, 1f);
 				UpdatePitch();
 			}
 		}
 
-		private float _volume = 1;
+		private float volume = 1;
 		public float Volume
 		{
-			get => _volume;
+			get => volume;
 			set
 			{
-				_volume = value;
-				FAudio.FAudioVoice_SetVolume(Handle, _volume, 0);
+				volume = value;
+				FAudio.FAudioVoice_SetVolume(Handle, volume, 0);
 			}
 		}
 
-		private float _reverb;
+		private float reverb;
 		public unsafe float Reverb
 		{
-			get => _reverb;
+			get => reverb;
 			set
 			{
-				_reverb = value;
+				reverb = value;
 
 				float* outputMatrix = (float*) dspSettings.pMatrixCoefficients;
-				outputMatrix[0] = _reverb;
+				outputMatrix[0] = reverb;
 				if (dspSettings.SrcChannelCount == 2)
 				{
-					outputMatrix[1] = _reverb;
+					outputMatrix[1] = reverb;
 				}
 
 				FAudio.FAudioVoice_SetOutputMatrix(
@@ -93,67 +93,83 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private float _lowPassFilter;
-		public float LowPassFilter
+		private const float MAX_FILTER_FREQUENCY = 1f;
+		private const float MAX_FILTER_ONEOVERQ = 1.5f;
+
+		private FAudio.FAudioFilterParameters filterParameters = new FAudio.FAudioFilterParameters
 		{
-			get => _lowPassFilter;
+			Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
+			Frequency = 1f,
+			OneOverQ = 1f
+		};
+
+		private float FilterFrequency
+		{
+			get => filterParameters.Frequency;
 			set
 			{
-				_lowPassFilter = value;
+				value = System.Math.Clamp(value, 0.01f, MAX_FILTER_FREQUENCY);
+				filterParameters.Frequency = value;
 
-				FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
-				{
-					Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
-					Frequency = _lowPassFilter,
-					OneOverQ = 1f
-				};
 				FAudio.FAudioVoice_SetFilterParameters(
 					Handle,
-					ref p,
+					ref filterParameters,
 					0
 				);
 			}
 		}
 
-		private float _highPassFilter;
-		public float HighPassFilter
+		private float FilterOneOverQ
 		{
-			get => _highPassFilter;
+			get => filterParameters.OneOverQ;
 			set
 			{
-				_highPassFilter = value;
+				value = System.Math.Clamp(value, 0.01f, MAX_FILTER_ONEOVERQ);
+				filterParameters.OneOverQ = value;
 
-				FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
-				{
-					Type = FAudio.FAudioFilterType.FAudioHighPassFilter,
-					Frequency = _highPassFilter,
-					OneOverQ = 1f
-				};
 				FAudio.FAudioVoice_SetFilterParameters(
 					Handle,
-					ref p,
+					ref filterParameters,
 					0
 				);
 			}
 		}
 
-		private float _bandPassFilter;
-		public float BandPassFilter
+		private FilterType filterType;
+		public FilterType FilterType
 		{
-			get => _bandPassFilter;
+			get => filterType;
 			set
 			{
-				_bandPassFilter = value;
+				filterType = value;
 
-				FAudio.FAudioFilterParameters p = new FAudio.FAudioFilterParameters
+				switch (filterType)
 				{
-					Type = FAudio.FAudioFilterType.FAudioBandPassFilter,
-					Frequency = _bandPassFilter,
-					OneOverQ = 1f
-				};
+					case FilterType.None:
+						filterParameters = new FAudio.FAudioFilterParameters
+						{
+							Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
+							Frequency = 1f,
+							OneOverQ = 1f
+						};
+						break;
+
+					case FilterType.LowPass:
+						filterParameters.Type = FAudio.FAudioFilterType.FAudioLowPassFilter;
+						break;
+
+					case FilterType.BandPass:
+						filterParameters.Type = FAudio.FAudioFilterType.FAudioBandPassFilter;
+						break;
+
+					case FilterType.HighPass:
+						filterParameters.Type = FAudio.FAudioFilterType.FAudioHighPassFilter;
+						break;
+				}
+
 				FAudio.FAudioVoice_SetFilterParameters(
 					Handle,
-					ref p,
+					ref filterParameters,
 					0
 				);
 			}
@@ -281,7 +297,7 @@ namespace MoonWorks.Audio
 
 			FAudio.FAudioSourceVoice_SetFrequencyRatio(
 				Handle,
-				(float) System.Math.Pow(2.0, _pitch) * doppler,
+				(float) System.Math.Pow(2.0, pitch) * doppler,
 				0
 			);
 		}
@@ -305,8 +321,8 @@ namespace MoonWorks.Audio
 				}
 				else
 				{
-					outputMatrix[0] = (_pan > 0.0f) ? (1.0f - _pan) : 1.0f;
-					outputMatrix[1] = (_pan < 0.0f) ? (1.0f + _pan) : 1.0f;
+					outputMatrix[0] = (pan > 0.0f) ? (1.0f - pan) : 1.0f;
+					outputMatrix[1] = (pan < 0.0f) ? (1.0f + pan) : 1.0f;
 				}
 			}
 			else
@@ -318,23 +334,23 @@ namespace MoonWorks.Audio
 				}
 				else
 				{
-					if (_pan <= 0.0f)
+					if (pan <= 0.0f)
 					{
 						// Left speaker blends left/right channels
-						outputMatrix[0] = 0.5f * _pan + 1.0f;
-						outputMatrix[1] = 0.5f * -_pan;
+						outputMatrix[0] = 0.5f * pan + 1.0f;
+						outputMatrix[1] = 0.5f * -pan;
 						// Right speaker gets less of the right channel
 						outputMatrix[2] = 0.0f;
-						outputMatrix[3] = _pan + 1.0f;
+						outputMatrix[3] = pan + 1.0f;
 					}
 					else
 					{
 						// Left speaker gets less of the left channel
-						outputMatrix[0] = -_pan + 1.0f;
+						outputMatrix[0] = -pan + 1.0f;
 						outputMatrix[1] = 0.0f;
 						// Right speaker blends right/left channels
-						outputMatrix[2] = 0.5f * _pan;
-						outputMatrix[3] = 0.5f * -_pan + 1.0f;
+						outputMatrix[2] = 0.5f * pan;
+						outputMatrix[3] = 0.5f * -pan + 1.0f;
 					}
 				}
 			}

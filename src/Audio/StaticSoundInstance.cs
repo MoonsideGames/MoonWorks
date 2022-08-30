@@ -107,5 +107,17 @@ namespace MoonWorks.Audio
 		{
 			Parent.FreeInstance(this);
 		}
+
+		internal void Reset()
+		{
+			Pan = 0;
+			Pitch = 0;
+			Volume = 1;
+			Reverb = 0;
+			Loop = false;
+			Is3D = false;
+			FilterType = FilterType.None;
+			Reverb = 0;
+		}
 	}
 }

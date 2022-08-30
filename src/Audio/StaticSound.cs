@@ -283,6 +283,7 @@ namespace MoonWorks.Audio
 
 		internal void FreeInstance(StaticSoundInstance instance)
 		{
+			instance.Reset();
 			Instances.Push(instance);
 		}
 
