@@ -10,7 +10,12 @@ namespace MoonWorks.Graphics
 	public struct CommandBuffer
 	{
 		public GraphicsDevice Device { get; }
-		public IntPtr Handle { get; internal set; }
+		public IntPtr Handle { get; }
+
+		// some state for debug validation
+		GraphicsPipeline currentGraphicsPipeline = null;
+		ComputePipeline currentComputePipeline = null;
+		bool renderPassActive = false;
 
 		// called from RefreshDevice
 		internal CommandBuffer(GraphicsDevice device, IntPtr handle)
@@ -61,6 +66,8 @@ namespace MoonWorks.Graphics
 					IntPtr.Zero
 				);
 			}
+
+			renderPassActive = true;
 		}
 
 		/// <summary>
@@ -102,6 +109,8 @@ namespace MoonWorks.Graphics
 					&refreshDepthStencilAttachmentInfo
 				);
 			}
+
+			renderPassActive = true;
 		}
 
 		/// <summary>
@@ -146,6 +155,8 @@ namespace MoonWorks.Graphics
 					IntPtr.Zero
 				);
 			}
+
+			renderPassActive = true;
 		}
 
 		/// <summary>
@@ -189,6 +200,8 @@ namespace MoonWorks.Graphics
 					&refreshDepthStencilAttachmentInfo
 				);
 			}
+
+			renderPassActive = true;
 		}
 
 		/// <summary>
@@ -204,6 +217,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				computePipeline.Handle
 			);
+
+			currentComputePipeline = computePipeline;
 		}
 
 		/// <summary>
@@ -214,6 +229,20 @@ namespace MoonWorks.Graphics
 			params Buffer[] buffers
 		)
 		{
+#if DEBUG
+			AssertComputePipelineBound();
+
+			if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount == 0)
+			{
+				throw new System.InvalidOperationException("The current compute shader does not take any buffers!");
+			}
+
+			if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount < buffers.Length)
+			{
+				throw new System.InvalidOperationException("Buffer count exceeds the amount used by the current compute shader!");
+			}
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[buffers.Length];
 
 			for (var i = 0; i < buffers.Length; i += 1)
@@ -236,6 +265,20 @@ namespace MoonWorks.Graphics
 			params Texture[] textures
 		)
 		{
+#if DEBUG
+			AssertComputePipelineBound();
+
+			if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount == 0)
+			{
+				throw new System.InvalidOperationException("The current compute shader does not take any textures!");
+			}
+
+			if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount < textures.Length)
+			{
+				throw new System.InvalidOperationException("Texture count exceeds the amount used by the current compute shader!");
+			}
+#endif
+
 			var texturePtrs = stackalloc IntPtr[textures.Length];
 
 			for (var i = 0; i < textures.Length; i += 1)
@@ -264,6 +307,10 @@ namespace MoonWorks.Graphics
 			uint computeParamOffset
 		)
 		{
+#if DEBUG
+			AssertComputePipelineBound();
+#endif
+
 			Refresh.Refresh_DispatchCompute(
 				Device.Handle,
 				Handle,
@@ -287,6 +334,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				graphicsPipeline.Handle
 			);
+
+			currentGraphicsPipeline = graphicsPipeline;
 		}
 
 		/// <summary>
@@ -294,6 +343,10 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void SetViewport(Viewport viewport)
 		{
+#if DEBUG
+			AssertRenderPassActive();
+#endif
+
 			Refresh.Refresh_SetViewport(
 				Device.Handle,
 				Handle,
@@ -306,6 +359,10 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void SetScissor(Rect scissor)
 		{
+#if DEBUG
+			AssertRenderPassActive();
+#endif
+
 			Refresh.Refresh_SetScissor(
 				Device.Handle,
 				Handle,
@@ -400,6 +457,20 @@ namespace MoonWorks.Graphics
 			int length
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+
+			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount == 0)
+			{
+				throw new System.InvalidOperationException("The vertex shader of the current graphics pipeline does not take any samplers!");
+			}
+
+			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < length)
+			{
+				throw new System.InvalidOperationException("Vertex sampler count exceeds the amount used by the vertex shader!");
+			}
+#endif
+
 			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
@@ -438,6 +509,20 @@ namespace MoonWorks.Graphics
 			int length
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+
+			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount == 0)
+			{
+				throw new System.InvalidOperationException("The fragment shader of the current graphics pipeline does not take any samplers!");
+			}
+
+			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < length)
+			{
+				throw new System.InvalidOperationException("Fragment sampler count exceeds the amount used by the fragment shader!");
+			}
+#endif
+
 			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
@@ -485,6 +570,14 @@ namespace MoonWorks.Graphics
 			params T[] uniforms
 		) where T : unmanaged
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+
+			if (currentGraphicsPipeline.VertexShaderInfo.UniformBufferSize == 0)
+			{
+				throw new InvalidOperationException("The current vertex shader does not take a uniform buffer!");
+			}
+#endif
 			fixed (T* ptr = &uniforms[0])
 			{
 				return Refresh.Refresh_PushVertexShaderUniforms(
@@ -504,6 +597,15 @@ namespace MoonWorks.Graphics
 			params T[] uniforms
 		) where T : unmanaged
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+
+			if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize == 0)
+			{
+				throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
+			}
+#endif
+
 			fixed (T* ptr = &uniforms[0])
 			{
 				return Refresh.Refresh_PushFragmentShaderUniforms(
@@ -523,6 +625,15 @@ namespace MoonWorks.Graphics
 			params T[] uniforms
 		) where T : unmanaged
 		{
+#if DEBUG
+			AssertComputePipelineBound();
+
+			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
+			{
+				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
+			}
+#endif
+
 			fixed (T* ptr = &uniforms[0])
 			{
 				return Refresh.Refresh_PushComputeShaderUniforms(
@@ -553,6 +664,10 @@ namespace MoonWorks.Graphics
 			uint fragmentParamOffset
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			Refresh.Refresh_DrawInstancedPrimitives(
 				Device.Handle,
 				Handle,
@@ -581,6 +696,10 @@ namespace MoonWorks.Graphics
 			uint fragmentParamOffset
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			Refresh.Refresh_DrawIndexedPrimitives(
 				Device.Handle,
 				Handle,
@@ -606,6 +725,10 @@ namespace MoonWorks.Graphics
 			uint fragmentParamOffset
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			Refresh.Refresh_DrawPrimitives(
 				Device.Handle,
 				Handle,
@@ -634,6 +757,10 @@ namespace MoonWorks.Graphics
 			uint fragmentParamOffset
 		)
 		{
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			Refresh.Refresh_DrawPrimitivesIndirect(
 				Device.Handle,
 				Handle,
@@ -656,6 +783,9 @@ namespace MoonWorks.Graphics
 				Device.Handle,
 				Handle
 			);
+
+			currentGraphicsPipeline = null;
+			renderPassActive = false;
 		}
 
 		/// <summary>
@@ -704,6 +834,10 @@ namespace MoonWorks.Graphics
 			uint bufferOffsetInBytes = 0
 		) where T : unmanaged
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			SetBufferData(
 				buffer,
 				data,
@@ -728,6 +862,10 @@ namespace MoonWorks.Graphics
 			uint dataLengthInBytes
 		)
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			Refresh.Refresh_SetBufferData(
 				Device.Handle,
 				Handle,
@@ -755,6 +893,10 @@ namespace MoonWorks.Graphics
 			uint numElements
 		) where T : unmanaged
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			var elementSize = sizeof(T);
 
 			fixed (T* ptr = &data[0])
@@ -778,6 +920,10 @@ namespace MoonWorks.Graphics
 			uint bufferOffsetInElements,
 			uint numElements
 		) where T : unmanaged {
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			Refresh.Refresh_SetBufferData(
 				Device.Handle,
 				Handle,
@@ -804,6 +950,10 @@ namespace MoonWorks.Graphics
 		/// <param name="data">An array of data to copy into the texture.</param>
 		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			var size = sizeof(T);
 
 			fixed (T* ptr = &data[0])
@@ -826,6 +976,10 @@ namespace MoonWorks.Graphics
 		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
 		public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			Refresh.Refresh_SetTextureData(
 				Device.Handle,
 				Handle,
@@ -850,6 +1004,10 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void SetTextureDataYUV(Texture yTexture, Texture uTexture, Texture vTexture, IntPtr dataPtr, uint dataLengthInBytes)
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			Refresh.Refresh_SetTextureDataYUV(
 				Device.Handle,
 				Handle,
@@ -877,6 +1035,10 @@ namespace MoonWorks.Graphics
 			Filter filter
 		)
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			var sourceRefreshTextureSlice = sourceTextureSlice.ToRefreshTextureSlice();
 			var destRefreshTextureSlice = destinationTextureSlice.ToRefreshTextureSlice();
 
@@ -900,6 +1062,10 @@ namespace MoonWorks.Graphics
 			Buffer buffer
 		)
 		{
+#if DEBUG
+			AssertRenderPassInactive("Cannot copy during render pass!");
+#endif
+
 			var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
 
 			Refresh.Refresh_CopyTextureToBuffer(
@@ -909,5 +1075,39 @@ namespace MoonWorks.Graphics
 				buffer.Handle
 			);
 		}
+
+#if DEBUG
+		private void AssertRenderPassActive(string message = "No active render pass!")
+		{
+			if (!renderPassActive)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertRenderPassInactive(string message = "Render pass is active!")
+		{
+			if (renderPassActive)
+			{
+				throw new System.InvalidCastException(message);
+			}
+		}
+
+		private void AssertGraphicsPipelineBound(string message = "No graphics pipeline is bound!")
+		{
+			if (currentGraphicsPipeline == null)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertComputePipelineBound(string message = "No compute pipeline is bound!")
+		{
+			if (currentComputePipeline == null)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+#endif
 	}
 }
