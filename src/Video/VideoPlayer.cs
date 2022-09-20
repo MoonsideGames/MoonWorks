@@ -58,66 +58,69 @@ namespace MoonWorks.Video
 
 		public void Load(Video video)
 		{
-			Stop();
-
-			if (RenderTexture == null)
+			if (Video != video)
 			{
-				RenderTexture = CreateRenderTexture(GraphicsDevice, video.Width, video.Height);
+				Stop();
+
+				if (RenderTexture == null)
+				{
+					RenderTexture = CreateRenderTexture(GraphicsDevice, video.Width, video.Height);
+				}
+
+				if (yTexture == null)
+				{
+					yTexture = CreateSubTexture(GraphicsDevice, video.Width, video.Height);
+				}
+
+				if (uTexture == null)
+				{
+					uTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+				}
+
+				if (vTexture == null)
+				{
+					vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+				}
+
+				if (video.Width != RenderTexture.Width || video.Height != RenderTexture.Height)
+				{
+					RenderTexture.Dispose();
+					RenderTexture = CreateRenderTexture(GraphicsDevice, video.Width, video.Height);
+				}
+
+				if (video.Width != yTexture.Width || video.Height != yTexture.Height)
+				{
+					yTexture.Dispose();
+					yTexture = CreateSubTexture(GraphicsDevice, video.Width, video.Height);
+				}
+
+				if (video.UVWidth != uTexture.Width || video.UVHeight != uTexture.Height)
+				{
+					uTexture.Dispose();
+					uTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+				}
+
+				if (video.UVWidth != vTexture.Width || video.UVHeight != vTexture.Height)
+				{
+					vTexture.Dispose();
+					vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+				}
+
+				var newDataLength = (
+					(video.Width * video.Height) +
+					(video.UVWidth * video.UVHeight * 2)
+				);
+
+				if (newDataLength != yuvDataLength)
+				{
+					yuvData = NativeMemory.Realloc(yuvData, (nuint) newDataLength);
+					yuvDataLength = newDataLength;
+				}
+
+				Video = video;
+
+				InitializeTheoraStream();
 			}
-
-			if (yTexture == null)
-			{
-				yTexture = CreateSubTexture(GraphicsDevice, video.Width, video.Height);
-			}
-
-			if (uTexture == null)
-			{
-				uTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
-			}
-
-			if (vTexture == null)
-			{
-				vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
-			}
-
-			if (video.Width != RenderTexture.Width || video.Height != RenderTexture.Height)
-			{
-				RenderTexture.Dispose();
-				RenderTexture = CreateRenderTexture(GraphicsDevice, video.Width, video.Height);
-			}
-
-			if (video.Width != yTexture.Width || video.Height != yTexture.Height)
-			{
-				yTexture.Dispose();
-				yTexture = CreateSubTexture(GraphicsDevice, video.Width, video.Height);
-			}
-
-			if (video.UVWidth != uTexture.Width || video.UVHeight != uTexture.Height)
-			{
-				uTexture.Dispose();
-				uTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
-			}
-
-			if (video.UVWidth != vTexture.Width || video.UVHeight != vTexture.Height)
-			{
-				vTexture.Dispose();
-				vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
-			}
-
-			var newDataLength = (
-				(video.Width * video.Height) +
-				(video.UVWidth * video.UVHeight * 2)
-			);
-
-			if (newDataLength != yuvDataLength)
-			{
-				yuvData = NativeMemory.Realloc(yuvData, (nuint) newDataLength);
-				yuvDataLength = newDataLength;
-			}
-
-			Video = video;
-
-			InitializeTheoraStream();
 		}
 
 		public void Play()
