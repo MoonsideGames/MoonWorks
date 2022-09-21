@@ -1,9 +1,6 @@
 /* Heavily based on https://github.com/FNA-XNA/FNA/blob/master/src/Media/Xiph/VideoPlayer.cs */
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using MoonWorks.Audio;
-using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
 {
@@ -32,7 +29,6 @@ namespace MoonWorks.Video
 
 		private bool disposed;
 
-		/* TODO: is there some way for us to load the data into memory? */
 		public Video(string filename)
 		{
 			if (!System.IO.File.Exists(filename))
