@@ -204,6 +204,14 @@ namespace MoonWorks.Math.Fixed
 			return ((value - min) * (newMax - newMin)) / (max - min) + newMin;
 		}
 
+		/// <summary>
+		/// Returns Floor(value / step) * step. Nearest multiple of step to a specified value
+		/// </summary>
+		public static Fix64 Step(Fix64 value, Fix64 step)
+		{
+			return Fix64.Floor(value / step) * step;
+		}
+
 		// Trigonometry functions
 
 		/// <summary>
