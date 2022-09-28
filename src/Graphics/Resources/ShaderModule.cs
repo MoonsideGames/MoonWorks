@@ -13,7 +13,7 @@ namespace MoonWorks.Graphics
 
 		public unsafe ShaderModule(GraphicsDevice device, string filePath) : base(device)
 		{
-			using (FileStream stream = new FileStream(filePath, FileMode.Open))
+			using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
 			{
 				Handle = CreateFromStream(device, stream);
 			}
