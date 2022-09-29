@@ -8,6 +8,10 @@ namespace MoonWorks.Graphics
 	public class GraphicsDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
+		public Backend Backend { get; }
+
+		private uint windowFlags;
+		public SDL2.SDL.SDL_WindowFlags WindowFlags => (SDL2.SDL.SDL_WindowFlags) windowFlags;
 
 		// Built-in video pipeline
 		private ShaderModule VideoVertexShader { get; }
@@ -19,19 +23,13 @@ namespace MoonWorks.Graphics
 		private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
 
 		public GraphicsDevice(
-			IntPtr deviceWindowHandle,
-			Refresh.PresentMode presentMode,
+			Backend preferredBackend,
 			bool debugMode
 		)
 		{
-			var presentationParameters = new Refresh.PresentationParameters
-			{
-				deviceWindowHandle = deviceWindowHandle,
-				presentMode = presentMode
-			};
+			Backend = (Backend) Refresh.Refresh_SelectBackend((Refresh.Backend) preferredBackend, out windowFlags);
 
 			Handle = Refresh.Refresh_CreateDevice(
-				presentationParameters,
 				Conversions.BoolToByte(debugMode)
 			);
 
@@ -53,6 +51,43 @@ namespace MoonWorks.Graphics
 					PrimitiveType = PrimitiveType.TriangleList,
 					MultisampleState = MultisampleState.None
 				}
+			);
+		}
+
+		public bool ClaimWindow(Window window, PresentMode presentMode)
+		{
+			var success = Conversions.ByteToBool(
+				Refresh.Refresh_ClaimWindow(
+					Handle,
+					window.Handle,
+					(Refresh.PresentMode) presentMode
+				)
+			);
+
+			if (success)
+			{
+				window.Claimed = true;
+				window.SwapchainFormat = GetSwapchainFormat(window);
+			}
+
+			return success;
+		}
+
+		public void UnclaimWindow(Window window)
+		{
+			Refresh.Refresh_UnclaimWindow(
+				Handle,
+				window.Handle
+			);
+			window.Claimed = false;
+		}
+
+		public void SetPresentMode(Window window, PresentMode presentMode)
+		{
+			Refresh.Refresh_SetSwapchainPresentMode(
+				Handle,
+				window.Handle,
+				(Refresh.PresentMode) presentMode
 			);
 		}
 
@@ -82,7 +117,7 @@ namespace MoonWorks.Graphics
 			Refresh.Refresh_Wait(Handle);
 		}
 
-		public TextureFormat GetSwapchainFormat(Window window)
+		private TextureFormat GetSwapchainFormat(Window window)
 		{
 			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
 		}

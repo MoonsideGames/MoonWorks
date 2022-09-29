@@ -280,4 +280,12 @@ namespace MoonWorks.Graphics
 		FloatOpaqueWhite,
 		IntOpaqueWhite
 	}
+
+	public enum Backend
+	{
+		DontCare,
+		Vulkan,
+		PS5,
+		Invalid
+	}
 }

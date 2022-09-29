@@ -13,15 +13,18 @@ namespace MoonWorks.Graphics
 		public IntPtr Handle { get; }
 
 		// some state for debug validation
-		GraphicsPipeline currentGraphicsPipeline = null;
-		ComputePipeline currentComputePipeline = null;
-		bool renderPassActive = false;
+		GraphicsPipeline currentGraphicsPipeline;
+		ComputePipeline currentComputePipeline;
+		bool renderPassActive;
 
 		// called from RefreshDevice
 		internal CommandBuffer(GraphicsDevice device, IntPtr handle)
 		{
 			Device = device;
 			Handle = handle;
+			currentGraphicsPipeline = null;
+			currentComputePipeline = null;
+			renderPassActive = false;
 		}
 
 		// FIXME: we can probably use the NativeMemory functions to not have to generate arrays here
@@ -815,7 +818,7 @@ namespace MoonWorks.Graphics
 			return new Texture(
 				Device,
 				texturePtr,
-				Device.GetSwapchainFormat(window),
+				window.SwapchainFormat,
 				width,
 				height
 			);

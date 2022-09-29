@@ -29,23 +29,16 @@ namespace MoonWorks
 		private bool FramerateCapped = false;
 		private TimeSpan FramerateCapTimeSpan = TimeSpan.Zero;
 
-		public Window Window { get; }
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
 
-		private Dictionary<PresentMode, RefreshCS.Refresh.PresentMode> moonWorksToRefreshPresentMode = new Dictionary<PresentMode, RefreshCS.Refresh.PresentMode>
-		{
-			{ PresentMode.Immediate, RefreshCS.Refresh.PresentMode.Immediate },
-			{ PresentMode.Mailbox, RefreshCS.Refresh.PresentMode.Mailbox },
-			{ PresentMode.FIFO, RefreshCS.Refresh.PresentMode.FIFO },
-			{ PresentMode.FIFORelaxed, RefreshCS.Refresh.PresentMode.FIFORelaxed }
-		};
+		public Window MainWindow { get; }
 
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			PresentMode presentMode,
-			FramerateSettings framerateSettings,
+			FrameLimiterSettings frameLimiterSettings,
 			int targetTimestep = 60,
 			bool debugMode = false
 		)
@@ -53,12 +46,7 @@ namespace MoonWorks
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
 
-			FramerateCapped = framerateSettings.Mode == FramerateMode.Capped;
-
-			if (FramerateCapped)
-			{
-				FramerateCapTimeSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / framerateSettings.Cap);
-			}
+			SetFrameLimiter(frameLimiterSettings);
 
 			for (int i = 0; i < previousSleepTimes.Length; i += 1)
 			{
@@ -75,13 +63,17 @@ namespace MoonWorks
 
 			Inputs = new Inputs();
 
-			Window = new Window(windowCreateInfo);
-
 			GraphicsDevice = new GraphicsDevice(
-				Window.Handle,
-				moonWorksToRefreshPresentMode[presentMode],
+				Backend.Vulkan,
 				debugMode
 			);
+
+			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags);
+
+			if (!GraphicsDevice.ClaimWindow(MainWindow, presentMode))
+			{
+				throw new System.SystemException("Could not claim window!");
+			}
 
 			AudioDevice = new AudioDevice();
 		}
@@ -96,10 +88,24 @@ namespace MoonWorks
 			Destroy();
 
 			AudioDevice.Dispose();
+			MainWindow.Dispose();
 			GraphicsDevice.Dispose();
-			Window.Dispose();
 
 			SDL.SDL_Quit();
+		}
+
+		public void SetFrameLimiter(FrameLimiterSettings settings)
+		{
+			FramerateCapped = settings.Mode == FrameLimiterMode.Capped;
+
+			if (FramerateCapped)
+			{
+				FramerateCapTimeSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / settings.Cap);
+			}
+			else
+			{
+				FramerateCapTimeSpan = TimeSpan.Zero;
+			}
 		}
 
 		protected abstract void Update(TimeSpan delta);
@@ -224,7 +230,14 @@ namespace MoonWorks
 		{
 			if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
 			{
-				Window.SizeChanged((uint) evt.window.data1, (uint) evt.window.data2);
+				var window = Window.Lookup(evt.window.windowID);
+				window.SizeChanged((uint) evt.window.data1, (uint) evt.window.data2);
+			}
+			else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE)
+			{
+				var window = Window.Lookup(evt.window.windowID);
+				GraphicsDevice.UnclaimWindow(window);
+				window.Dispose();
 			}
 		}
 

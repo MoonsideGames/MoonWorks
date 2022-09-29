@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using SDL2;
 
 namespace MoonWorks
@@ -10,29 +11,32 @@ namespace MoonWorks
 		public uint Width { get; private set; }
 		public uint Height { get; private set; }
 
+		public bool Claimed { get; internal set; }
+		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }
+
 		private bool IsDisposed;
 
-		public Window(WindowCreateInfo windowCreateInfo)
-		{
-			var windowFlags = SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
+		private static Dictionary<uint, Window> idLookup = new Dictionary<uint, Window>();
 
+		public Window(WindowCreateInfo windowCreateInfo, SDL.SDL_WindowFlags flags)
+		{
 			if (windowCreateInfo.ScreenMode == ScreenMode.Fullscreen)
 			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 			}
 			else if (windowCreateInfo.ScreenMode == ScreenMode.BorderlessWindow)
 			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
+				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
 
 			if (windowCreateInfo.SystemResizable)
 			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 			}
 
 			if (windowCreateInfo.StartMaximized)
 			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED;
+				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED;
 			}
 
 			ScreenMode = windowCreateInfo.ScreenMode;
@@ -43,11 +47,13 @@ namespace MoonWorks
 				SDL.SDL_WINDOWPOS_UNDEFINED,
 				(int) windowCreateInfo.WindowWidth,
 				(int) windowCreateInfo.WindowHeight,
-				windowFlags
+				flags
 			);
 
 			Width = windowCreateInfo.WindowWidth;
 			Height = windowCreateInfo.WindowHeight;
+
+			idLookup.Add(SDL.SDL_GetWindowID(Handle), this);
 		}
 
 		public void ChangeScreenMode(ScreenMode screenMode)
@@ -81,6 +87,11 @@ namespace MoonWorks
 			Height = height;
 		}
 
+		internal static Window Lookup(uint windowID)
+		{
+			return idLookup.ContainsKey(windowID) ? idLookup[windowID] : null;
+		}
+
 		internal void SizeChanged(uint width, uint height)
 		{
 			Width = width;
@@ -96,6 +107,7 @@ namespace MoonWorks
 					// dispose managed state (managed objects)
 				}
 
+				idLookup.Remove(SDL.SDL_GetWindowID(Handle));
 				SDL.SDL_DestroyWindow(Handle);
 
 				IsDisposed = true;
