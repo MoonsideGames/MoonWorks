@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
@@ -67,7 +67,7 @@ namespace MoonWorks
 				debugMode
 			);
 
-			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags);
+			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
 			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.PresentMode))
 			{
@@ -79,6 +79,8 @@ namespace MoonWorks
 
 		public void Run()
 		{
+			MainWindow.Show();
+
 			while (!quit)
 			{
 				Tick();

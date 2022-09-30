@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using SDL2;
 
@@ -90,6 +90,11 @@ namespace MoonWorks
 		internal static Window Lookup(uint windowID)
 		{
 			return idLookup.ContainsKey(windowID) ? idLookup[windowID] : null;
+		}
+
+		internal void Show()
+		{
+			SDL.SDL_ShowWindow(Handle);
 		}
 
 		internal void SizeChanged(uint width, uint height)
