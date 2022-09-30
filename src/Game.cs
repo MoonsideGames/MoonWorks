@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
@@ -37,7 +37,6 @@ namespace MoonWorks
 
 		public Game(
 			WindowCreateInfo windowCreateInfo,
-			PresentMode presentMode,
 			FrameLimiterSettings frameLimiterSettings,
 			int targetTimestep = 60,
 			bool debugMode = false
@@ -70,7 +69,7 @@ namespace MoonWorks
 
 			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags);
 
-			if (!GraphicsDevice.ClaimWindow(MainWindow, presentMode))
+			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.PresentMode))
 			{
 				throw new System.SystemException("Could not claim window!");
 			}

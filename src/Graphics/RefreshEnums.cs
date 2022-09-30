@@ -1,9 +1,6 @@
 ﻿using System;
 
-/* Recreate all the enums in here so we don't need to explicitly
- * reference the RefreshCS namespace when using MoonWorks.Graphics
- */
-namespace MoonWorks.Graphics
+namespace MoonWorks
 {
 	public enum PresentMode
 	{
@@ -12,7 +9,13 @@ namespace MoonWorks.Graphics
 		FIFO,
 		FIFORelaxed
 	}
+}
 
+/* Recreate all the enums in here so we don't need to explicitly
+ * reference the RefreshCS namespace when using MoonWorks.Graphics
+ */
+namespace MoonWorks.Graphics
+{
 	public enum PrimitiveType
 	{
 		PointList,
