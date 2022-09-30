@@ -29,6 +29,11 @@ namespace MoonWorks.Graphics
 		{
 			Backend = (Backend) Refresh.Refresh_SelectBackend((Refresh.Backend) preferredBackend, out windowFlags);
 
+			if (Backend == Backend.Invalid)
+			{
+				throw new System.Exception("Could not set graphics backend!");
+			}
+
 			Handle = Refresh.Refresh_CreateDevice(
 				Conversions.BoolToByte(debugMode)
 			);
