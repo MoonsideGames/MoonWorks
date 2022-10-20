@@ -16,6 +16,17 @@ namespace MoonWorks.Audio
 		public float DopplerScale = 1f;
 		public float SpeedOfSound = 343.5f;
 
+		private float masteringVolume = 1f;
+		public float MasteringVolume
+		{
+			get => masteringVolume;
+			set
+			{
+				masteringVolume = value;
+				FAudio.FAudioVoice_SetVolume(MasteringVoice, masteringVolume, 0);
+			}
+		}
+
 		internal FAudio.FAudioVoiceSends ReverbSends;
 
 		private readonly List<WeakReference<AudioResource>> resources = new List<WeakReference<AudioResource>>();
@@ -195,11 +206,6 @@ namespace MoonWorks.Audio
 			sendDesc[0].pOutputVoice = MasteringVoice;
 			sendDesc[1].Flags = 0;
 			sendDesc[1].pOutputVoice = ReverbVoice;
-		}
-
-		public void SetMasteringVolume(float volume)
-		{
-			FAudio.FAudioVoice_SetVolume(MasteringVoice, volume, 0);
 		}
 
 		internal void Update()
