@@ -14,7 +14,10 @@ namespace MoonWorks.Input
 		public int DeltaX { get; private set; }
 		public int DeltaY { get; private set; }
 
-		public int Wheel { get; internal set; }
+		// note that this is a delta value
+		public int Wheel { get; private set; }
+		internal int WheelRaw;
+		private int previousWheelRaw = 0;
 
 		public bool AnyPressed { get; private set; }
 		public MouseButton AnyPressedButton { get; private set; }
@@ -73,6 +76,9 @@ namespace MoonWorks.Input
 			Y = y;
 			DeltaX = deltaX;
 			DeltaY = deltaY;
+
+			Wheel = WheelRaw - previousWheelRaw;
+			previousWheelRaw = WheelRaw;
 
 			LeftButton.Update();
 			MiddleButton.Update();

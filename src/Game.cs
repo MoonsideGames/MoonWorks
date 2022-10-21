@@ -197,7 +197,7 @@ namespace MoonWorks
 						break;
 
 					case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-						Inputs.Mouse.Wheel += _event.wheel.y;
+						Inputs.Mouse.WheelRaw += _event.wheel.y;
 						break;
 
 					case SDL.SDL_EventType.SDL_DROPBEGIN:

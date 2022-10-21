@@ -37,7 +37,6 @@ namespace MoonWorks.Input
 			AnyPressed = false;
 			AnyPressedButton = default; // DeviceKind.None
 
-			Mouse.Wheel = 0;
 			Keyboard.Update();
 
 			if (Keyboard.AnyPressed)
