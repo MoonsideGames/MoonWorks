@@ -101,8 +101,11 @@ namespace MoonWorks.Graphics.Font
 				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, indexDataLengthInBytes);
 			}
 
-			commandBuffer.SetBufferData(VertexBuffer, vertexDataPointer, 0, vertexDataLengthInBytes);
-			commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
+			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
+			{
+				commandBuffer.SetBufferData(VertexBuffer, vertexDataPointer, 0, vertexDataLengthInBytes);
+				commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
+			}
 
 			PrimitiveCount = vertexCount / 2; // FIXME: is this jank?
 		}
