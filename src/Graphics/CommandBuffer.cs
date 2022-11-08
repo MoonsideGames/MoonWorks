@@ -40,15 +40,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length == 0)
-			{
-				throw new System.ArgumentException("Render pass must contain at least one attachment!");
-			}
-
-			if (colorAttachmentInfos.Length > 4)
-			{
-				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
-			}
+			AssertValidColorAttachments(colorAttachmentInfos, true);
 #endif
 
 			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
@@ -86,10 +78,8 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length > 4)
-			{
-				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
-			}
+			AssertValidDepthAttachments(depthStencilAttachmentInfo);
+			AssertValidColorAttachments(colorAttachmentInfos, false);
 #endif
 
 			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
@@ -129,15 +119,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length == 0)
-			{
-				throw new System.ArgumentException("Render pass must contain at least one attachment!");
-			}
-
-			if (colorAttachmentInfos.Length > 4)
-			{
-				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
-			}
+			AssertValidColorAttachments(colorAttachmentInfos, true);
 #endif
 
 			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
@@ -177,10 +159,8 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			if (colorAttachmentInfos.Length > 4)
-			{
-				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
-			}
+			AssertValidDepthAttachments(depthStencilAttachmentInfo);
+			AssertValidColorAttachments(colorAttachmentInfos, false);
 #endif
 
 			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
@@ -453,11 +433,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds samplers to be used by the vertex shader.
 		/// </summary>
-		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
-		/// <param name="length">The number of texture-sampler pairs from the array to bind.</param>
+		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
 		public unsafe void BindVertexSamplers(
-			TextureSamplerBinding[] textureSamplerBindings,
-			int length
+			params TextureSamplerBinding[] textureSamplerBindings
 		)
 		{
 #if DEBUG
@@ -468,7 +446,7 @@ namespace MoonWorks.Graphics
 				throw new System.InvalidOperationException("The vertex shader of the current graphics pipeline does not take any samplers!");
 			}
 
-			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < length)
+			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < textureSamplerBindings.Length)
 			{
 				throw new System.InvalidOperationException("Vertex sampler count exceeds the amount used by the vertex shader!");
 			}
@@ -477,10 +455,15 @@ namespace MoonWorks.Graphics
 			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-			for (var i = 0; i < length; i += 1)
+			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
-				texturePtrs[i] = textureSamplerBindings[i].TextureHandle;
-				samplerPtrs[i] = textureSamplerBindings[i].SamplerHandle;
+#if DEBUG
+				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
+				AssertTextureBindingUsageFlags(textureSamplerBindings[i].Texture);
+#endif
+
+				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
+				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
 			}
 
 			Refresh.Refresh_BindVertexSamplers(
@@ -492,24 +475,11 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Binds samplers to be used by the vertex shader.
-		/// </summary>
-		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
-		public unsafe void BindVertexSamplers(
-			params TextureSamplerBinding[] textureSamplerBindings
-		)
-		{
-			BindVertexSamplers(textureSamplerBindings, textureSamplerBindings.Length);
-		}
-
-		/// <summary>
 		/// Binds samplers to be used by the fragment shader.
 		/// </summary>
 		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
-		/// <param name="length">The number of texture-sampler pairs from the given array to bind.</param>
 		public unsafe void BindFragmentSamplers(
-			TextureSamplerBinding[] textureSamplerBindings,
-			int length
+			params TextureSamplerBinding[] textureSamplerBindings
 		)
 		{
 #if DEBUG
@@ -520,7 +490,7 @@ namespace MoonWorks.Graphics
 				throw new System.InvalidOperationException("The fragment shader of the current graphics pipeline does not take any samplers!");
 			}
 
-			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < length)
+			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < textureSamplerBindings.Length)
 			{
 				throw new System.InvalidOperationException("Fragment sampler count exceeds the amount used by the fragment shader!");
 			}
@@ -529,21 +499,15 @@ namespace MoonWorks.Graphics
 			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-			for (var i = 0; i < length; i += 1)
+			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
-				#if DEBUG
-				if (textureSamplerBindings[i].TextureHandle == IntPtr.Zero)
-				{
-					throw new NullReferenceException("Texture binding must not be null!");
-				}
-				if (textureSamplerBindings[i].TextureHandle == IntPtr.Zero)
-				{
-					throw new NullReferenceException("Sampler binding must not be null!");
-				}
-				#endif
+#if DEBUG
+				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
+				AssertTextureBindingUsageFlags(textureSamplerBindings[i].Texture);
+#endif
 
-				texturePtrs[i] = textureSamplerBindings[i].TextureHandle;
-				samplerPtrs[i] = textureSamplerBindings[i].SamplerHandle;
+				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
+				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
 			}
 
 			Refresh.Refresh_BindFragmentSamplers(
@@ -552,17 +516,6 @@ namespace MoonWorks.Graphics
 				(IntPtr) texturePtrs,
 				(IntPtr) samplerPtrs
 			);
-		}
-
-		/// <summary>
-		/// Binds samplers to be used by the fragment shader.
-		/// </summary>
-		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
-		public unsafe void BindFragmentSamplers(
-			params TextureSamplerBinding[] textureSamplerBindings
-		)
-		{
-			BindFragmentSamplers(textureSamplerBindings, textureSamplerBindings.Length);
 		}
 
 		/// <summary>
@@ -581,6 +534,7 @@ namespace MoonWorks.Graphics
 				throw new InvalidOperationException("The current vertex shader does not take a uniform buffer!");
 			}
 #endif
+
 			fixed (T* ptr = &uniforms[0])
 			{
 				return Refresh.Refresh_PushVertexShaderUniforms(
@@ -1109,6 +1063,68 @@ namespace MoonWorks.Graphics
 			if (currentComputePipeline == null)
 			{
 				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertValidColorAttachments(ColorAttachmentInfo[] colorAttachmentInfos, bool atLeastOneRequired)
+		{
+			if (atLeastOneRequired && colorAttachmentInfos.Length == 0)
+			{
+				throw new System.ArgumentException("Render pass must contain at least one attachment!");
+			}
+
+			if (colorAttachmentInfos.Length > 4)
+			{
+				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
+			}
+
+			for (int i = 0; i < colorAttachmentInfos.Length; i += 1)
+			{
+				if (colorAttachmentInfos[i].Texture == null ||
+					colorAttachmentInfos[i].Texture.Handle == IntPtr.Zero)
+				{
+					throw new System.ArgumentException("Render pass color attachment Texture cannot be null!");
+				}
+
+				if ((colorAttachmentInfos[i].Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
+				{
+					throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
+				}
+			}
+		}
+
+		private void AssertValidDepthAttachments(DepthStencilAttachmentInfo depthStencilAttachmentInfo)
+		{
+			if (depthStencilAttachmentInfo.Texture == null ||
+				depthStencilAttachmentInfo.Texture.Handle == IntPtr.Zero)
+			{
+				throw new System.ArgumentException("Render pass depth stencil attachment Texture cannot be null!");
+			}
+
+			if ((depthStencilAttachmentInfo.Texture.UsageFlags & TextureUsageFlags.DepthStencilTarget) == 0)
+			{
+				throw new System.ArgumentException("Render pass depth stencil attachment UsageFlags must include TextureUsageFlags.DepthStencilTarget!");
+			}
+		}
+
+		private void AssertTextureSamplerBindingNonNull(in TextureSamplerBinding binding)
+		{
+			if (binding.Texture == null || binding.Texture.Handle == IntPtr.Zero)
+			{
+				throw new NullReferenceException("Texture binding must not be null!");
+			}
+
+			if (binding.Sampler == null || binding.Sampler.Handle == IntPtr.Zero)
+			{
+				throw new NullReferenceException("Sampler binding must not be null!");
+			}
+		}
+
+		private void AssertTextureBindingUsageFlags(Texture texture)
+		{
+			if ((texture.UsageFlags & TextureUsageFlags.Sampler) == 0)
+			{
+				throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.Sampler!");
 			}
 		}
 #endif

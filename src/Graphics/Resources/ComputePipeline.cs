@@ -28,6 +28,10 @@ namespace MoonWorks.Graphics
 				device.Handle,
 				refreshComputeShaderInfo
 			);
+			if (Handle == IntPtr.Zero)
+			{
+				throw new Exception("Could not create compute pipeline!");
+			}
 
 			ComputeShaderInfo = computeShaderInfo;
 		}

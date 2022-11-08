@@ -102,6 +102,10 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.attachmentInfo.hasDepthStencilAttachment = Conversions.BoolToByte(attachmentInfo.HasDepthStencilAttachment);
 
 			Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, refreshGraphicsPipelineCreateInfo);
+			if (Handle == IntPtr.Zero)
+			{
+				throw new Exception("Could not create graphics pipeline!");
+			}
 
 			vertexAttributesHandle.Free();
 			vertexBindingsHandle.Free();
