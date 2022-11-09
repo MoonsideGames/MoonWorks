@@ -209,25 +209,35 @@ namespace MoonWorks.Graphics
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
 
-		public ColorAttachmentInfo(Texture texture, Color clearColor, StoreOp storeOp = StoreOp.Store)
+		public ColorAttachmentInfo(
+			Texture texture,
+			Color clearColor,
+			SampleCount sampleCount = SampleCount.One,
+			StoreOp storeOp = StoreOp.Store
+		)
 		{
 			Texture = texture;
 			Depth = 0;
 			Layer = 0;
 			Level = 0;
-			SampleCount = SampleCount.One;
+			SampleCount = sampleCount;
 			ClearColor = clearColor;
 			LoadOp = LoadOp.Clear;
 			StoreOp = storeOp;
 		}
 
-		public ColorAttachmentInfo(Texture texture, LoadOp loadOp = LoadOp.DontCare, StoreOp storeOp = StoreOp.Store)
+		public ColorAttachmentInfo(
+			Texture texture,
+			LoadOp loadOp = LoadOp.DontCare,
+			SampleCount sampleCount = SampleCount.One,
+			StoreOp storeOp = StoreOp.Store
+		)
 		{
 			Texture = texture;
 			Depth = 0;
 			Layer = 0;
 			Level = 0;
-			SampleCount = SampleCount.One;
+			SampleCount = sampleCount;
 			ClearColor = Color.White;
 			LoadOp = loadOp;
 			StoreOp = storeOp;
@@ -344,16 +354,13 @@ namespace MoonWorks.Graphics
 	public struct ColorAttachmentDescription
 	{
 		public TextureFormat Format;
-		public SampleCount SampleCount;
 		public ColorAttachmentBlendState BlendState;
 
 		public ColorAttachmentDescription(
 			TextureFormat format,
-			ColorAttachmentBlendState blendState,
-			SampleCount sampleCount = SampleCount.One
+			ColorAttachmentBlendState blendState
 		) {
 			Format = format;
-			SampleCount = sampleCount;
 			BlendState = blendState;
 		}
 	}

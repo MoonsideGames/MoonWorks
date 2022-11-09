@@ -14,6 +14,7 @@ namespace MoonWorks.Graphics
 
 		public GraphicsShaderInfo VertexShaderInfo { get; }
 		public GraphicsShaderInfo FragmentShaderInfo { get; }
+		internal SampleCount SampleCount { get; }
 
 		public unsafe GraphicsPipeline(
 			GraphicsDevice device,
@@ -46,7 +47,6 @@ namespace MoonWorks.Graphics
 			for (var i = 0; i < attachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
 			{
 				colorAttachmentDescriptions[i].format = (Refresh.TextureFormat) attachmentInfo.ColorAttachmentDescriptions[i].Format;
-				colorAttachmentDescriptions[i].sampleCount = (Refresh.SampleCount) attachmentInfo.ColorAttachmentDescriptions[i].SampleCount;
 				colorAttachmentDescriptions[i].blendState = attachmentInfo.ColorAttachmentDescriptions[i].BlendState.ToRefresh();
 			}
 
@@ -112,6 +112,7 @@ namespace MoonWorks.Graphics
 
 			VertexShaderInfo = vertexShaderInfo;
 			FragmentShaderInfo = fragmentShaderInfo;
+			SampleCount = multisampleState.MultisampleCount;
 		}
 	}
 }

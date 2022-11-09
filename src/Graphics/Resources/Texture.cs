@@ -15,7 +15,6 @@ namespace MoonWorks.Graphics
 		public TextureFormat Format { get; }
 		public bool IsCube { get; }
 		public uint LevelCount { get; }
-		public SampleCount SampleCount { get; }
 		public TextureUsageFlags UsageFlags { get; }
 
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
@@ -46,7 +45,6 @@ namespace MoonWorks.Graphics
 			textureCreateInfo.Format = TextureFormat.R8G8B8A8;
 			textureCreateInfo.IsCube = false;
 			textureCreateInfo.LevelCount = 1;
-			textureCreateInfo.SampleCount = SampleCount.One;
 			textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
 
 			var texture = new Texture(device, textureCreateInfo);
@@ -83,12 +81,12 @@ namespace MoonWorks.Graphics
 
 				if (isCube)
 				{
-					texture = CreateTextureCube(graphicsDevice, (uint) width, format, TextureUsageFlags.Sampler, SampleCount.One, (uint) levels);
+					texture = CreateTextureCube(graphicsDevice, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
 					faces = 6;
 				}
 				else
 				{
-					texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, SampleCount.One, (uint) levels);
+					texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
 					faces = 1;
 				}
 
@@ -124,7 +122,6 @@ namespace MoonWorks.Graphics
 		/// <param name="height">The height of the texture.</param>
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
-		/// <param name="sampleCount">Specifies the multisample count.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
 		public static Texture CreateTexture2D(
 			GraphicsDevice device,
@@ -132,7 +129,6 @@ namespace MoonWorks.Graphics
 			uint height,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			SampleCount sampleCount = SampleCount.One,
 			uint levelCount = 1
 		)
 		{
@@ -142,7 +138,6 @@ namespace MoonWorks.Graphics
 				Height = height,
 				Depth = 1,
 				IsCube = false,
-				SampleCount = sampleCount,
 				LevelCount = levelCount,
 				Format = format,
 				UsageFlags = usageFlags
@@ -160,7 +155,6 @@ namespace MoonWorks.Graphics
 		/// <param name="depth">The depth of the texture.</param>
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
-		/// <param name="sampleCount">Specifies the multisample count.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
 		public static Texture CreateTexture3D(
 			GraphicsDevice device,
@@ -169,7 +163,6 @@ namespace MoonWorks.Graphics
 			uint depth,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			SampleCount sampleCount = SampleCount.One,
 			uint levelCount = 1
 		)
 		{
@@ -179,7 +172,6 @@ namespace MoonWorks.Graphics
 				Height = height,
 				Depth = depth,
 				IsCube = false,
-				SampleCount = sampleCount,
 				LevelCount = levelCount,
 				Format = format,
 				UsageFlags = usageFlags
@@ -195,14 +187,12 @@ namespace MoonWorks.Graphics
 		/// <param name="size">The length of one side of the cube.</param>
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
-		/// <param name="sampleCount">Specifies the multisample count.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
 		public static Texture CreateTextureCube(
 			GraphicsDevice device,
 			uint size,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			SampleCount sampleCount = SampleCount.One,
 			uint levelCount = 1
 		)
 		{
@@ -212,7 +202,6 @@ namespace MoonWorks.Graphics
 				Height = size,
 				Depth = 1,
 				IsCube = true,
-				SampleCount = sampleCount,
 				LevelCount = levelCount,
 				Format = format,
 				UsageFlags = usageFlags
@@ -241,7 +230,6 @@ namespace MoonWorks.Graphics
 			Height = textureCreateInfo.Height;
 			Depth = textureCreateInfo.Depth;
 			IsCube = textureCreateInfo.IsCube;
-			SampleCount = textureCreateInfo.SampleCount;
 			LevelCount = textureCreateInfo.LevelCount;
 			UsageFlags = textureCreateInfo.UsageFlags;
 		}
@@ -265,7 +253,6 @@ namespace MoonWorks.Graphics
 			Height = height;
 			Depth = 1;
 			IsCube = false;
-			SampleCount = SampleCount.One;
 			LevelCount = 1;
 			UsageFlags = TextureUsageFlags.ColorTarget;
 		}

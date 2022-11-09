@@ -16,6 +16,7 @@ namespace MoonWorks.Graphics
 		GraphicsPipeline currentGraphicsPipeline;
 		ComputePipeline currentComputePipeline;
 		bool renderPassActive;
+		SampleCount currentSampleCount;
 
 		// called from RefreshDevice
 		internal CommandBuffer(GraphicsDevice device, IntPtr handle)
@@ -25,6 +26,7 @@ namespace MoonWorks.Graphics
 			currentGraphicsPipeline = null;
 			currentComputePipeline = null;
 			renderPassActive = false;
+			currentSampleCount = SampleCount.One;
 		}
 
 		// FIXME: we can probably use the NativeMemory functions to not have to generate arrays here
@@ -55,7 +57,6 @@ namespace MoonWorks.Graphics
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					IntPtr.Zero,
 					(IntPtr) pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					IntPtr.Zero
@@ -78,7 +79,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
-			AssertValidDepthAttachments(depthStencilAttachmentInfo);
+			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 			AssertValidColorAttachments(colorAttachmentInfos, false);
 #endif
 
@@ -96,88 +97,6 @@ namespace MoonWorks.Graphics
 				Refresh.Refresh_BeginRenderPass(
 					Device.Handle,
 					Handle,
-					IntPtr.Zero,
-					pColorAttachmentInfos,
-					(uint) colorAttachmentInfos.Length,
-					&refreshDepthStencilAttachmentInfo
-				);
-			}
-
-			renderPassActive = true;
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderArea">The rectangle that should be drawn to on the attachments.</param>
-		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
-		public unsafe void BeginRenderPass(
-			in Rect renderArea,
-			params ColorAttachmentInfo[] colorAttachmentInfos
-		)
-		{
-#if DEBUG
-			AssertValidColorAttachments(colorAttachmentInfos, true);
-#endif
-
-			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
-
-			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
-			{
-				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
-			}
-
-			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
-			{
-				Refresh.Refresh_BeginRenderPass(
-					Device.Handle,
-					Handle,
-					renderArea.ToRefresh(),
-					(IntPtr) pColorAttachmentInfos,
-					(uint) colorAttachmentInfos.Length,
-					IntPtr.Zero
-				);
-			}
-
-			renderPassActive = true;
-		}
-
-		/// <summary>
-		/// Begins a render pass.
-		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-		/// </summary>
-		/// <param name="renderArea">The rectangle that should be drawn to on the attachments.</param>
-		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
-		public unsafe void BeginRenderPass(
-			in Rect renderArea,
-			DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-			params ColorAttachmentInfo[] colorAttachmentInfos
-		)
-		{
-#if DEBUG
-			AssertValidDepthAttachments(depthStencilAttachmentInfo);
-			AssertValidColorAttachments(colorAttachmentInfos, false);
-#endif
-
-			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
-
-			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
-			{
-				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
-			}
-
-			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
-			{
-				Refresh.Refresh_BeginRenderPass(
-					Device.Handle,
-					Handle,
-					renderArea.ToRefresh(),
 					pColorAttachmentInfos,
 					(uint) colorAttachmentInfos.Length,
 					&refreshDepthStencilAttachmentInfo
@@ -312,6 +231,15 @@ namespace MoonWorks.Graphics
 			GraphicsPipeline graphicsPipeline
 		)
 		{
+#if DEBUG
+			AssertRenderPassActive();
+
+			if (graphicsPipeline.SampleCount != currentSampleCount)
+			{
+				throw new System.ArgumentException("The sample count of the bound GraphicsPipeline must match the sample count of the current render pass!");
+			}
+#endif
+
 			Refresh.Refresh_BindGraphicsPipeline(
 				Device.Handle,
 				Handle,
@@ -1073,6 +1001,8 @@ namespace MoonWorks.Graphics
 				throw new System.ArgumentException("Render pass must contain at least one attachment!");
 			}
 
+			currentSampleCount = (colorAttachmentInfos.Length > 0) ? colorAttachmentInfos[0].SampleCount : SampleCount.One;
+
 			if (colorAttachmentInfos.Length > 4)
 			{
 				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
@@ -1090,10 +1020,15 @@ namespace MoonWorks.Graphics
 				{
 					throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
 				}
+
+				if (colorAttachmentInfos[i].SampleCount != currentSampleCount)
+				{
+					throw new System.ArgumentException("All color attachments in a render pass must have the same SampleCount!");
+				}
 			}
 		}
 
-		private void AssertValidDepthAttachments(DepthStencilAttachmentInfo depthStencilAttachmentInfo)
+		private void AssertValidDepthAttachment(DepthStencilAttachmentInfo depthStencilAttachmentInfo)
 		{
 			if (depthStencilAttachmentInfo.Texture == null ||
 				depthStencilAttachmentInfo.Texture.Handle == IntPtr.Zero)

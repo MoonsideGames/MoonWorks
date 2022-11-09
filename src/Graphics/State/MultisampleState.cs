@@ -13,5 +13,13 @@
 			MultisampleCount = SampleCount.One,
 			SampleMask = uint.MaxValue
 		};
+
+		public MultisampleState(
+			SampleCount sampleCount,
+			uint sampleMask = uint.MaxValue
+		) {
+			MultisampleCount = sampleCount;
+			SampleMask = sampleMask;
+		}
 	}
 }

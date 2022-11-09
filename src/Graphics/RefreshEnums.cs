@@ -110,10 +110,7 @@ namespace MoonWorks.Graphics
 		One,
 		Two,
 		Four,
-		Eight,
-		Sixteen,
-		ThirtyTwo,
-		SixtyFour
+		Eight
 	}
 
 	public enum CubeMapFace : uint
