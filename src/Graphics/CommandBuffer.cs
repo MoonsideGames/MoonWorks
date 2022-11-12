@@ -784,16 +784,14 @@ namespace MoonWorks.Graphics
 
 			var elementSize = sizeof(T);
 
-			fixed (T* ptr = &data[0])
+			fixed (T* ptr = &data[startElement])
 			{
-				var dataPtr = ptr + (startElement * elementSize);
-
 				Refresh.Refresh_SetBufferData(
 					Device.Handle,
 					Handle,
 					buffer.Handle,
 					bufferOffsetInBytes,
-					(IntPtr) dataPtr,
+					(IntPtr) ptr,
 					(uint) (numElements * elementSize)
 				);
 			}
