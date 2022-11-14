@@ -211,6 +211,11 @@ namespace MoonWorks.Graphics
 		{
 #if DEBUG
 			AssertComputePipelineBound();
+
+			if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
+			{
+				throw new ArgumentException("All dimensions for the compute work group must be >= 1!");
+			}
 #endif
 
 			Refresh.Refresh_DispatchCompute(
