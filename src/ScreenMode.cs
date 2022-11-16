@@ -3,7 +3,7 @@
 	public enum ScreenMode
 	{
 		Fullscreen,
-		BorderlessWindow,
+		BorderlessFullscreen,
 		Windowed
 	}
 }
