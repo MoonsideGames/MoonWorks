@@ -368,7 +368,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
 		public unsafe void BindVertexSamplers(
-			params TextureSamplerBinding[] textureSamplerBindings
+			ArraySegment<TextureSamplerBinding> textureSamplerBindings
 		)
 		{
 #if DEBUG
@@ -379,16 +379,16 @@ namespace MoonWorks.Graphics
 				throw new System.InvalidOperationException("The vertex shader of the current graphics pipeline does not take any samplers!");
 			}
 
-			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < textureSamplerBindings.Length)
+			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < textureSamplerBindings.Count)
 			{
 				throw new System.InvalidOperationException("Vertex sampler count exceeds the amount used by the vertex shader!");
 			}
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Count];
+			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Count];
 
-			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
+			for (var i = 0; i < textureSamplerBindings.Count; i += 1)
 			{
 #if DEBUG
 				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
@@ -408,11 +408,22 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Binds samplers to be used by the fragment shader.
+		/// Binds samplers to be used by the vertex shader.
 		/// </summary>
-		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
-		public unsafe void BindFragmentSamplers(
+		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+		public unsafe void BindVertexSamplers(
 			params TextureSamplerBinding[] textureSamplerBindings
+		)
+		{
+			BindVertexSamplers(new ArraySegment<TextureSamplerBinding>(textureSamplerBindings));
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the vertex shader.
+		/// </summary>
+		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			ArraySegment<TextureSamplerBinding> textureSamplerBindings
 		)
 		{
 #if DEBUG
@@ -423,16 +434,16 @@ namespace MoonWorks.Graphics
 				throw new System.InvalidOperationException("The fragment shader of the current graphics pipeline does not take any samplers!");
 			}
 
-			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < textureSamplerBindings.Length)
+			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < textureSamplerBindings.Count)
 			{
 				throw new System.InvalidOperationException("Fragment sampler count exceeds the amount used by the fragment shader!");
 			}
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Count];
+			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Count];
 
-			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
+			for (var i = 0; i < textureSamplerBindings.Count; i += 1)
 			{
 #if DEBUG
 				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
@@ -449,6 +460,17 @@ namespace MoonWorks.Graphics
 				(IntPtr) texturePtrs,
 				(IntPtr) samplerPtrs
 			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the fragment shader.
+		/// </summary>
+		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			params TextureSamplerBinding[] textureSamplerBindings
+		)
+		{
+			BindFragmentSamplers(new ArraySegment<TextureSamplerBinding>(textureSamplerBindings));
 		}
 
 		/// <summary>
