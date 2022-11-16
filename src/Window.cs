@@ -18,13 +18,15 @@ namespace MoonWorks
 
 		private static Dictionary<uint, Window> idLookup = new Dictionary<uint, Window>();
 
+		private System.Action<uint, uint> SizeChangeCallback = null;
+
 		public Window(WindowCreateInfo windowCreateInfo, SDL.SDL_WindowFlags flags)
 		{
 			if (windowCreateInfo.ScreenMode == ScreenMode.Fullscreen)
 			{
 				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 			}
-			else if (windowCreateInfo.ScreenMode == ScreenMode.BorderlessWindow)
+			else if (windowCreateInfo.ScreenMode == ScreenMode.BorderlessFullscreen)
 			{
 				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
@@ -56,7 +58,7 @@ namespace MoonWorks
 			idLookup.Add(SDL.SDL_GetWindowID(Handle), this);
 		}
 
-		public void ChangeScreenMode(ScreenMode screenMode)
+		public void SetScreenMode(ScreenMode screenMode)
 		{
 			SDL.SDL_WindowFlags windowFlag = 0;
 
@@ -64,7 +66,7 @@ namespace MoonWorks
 			{
 				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
 			}
-			else if (screenMode == ScreenMode.BorderlessWindow)
+			else if (screenMode == ScreenMode.BorderlessFullscreen)
 			{
 				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
@@ -97,10 +99,20 @@ namespace MoonWorks
 			SDL.SDL_ShowWindow(Handle);
 		}
 
-		internal void SizeChanged(uint width, uint height)
+		internal void HandleSizeChange(uint width, uint height)
 		{
 			Width = width;
 			Height = height;
+
+			if (SizeChangeCallback != null)
+			{
+				SizeChangeCallback(width, height);
+			}
+		}
+
+		public void RegisterSizeChangeCallback(System.Action<uint, uint> sizeChangeCallback)
+		{
+			SizeChangeCallback = sizeChangeCallback;
 		}
 
 		protected virtual void Dispose(bool disposing)

@@ -232,7 +232,7 @@ namespace MoonWorks
 			if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
 			{
 				var window = Window.Lookup(evt.window.windowID);
-				window.SizeChanged((uint) evt.window.data1, (uint) evt.window.data2);
+				window.HandleSizeChange((uint) evt.window.data1, (uint) evt.window.data2);
 			}
 			else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE)
 			{
