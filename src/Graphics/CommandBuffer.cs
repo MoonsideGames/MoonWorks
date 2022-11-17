@@ -12,58 +12,214 @@ namespace MoonWorks.Graphics
 		public GraphicsDevice Device { get; }
 		public IntPtr Handle { get; }
 
-		// some state for debug validation
+#if DEBUG
 		GraphicsPipeline currentGraphicsPipeline;
 		ComputePipeline currentComputePipeline;
 		bool renderPassActive;
 		SampleCount currentSampleCount;
+		TextureFormat colorFormatOne;
+		TextureFormat colorFormatTwo;
+		TextureFormat colorFormatThree;
+		TextureFormat colorFormatFour;
+		TextureFormat depthStencilFormat;
+#endif
 
 		// called from RefreshDevice
 		internal CommandBuffer(GraphicsDevice device, IntPtr handle)
 		{
 			Device = device;
 			Handle = handle;
+
+#if DEBUG
 			currentGraphicsPipeline = null;
 			currentComputePipeline = null;
 			renderPassActive = false;
 			currentSampleCount = SampleCount.One;
+			colorFormatOne = TextureFormat.R8G8B8A8;
+			colorFormatTwo = TextureFormat.R8G8B8A8;
+			colorFormatThree = TextureFormat.R8G8B8A8;
+			colorFormatFour = TextureFormat.R8G8B8A8;
+			depthStencilFormat = TextureFormat.D16;
+#endif
 		}
-
-		// FIXME: we can probably use the NativeMemory functions to not have to generate arrays here
 
 		/// <summary>
 		/// Begins a render pass.
 		/// All render state, resource binding, and draw commands must be made within a render pass.
 		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 		/// </summary>
-		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
+		/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
 		public unsafe void BeginRenderPass(
-			params ColorAttachmentInfo[] colorAttachmentInfos
-		)
-		{
+			in ColorAttachmentInfo colorAttachmentInfo
+		) {
 #if DEBUG
-			AssertValidColorAttachments(colorAttachmentInfos, true);
+			AssertTextureNotNull(colorAttachmentInfo);
+			AssertColorTarget(colorAttachmentInfo);
 #endif
 
-			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
 
-			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
-			{
-				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
-			}
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				(IntPtr) refreshColorAttachmentInfos,
+				1,
+				IntPtr.Zero
+			);
 
-			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
-			{
-				Refresh.Refresh_BeginRenderPass(
-					Device.Handle,
-					Handle,
-					(IntPtr) pColorAttachmentInfos,
-					(uint) colorAttachmentInfos.Length,
-					IntPtr.Zero
-				);
-			}
-
+#if DEBUG
 			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfo.SampleCount;
+			colorFormatOne = colorAttachmentInfo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo
+		) {
+#if DEBUG
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				(IntPtr) refreshColorAttachmentInfos,
+				2,
+				IntPtr.Zero
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo,
+			in ColorAttachmentInfo colorAttachmentInfoThree
+		) {
+#if DEBUG
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertTextureNotNull(colorAttachmentInfoThree);
+			AssertColorTarget(colorAttachmentInfoThree);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+			refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				(IntPtr) refreshColorAttachmentInfos,
+				3,
+				IntPtr.Zero
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo,
+			in ColorAttachmentInfo colorAttachmentInfoThree,
+			in ColorAttachmentInfo colorAttachmentInfoFour
+		) {
+#if DEBUG
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertTextureNotNull(colorAttachmentInfoThree);
+			AssertColorTarget(colorAttachmentInfoThree);
+
+			AssertTextureNotNull(colorAttachmentInfoFour);
+			AssertColorTarget(colorAttachmentInfoFour);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoFour);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+			refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+			refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				(IntPtr) refreshColorAttachmentInfos,
+				4,
+				IntPtr.Zero
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
+			colorFormatFour = colorAttachmentInfoFour.Texture.Format;
+#endif
 		}
 
 		/// <summary>
@@ -72,38 +228,234 @@ namespace MoonWorks.Graphics
 		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 		/// </summary>
 		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-		/// <param name="colorAttachmentInfos">The color attachments to use in the render pass.</param>
 		public unsafe void BeginRenderPass(
-			DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-			params ColorAttachmentInfo[] colorAttachmentInfos
-		)
-		{
+			in DepthStencilAttachmentInfo depthStencilAttachmentInfo
+		) {
 #if DEBUG
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
-			AssertValidColorAttachments(colorAttachmentInfos, false);
 #endif
-
-			var refreshColorAttachmentInfos = new Refresh.ColorAttachmentInfo[colorAttachmentInfos.Length];
-
-			for (var i = 0; i < colorAttachmentInfos.Length; i += 1)
-			{
-				refreshColorAttachmentInfos[i] = colorAttachmentInfos[i].ToRefresh();
-			}
 
 			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-			fixed (Refresh.ColorAttachmentInfo* pColorAttachmentInfos = refreshColorAttachmentInfos)
-			{
-				Refresh.Refresh_BeginRenderPass(
-					Device.Handle,
-					Handle,
-					pColorAttachmentInfos,
-					(uint) colorAttachmentInfos.Length,
-					&refreshDepthStencilAttachmentInfo
-				);
-			}
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				(Refresh.ColorAttachmentInfo*) IntPtr.Zero,
+				0,
+				&refreshDepthStencilAttachmentInfo
+			);
 
+#if DEBUG
 			renderPassActive = true;
+			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			in ColorAttachmentInfo colorAttachmentInfo
+		) {
+#if DEBUG
+			AssertValidDepthAttachment(depthStencilAttachmentInfo);
+
+			AssertTextureNotNull(colorAttachmentInfo);
+			AssertColorTarget(colorAttachmentInfo);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				refreshColorAttachmentInfos,
+				1,
+				&refreshDepthStencilAttachmentInfo
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfo.SampleCount;
+			colorFormatOne = colorAttachmentInfo.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo
+		) {
+#if DEBUG
+			AssertValidDepthAttachment(depthStencilAttachmentInfo);
+
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				refreshColorAttachmentInfos,
+				2,
+				&refreshDepthStencilAttachmentInfo
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo,
+			in ColorAttachmentInfo colorAttachmentInfoThree
+		) {
+#if DEBUG
+			AssertValidDepthAttachment(depthStencilAttachmentInfo);
+
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertTextureNotNull(colorAttachmentInfoThree);
+			AssertColorTarget(colorAttachmentInfoThree);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+			refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				refreshColorAttachmentInfos,
+				3,
+				&refreshDepthStencilAttachmentInfo
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+#endif
+		}
+
+		/// <summary>
+		/// Begins a render pass.
+		/// All render state, resource binding, and draw commands must be made within a render pass.
+		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// </summary>
+		/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+		/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
+		public unsafe void BeginRenderPass(
+			in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
+			in ColorAttachmentInfo colorAttachmentInfoOne,
+			in ColorAttachmentInfo colorAttachmentInfoTwo,
+			in ColorAttachmentInfo colorAttachmentInfoThree,
+			in ColorAttachmentInfo colorAttachmentInfoFour
+		) {
+#if DEBUG
+			AssertValidDepthAttachment(depthStencilAttachmentInfo);
+
+			AssertTextureNotNull(colorAttachmentInfoOne);
+			AssertColorTarget(colorAttachmentInfoOne);
+
+			AssertTextureNotNull(colorAttachmentInfoTwo);
+			AssertColorTarget(colorAttachmentInfoTwo);
+
+			AssertTextureNotNull(colorAttachmentInfoThree);
+			AssertColorTarget(colorAttachmentInfoThree);
+
+			AssertTextureNotNull(colorAttachmentInfoFour);
+			AssertColorTarget(colorAttachmentInfoFour);
+
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
+			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoFour);
+#endif
+
+			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+			refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+			refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+			refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+			refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+
+			var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+
+			Refresh.Refresh_BeginRenderPass(
+				Device.Handle,
+				Handle,
+				refreshColorAttachmentInfos,
+				4,
+				&refreshDepthStencilAttachmentInfo
+			);
+
+#if DEBUG
+			renderPassActive = true;
+			currentSampleCount = colorAttachmentInfoOne.SampleCount;
+			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
+			colorFormatFour = colorAttachmentInfoFour.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+#endif
 		}
 
 		/// <summary>
@@ -112,37 +464,134 @@ namespace MoonWorks.Graphics
 		/// <param name="computePipeline">The compute pipeline to bind.</param>
 		public void BindComputePipeline(
 			ComputePipeline computePipeline
-		)
-		{
+		) {
 			Refresh.Refresh_BindComputePipeline(
 				Device.Handle,
 				Handle,
 				computePipeline.Handle
 			);
 
+#if DEBUG
 			currentComputePipeline = computePipeline;
+#endif
+		}
+
+		/// <summary>
+		/// Binds a buffer to be used in the compute shader.
+		/// </summary>
+		/// <param name="buffer">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			Buffer buffer
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(1);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[1];
+			bufferPtrs[0] = buffer.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
 		}
 
 		/// <summary>
 		/// Binds buffers to be used in the compute shader.
 		/// </summary>
-		/// <param name="buffers">A set of buffers to bind.</param>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			params Buffer[] buffers
-		)
-		{
+			Buffer bufferOne,
+			Buffer bufferTwo
+		) {
 #if DEBUG
 			AssertComputePipelineBound();
+			AssertComputeBufferCount(2);
+#endif
 
-			if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount == 0)
-			{
-				throw new System.InvalidOperationException("The current compute shader does not take any buffers!");
-			}
+			var bufferPtrs = stackalloc IntPtr[2];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
 
-			if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount < buffers.Length)
-			{
-				throw new System.InvalidOperationException("Buffer count exceeds the amount used by the current compute shader!");
-			}
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
+		/// <param name="bufferThree">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			Buffer bufferOne,
+			Buffer bufferTwo,
+			Buffer bufferThree
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(3);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[3];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
+			bufferPtrs[2] = bufferThree.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
+		/// <param name="bufferThree">A buffer to bind.</param>
+		/// <param name="bufferFour">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			Buffer bufferOne,
+			Buffer bufferTwo,
+			Buffer bufferThree,
+			Buffer bufferFour
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(4);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[4];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
+			bufferPtrs[2] = bufferThree.Handle;
+			bufferPtrs[3] = bufferFour.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="buffers">A Span of buffers to bind.</param>
+		public unsafe void BindComputeBuffers(
+			in Span<Buffer> buffers
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(buffers.Length);
 #endif
 
 			var bufferPtrs = stackalloc IntPtr[buffers.Length];
@@ -160,25 +609,121 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
+		/// Binds a texture to be used in the compute shader.
+		/// </summary>
+		/// <param name="texture">A texture to bind.</param>
+		public unsafe void BindComputeTextures(
+			Texture texture
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(1);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[1];
+			texturePtrs[0] = texture.Handle;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="textureOne">A texture to bind.</param>
+		/// <param name="textureTwo">A texture to bind.</param>
+		public unsafe void BindComputeTextures(
+			Texture textureOne,
+			Texture textureTwo
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(2);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[2];
+			texturePtrs[0] = textureOne.Handle;
+			texturePtrs[1] = textureTwo.Handle;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="textureOne">A texture to bind.</param>
+		/// <param name="textureTwo">A texture to bind.</param>
+		/// <param name="textureThree">A texture to bind.</param>
+		public unsafe void BindComputeTextures(
+			Texture textureOne,
+			Texture textureTwo,
+			Texture textureThree
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(3);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[3];
+			texturePtrs[0] = textureOne.Handle;
+			texturePtrs[1] = textureTwo.Handle;
+			texturePtrs[2] = textureThree.Handle;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="textureOne">A texture to bind.</param>
+		/// <param name="textureTwo">A texture to bind.</param>
+		/// <param name="textureThree">A texture to bind.</param>
+		/// <param name="textureFour">A texture to bind.</param>
+		public unsafe void BindComputeTextures(
+			Texture textureOne,
+			Texture textureTwo,
+			Texture textureThree,
+			Texture textureFour
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(4);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[4];
+			texturePtrs[0] = textureOne.Handle;
+			texturePtrs[1] = textureTwo.Handle;
+			texturePtrs[2] = textureThree.Handle;
+			texturePtrs[3] = textureFour.Handle;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs
+			);
+		}
+
+		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
 		/// <param name="textures">A set of textures to bind.</param>
 		public unsafe void BindComputeTextures(
-			params Texture[] textures
-		)
-		{
+			in Span<Texture> textures
+		) {
 #if DEBUG
 			AssertComputePipelineBound();
-
-			if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount == 0)
-			{
-				throw new System.InvalidOperationException("The current compute shader does not take any textures!");
-			}
-
-			if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount < textures.Length)
-			{
-				throw new System.InvalidOperationException("Texture count exceeds the amount used by the current compute shader!");
-			}
+			AssertComputeTextureCount(textures.Length);
 #endif
 
 			var texturePtrs = stackalloc IntPtr[textures.Length];
@@ -207,8 +752,7 @@ namespace MoonWorks.Graphics
 			uint groupCountY,
 			uint groupCountZ,
 			uint computeParamOffset
-		)
-		{
+		) {
 #if DEBUG
 			AssertComputePipelineBound();
 
@@ -234,10 +778,10 @@ namespace MoonWorks.Graphics
 		/// <param name="graphicsPipeline">The graphics pipeline to bind.</param>
 		public void BindGraphicsPipeline(
 			GraphicsPipeline graphicsPipeline
-		)
-		{
+		) {
 #if DEBUG
 			AssertRenderPassActive();
+			AssertRenderPassPipelineFormatMatch(graphicsPipeline);
 
 			if (graphicsPipeline.SampleCount != currentSampleCount)
 			{
@@ -251,13 +795,15 @@ namespace MoonWorks.Graphics
 				graphicsPipeline.Handle
 			);
 
+#if DEBUG
 			currentGraphicsPipeline = graphicsPipeline;
+#endif
 		}
 
 		/// <summary>
 		/// Sets the viewport. Only valid during a render pass.
 		/// </summary>
-		public void SetViewport(Viewport viewport)
+		public void SetViewport(in Viewport viewport)
 		{
 #if DEBUG
 			AssertRenderPassActive();
@@ -273,7 +819,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Sets the scissor area. Only valid during a render pass.
 		/// </summary>
-		public void SetScissor(Rect scissor)
+		public void SetScissor(in Rect scissor)
 		{
 #if DEBUG
 			AssertRenderPassActive();
@@ -289,13 +835,139 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds vertex buffers to be used by subsequent draw calls.
 		/// </summary>
-		/// <param name="firstBinding">The index of the first buffer to bind.</param>
-		/// <param name="bufferBindings">Buffers to bind and their associated offsets.</param>
+		/// <param name="bufferBinding">Buffer to bind and associated offset.</param>
+		/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
 		public unsafe void BindVertexBuffers(
-			uint firstBinding,
-			params BufferBinding[] bufferBindings
-		)
-		{
+			in BufferBinding bufferBinding,
+			uint firstBinding = 0
+		) {
+			var bufferPtrs = stackalloc IntPtr[1];
+			var offsets = stackalloc ulong[1];
+
+			bufferPtrs[0] = bufferBinding.Buffer.Handle;
+			offsets[0] = bufferBinding.Offset;
+
+			Refresh.Refresh_BindVertexBuffers(
+				Device.Handle,
+				Handle,
+				firstBinding,
+				1,
+				(IntPtr) bufferPtrs,
+				(IntPtr) offsets
+			);
+		}
+
+		/// <summary>
+		/// Binds vertex buffers to be used by subsequent draw calls.
+		/// </summary>
+		/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
+		/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
+		public unsafe void BindVertexBuffers(
+			in BufferBinding bufferBindingOne,
+			in BufferBinding bufferBindingTwo,
+			uint firstBinding = 0
+		) {
+			var bufferPtrs = stackalloc IntPtr[2];
+			var offsets = stackalloc ulong[2];
+
+			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
+			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
+
+			offsets[0] = bufferBindingOne.Offset;
+			offsets[1] = bufferBindingTwo.Offset;
+
+			Refresh.Refresh_BindVertexBuffers(
+				Device.Handle,
+				Handle,
+				firstBinding,
+				2,
+				(IntPtr) bufferPtrs,
+				(IntPtr) offsets
+			);
+		}
+
+		/// <summary>
+		/// Binds vertex buffers to be used by subsequent draw calls.
+		/// </summary>
+		/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingThree">Buffer to bind and associated offset.</param>
+		/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
+		public unsafe void BindVertexBuffers(
+			in BufferBinding bufferBindingOne,
+			in BufferBinding bufferBindingTwo,
+			in BufferBinding bufferBindingThree,
+			uint firstBinding = 0
+		) {
+			var bufferPtrs = stackalloc IntPtr[3];
+			var offsets = stackalloc ulong[3];
+
+			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
+			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
+			bufferPtrs[2] = bufferBindingThree.Buffer.Handle;
+
+			offsets[0] = bufferBindingOne.Offset;
+			offsets[1] = bufferBindingTwo.Offset;
+			offsets[2] = bufferBindingThree.Offset;
+
+			Refresh.Refresh_BindVertexBuffers(
+				Device.Handle,
+				Handle,
+				firstBinding,
+				3,
+				(IntPtr) bufferPtrs,
+				(IntPtr) offsets
+			);
+		}
+
+		/// <summary>
+		/// Binds vertex buffers to be used by subsequent draw calls.
+		/// </summary>
+		/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingThree">Buffer to bind and associated offset.</param>
+		/// <param name="bufferBindingFour">Buffer to bind and associated offset.</param>
+		/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
+		public unsafe void BindVertexBuffers(
+			in BufferBinding bufferBindingOne,
+			in BufferBinding bufferBindingTwo,
+			in BufferBinding bufferBindingThree,
+			in BufferBinding bufferBindingFour,
+			uint firstBinding = 0
+		) {
+			var bufferPtrs = stackalloc IntPtr[4];
+			var offsets = stackalloc ulong[4];
+
+			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
+			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
+			bufferPtrs[2] = bufferBindingThree.Buffer.Handle;
+			bufferPtrs[3] = bufferBindingFour.Buffer.Handle;
+
+			offsets[0] = bufferBindingOne.Offset;
+			offsets[1] = bufferBindingTwo.Offset;
+			offsets[2] = bufferBindingThree.Offset;
+			offsets[3] = bufferBindingFour.Offset;
+
+			Refresh.Refresh_BindVertexBuffers(
+				Device.Handle,
+				Handle,
+				firstBinding,
+				4,
+				(IntPtr) bufferPtrs,
+				(IntPtr) offsets
+			);
+		}
+
+		/// <summary>
+		/// Binds vertex buffers to be used by subsequent draw calls.
+		/// </summary>
+		/// <param name="bufferBindings">Spawn of buffers to bind and their associated offsets.</param>
+		/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
+		public unsafe void BindVertexBuffers(
+			in Span<BufferBinding> bufferBindings,
+			uint firstBinding = 0
+		) {
 			var bufferPtrs = stackalloc IntPtr[bufferBindings.Length];
 			var offsets = stackalloc ulong[bufferBindings.Length];
 
@@ -310,33 +982,6 @@ namespace MoonWorks.Graphics
 				Handle,
 				firstBinding,
 				(uint) bufferBindings.Length,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
-			);
-		}
-
-		/// <summary>
-		/// Binds vertex buffers to be used by subsequent draw calls.
-		/// </summary>
-		/// <param name="buffers">The buffers to bind.</param>
-		public unsafe void BindVertexBuffers(
-			params Buffer[] buffers
-		)
-		{
-			var bufferPtrs = stackalloc IntPtr[buffers.Length];
-			var offsets = stackalloc ulong[buffers.Length];
-
-			for (var i = 0; i < buffers.Length; i += 1)
-			{
-				bufferPtrs[i] = buffers[i].Handle;
-				offsets[i] = 0;
-			}
-
-			Refresh.Refresh_BindVertexBuffers(
-				Device.Handle,
-				Handle,
-				0,
-				(uint) buffers.Length,
 				(IntPtr) bufferPtrs,
 				(IntPtr) offsets
 			);
@@ -366,29 +1011,170 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds samplers to be used by the vertex shader.
 		/// </summary>
-		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+		/// <param name="textureSamplerBindings">The texture-sampler to bind.</param>
 		public unsafe void BindVertexSamplers(
-			ArraySegment<TextureSamplerBinding> textureSamplerBindings
-		)
-		{
+			in TextureSamplerBinding textureSamplerBinding
+		) {
 #if DEBUG
 			AssertGraphicsPipelineBound();
-
-			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount == 0)
-			{
-				throw new System.InvalidOperationException("The vertex shader of the current graphics pipeline does not take any samplers!");
-			}
-
-			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount < textureSamplerBindings.Count)
-			{
-				throw new System.InvalidOperationException("Vertex sampler count exceeds the amount used by the vertex shader!");
-			}
+			AssertVertexSamplerCount(1);
+			AssertTextureSamplerBindingNonNull(textureSamplerBinding);
+			AssertTextureBindingUsageFlags(textureSamplerBinding.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Count];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Count];
+			var texturePtrs = stackalloc IntPtr[1];
+			var samplerPtrs = stackalloc IntPtr[1];
 
-			for (var i = 0; i < textureSamplerBindings.Count; i += 1)
+			texturePtrs[0] = textureSamplerBinding.Texture.Handle;
+			samplerPtrs[0] = textureSamplerBinding.Sampler.Handle;
+
+			Refresh.Refresh_BindVertexSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the vertex shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		public unsafe void BindVertexSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertVertexSamplerCount(2);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[2];
+			var samplerPtrs = stackalloc IntPtr[2];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+
+			Refresh.Refresh_BindVertexSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the vertex shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
+		public unsafe void BindVertexSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo,
+			in TextureSamplerBinding textureSamplerBindingThree
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertVertexSamplerCount(3);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[3];
+			var samplerPtrs = stackalloc IntPtr[3];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+
+			Refresh.Refresh_BindVertexSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the vertex shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingThree">The fourth texture-sampler to bind.</param>
+		public unsafe void BindVertexSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo,
+			in TextureSamplerBinding textureSamplerBindingThree,
+			in TextureSamplerBinding textureSamplerBindingFour
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertVertexSamplerCount(4);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingFour);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingFour.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[4];
+			var samplerPtrs = stackalloc IntPtr[4];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
+			texturePtrs[3] = textureSamplerBindingFour.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+			samplerPtrs[3] = textureSamplerBindingFour.Sampler.Handle;
+
+			Refresh.Refresh_BindVertexSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the vertex shader.
+		/// </summary>
+		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+		public unsafe void BindVertexSamplers(
+			in Span<TextureSamplerBinding> textureSamplerBindings
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertVertexSamplerCount(textureSamplerBindings.Length);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+
+			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
 #if DEBUG
 				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
@@ -408,42 +1194,172 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Binds samplers to be used by the vertex shader.
+		/// Binds samplers to be used by the fragment shader.
 		/// </summary>
-		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
-		public unsafe void BindVertexSamplers(
-			params TextureSamplerBinding[] textureSamplerBindings
-		)
-		{
-			BindVertexSamplers(new ArraySegment<TextureSamplerBinding>(textureSamplerBindings));
+		/// <param name="textureSamplerBinding">The texture-sampler to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			in TextureSamplerBinding textureSamplerBinding
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertFragmentSamplerCount(1);
+			AssertTextureSamplerBindingNonNull(textureSamplerBinding);
+			AssertTextureBindingUsageFlags(textureSamplerBinding.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[1];
+			var samplerPtrs = stackalloc IntPtr[1];
+
+			texturePtrs[0] = textureSamplerBinding.Texture.Handle;
+			samplerPtrs[0] = textureSamplerBinding.Sampler.Handle;
+
+			Refresh.Refresh_BindFragmentSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
 		}
 
 		/// <summary>
-		/// Binds samplers to be used by the vertex shader.
+		/// Binds samplers to be used by the fragment shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertFragmentSamplerCount(2);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[2];
+			var samplerPtrs = stackalloc IntPtr[2];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+
+			Refresh.Refresh_BindFragmentSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the fragment shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo,
+			in TextureSamplerBinding textureSamplerBindingThree
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertFragmentSamplerCount(3);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[3];
+			var samplerPtrs = stackalloc IntPtr[3];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+
+			Refresh.Refresh_BindFragmentSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the fragment shader.
+		/// </summary>
+		/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
+		/// <param name="textureSamplerBindingFour">The fourth texture-sampler to bind.</param>
+		public unsafe void BindFragmentSamplers(
+			in TextureSamplerBinding textureSamplerBindingOne,
+			in TextureSamplerBinding textureSamplerBindingTwo,
+			in TextureSamplerBinding textureSamplerBindingThree,
+			in TextureSamplerBinding textureSamplerBindingFour
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+			AssertFragmentSamplerCount(4);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
+			AssertTextureSamplerBindingNonNull(textureSamplerBindingFour);
+			AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
+			AssertTextureBindingUsageFlags(textureSamplerBindingFour.Texture);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[4];
+			var samplerPtrs = stackalloc IntPtr[4];
+
+			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
+			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
+			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
+			texturePtrs[3] = textureSamplerBindingFour.Texture.Handle;
+
+			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
+			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+			samplerPtrs[3] = textureSamplerBindingFour.Sampler.Handle;
+
+			Refresh.Refresh_BindFragmentSamplers(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) samplerPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds samplers to be used by the fragment shader.
 		/// </summary>
 		/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
 		public unsafe void BindFragmentSamplers(
-			ArraySegment<TextureSamplerBinding> textureSamplerBindings
-		)
-		{
+			in Span<TextureSamplerBinding> textureSamplerBindings
+		) {
 #if DEBUG
 			AssertGraphicsPipelineBound();
-
-			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount == 0)
-			{
-				throw new System.InvalidOperationException("The fragment shader of the current graphics pipeline does not take any samplers!");
-			}
-
-			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount < textureSamplerBindings.Count)
-			{
-				throw new System.InvalidOperationException("Fragment sampler count exceeds the amount used by the fragment shader!");
-			}
+			AssertFragmentSamplerCount(textureSamplerBindings.Length);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Count];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Count];
+			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
 
-			for (var i = 0; i < textureSamplerBindings.Count; i += 1)
+			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
 #if DEBUG
 				AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
@@ -463,22 +1379,11 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Binds samplers to be used by the fragment shader.
-		/// </summary>
-		/// <param name="textureSamplerBindings">An array of texture-sampler pairs to bind.</param>
-		public unsafe void BindFragmentSamplers(
-			params TextureSamplerBinding[] textureSamplerBindings
-		)
-		{
-			BindFragmentSamplers(new ArraySegment<TextureSamplerBinding>(textureSamplerBindings));
-		}
-
-		/// <summary>
 		/// Pushes vertex shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset value to be used with draw calls.</returns>
 		public unsafe uint PushVertexShaderUniforms<T>(
-			params T[] uniforms
+			in T uniforms
 		) where T : unmanaged
 		{
 #if DEBUG
@@ -490,13 +1395,13 @@ namespace MoonWorks.Graphics
 			}
 #endif
 
-			fixed (T* ptr = &uniforms[0])
+			fixed (T* uniformsPtr = &uniforms)
 			{
 				return Refresh.Refresh_PushVertexShaderUniforms(
 					Device.Handle,
 					Handle,
-					(IntPtr) ptr,
-					(uint) (uniforms.Length * sizeof(T))
+					(IntPtr) uniformsPtr,
+					(uint) sizeof(T)
 				);
 			}
 		}
@@ -506,7 +1411,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <returns>A starting offset to be used with draw calls.</returns>
 		public unsafe uint PushFragmentShaderUniforms<T>(
-			params T[] uniforms
+			in T uniforms
 		) where T : unmanaged
 		{
 #if DEBUG
@@ -517,14 +1422,13 @@ namespace MoonWorks.Graphics
 				throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
 			}
 #endif
-
-			fixed (T* ptr = &uniforms[0])
+			fixed (T* uniformsPtr = &uniforms)
 			{
 				return Refresh.Refresh_PushFragmentShaderUniforms(
 					Device.Handle,
 					Handle,
-					(IntPtr) ptr,
-					(uint) (uniforms.Length * sizeof(T))
+					(IntPtr) uniformsPtr,
+					(uint) sizeof(T)
 				);
 			}
 		}
@@ -534,7 +1438,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <returns>A starting offset to be used with dispatch calls.</returns>
 		public unsafe uint PushComputeShaderUniforms<T>(
-			params T[] uniforms
+			in T uniforms
 		) where T : unmanaged
 		{
 #if DEBUG
@@ -546,13 +1450,13 @@ namespace MoonWorks.Graphics
 			}
 #endif
 
-			fixed (T* ptr = &uniforms[0])
+			fixed (T* uniformsPtr = &uniforms)
 			{
 				return Refresh.Refresh_PushComputeShaderUniforms(
 					Device.Handle,
 					Handle,
-					(IntPtr) ptr,
-					(uint) (uniforms.Length * sizeof(T))
+					(IntPtr) uniformsPtr,
+					(uint) sizeof(T)
 				);
 			}
 		}
@@ -696,8 +1600,10 @@ namespace MoonWorks.Graphics
 				Handle
 			);
 
+#if DEBUG
 			currentGraphicsPipeline = null;
 			renderPassActive = false;
+#endif
 		}
 
 		/// <summary>
@@ -707,7 +1613,7 @@ namespace MoonWorks.Graphics
 		/// If null is returned, presentation will not occur.
 		/// It is an error to acquire two swapchain textures from the same window in one command buffer.
 		/// </summary>
-		public Texture? AcquireSwapchainTexture(
+		public Texture AcquireSwapchainTexture(
 			Window window
 		)
 		{
@@ -1011,6 +1917,58 @@ namespace MoonWorks.Graphics
 			}
 		}
 
+		private void AssertRenderPassPipelineFormatMatch(GraphicsPipeline graphicsPipeline)
+		{
+			for (var i = 0; i < graphicsPipeline.AttachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
+			{
+				TextureFormat format;
+				if (i == 0)
+				{
+					format = colorFormatOne;
+				}
+				else if (i == 1)
+				{
+					format = colorFormatTwo;
+				}
+				else if (i == 2)
+				{
+					format = colorFormatThree;
+				}
+				else
+				{
+					format = colorFormatFour;
+				}
+
+				var pipelineFormat = graphicsPipeline.AttachmentInfo.ColorAttachmentDescriptions[i].Format;
+				if (pipelineFormat != format)
+				{
+					throw new System.InvalidOperationException($"Color texture format mismatch! Pipeline expects {pipelineFormat}, render pass attachment is {format}");
+				}
+			}
+
+			var pipelineDepthFormat = graphicsPipeline.AttachmentInfo.DepthStencilFormat;
+			if (pipelineDepthFormat != depthStencilFormat)
+			{
+				throw new System.InvalidOperationException($"Depth texture format mismatch! Pipeline expects {pipelineDepthFormat}, render pass attachment is {depthStencilFormat}");
+			}
+		}
+
+		private void AssertVertexSamplerCount(int count)
+		{
+			if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount != count)
+			{
+				throw new System.InvalidOperationException($"Vertex sampler expected {currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount} samplers, but received {count}");
+			}
+		}
+
+		private void AssertFragmentSamplerCount(int count)
+		{
+			if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount != count)
+			{
+				throw new System.InvalidOperationException($"Fragment sampler expected {currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount} samplers, but received {count}");
+			}
+		}
+
 		private void AssertComputePipelineBound(string message = "No compute pipeline is bound!")
 		{
 			if (currentComputePipeline == null)
@@ -1019,37 +1977,43 @@ namespace MoonWorks.Graphics
 			}
 		}
 
-		private void AssertValidColorAttachments(ColorAttachmentInfo[] colorAttachmentInfos, bool atLeastOneRequired)
+		private void AssertComputeBufferCount(int count)
 		{
-			if (atLeastOneRequired && colorAttachmentInfos.Length == 0)
+			if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount != count)
 			{
-				throw new System.ArgumentException("Render pass must contain at least one attachment!");
+				throw new System.InvalidOperationException($"Compute pipeline expects {currentComputePipeline.ComputeShaderInfo.BufferBindingCount} buffers, but received {count}");
 			}
+		}
 
-			currentSampleCount = (colorAttachmentInfos.Length > 0) ? colorAttachmentInfos[0].SampleCount : SampleCount.One;
-
-			if (colorAttachmentInfos.Length > 4)
+		private void AssertComputeTextureCount(int count)
+		{
+			if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount != count)
 			{
-				throw new System.ArgumentException("Render pass cannot have more than 4 color attachments!");
+				throw new System.InvalidOperationException($"Compute pipeline expects {currentComputePipeline.ComputeShaderInfo.ImageBindingCount} textures, but received {count}");
 			}
+		}
 
-			for (int i = 0; i < colorAttachmentInfos.Length; i += 1)
+		private void AssertTextureNotNull(ColorAttachmentInfo colorAttachmentInfo)
+		{
+			if (colorAttachmentInfo.Texture == null || colorAttachmentInfo.Texture.Handle == IntPtr.Zero)
 			{
-				if (colorAttachmentInfos[i].Texture == null ||
-					colorAttachmentInfos[i].Texture.Handle == IntPtr.Zero)
-				{
-					throw new System.ArgumentException("Render pass color attachment Texture cannot be null!");
-				}
+				throw new System.ArgumentException("Render pass color attachment Texture cannot be null!");
+			}
+		}
 
-				if ((colorAttachmentInfos[i].Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
-				{
-					throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
-				}
+		private void AssertColorTarget(ColorAttachmentInfo colorAttachmentInfo)
+		{
+			if ((colorAttachmentInfo.Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
+			{
+				throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
+			}
+		}
 
-				if (colorAttachmentInfos[i].SampleCount != currentSampleCount)
-				{
-					throw new System.ArgumentException("All color attachments in a render pass must have the same SampleCount!");
-				}
+		private void AssertSameSampleCount(ColorAttachmentInfo a, ColorAttachmentInfo b)
+		{
+			if (a.SampleCount != b.SampleCount)
+			{
+				throw new System.ArgumentException("All color attachments in a render pass must have the same SampleCount!");
 			}
 		}
 

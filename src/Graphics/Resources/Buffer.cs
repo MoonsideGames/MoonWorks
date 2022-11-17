@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -77,6 +76,11 @@ namespace MoonWorks.Graphics
 					dataLengthInBytes
 				);
 			}
+		}
+
+		public static implicit operator BufferBinding(Buffer b)
+		{
+			return new BufferBinding(b, 0);
 		}
 	}
 }

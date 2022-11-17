@@ -14,7 +14,11 @@ namespace MoonWorks.Graphics
 
 		public GraphicsShaderInfo VertexShaderInfo { get; }
 		public GraphicsShaderInfo FragmentShaderInfo { get; }
-		internal SampleCount SampleCount { get; }
+		public  SampleCount SampleCount { get; }
+
+#if DEBUG
+		internal GraphicsPipelineAttachmentInfo AttachmentInfo { get; }
+#endif
 
 		public unsafe GraphicsPipeline(
 			GraphicsDevice device,
@@ -113,6 +117,10 @@ namespace MoonWorks.Graphics
 			VertexShaderInfo = vertexShaderInfo;
 			FragmentShaderInfo = fragmentShaderInfo;
 			SampleCount = multisampleState.MultisampleCount;
+
+#if DEBUG
+			AttachmentInfo = attachmentInfo;
+#endif
 		}
 	}
 }
