@@ -592,7 +592,7 @@ namespace MoonWorks.Math
 			return (end * time * time * (((s + 1) * time) - s)) + start;
 		}
 
-		public static float InBack(float start, float end, float time, float duration) => InBack(start, end, time, duration);
+		public static float InBack(float start, float end, float time, float duration) => InBack(start, end, time, duration, 1.70158f);
 
 		public static float OutBack(float start, float end, float time, float duration, float s = 1.70158f)
 		{
@@ -600,7 +600,7 @@ namespace MoonWorks.Math
 			return (end * ((time * time * (((s + 1) * time) + s)) + 1)) + start;
 		}
 
-		public static float OutBack(float start, float end, float time, float duration) => OutBack(start, end, time, duration);
+		public static float OutBack(float start, float end, float time, float duration) => OutBack(start, end, time, duration, 1.70158f);
 
 		public static float InOutBack(float start, float end, float time, float duration, float s = 1.70158f)
 		{
@@ -617,7 +617,7 @@ namespace MoonWorks.Math
 			}
 		}
 
-		public static float InOutBack(float start, float end, float time, float duration) => InOutBack(start, end, time, duration);
+		public static float InOutBack(float start, float end, float time, float duration) => InOutBack(start, end, time, duration, 1.70158f);
 
 		public static float OutInBack(float start, float end, float time, float duration, float s = 1.70158f)
 		{
@@ -631,7 +631,7 @@ namespace MoonWorks.Math
 			}
 		}
 
-		public static float OutInBack(float start, float end, float time, float duration) => OutInBack(start, end, time, duration);
+		public static float OutInBack(float start, float end, float time, float duration) => OutInBack(start, end, time, duration, 1.70158f);
 
 		private static readonly Fix64 S_DEFAULT = Fix64.FromFraction(170158, 100000);
 		private static readonly Fix64 S_MULTIPLIER = Fix64.FromFraction(61, 40);
