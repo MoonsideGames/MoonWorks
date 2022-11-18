@@ -4,6 +4,8 @@ namespace MoonWorks.Input
     {
         Left,
         Right,
-        Middle
+        Middle,
+		X1,
+		X2
     }
 }

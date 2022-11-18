@@ -8,6 +8,8 @@ namespace MoonWorks.Input
 		public MouseButton LeftButton { get; }
 		public MouseButton MiddleButton { get; }
 		public MouseButton RightButton { get; }
+		public MouseButton X1Button { get; }
+		public MouseButton X2Button { get; }
 
 		public int X { get; private set; }
 		public int Y { get; private set; }
@@ -41,27 +43,23 @@ namespace MoonWorks.Input
 
 		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
 
-		private IEnumerable<MouseButton> Buttons
-		{
-			get
-			{
-				yield return LeftButton;
-				yield return MiddleButton;
-				yield return RightButton;
-			}
-		}
+		private IEnumerable<MouseButton> Buttons => CodeToButton.Values;
 
 		public Mouse()
 		{
 			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_BUTTON_LMASK);
 			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_BUTTON_MMASK);
 			RightButton = new MouseButton(this, MouseButtonCode.Right, SDL.SDL_BUTTON_RMASK);
+			X1Button = new MouseButton(this, MouseButtonCode.X1, SDL.SDL_BUTTON_X1MASK);
+			X2Button = new MouseButton(this, MouseButtonCode.X2, SDL.SDL_BUTTON_X2MASK);
 
 			CodeToButton = new Dictionary<MouseButtonCode, MouseButton>
 			{
 				{ MouseButtonCode.Left, LeftButton },
 				{ MouseButtonCode.Right, RightButton },
-				{ MouseButtonCode.Middle, MiddleButton }
+				{ MouseButtonCode.Middle, MiddleButton },
+				{ MouseButtonCode.X1, X1Button },
+				{ MouseButtonCode.X2, X2Button }
 			};
 		}
 
@@ -80,12 +78,10 @@ namespace MoonWorks.Input
 			Wheel = WheelRaw - previousWheelRaw;
 			previousWheelRaw = WheelRaw;
 
-			LeftButton.Update();
-			MiddleButton.Update();
-			RightButton.Update();
-
 			foreach (var button in Buttons)
 			{
+				button.Update();
+
 				if (button.IsPressed)
 				{
 					AnyPressed = true;
