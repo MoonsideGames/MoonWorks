@@ -86,8 +86,6 @@ namespace MoonWorks.Input
 
 			foreach (var button in Buttons)
 			{
-				button.Update();
-
 				if (button.IsPressed)
 				{
 					AnyPressed = true;
