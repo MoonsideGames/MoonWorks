@@ -8,6 +8,8 @@
 		public bool IsHeld => ButtonStatus == ButtonStatus.Held;
 		public bool IsDown => ButtonStatus == ButtonStatus.Pressed || ButtonStatus == ButtonStatus.Held;
 		public bool IsReleased => ButtonStatus == ButtonStatus.Released;
+		public bool IsIdle => ButtonStatus == ButtonStatus.Idle;
+		public bool IsUp => ButtonStatus == ButtonStatus.Idle || ButtonStatus == ButtonStatus.Released;
 
 		public ButtonState(ButtonStatus buttonStatus)
 		{
@@ -18,26 +20,34 @@
 		{
 			if (isPressed)
 			{
-				if (ButtonStatus == ButtonStatus.Pressed)
-				{
-					return new ButtonState(ButtonStatus.Held);
-				}
-				else if (ButtonStatus == ButtonStatus.Released)
+				if (IsUp)
 				{
 					return new ButtonState(ButtonStatus.Pressed);
 				}
-				else if (ButtonStatus == ButtonStatus.Held)
+				else
 				{
 					return new ButtonState(ButtonStatus.Held);
 				}
 			}
-
-			return new ButtonState(ButtonStatus.Released);
+			else
+			{
+				if (IsDown)
+				{
+					return new ButtonState(ButtonStatus.Released);
+				}
+				else
+				{
+					return new ButtonState(ButtonStatus.Idle);
+				}
+			}
 		}
 
+		/// <summary>
+		/// Combines two button states. Useful for alt controls or input buffering.
+		/// </summary>
 		public static ButtonState operator |(ButtonState a, ButtonState b)
 		{
-			if (a.ButtonStatus == ButtonStatus.Released)
+			if (a.ButtonStatus == ButtonStatus.Idle || a.ButtonStatus == ButtonStatus.Released)
 			{
 				return b;
 			}
