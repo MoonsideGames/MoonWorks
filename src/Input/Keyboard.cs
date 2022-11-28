@@ -75,11 +75,6 @@ namespace MoonWorks.Input
 			}
 		}
 
-		public bool IsDown(KeyCode keycode)
-		{
-			return Keys[(int) keycode].IsDown;
-		}
-
 		public bool IsPressed(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsPressed;
@@ -90,9 +85,24 @@ namespace MoonWorks.Input
 			return Keys[(int) keycode].IsHeld;
 		}
 
+		public bool IsDown(KeyCode keycode)
+		{
+			return Keys[(int) keycode].IsDown;
+		}
+
 		public bool IsReleased(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsReleased;
+		}
+
+		public bool IsIdle(KeyCode keycode)
+		{
+			return Keys[(int) keycode].IsIdle;
+		}
+
+		public bool IsUp(KeyCode keycode)
+		{
+			return Keys[(int) keycode].IsUp;
 		}
 
 		public KeyboardButton Button(KeyCode keycode)
