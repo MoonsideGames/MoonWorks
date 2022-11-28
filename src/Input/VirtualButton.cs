@@ -5,9 +5,9 @@ namespace MoonWorks.Input
 		public ButtonState State { get; protected set; }
 
 		/// <summary>
-		/// True if the button is pressed or held.
+		/// True if the button was pressed this exact frame.
 		/// </summary>
-		public bool IsDown => State.IsDown;
+		public bool IsPressed => State.IsPressed;
 
 		/// <summary>
 		/// True if the button has been continuously held for more than one frame.
@@ -15,14 +15,24 @@ namespace MoonWorks.Input
 		public bool IsHeld => State.IsHeld;
 
 		/// <summary>
-		/// True if the button was pressed this exact frame.
+		/// True if the button is pressed or held.
 		/// </summary>
-		public bool IsPressed => State.IsPressed;
+		public bool IsDown => State.IsDown;
 
 		/// <summary>
-		/// True if the button is not pressed.
+		/// True if the button was released this frame.
 		/// </summary>
 		public bool IsReleased => State.IsReleased;
+
+		/// <summary>
+		/// True if the button was not pressed the previous or current frame.
+		/// </summary>
+		public bool IsIdle => State.IsIdle;
+
+		/// <summary>
+		/// True if the button is idle or released.
+		/// </summary>
+		public bool IsUp => State.IsUp;
 
 		internal virtual void Update()
 		{
