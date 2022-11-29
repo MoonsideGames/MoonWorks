@@ -1946,10 +1946,13 @@ namespace MoonWorks.Graphics
 				}
 			}
 
-			var pipelineDepthFormat = graphicsPipeline.AttachmentInfo.DepthStencilFormat;
-			if (pipelineDepthFormat != depthStencilFormat)
+			if (graphicsPipeline.AttachmentInfo.HasDepthStencilAttachment)
 			{
-				throw new System.InvalidOperationException($"Depth texture format mismatch! Pipeline expects {pipelineDepthFormat}, render pass attachment is {depthStencilFormat}");
+				var pipelineDepthFormat = graphicsPipeline.AttachmentInfo.DepthStencilFormat;
+				if (pipelineDepthFormat != depthStencilFormat)
+				{
+					throw new System.InvalidOperationException($"Depth texture format mismatch! Pipeline expects {pipelineDepthFormat}, render pass attachment is {depthStencilFormat}");
+				}
 			}
 		}
 
