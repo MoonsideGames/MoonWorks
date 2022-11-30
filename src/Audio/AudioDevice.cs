@@ -46,8 +46,8 @@ namespace MoonWorks.Audio
 			if (devices == 0)
 			{
 				Logger.LogError("No audio devices found!");
-				Handle = IntPtr.Zero;
 				FAudio.FAudio_Release(Handle);
+				Handle = IntPtr.Zero;
 				return;
 			}
 
