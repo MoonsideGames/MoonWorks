@@ -1612,11 +1612,11 @@ namespace MoonWorks.Graphics
 		/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
 		/// If null is returned, presentation will not occur.
 		/// It is an error to acquire two swapchain textures from the same window in one command buffer.
+		/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
 		/// </summary>
 		public Texture AcquireSwapchainTexture(
 			Window window
-		)
-		{
+		) {
 			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
 				Device.Handle,
 				Handle,
