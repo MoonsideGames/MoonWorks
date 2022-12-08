@@ -12,6 +12,7 @@ namespace MoonWorks.Collision.Float
 		private readonly int cellSize;
 
 		private readonly Dictionary<long, HashSet<T>> hashDictionary = new Dictionary<long, HashSet<T>>();
+		// FIXME: this ICollidable causes boxing which triggers garbage collection
 		private readonly Dictionary<T, (ICollidable, Transform2D, uint)> IDLookup = new Dictionary<T, (ICollidable, Transform2D, uint)>();
 
 		public int MinX { get; private set; } = 0;
