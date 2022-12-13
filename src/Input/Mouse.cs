@@ -43,8 +43,6 @@ namespace MoonWorks.Input
 
 		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
 
-		private IEnumerable<MouseButton> Buttons => CodeToButton.Values;
-
 		public Mouse()
 		{
 			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_BUTTON_LMASK);
@@ -78,7 +76,7 @@ namespace MoonWorks.Input
 			Wheel = WheelRaw - previousWheelRaw;
 			previousWheelRaw = WheelRaw;
 
-			foreach (var button in Buttons)
+			foreach (var button in CodeToButton.Values)
 			{
 				button.Update();
 
