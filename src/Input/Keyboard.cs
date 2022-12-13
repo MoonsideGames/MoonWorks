@@ -11,6 +11,7 @@ namespace MoonWorks.Input
 
 		public IntPtr State { get; private set; }
 
+		private KeyCode[] KeyCodes;
 		private KeyboardButton[] Keys { get; }
 		private int numKeys;
 
@@ -40,8 +41,10 @@ namespace MoonWorks.Input
 		{
 			SDL.SDL_GetKeyboardState(out numKeys);
 
+			KeyCodes = Enum.GetValues<KeyCode>();
 			Keys = new KeyboardButton[numKeys];
-			foreach (KeyCode keycode in Enum.GetValues(typeof(KeyCode)))
+
+			foreach (KeyCode keycode in KeyCodes)
 			{
 				Keys[(int) keycode] = new KeyboardButton(this, keycode);
 			}
@@ -53,18 +56,18 @@ namespace MoonWorks.Input
 
 			State = SDL.SDL_GetKeyboardState(out _);
 
-			foreach (int keycode in Enum.GetValues(typeof(KeyCode)))
+			foreach (KeyCode keycode in KeyCodes)
 			{
-				var button = Keys[keycode];
+				var button = Keys[(int) keycode];
 				button.Update();
 
 				if (button.IsPressed)
 				{
-					if (TextInputBindings.TryGetValue((KeyCode) keycode, out var textIndex))
+					if (TextInputBindings.TryGetValue(keycode, out var textIndex))
 					{
 						Inputs.OnTextInput(TextInputCharacters[(textIndex)]);
 					}
-					else if (IsDown(KeyCode.LeftControl) && (KeyCode) keycode == KeyCode.V)
+					else if (IsDown(KeyCode.LeftControl) && keycode == KeyCode.V)
 					{
 						Inputs.OnTextInput(TextInputCharacters[6]);
 					}

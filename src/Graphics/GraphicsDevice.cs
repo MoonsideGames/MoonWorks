@@ -101,6 +101,73 @@ namespace MoonWorks.Graphics
 			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle, 0));
 		}
 
+		public unsafe void Submit(CommandBuffer commandBuffer)
+		{
+			var commandBufferPtrs = stackalloc IntPtr[1];
+
+			commandBufferPtrs[0] = commandBuffer.Handle;
+
+			Refresh.Refresh_Submit(
+				Handle,
+				1,
+				(IntPtr) commandBufferPtrs
+			);
+		}
+
+		public unsafe void Submit(
+			CommandBuffer commandBufferOne,
+			CommandBuffer commandBufferTwo
+		) {
+			var commandBufferPtrs = stackalloc IntPtr[2];
+
+			commandBufferPtrs[0] = commandBufferOne.Handle;
+			commandBufferPtrs[1] = commandBufferTwo.Handle;
+
+			Refresh.Refresh_Submit(
+				Handle,
+				2,
+				(IntPtr) commandBufferPtrs
+			);
+		}
+
+		public unsafe void Submit(
+			CommandBuffer commandBufferOne,
+			CommandBuffer commandBufferTwo,
+			CommandBuffer commandBufferThree
+		) {
+			var commandBufferPtrs = stackalloc IntPtr[3];
+
+			commandBufferPtrs[0] = commandBufferOne.Handle;
+			commandBufferPtrs[1] = commandBufferTwo.Handle;
+			commandBufferPtrs[2] = commandBufferThree.Handle;
+
+			Refresh.Refresh_Submit(
+				Handle,
+				3,
+				(IntPtr) commandBufferPtrs
+			);
+		}
+
+		public unsafe void Submit(
+			CommandBuffer commandBufferOne,
+			CommandBuffer commandBufferTwo,
+			CommandBuffer commandBufferThree,
+			CommandBuffer commandBufferFour
+		) {
+			var commandBufferPtrs = stackalloc IntPtr[4];
+
+			commandBufferPtrs[0] = commandBufferOne.Handle;
+			commandBufferPtrs[1] = commandBufferTwo.Handle;
+			commandBufferPtrs[2] = commandBufferThree.Handle;
+			commandBufferPtrs[3] = commandBufferFour.Handle;
+
+			Refresh.Refresh_Submit(
+				Handle,
+				4,
+				(IntPtr) commandBufferPtrs
+			);
+		}
+
 		public unsafe void Submit(params CommandBuffer[] commandBuffers)
 		{
 			var commandBufferPtrs = stackalloc IntPtr[commandBuffers.Length];
