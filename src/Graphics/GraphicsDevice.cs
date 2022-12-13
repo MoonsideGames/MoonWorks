@@ -73,6 +73,10 @@ namespace MoonWorks.Graphics
 			{
 				window.Claimed = true;
 				window.SwapchainFormat = GetSwapchainFormat(window);
+				if (window.SwapchainTexture == null)
+				{
+					window.SwapchainTexture = new Texture(this, IntPtr.Zero, window.SwapchainFormat, 0, 0);
+				}
 			}
 
 			return success;

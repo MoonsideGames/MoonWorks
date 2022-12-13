@@ -9,14 +9,15 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Texture : GraphicsResource
 	{
-		public uint Width { get; }
-		public uint Height { get; }
+		public uint Width { get; internal set; }
+		public uint Height { get; internal set; }
 		public uint Depth { get; }
-		public TextureFormat Format { get; }
+		public TextureFormat Format { get; internal set; }
 		public bool IsCube { get; }
 		public uint LevelCount { get; }
 		public TextureUsageFlags UsageFlags { get; }
 
+		// FIXME: this allocates a delegate instance
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
 		/// <summary>

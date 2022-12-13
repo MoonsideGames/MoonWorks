@@ -1630,13 +1630,13 @@ namespace MoonWorks.Graphics
 				return null;
 			}
 
-			return new Texture(
-				Device,
-				texturePtr,
-				window.SwapchainFormat,
-				width,
-				height
-			);
+			// Override the texture properties to avoid allocating a new texture instance!
+			window.SwapchainTexture.Handle = texturePtr;
+			window.SwapchainTexture.Width = width;
+			window.SwapchainTexture.Height = height;
+			window.SwapchainTexture.Format = window.SwapchainFormat;
+
+			return window.SwapchainTexture;
 		}
 
 		/// <summary>

@@ -5,7 +5,7 @@ namespace MoonWorks.Graphics
 	public abstract class GraphicsResource : IDisposable
 	{
 		public GraphicsDevice Device { get; }
-		public IntPtr Handle { get; protected set; }
+		public IntPtr Handle { get; internal set; }
 
 		public bool IsDisposed { get; private set; }
 		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MoonWorks.Graphics;
 using SDL2;
 
 namespace MoonWorks
@@ -10,6 +11,7 @@ namespace MoonWorks
 		public ScreenMode ScreenMode { get; private set; }
 		public uint Width { get; private set; }
 		public uint Height { get; private set; }
+		internal Texture SwapchainTexture { get; set; } = null;
 
 		public bool Claimed { get; internal set; }
 		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }
