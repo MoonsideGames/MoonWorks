@@ -823,6 +823,11 @@ namespace MoonWorks.Graphics
 		{
 #if DEBUG
 			AssertRenderPassActive();
+
+			if (scissor.X < 0 || scissor.Y < 0 || scissor.W <= 0 || scissor.H <= 0)
+			{
+				throw new System.ArgumentOutOfRangeException("Scissor position cannot be negative and dimensions must be positive!");
+			}
 #endif
 
 			Refresh.Refresh_SetScissor(
