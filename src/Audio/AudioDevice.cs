@@ -118,13 +118,13 @@ namespace MoonWorks.Audio
 
 			IntPtr chainPtr;
 			chainPtr = Marshal.AllocHGlobal(
-				sizeof(FAudio.FAudioEffectChain)
+				Marshal.SizeOf<FAudio.FAudioEffectChain>()
 			);
 
 			FAudio.FAudioEffectChain* reverbChain = (FAudio.FAudioEffectChain*) chainPtr;
 			reverbChain->EffectCount = 1;
 			reverbChain->pEffectDescriptors = Marshal.AllocHGlobal(
-				sizeof(FAudio.FAudioEffectDescriptor)
+				Marshal.SizeOf<FAudio.FAudioEffectDescriptor>()
 			);
 
 			FAudio.FAudioEffectDescriptor* reverbDescriptor =
@@ -157,7 +157,7 @@ namespace MoonWorks.Audio
 			// Defaults based on FAUDIOFX_I3DL2_PRESET_GENERIC
 
 			IntPtr reverbParamsPtr = Marshal.AllocHGlobal(
-				sizeof(FAudio.FAudioFXReverbParameters)
+				Marshal.SizeOf<FAudio.FAudioFXReverbParameters>()
 			);
 
 			FAudio.FAudioFXReverbParameters* reverbParams = (FAudio.FAudioFXReverbParameters*) reverbParamsPtr;
@@ -187,7 +187,7 @@ namespace MoonWorks.Audio
 				ReverbVoice,
 				0,
 				reverbParamsPtr,
-				(uint) sizeof(FAudio.FAudioFXReverbParameters),
+				(uint) Marshal.SizeOf<FAudio.FAudioFXReverbParameters>(),
 				0
 			);
 			Marshal.FreeHGlobal(reverbParamsPtr);
@@ -198,7 +198,7 @@ namespace MoonWorks.Audio
 			{
 				SendCount = 2,
 				pSends = Marshal.AllocHGlobal(
-					2 * sizeof(FAudio.FAudioSendDescriptor)
+					2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()
 				)
 			};
 			FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) ReverbSends.pSends;

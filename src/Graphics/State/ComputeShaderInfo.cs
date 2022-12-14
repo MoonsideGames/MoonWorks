@@ -24,7 +24,7 @@ namespace MoonWorks.Graphics
 			{
 				ShaderModule = shaderModule,
 				EntryPointName = entryPointName,
-				UniformBufferSize = (uint) sizeof(T),
+				UniformBufferSize = (uint) Marshal.SizeOf<T>(),
 				BufferBindingCount = bufferBindingCount,
 				ImageBindingCount = imageBindingCount
 			};

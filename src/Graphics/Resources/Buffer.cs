@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -32,7 +33,7 @@ namespace MoonWorks.Graphics
 			return new Buffer(
 				device,
 				usageFlags,
-				(uint) sizeof(T) * elementCount
+				(uint) Marshal.SizeOf<T>() * elementCount
 			);
 		}
 

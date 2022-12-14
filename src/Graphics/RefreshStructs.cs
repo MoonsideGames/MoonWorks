@@ -134,7 +134,7 @@ namespace MoonWorks.Graphics
 			{
 				Binding = 0,
 				InputRate = VertexInputRate.Vertex,
-				Stride = (uint) sizeof(T)
+				Stride = (uint) Marshal.SizeOf<T>()
 			};
 		}
 	}

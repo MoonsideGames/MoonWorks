@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -1406,7 +1407,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) uniformsPtr,
-					(uint) sizeof(T)
+					(uint) Marshal.SizeOf<T>()
 				);
 			}
 		}
@@ -1433,7 +1434,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) uniformsPtr,
-					(uint) sizeof(T)
+					(uint) Marshal.SizeOf<T>()
 				);
 			}
 		}
@@ -1461,7 +1462,7 @@ namespace MoonWorks.Graphics
 					Device.Handle,
 					Handle,
 					(IntPtr) uniformsPtr,
-					(uint) sizeof(T)
+					(uint) Marshal.SizeOf<T>()
 				);
 			}
 		}
@@ -1720,7 +1721,7 @@ namespace MoonWorks.Graphics
 			AssertRenderPassInactive("Cannot copy during render pass!");
 #endif
 
-			var elementSize = sizeof(T);
+			var elementSize = Marshal.SizeOf<T>();
 
 			fixed (T* ptr = &data[startElement])
 			{
@@ -1749,9 +1750,9 @@ namespace MoonWorks.Graphics
 				Device.Handle,
 				Handle,
 				buffer.Handle,
-				(uint) sizeof(T) * bufferOffsetInElements,
+				(uint) Marshal.SizeOf<T>() * bufferOffsetInElements,
 				dataPtr,
-				(uint) sizeof(T) * numElements
+				(uint) Marshal.SizeOf<T>() * numElements
 			);
 		}
 
