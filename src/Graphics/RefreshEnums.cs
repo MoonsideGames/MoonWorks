@@ -221,11 +221,7 @@ namespace MoonWorks.Graphics
 		OneMinusDestinationAlpha,
 		ConstantColor,
 		OneMinusConstantColor,
-		SourceAlphaSaturate,
-		SourceOneColor,
-		OneMinusSourceOneColor,
-		SourceOneAlpha,
-		OneMinusSourceOneAlpha
+		SourceAlphaSaturate
 	}
 
 	[Flags]

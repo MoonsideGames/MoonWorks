@@ -14,7 +14,7 @@ namespace MoonWorks.Graphics
 
 		public GraphicsShaderInfo VertexShaderInfo { get; }
 		public GraphicsShaderInfo FragmentShaderInfo { get; }
-		public  SampleCount SampleCount { get; }
+		public SampleCount SampleCount { get; }
 
 #if DEBUG
 		internal GraphicsPipelineAttachmentInfo AttachmentInfo { get; }
@@ -89,7 +89,6 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.rasterizerState.depthBiasConstantFactor = rasterizerState.DepthBiasConstantFactor;
 			refreshGraphicsPipelineCreateInfo.rasterizerState.depthBiasEnable = Conversions.BoolToByte(rasterizerState.DepthBiasEnable);
 			refreshGraphicsPipelineCreateInfo.rasterizerState.depthBiasSlopeFactor = rasterizerState.DepthBiasSlopeFactor;
-			refreshGraphicsPipelineCreateInfo.rasterizerState.depthClampEnable = Conversions.BoolToByte(rasterizerState.DepthClampEnable);
 			refreshGraphicsPipelineCreateInfo.rasterizerState.fillMode = (Refresh.FillMode) rasterizerState.FillMode;
 			refreshGraphicsPipelineCreateInfo.rasterizerState.frontFace = (Refresh.FrontFace) rasterizerState.FrontFace;
 

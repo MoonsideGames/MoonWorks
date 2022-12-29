@@ -29,7 +29,6 @@
 		/// Factor applied to a fragment's slope in depth bias calculations. Only applies if depth biasing is enabled.
 		/// </summary>
 		public float DepthBiasSlopeFactor;
-		public bool DepthClampEnable;
 
 		/// <summary>
 		/// Specifies how triangles should be drawn.
