@@ -847,6 +847,10 @@ namespace MoonWorks.Graphics
 			in BufferBinding bufferBinding,
 			uint firstBinding = 0
 		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[1];
 			var offsets = stackalloc ulong[1];
 
@@ -874,6 +878,10 @@ namespace MoonWorks.Graphics
 			in BufferBinding bufferBindingTwo,
 			uint firstBinding = 0
 		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[2];
 			var offsets = stackalloc ulong[2];
 
@@ -906,6 +914,10 @@ namespace MoonWorks.Graphics
 			in BufferBinding bufferBindingThree,
 			uint firstBinding = 0
 		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[3];
 			var offsets = stackalloc ulong[3];
 
@@ -942,6 +954,10 @@ namespace MoonWorks.Graphics
 			in BufferBinding bufferBindingFour,
 			uint firstBinding = 0
 		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[4];
 			var offsets = stackalloc ulong[4];
 
@@ -974,6 +990,10 @@ namespace MoonWorks.Graphics
 			in Span<BufferBinding> bufferBindings,
 			uint firstBinding = 0
 		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+#endif
+
 			var bufferPtrs = stackalloc IntPtr[bufferBindings.Length];
 			var offsets = stackalloc ulong[bufferBindings.Length];
 
@@ -1623,6 +1643,13 @@ namespace MoonWorks.Graphics
 		public Texture AcquireSwapchainTexture(
 			Window window
 		) {
+#if DEBUG
+			if (!window.Claimed)
+			{
+				throw new System.InvalidOperationException("Cannot acquire swapchain texture, window has not been claimed!");
+			}
+#endif
+
 			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
 				Device.Handle,
 				Handle,
