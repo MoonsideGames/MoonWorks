@@ -364,4 +364,25 @@ namespace MoonWorks.Graphics
 			BlendState = blendState;
 		}
 	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct IndirectDrawCommand
+	{
+		public uint VertexCount;
+		public uint InstanceCount;
+		public uint FirstVertex;
+		public uint FirstInstance;
+
+		public IndirectDrawCommand(
+			uint vertexCount,
+			uint instanceCount,
+			uint firstVertex,
+			uint firstInstance
+		) {
+			VertexCount = vertexCount;
+			InstanceCount = instanceCount;
+			FirstVertex = firstVertex;
+			FirstInstance = firstInstance;
+		}
+	}
 }
