@@ -145,21 +145,6 @@ namespace MoonWorks.Graphics
 		public uint Binding;
 		public VertexElementFormat Format;
 		public uint Offset;
-
-		public static VertexAttribute Create(
-			uint binding,
-			uint location,
-			VertexElementFormat format,
-			uint offset
-		) {
-			return new VertexAttribute
-			{
-				Location = location,
-				Binding = binding,
-				Format = format,
-				Offset = offset
-			};
-		}
 	}
 
 	[StructLayout(LayoutKind.Sequential)]

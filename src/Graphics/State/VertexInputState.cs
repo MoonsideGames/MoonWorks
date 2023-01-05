@@ -30,12 +30,41 @@
 			VertexAttributes = vertexAttributes;
 		}
 
+		public VertexInputState(
+			VertexBindingAndAttributes bindingAndAttributes
+		) {
+			VertexBindings = new VertexBinding[] { bindingAndAttributes.VertexBinding };
+			VertexAttributes = bindingAndAttributes.VertexAttributes;
+		}
+
+		public VertexInputState(
+			VertexBindingAndAttributes[] bindingAndAttributesArray
+		) {
+			VertexBindings = new VertexBinding[bindingAndAttributesArray.Length];
+			var attributesLength = 0;
+
+			for (var i = 0; i < bindingAndAttributesArray.Length; i += 1)
+			{
+				VertexBindings[i] = bindingAndAttributesArray[i].VertexBinding;
+				attributesLength += bindingAndAttributesArray[i].VertexAttributes.Length;
+			}
+
+			VertexAttributes = new VertexAttribute[attributesLength];
+
+			var attributeIndex = 0;
+			for (var i = 0; i < bindingAndAttributesArray.Length; i += 1)
+			{
+				for (var j = 0; j < bindingAndAttributesArray[i].VertexAttributes.Length; j += 1)
+				{
+					VertexAttributes[attributeIndex] = bindingAndAttributesArray[i].VertexAttributes[j];
+					attributeIndex += 1;
+				}
+			}
+		}
+
 		public static VertexInputState CreateSingleBinding<T>() where T : unmanaged, IVertexType
 		{
-			return new VertexInputState(
-				VertexBinding.Create<T>(),
-				default(T).Attributes()
-			);
+			return new VertexInputState(VertexBindingAndAttributes.Create<T>(0));
 		}
 	}
 }
