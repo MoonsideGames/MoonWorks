@@ -127,12 +127,11 @@ namespace MoonWorks.Graphics
 		public uint Stride;
 		public VertexInputRate InputRate;
 
-		// Shortcut for the common case of having a single vertex binding.
-		public unsafe static VertexBinding Create<T>() where T : unmanaged
+		public static VertexBinding Create<T>(uint binding = 0) where T : unmanaged
 		{
 			return new VertexBinding
 			{
-				Binding = 0,
+				Binding = binding,
 				InputRate = VertexInputRate.Vertex,
 				Stride = (uint) Marshal.SizeOf<T>()
 			};
@@ -147,25 +146,18 @@ namespace MoonWorks.Graphics
 		public VertexElementFormat Format;
 		public uint Offset;
 
-		public static VertexAttribute Create<T>(
-			string fieldName,
+		public static VertexAttribute Create(
+			uint binding,
 			uint location,
-			uint binding = 0
-		)
-		{
-			var fieldInfo = typeof(T).GetField(fieldName);
-
-			if (fieldInfo == null)
-			{
-				throw new System.ArgumentException("Field not recognized!");
-			}
-
+			VertexElementFormat format,
+			uint offset
+		) {
 			return new VertexAttribute
 			{
-				Binding = binding,
 				Location = location,
-				Format = Conversions.TypeToVertexElementFormat(fieldInfo.FieldType),
-				Offset = (uint) Marshal.OffsetOf<T>(fieldName)
+				Binding = binding,
+				Format = format,
+				Offset = offset
 			};
 		}
 	}

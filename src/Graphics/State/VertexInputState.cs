@@ -10,16 +10,32 @@
 
 		public static readonly VertexInputState Empty = new VertexInputState
 		{
-			VertexBindings = new VertexBinding[0],
-			VertexAttributes = new VertexAttribute[0]
+			VertexBindings = System.Array.Empty<VertexBinding>(),
+			VertexAttributes = System.Array.Empty<VertexAttribute>()
 		};
 
 		public VertexInputState(
 			VertexBinding vertexBinding,
-			params VertexAttribute[] vertexAttributes
+			VertexAttribute[] vertexAttributes
 		) {
 			VertexBindings = new VertexBinding[] { vertexBinding };
 			VertexAttributes = vertexAttributes;
+		}
+
+		public VertexInputState(
+			VertexBinding[] vertexBindings,
+			VertexAttribute[] vertexAttributes
+		) {
+			VertexBindings = vertexBindings;
+			VertexAttributes = vertexAttributes;
+		}
+
+		public static VertexInputState CreateSingleBinding<T>() where T : unmanaged, IVertexType
+		{
+			return new VertexInputState(
+				VertexBinding.Create<T>(),
+				default(T).Attributes()
+			);
 		}
 	}
 }
