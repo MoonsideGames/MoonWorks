@@ -272,14 +272,12 @@ namespace MoonWorks.Graphics
 			const uint DDS_MAGIC = 0x20534444;
 			const uint DDS_HEADERSIZE = 124;
 			const uint DDS_PIXFMTSIZE = 32;
-			const uint DDSD_CAPS = 0x1;
 			const uint DDSD_HEIGHT = 0x2;
 			const uint DDSD_WIDTH = 0x4;
 			const uint DDSD_PITCH = 0x8;
-			const uint DDSD_FMT = 0x1000;
 			const uint DDSD_LINEARSIZE = 0x80000;
 			const uint DDSD_REQ = (
-				DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_FMT
+				DDSD_HEIGHT | DDSD_WIDTH
 			);
 			const uint DDSCAPS_MIPMAP = 0x400000;
 			const uint DDSCAPS_TEXTURE = 0x1000;
