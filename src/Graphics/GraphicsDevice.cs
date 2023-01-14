@@ -102,7 +102,7 @@ namespace MoonWorks.Graphics
 
 		public CommandBuffer AcquireCommandBuffer()
 		{
-			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle, 0));
+			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle));
 		}
 
 		public unsafe void Submit(CommandBuffer commandBuffer)
