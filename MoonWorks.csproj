@@ -24,13 +24,4 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Include="src\Video\Shaders\Compiled\FullscreenVert.spv">
-			<LogicalName>MoonWorks.Shaders.FullscreenVert.spv</LogicalName>
-		</EmbeddedResource>
-		<EmbeddedResource Include="src\Video\Shaders\Compiled\YUV2RGBAFrag.spv">
-			<LogicalName>MoonWorks.Shaders.YUV2RGBAFrag.spv</LogicalName>
-		</EmbeddedResource>
-	</ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ using System.IO;
 namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// Shader modules expect input in SPIR-V bytecode format.
+	/// Shader modules expect input in Refresh bytecode format.
 	/// </summary>
 	public class ShaderModule : GraphicsResource
 	{

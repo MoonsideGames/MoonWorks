@@ -50,6 +50,11 @@ namespace MoonWorks.Video
 		public VideoPlayer(GraphicsDevice graphicsDevice, AudioDevice audioDevice)
 		{
 			GraphicsDevice = graphicsDevice;
+			if (GraphicsDevice.VideoPipeline == null)
+			{
+				throw new InvalidOperationException("Missing video shaders!");
+			}
+
 			AudioDevice = audioDevice;
 			LinearSampler = new Sampler(graphicsDevice, SamplerCreateInfo.LinearClamp);
 

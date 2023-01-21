@@ -14,8 +14,6 @@ namespace MoonWorks.Graphics
 		public SDL2.SDL.SDL_WindowFlags WindowFlags => (SDL2.SDL.SDL_WindowFlags) windowFlags;
 
 		// Built-in video pipeline
-		private ShaderModule VideoVertexShader { get; }
-		private ShaderModule VideoFragmentShader { get; }
 		internal GraphicsPipeline VideoPipeline { get; }
 
 		public bool IsDisposed { get; private set; }
@@ -25,8 +23,7 @@ namespace MoonWorks.Graphics
 		public GraphicsDevice(
 			Backend preferredBackend,
 			bool debugMode
-		)
-		{
+		) {
 			Backend = (Backend) Refresh.Refresh_SelectBackend((Refresh.Backend) preferredBackend, out windowFlags);
 
 			if (Backend == Backend.Invalid)
@@ -38,25 +35,43 @@ namespace MoonWorks.Graphics
 				Conversions.BoolToByte(debugMode)
 			);
 
-			VideoVertexShader = new ShaderModule(this, GetEmbeddedResource("MoonWorks.Shaders.FullscreenVert.spv"));
-			VideoFragmentShader = new ShaderModule(this, GetEmbeddedResource("MoonWorks.Shaders.YUV2RGBAFrag.spv"));
+			// Check for optional video shaders
+			string basePath = SDL2.SDL.SDL_GetBasePath();
+			string videoVertPath = Path.Combine(basePath, "video_fullscreen.refresh");
+			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.refresh");
+			if (File.Exists(videoVertPath) && File.Exists(videoFragPath))
+			{
+				ShaderModule videoVertShader = new ShaderModule(this, videoVertPath);
+				ShaderModule videoFragShader = new ShaderModule(this, videoFragPath);
 
-			VideoPipeline = new GraphicsPipeline(
-				this,
-				new GraphicsPipelineCreateInfo
-				{
-					AttachmentInfo = new GraphicsPipelineAttachmentInfo(
-						new ColorAttachmentDescription(TextureFormat.R8G8B8A8, ColorAttachmentBlendState.None)
-					),
-					DepthStencilState = DepthStencilState.Disable,
-					VertexShaderInfo = GraphicsShaderInfo.Create(VideoVertexShader, "main", 0),
-					FragmentShaderInfo = GraphicsShaderInfo.Create(VideoFragmentShader, "main", 3),
-					VertexInputState = VertexInputState.Empty,
-					RasterizerState = RasterizerState.CCW_CullNone,
-					PrimitiveType = PrimitiveType.TriangleList,
-					MultisampleState = MultisampleState.None
-				}
-			);
+				VideoPipeline = new GraphicsPipeline(
+					this,
+					new GraphicsPipelineCreateInfo
+					{
+						AttachmentInfo = new GraphicsPipelineAttachmentInfo(
+							new ColorAttachmentDescription(
+								TextureFormat.R8G8B8A8,
+								ColorAttachmentBlendState.None
+							)
+						),
+						DepthStencilState = DepthStencilState.Disable,
+						VertexShaderInfo = GraphicsShaderInfo.Create(
+							videoVertShader,
+							"main",
+							0
+						),
+						FragmentShaderInfo = GraphicsShaderInfo.Create(
+							videoFragShader,
+							"main",
+							3
+						),
+						VertexInputState = VertexInputState.Empty,
+						RasterizerState = RasterizerState.CCW_CullNone,
+						PrimitiveType = PrimitiveType.TriangleList,
+						MultisampleState = MultisampleState.None
+					}
+				);
+			}
 		}
 
 		public bool ClaimWindow(Window window, PresentMode presentMode)
@@ -212,11 +227,6 @@ namespace MoonWorks.Graphics
 			{
 				resources.Remove(resourceReference);
 			}
-		}
-
-		private static Stream GetEmbeddedResource(string name)
-		{
-			return typeof(GraphicsDevice).Assembly.GetManifestResourceStream(name);
 		}
 
 		protected virtual void Dispose(bool disposing)
