@@ -1489,7 +1489,6 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Draws using instanced rendering.
-		/// It is an error to call this method unless two vertex buffers have been bound.
 		/// </summary>
 		/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
 		/// <param name="startIndex">The starting index offset for the index buffer.</param>
