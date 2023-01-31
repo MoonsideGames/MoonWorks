@@ -9,6 +9,7 @@ namespace MoonWorks.Graphics
 		public uint Depth;
 		public bool IsCube;
 		public uint LevelCount;
+		public SampleCount SampleCount;
 		public TextureFormat Format;
 		public TextureUsageFlags UsageFlags;
 
@@ -21,6 +22,7 @@ namespace MoonWorks.Graphics
 				depth = Depth,
 				isCube = Conversions.BoolToByte(IsCube),
 				levelCount = LevelCount,
+				sampleCount = (Refresh.SampleCount) SampleCount,
 				format = (Refresh.TextureFormat) Format,
 				usageFlags = (Refresh.TextureUsageFlags) UsageFlags
 			};

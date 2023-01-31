@@ -15,6 +15,7 @@ namespace MoonWorks.Graphics
 		public TextureFormat Format { get; internal set; }
 		public bool IsCube { get; }
 		public uint LevelCount { get; }
+		public SampleCount SampleCount { get; }
 		public TextureUsageFlags UsageFlags { get; }
 
 		// FIXME: this allocates a delegate instance
@@ -39,13 +40,14 @@ namespace MoonWorks.Graphics
 
 			var byteCount = (uint) (width * height * channels);
 
-			TextureCreateInfo textureCreateInfo;
+			TextureCreateInfo textureCreateInfo = new TextureCreateInfo();
 			textureCreateInfo.Width = (uint) width;
 			textureCreateInfo.Height = (uint) height;
 			textureCreateInfo.Depth = 1;
 			textureCreateInfo.Format = TextureFormat.R8G8B8A8;
 			textureCreateInfo.IsCube = false;
 			textureCreateInfo.LevelCount = 1;
+			textureCreateInfo.SampleCount = SampleCount.One;
 			textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
 
 			var texture = new Texture(device, textureCreateInfo);
@@ -130,9 +132,9 @@ namespace MoonWorks.Graphics
 			uint height,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			uint levelCount = 1
-		)
-		{
+			uint levelCount = 1,
+			SampleCount sampleCount = SampleCount.One
+		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
 				Width = width,
@@ -140,6 +142,7 @@ namespace MoonWorks.Graphics
 				Depth = 1,
 				IsCube = false,
 				LevelCount = levelCount,
+				SampleCount = sampleCount,
 				Format = format,
 				UsageFlags = usageFlags
 			};
@@ -165,8 +168,7 @@ namespace MoonWorks.Graphics
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
 			uint levelCount = 1
-		)
-		{
+		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
 				Width = width,
@@ -195,8 +197,7 @@ namespace MoonWorks.Graphics
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
 			uint levelCount = 1
-		)
-		{
+		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
 				Width = size,
@@ -232,6 +233,7 @@ namespace MoonWorks.Graphics
 			Depth = textureCreateInfo.Depth;
 			IsCube = textureCreateInfo.IsCube;
 			LevelCount = textureCreateInfo.LevelCount;
+			SampleCount = textureCreateInfo.SampleCount;
 			UsageFlags = textureCreateInfo.UsageFlags;
 		}
 
@@ -255,6 +257,7 @@ namespace MoonWorks.Graphics
 			Depth = 1;
 			IsCube = false;
 			LevelCount = 1;
+			SampleCount = SampleCount.One;
 			UsageFlags = TextureUsageFlags.ColorTarget;
 		}
 

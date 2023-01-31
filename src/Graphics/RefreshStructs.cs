@@ -181,7 +181,6 @@ namespace MoonWorks.Graphics
 		public uint Depth;
 		public uint Layer;
 		public uint Level;
-		public SampleCount SampleCount;
 		public Color ClearColor;
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
@@ -189,15 +188,12 @@ namespace MoonWorks.Graphics
 		public ColorAttachmentInfo(
 			Texture texture,
 			Color clearColor,
-			SampleCount sampleCount = SampleCount.One,
 			StoreOp storeOp = StoreOp.Store
-		)
-		{
+		) {
 			Texture = texture;
 			Depth = 0;
 			Layer = 0;
 			Level = 0;
-			SampleCount = sampleCount;
 			ClearColor = clearColor;
 			LoadOp = LoadOp.Clear;
 			StoreOp = storeOp;
@@ -206,15 +202,12 @@ namespace MoonWorks.Graphics
 		public ColorAttachmentInfo(
 			Texture texture,
 			LoadOp loadOp = LoadOp.DontCare,
-			SampleCount sampleCount = SampleCount.One,
 			StoreOp storeOp = StoreOp.Store
-		)
-		{
+		) {
 			Texture = texture;
 			Depth = 0;
 			Layer = 0;
 			Level = 0;
-			SampleCount = sampleCount;
 			ClearColor = Color.White;
 			LoadOp = loadOp;
 			StoreOp = storeOp;
@@ -228,7 +221,6 @@ namespace MoonWorks.Graphics
 				depth = Depth,
 				layer = Layer,
 				level = Level,
-				sampleCount = (Refresh.SampleCount) SampleCount,
 				clearColor = new Refresh.Vec4
 				{
 					x = ClearColor.R / 255f,
