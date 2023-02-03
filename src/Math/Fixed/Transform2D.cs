@@ -24,7 +24,7 @@
 		}
 
 		public bool IsAxisAligned => Rotation % Fix64.PiOver2 == Fix64.Zero;
-		public bool IsUniformScale => Scale.X == Scale.Y;
+		public bool IsUniformScale => Scale.X == Scale.Y || Scale.X == -Scale.Y;
 
 		public static readonly Transform2D Identity = new Transform2D(Vector2.Zero, Fix64.Zero, Vector2.One);
 
