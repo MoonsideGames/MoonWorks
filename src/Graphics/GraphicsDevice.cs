@@ -37,8 +37,8 @@ namespace MoonWorks.Graphics
 
 			// Check for optional video shaders
 			string basePath = SDL2.SDL.SDL_GetBasePath();
-			string videoVertPath = Path.Combine(basePath, "video_fullscreen.refresh");
-			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.refresh");
+			string videoVertPath = Path.Combine(basePath, "video_fullscreen.vert.refresh");
+			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
 			if (File.Exists(videoVertPath) && File.Exists(videoFragPath))
 			{
 				ShaderModule videoVertShader = new ShaderModule(this, videoVertPath);
