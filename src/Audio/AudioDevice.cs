@@ -224,6 +224,11 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		public void SyncPlay()
+		{
+			FAudio.FAudio_CommitChanges(Handle, 1);
+		}
+
 		internal void AddDynamicSoundInstance(StreamingSound instance)
 		{
 			streamingSounds.Add(new WeakReference<StreamingSound>(instance));

@@ -253,6 +253,7 @@ namespace MoonWorks.Audio
 		}
 
 		public abstract void Play();
+		public abstract void QueueSyncPlay();
 		public abstract void Pause();
 		public abstract void Stop();
 		public abstract void StopImmediate();

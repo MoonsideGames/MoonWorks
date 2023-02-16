@@ -36,6 +36,16 @@ namespace MoonWorks.Audio
 
 		public override void Play()
 		{
+			PlayUsingOperationSet(0);
+		}
+
+		public override void QueueSyncPlay()
+		{
+			PlayUsingOperationSet(1);
+		}
+
+		private void PlayUsingOperationSet(uint operationSet)
+		{
 			if (State == SoundState.Playing)
 			{
 				return;
@@ -44,7 +54,7 @@ namespace MoonWorks.Audio
 			State = SoundState.Playing;
 
 			Update();
-			FAudio.FAudioSourceVoice_Start(Handle, 0, 0);
+			FAudio.FAudioSourceVoice_Start(Handle, 0, operationSet);
 		}
 
 		public override void Pause()
