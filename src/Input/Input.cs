@@ -95,7 +95,7 @@ namespace MoonWorks.Input
 					}
 					else
 					{
-						gamepads[slot].Handle = SDL.SDL_GameControllerOpen(index);
+						gamepads[slot].Handle = openResult;
 						System.Console.WriteLine($"Gamepad added to slot {slot}!");
 					}
 					return;
