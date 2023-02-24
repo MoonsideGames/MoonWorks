@@ -1408,10 +1408,10 @@ namespace MoonWorks.Graphics
 		/// Pushes vertex shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset value to be used with draw calls.</returns>
-		public unsafe uint PushVertexShaderUniforms<T>(
-			in T uniforms
-		) where T : unmanaged
-		{
+		public unsafe uint PushVertexShaderUniforms(
+			void* uniformsPtr,
+			uint size
+		) {
 #if DEBUG
 			AssertGraphicsPipelineBound();
 
@@ -1421,15 +1421,51 @@ namespace MoonWorks.Graphics
 			}
 #endif
 
+			return Refresh.Refresh_PushVertexShaderUniforms(
+				Device.Handle,
+				Handle,
+				(IntPtr) uniformsPtr,
+				size
+			);
+		}
+
+		/// <summary>
+		/// Pushes vertex shader uniforms to the device.
+		/// </summary>
+		/// <returns>A starting offset value to be used with draw calls.</returns>
+		public unsafe uint PushVertexShaderUniforms<T>(
+			in T uniforms
+		) where T : unmanaged
+		{
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return Refresh.Refresh_PushVertexShaderUniforms(
-					Device.Handle,
-					Handle,
-					(IntPtr) uniformsPtr,
-					(uint) Marshal.SizeOf<T>()
-				);
+				return PushVertexShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
+		}
+
+		/// <summary>
+		/// Pushes fragment shader uniforms to the device.
+		/// </summary>
+		/// <returns>A starting offset to be used with draw calls.</returns>
+		public unsafe uint PushFragmentShaderUniforms(
+			void* uniformsPtr,
+			uint size
+		) {
+#if DEBUG
+			AssertGraphicsPipelineBound();
+
+			if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize == 0)
+			{
+				throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
+			}
+#endif
+
+			return Refresh.Refresh_PushFragmentShaderUniforms(
+				Device.Handle,
+				Handle,
+				(IntPtr) uniformsPtr,
+				size
+			);
 		}
 
 		/// <summary>
@@ -1440,23 +1476,35 @@ namespace MoonWorks.Graphics
 			in T uniforms
 		) where T : unmanaged
 		{
-#if DEBUG
-			AssertGraphicsPipelineBound();
-
-			if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize == 0)
-			{
-				throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
-			}
-#endif
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return Refresh.Refresh_PushFragmentShaderUniforms(
-					Device.Handle,
-					Handle,
-					(IntPtr) uniformsPtr,
-					(uint) Marshal.SizeOf<T>()
-				);
+				return PushFragmentShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
+		}
+
+		/// <summary>
+		/// Pushes compute shader uniforms to the device.
+		/// </summary>
+		/// <returns>A starting offset to be used with dispatch calls.</returns>
+		public unsafe uint PushComputeShaderUniforms(
+			void* uniformsPtr,
+			uint size
+		) {
+#if DEBUG
+			AssertComputePipelineBound();
+
+			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
+			{
+				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
+			}
+#endif
+
+			return Refresh.Refresh_PushComputeShaderUniforms(
+				Device.Handle,
+				Handle,
+				(IntPtr) uniformsPtr,
+				size
+			);
 		}
 
 		/// <summary>
@@ -1467,23 +1515,9 @@ namespace MoonWorks.Graphics
 			in T uniforms
 		) where T : unmanaged
 		{
-#if DEBUG
-			AssertComputePipelineBound();
-
-			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
-			{
-				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
-			}
-#endif
-
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return Refresh.Refresh_PushComputeShaderUniforms(
-					Device.Handle,
-					Handle,
-					(IntPtr) uniformsPtr,
-					(uint) Marshal.SizeOf<T>()
-				);
+				return PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
 		}
 
