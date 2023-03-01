@@ -41,6 +41,17 @@ namespace MoonWorks.Input
 			}
 		}
 
+		private bool hidden;
+		public bool Hidden
+		{
+			get => hidden;
+			set
+			{
+				hidden = value;
+				SDL.SDL_ShowCursor(hidden ? SDL.SDL_DISABLE : SDL.SDL_ENABLE);
+			}
+		}
+
 		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
 
 		public Mouse()
