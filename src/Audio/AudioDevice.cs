@@ -10,7 +10,6 @@ namespace MoonWorks.Audio
 		public byte[] Handle3D { get; }
 		public IntPtr MasteringVoice { get; }
 		public FAudio.FAudioDeviceDetails DeviceDetails { get; }
-		public IntPtr ReverbVoice { get; }
 
 		public float CurveDistanceScalar = 1f;
 		public float DopplerScale = 1f;
@@ -26,8 +25,6 @@ namespace MoonWorks.Audio
 				FAudio.FAudioVoice_SetVolume(MasteringVoice, masteringVolume, 0);
 			}
 		}
-
-		internal FAudio.FAudioVoiceSends ReverbSends;
 
 		private readonly List<WeakReference<AudioResource>> resources = new List<WeakReference<AudioResource>>();
 		private readonly List<WeakReference<StreamingSound>> streamingSounds = new List<WeakReference<StreamingSound>>();
@@ -108,104 +105,6 @@ namespace MoonWorks.Audio
 				SpeedOfSound,
 				Handle3D
 			);
-
-			/* Init reverb */
-
-			IntPtr reverbVoice;
-
-			IntPtr reverb;
-			FAudio.FAudioCreateReverb(out reverb, 0);
-
-			IntPtr chainPtr;
-			chainPtr = Marshal.AllocHGlobal(
-				Marshal.SizeOf<FAudio.FAudioEffectChain>()
-			);
-
-			FAudio.FAudioEffectChain* reverbChain = (FAudio.FAudioEffectChain*) chainPtr;
-			reverbChain->EffectCount = 1;
-			reverbChain->pEffectDescriptors = Marshal.AllocHGlobal(
-				Marshal.SizeOf<FAudio.FAudioEffectDescriptor>()
-			);
-
-			FAudio.FAudioEffectDescriptor* reverbDescriptor =
-				(FAudio.FAudioEffectDescriptor*) reverbChain->pEffectDescriptors;
-
-			reverbDescriptor->InitialState = 1;
-			reverbDescriptor->OutputChannels = (uint) (
-				(DeviceDetails.OutputFormat.Format.nChannels == 6) ? 6 : 1
-			);
-			reverbDescriptor->pEffect = reverb;
-
-			FAudio.FAudio_CreateSubmixVoice(
-				Handle,
-				out reverbVoice,
-				1, /* omnidirectional reverb */
-				DeviceDetails.OutputFormat.Format.nSamplesPerSec,
-				0,
-				0,
-				IntPtr.Zero,
-				chainPtr
-			);
-			FAudio.FAPOBase_Release(reverb);
-
-			Marshal.FreeHGlobal(reverbChain->pEffectDescriptors);
-			Marshal.FreeHGlobal(chainPtr);
-
-			ReverbVoice = reverbVoice;
-
-			/* Init reverb params */
-			// Defaults based on FAUDIOFX_I3DL2_PRESET_GENERIC
-
-			IntPtr reverbParamsPtr = Marshal.AllocHGlobal(
-				Marshal.SizeOf<FAudio.FAudioFXReverbParameters>()
-			);
-
-			FAudio.FAudioFXReverbParameters* reverbParams = (FAudio.FAudioFXReverbParameters*) reverbParamsPtr;
-			reverbParams->WetDryMix = 100.0f;
-			reverbParams->ReflectionsDelay = 7;
-			reverbParams->ReverbDelay = 11;
-			reverbParams->RearDelay = FAudio.FAUDIOFX_REVERB_DEFAULT_REAR_DELAY;
-			reverbParams->PositionLeft = FAudio.FAUDIOFX_REVERB_DEFAULT_POSITION;
-			reverbParams->PositionRight = FAudio.FAUDIOFX_REVERB_DEFAULT_POSITION;
-			reverbParams->PositionMatrixLeft = FAudio.FAUDIOFX_REVERB_DEFAULT_POSITION_MATRIX;
-			reverbParams->PositionMatrixRight = FAudio.FAUDIOFX_REVERB_DEFAULT_POSITION_MATRIX;
-			reverbParams->EarlyDiffusion = 15;
-			reverbParams->LateDiffusion = 15;
-			reverbParams->LowEQGain = 8;
-			reverbParams->LowEQCutoff = 4;
-			reverbParams->HighEQGain = 8;
-			reverbParams->HighEQCutoff = 6;
-			reverbParams->RoomFilterFreq = 5000f;
-			reverbParams->RoomFilterMain = -10f;
-			reverbParams->RoomFilterHF = -1f;
-			reverbParams->ReflectionsGain = -26.0200005f;
-			reverbParams->ReverbGain = 10.0f;
-			reverbParams->DecayTime = 1.49000001f;
-			reverbParams->Density = 100.0f;
-			reverbParams->RoomSize = FAudio.FAUDIOFX_REVERB_DEFAULT_ROOM_SIZE;
-			FAudio.FAudioVoice_SetEffectParameters(
-				ReverbVoice,
-				0,
-				reverbParamsPtr,
-				(uint) Marshal.SizeOf<FAudio.FAudioFXReverbParameters>(),
-				0
-			);
-			Marshal.FreeHGlobal(reverbParamsPtr);
-
-			/* Init reverb sends */
-
-			ReverbSends = new FAudio.FAudioVoiceSends
-			{
-				SendCount = 2,
-				pSends = Marshal.AllocHGlobal(
-					2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()
-				)
-			};
-			FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) ReverbSends.pSends;
-			sendDesc[0].Flags = 0;
-			sendDesc[0].pOutputVoice = MasteringVoice;
-			sendDesc[1].Flags = 0;
-			sendDesc[1].pOutputVoice = ReverbVoice;
 		}
 
 		internal void Update()
@@ -268,7 +167,6 @@ namespace MoonWorks.Audio
 					resources.Clear();
 				}
 
-				FAudio.FAudioVoice_DestroyVoice(ReverbVoice);
 				FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
 				FAudio.FAudio_Release(Handle);
 

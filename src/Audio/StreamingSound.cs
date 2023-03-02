@@ -54,14 +54,14 @@ namespace MoonWorks.Audio
 			State = SoundState.Playing;
 
 			Update();
-			FAudio.FAudioSourceVoice_Start(Handle, 0, operationSet);
+			FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 		}
 
 		public override void Pause()
 		{
 			if (State == SoundState.Playing)
 			{
-				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
 				State = SoundState.Paused;
 			}
 		}
@@ -73,8 +73,8 @@ namespace MoonWorks.Audio
 
 		public override void StopImmediate()
 		{
-			FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+			FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
+			FAudio.FAudioSourceVoice_FlushSourceBuffers(Voice);
 			ClearBuffers();
 
 			State = SoundState.Stopped;
@@ -88,7 +88,7 @@ namespace MoonWorks.Audio
 			}
 
 			FAudio.FAudioSourceVoice_GetState(
-				Handle,
+				Voice,
 				out var state,
 				FAudio.FAUDIO_VOICE_NOSAMPLESPLAYED
 			);
@@ -136,7 +136,7 @@ namespace MoonWorks.Audio
 			};
 
 			FAudio.FAudioSourceVoice_SubmitSourceBuffer(
-				Handle,
+				Voice,
 				ref buf,
 				IntPtr.Zero
 			);

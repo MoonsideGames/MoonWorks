@@ -5,10 +5,13 @@ namespace MoonWorks.Audio
 {
 	public abstract class SoundInstance : AudioResource
 	{
-		internal IntPtr Handle;
+		internal IntPtr Voice;
 		internal FAudio.FAudioWaveFormatEx Format;
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
+
+		private ReverbEffect ReverbEffect;
+		private FAudio.FAudioVoiceSends ReverbSends;
 
 		public bool Is3D { get; protected set; }
 
@@ -35,7 +38,7 @@ namespace MoonWorks.Audio
 
 				SetPanMatrixCoefficients();
 				FAudio.FAudioVoice_SetOutputMatrix(
-					Handle,
+					Voice,
 					Device.MasteringVoice,
 					dspSettings.SrcChannelCount,
 					dspSettings.DstChannelCount,
@@ -63,33 +66,7 @@ namespace MoonWorks.Audio
 			set
 			{
 				volume = value;
-				FAudio.FAudioVoice_SetVolume(Handle, volume, 0);
-			}
-		}
-
-		private float reverb;
-		public unsafe float Reverb
-		{
-			get => reverb;
-			set
-			{
-				reverb = value;
-
-				float* outputMatrix = (float*) dspSettings.pMatrixCoefficients;
-				outputMatrix[0] = reverb;
-				if (dspSettings.SrcChannelCount == 2)
-				{
-					outputMatrix[1] = reverb;
-				}
-
-				FAudio.FAudioVoice_SetOutputMatrix(
-					Handle,
-					Device.ReverbVoice,
-					dspSettings.SrcChannelCount,
-					1,
-					dspSettings.pMatrixCoefficients,
-					0
-				);
+				FAudio.FAudioVoice_SetVolume(Voice, volume, 0);
 			}
 		}
 
@@ -112,7 +89,7 @@ namespace MoonWorks.Audio
 				filterParameters.Frequency = value;
 
 				FAudio.FAudioVoice_SetFilterParameters(
-					Handle,
+					Voice,
 					ref filterParameters,
 					0
 				);
@@ -128,7 +105,7 @@ namespace MoonWorks.Audio
 				filterParameters.OneOverQ = value;
 
 				FAudio.FAudioVoice_SetFilterParameters(
-					Handle,
+					Voice,
 					ref filterParameters,
 					0
 				);
@@ -168,10 +145,46 @@ namespace MoonWorks.Audio
 				}
 
 				FAudio.FAudioVoice_SetFilterParameters(
-					Handle,
+					Voice,
 					ref filterParameters,
 					0
 				);
+			}
+		}
+
+		private float reverb;
+		public unsafe float Reverb
+		{
+			get => reverb;
+			set
+			{
+				if (ReverbEffect != null)
+				{
+					reverb = value;
+
+					float* outputMatrix = (float*) dspSettings.pMatrixCoefficients;
+					outputMatrix[0] = reverb;
+					if (dspSettings.SrcChannelCount == 2)
+					{
+						outputMatrix[1] = reverb;
+					}
+
+					FAudio.FAudioVoice_SetOutputMatrix(
+						Voice,
+						ReverbEffect.Voice,
+						dspSettings.SrcChannelCount,
+						1,
+						dspSettings.pMatrixCoefficients,
+						0
+					);
+				}
+
+				#if DEBUG
+				if (ReverbEffect == null)
+				{
+					Logger.LogWarn("Tried to set reverb value before applying a reverb effect");
+				}
+				#endif
 			}
 		}
 
@@ -198,7 +211,7 @@ namespace MoonWorks.Audio
 
 			FAudio.FAudio_CreateSourceVoice(
 				Device.Handle,
-				out Handle,
+				out Voice,
 				ref Format,
 				FAudio.FAUDIO_VOICE_USEFILTER,
 				FAudio.FAUDIO_DEFAULT_FREQ_RATIO,
@@ -207,21 +220,13 @@ namespace MoonWorks.Audio
 				IntPtr.Zero
 			);
 
-			if (Handle == IntPtr.Zero)
+			if (Voice == IntPtr.Zero)
 			{
 				Logger.LogError("SoundInstance failed to initialize!");
 				return;
 			}
 
 			InitDSPSettings(Format.nChannels);
-
-			// FIXME: not everything should be running through reverb...
-			/*
-			FAudio.FAudioVoice_SetOutputVoices(
-				Handle,
-				ref Device.ReverbSends
-			);
-			*/
 
 			State = SoundState.Stopped;
 		}
@@ -243,7 +248,7 @@ namespace MoonWorks.Audio
 
 			UpdatePitch();
 			FAudio.FAudioVoice_SetOutputMatrix(
-				Handle,
+				Voice,
 				Device.MasteringVoice,
 				dspSettings.SrcChannelCount,
 				dspSettings.DstChannelCount,
@@ -252,30 +257,50 @@ namespace MoonWorks.Audio
 			);
 		}
 
+		public unsafe void ApplyReverb(ReverbEffect reverbEffect)
+		{
+			ReverbSends = new FAudio.FAudioVoiceSends();
+			ReverbSends.SendCount = 2;
+			ReverbSends.pSends = (nint) NativeMemory.Alloc((nuint) (2 * Marshal.SizeOf<FAudio.FAudioSendDescriptor>()));
+
+			FAudio.FAudioSendDescriptor* sendDesc = (FAudio.FAudioSendDescriptor*) ReverbSends.pSends;
+			sendDesc[0].Flags = 0;
+			sendDesc[0].pOutputVoice = Device.MasteringVoice;
+			sendDesc[1].Flags = 0;
+			sendDesc[1].pOutputVoice = reverbEffect.Voice;
+
+			FAudio.FAudioVoice_SetOutputVoices(
+				Voice,
+				ref ReverbSends
+			);
+
+			ReverbEffect = reverbEffect;
+		}
+
 		public abstract void Play();
 		public abstract void QueueSyncPlay();
 		public abstract void Pause();
 		public abstract void Stop();
 		public abstract void StopImmediate();
 
-		private void InitDSPSettings(uint srcChannels)
+		private unsafe void InitDSPSettings(uint srcChannels)
 		{
 			dspSettings = new FAudio.F3DAUDIO_DSP_SETTINGS();
 			dspSettings.DopplerFactor = 1f;
 			dspSettings.SrcChannelCount = srcChannels;
 			dspSettings.DstChannelCount = Device.DeviceDetails.OutputFormat.Format.nChannels;
 
-			int memsize = (
+			nuint memsize = (
 				4 *
-				(int) dspSettings.SrcChannelCount *
-				(int) dspSettings.DstChannelCount
+				dspSettings.SrcChannelCount *
+				dspSettings.DstChannelCount
 			);
 
-			dspSettings.pMatrixCoefficients = Marshal.AllocHGlobal(memsize);
+			dspSettings.pMatrixCoefficients = (nint) NativeMemory.Alloc(memsize);
 			unsafe
 			{
 				byte* memPtr = (byte*) dspSettings.pMatrixCoefficients;
-				for (int i = 0; i < memsize; i += 1)
+				for (uint i = 0; i < memsize; i += 1)
 				{
 					memPtr[i] = 0;
 				}
@@ -297,7 +322,7 @@ namespace MoonWorks.Audio
 			}
 
 			FAudio.FAudioSourceVoice_SetFrequencyRatio(
-				Handle,
+				Voice,
 				(float) System.Math.Pow(2.0, pitch) * doppler,
 				0
 			);
@@ -357,11 +382,16 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		protected override void Destroy()
+		protected unsafe override void Destroy()
 		{
 			StopImmediate();
-			FAudio.FAudioVoice_DestroyVoice(Handle);
-			Marshal.FreeHGlobal(dspSettings.pMatrixCoefficients);
+			FAudio.FAudioVoice_DestroyVoice(Voice);
+			NativeMemory.Free((void*) dspSettings.pMatrixCoefficients);
+
+			if (ReverbEffect != null)
+			{
+				NativeMemory.Free((void*) ReverbSends.pSends);
+			}
 		}
 	}
 }

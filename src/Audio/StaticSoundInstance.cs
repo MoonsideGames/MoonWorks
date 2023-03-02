@@ -14,7 +14,7 @@ namespace MoonWorks.Audio
 			get
 			{
 				FAudio.FAudioSourceVoice_GetState(
-					Handle,
+					Voice,
 					out var state,
 					FAudio.FAUDIO_VOICE_NOSAMPLESPLAYED
 				);
@@ -71,12 +71,12 @@ namespace MoonWorks.Audio
 			}
 
 			FAudio.FAudioSourceVoice_SubmitSourceBuffer(
-				Handle,
+				Voice,
 				ref Parent.Handle,
 				IntPtr.Zero
 			);
 
-			FAudio.FAudioSourceVoice_Start(Handle, 0, operationSet);
+			FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 			State = SoundState.Playing;
 		}
 
@@ -84,21 +84,21 @@ namespace MoonWorks.Audio
 		{
 			if (State == SoundState.Paused)
 			{
-				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
+				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
 				State = SoundState.Paused;
 			}
 		}
 
 		public override void Stop()
 		{
-			FAudio.FAudioSourceVoice_ExitLoop(Handle, 0);
+			FAudio.FAudioSourceVoice_ExitLoop(Voice, 0);
 			State = SoundState.Stopped;
 		}
 
 		public override void StopImmediate()
 		{
-			FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+			FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
+			FAudio.FAudioSourceVoice_FlushSourceBuffers(Voice);
 			State = SoundState.Stopped;
 		}
 
@@ -106,8 +106,8 @@ namespace MoonWorks.Audio
 		{
 			if (State == SoundState.Playing)
 			{
-				FAudio.FAudioSourceVoice_Stop(Handle, 0, 0);
-				FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
+				FAudio.FAudioSourceVoice_FlushSourceBuffers(Voice);
 			}
 
 			Parent.Handle.PlayBegin = sampleFrame;
@@ -123,11 +123,9 @@ namespace MoonWorks.Audio
 			Pan = 0;
 			Pitch = 0;
 			Volume = 1;
-			Reverb = 0;
 			Loop = false;
 			Is3D = false;
 			FilterType = FilterType.None;
-			Reverb = 0;
 		}
 	}
 }
