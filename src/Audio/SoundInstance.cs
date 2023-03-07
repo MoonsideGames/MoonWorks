@@ -1,12 +1,15 @@
 using System;
 using System.Runtime.InteropServices;
+using EasingFunction = System.Func<float, float>;
 
 namespace MoonWorks.Audio
 {
 	public abstract class SoundInstance : AudioResource
 	{
 		internal IntPtr Voice;
-		internal FAudio.FAudioWaveFormatEx Format;
+
+		private FAudio.FAudioWaveFormatEx format;
+		public FAudio.FAudioWaveFormatEx Format => format;
 
 		protected FAudio.F3DAUDIO_DSP_SETTINGS dspSettings;
 
@@ -21,30 +24,34 @@ namespace MoonWorks.Audio
 		public float Pan
 		{
 			get => pan;
-			set
+			internal set
 			{
-				pan = value;
-
-				if (pan < -1f)
+				value = Math.MathHelper.Clamp(value, -1f, 1f);
+				if (pan != value)
 				{
-					pan = -1f;
-				}
-				if (pan > 1f)
-				{
-					pan = 1f;
-				}
+					pan = value;
 
-				if (Is3D) { return; }
+					if (pan < -1f)
+					{
+						pan = -1f;
+					}
+					if (pan > 1f)
+					{
+						pan = 1f;
+					}
 
-				SetPanMatrixCoefficients();
-				FAudio.FAudioVoice_SetOutputMatrix(
-					Voice,
-					Device.MasteringVoice,
-					dspSettings.SrcChannelCount,
-					dspSettings.DstChannelCount,
-					dspSettings.pMatrixCoefficients,
-					0
-				);
+					if (Is3D) { return; }
+
+					SetPanMatrixCoefficients();
+					FAudio.FAudioVoice_SetOutputMatrix(
+						Voice,
+						Device.MasteringVoice,
+						dspSettings.SrcChannelCount,
+						dspSettings.DstChannelCount,
+						dspSettings.pMatrixCoefficients,
+						0
+					);
+				}
 			}
 		}
 
@@ -52,10 +59,14 @@ namespace MoonWorks.Audio
 		public float Pitch
 		{
 			get => pitch;
-			set
+			internal set
 			{
-				pitch = Math.MathHelper.Clamp(value, -1f, 1f);
-				UpdatePitch();
+				value = Math.MathHelper.Clamp(value, -1f, 1f);
+				if (pitch != value)
+				{
+					pitch = value;
+					UpdatePitch();
+				}
 			}
 		}
 
@@ -63,10 +74,14 @@ namespace MoonWorks.Audio
 		public float Volume
 		{
 			get => volume;
-			set
+			internal set
 			{
-				volume = value;
-				FAudio.FAudioVoice_SetVolume(Voice, volume, 0);
+				value = Math.MathHelper.Max(0, value);
+				if (volume != value)
+				{
+					volume = value;
+					FAudio.FAudioVoice_SetVolume(Voice, volume, 0);
+				}
 			}
 		}
 
@@ -80,35 +95,41 @@ namespace MoonWorks.Audio
 			OneOverQ = 1f
 		};
 
-		private float FilterFrequency
+		public float FilterFrequency
 		{
 			get => filterParameters.Frequency;
-			set
+			internal set
 			{
 				value = System.Math.Clamp(value, 0.01f, MAX_FILTER_FREQUENCY);
-				filterParameters.Frequency = value;
+				if (filterParameters.Frequency != value)
+				{
+					filterParameters.Frequency = value;
 
-				FAudio.FAudioVoice_SetFilterParameters(
-					Voice,
-					ref filterParameters,
-					0
-				);
+					FAudio.FAudioVoice_SetFilterParameters(
+						Voice,
+						ref filterParameters,
+						0
+					);
+				}
 			}
 		}
 
-		private float FilterOneOverQ
+		public float FilterOneOverQ
 		{
 			get => filterParameters.OneOverQ;
-			set
+			internal set
 			{
 				value = System.Math.Clamp(value, 0.01f, MAX_FILTER_ONEOVERQ);
-				filterParameters.OneOverQ = value;
+				if (filterParameters.OneOverQ != value)
+				{
+					filterParameters.OneOverQ = value;
 
-				FAudio.FAudioVoice_SetFilterParameters(
-					Voice,
-					ref filterParameters,
-					0
-				);
+					FAudio.FAudioVoice_SetFilterParameters(
+						Voice,
+						ref filterParameters,
+						0
+					);
+				}
 			}
 		}
 
@@ -118,37 +139,42 @@ namespace MoonWorks.Audio
 			get => filterType;
 			set
 			{
-				filterType = value;
-
-				switch (filterType)
+				if (filterType != value)
 				{
-					case FilterType.None:
-						filterParameters = new FAudio.FAudioFilterParameters
-						{
-							Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
-							Frequency = 1f,
-							OneOverQ = 1f
-						};
-						break;
+					filterType = value;
 
-					case FilterType.LowPass:
-						filterParameters.Type = FAudio.FAudioFilterType.FAudioLowPassFilter;
-						break;
+					switch (filterType)
+					{
+						case FilterType.None:
+							filterParameters = new FAudio.FAudioFilterParameters
+							{
+								Type = FAudio.FAudioFilterType.FAudioLowPassFilter,
+								Frequency = 1f,
+								OneOverQ = 1f
+							};
+							break;
 
-					case FilterType.BandPass:
-						filterParameters.Type = FAudio.FAudioFilterType.FAudioBandPassFilter;
-						break;
+						case FilterType.LowPass:
+							filterParameters.Type = FAudio.FAudioFilterType.FAudioLowPassFilter;
+							filterParameters.Frequency = 1f;
+							break;
 
-					case FilterType.HighPass:
-						filterParameters.Type = FAudio.FAudioFilterType.FAudioHighPassFilter;
-						break;
+						case FilterType.BandPass:
+							filterParameters.Type = FAudio.FAudioFilterType.FAudioBandPassFilter;
+							break;
+
+						case FilterType.HighPass:
+							filterParameters.Type = FAudio.FAudioFilterType.FAudioHighPassFilter;
+							filterParameters.Frequency = 0f;
+							break;
+					}
+
+					FAudio.FAudioVoice_SetFilterParameters(
+						Voice,
+						ref filterParameters,
+						0
+					);
 				}
-
-				FAudio.FAudioVoice_SetFilterParameters(
-					Voice,
-					ref filterParameters,
-					0
-				);
 			}
 		}
 
@@ -156,27 +182,31 @@ namespace MoonWorks.Audio
 		public unsafe float Reverb
 		{
 			get => reverb;
-			set
+			internal set
 			{
 				if (ReverbEffect != null)
 				{
-					reverb = value;
-
-					float* outputMatrix = (float*) dspSettings.pMatrixCoefficients;
-					outputMatrix[0] = reverb;
-					if (dspSettings.SrcChannelCount == 2)
+					value = MathF.Max(0, value);
+					if (reverb != value)
 					{
-						outputMatrix[1] = reverb;
-					}
+						reverb = value;
 
-					FAudio.FAudioVoice_SetOutputMatrix(
-						Voice,
-						ReverbEffect.Voice,
-						dspSettings.SrcChannelCount,
-						1,
-						dspSettings.pMatrixCoefficients,
-						0
-					);
+						float* outputMatrix = (float*) dspSettings.pMatrixCoefficients;
+						outputMatrix[0] = reverb;
+						if (dspSettings.SrcChannelCount == 2)
+						{
+							outputMatrix[1] = reverb;
+						}
+
+						FAudio.FAudioVoice_SetOutputMatrix(
+							Voice,
+							ReverbEffect.Voice,
+							dspSettings.SrcChannelCount,
+							1,
+							dspSettings.pMatrixCoefficients,
+							0
+						);
+					}
 				}
 
 				#if DEBUG
@@ -188,7 +218,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public SoundInstance(
+		public unsafe SoundInstance(
 			AudioDevice device,
 			ushort formatTag,
 			ushort bitsPerSample,
@@ -197,7 +227,7 @@ namespace MoonWorks.Audio
 			uint samplesPerSecond
 		) : base(device)
 		{
-			var format = new FAudio.FAudioWaveFormatEx
+			format = new FAudio.FAudioWaveFormatEx
 			{
 				wFormatTag = formatTag,
 				wBitsPerSample = bitsPerSample,
@@ -207,12 +237,10 @@ namespace MoonWorks.Audio
 				nAvgBytesPerSec = blockAlign * samplesPerSecond
 			};
 
-			Format = format;
-
 			FAudio.FAudio_CreateSourceVoice(
 				Device.Handle,
 				out Voice,
-				ref Format,
+				ref format,
 				FAudio.FAUDIO_VOICE_USEFILTER,
 				FAudio.FAUDIO_DEFAULT_FREQ_RATIO,
 				IntPtr.Zero,
@@ -277,6 +305,91 @@ namespace MoonWorks.Audio
 			ReverbEffect = reverbEffect;
 		}
 
+		public void SetPan(float targetValue)
+		{
+			Pan = targetValue;
+			Device.ClearTweens(weakReference, AudioTweenProperty.Pan);
+		}
+
+		public void SetPan(float targetValue, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Pan, easingFunction, Pan, targetValue, duration, 0);
+		}
+
+		public void SetPan(float targetValue, float delayTime, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Pan, easingFunction, Pan, targetValue, duration, delayTime);
+		}
+
+		public void SetPitch(float targetValue)
+		{
+			Pitch = targetValue;
+			Device.ClearTweens(weakReference, AudioTweenProperty.Pitch);
+		}
+
+		public void SetPitch(float targetValue, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Pitch, easingFunction, Pan, targetValue, duration, 0);
+		}
+
+		public void SetPitch(float targetValue, float delayTime, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Pitch, easingFunction, Pan, targetValue, duration, delayTime);
+		}
+
+		public void SetVolume(float targetValue)
+		{
+			Volume = targetValue;
+			Device.ClearTweens(weakReference, AudioTweenProperty.Volume);
+		}
+
+		public void SetVolume(float targetValue, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Volume, easingFunction, Volume, targetValue, duration, 0);
+		}
+
+		public void SetVolume(float targetValue, float delayTime, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Volume, easingFunction, Volume, targetValue, duration, delayTime);
+		}
+
+		public void SetFilterFrequency(float targetValue)
+		{
+			FilterFrequency = targetValue;
+			Device.ClearTweens(weakReference, AudioTweenProperty.FilterFrequency);
+		}
+
+		public void SetFilterFrequency(float targetValue, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.FilterFrequency, easingFunction, FilterFrequency, targetValue, duration, 0);
+		}
+
+		public void SetFilterFrequency(float targetValue, float delayTime, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.FilterFrequency, easingFunction, FilterFrequency, targetValue, duration, delayTime);
+		}
+
+		public void SetFilterOneOverQ(float targetValue)
+		{
+			FilterOneOverQ = targetValue;
+		}
+
+		public void SetReverb(float targetValue)
+		{
+			Reverb = targetValue;
+			Device.ClearTweens(weakReference, AudioTweenProperty.Reverb);
+		}
+
+		public void SetReverb(float targetValue, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Reverb, easingFunction, Volume, targetValue, duration, 0);
+		}
+
+		public void SetReverb(float targetValue, float delayTime, float duration, EasingFunction easingFunction)
+		{
+			Device.CreateTween(this, AudioTweenProperty.Reverb, easingFunction, Volume, targetValue, duration, delayTime);
+		}
+
 		public abstract void Play();
 		public abstract void QueueSyncPlay();
 		public abstract void Pause();
@@ -297,14 +410,12 @@ namespace MoonWorks.Audio
 			);
 
 			dspSettings.pMatrixCoefficients = (nint) NativeMemory.Alloc(memsize);
-			unsafe
+			byte* memPtr = (byte*) dspSettings.pMatrixCoefficients;
+			for (uint i = 0; i < memsize; i += 1)
 			{
-				byte* memPtr = (byte*) dspSettings.pMatrixCoefficients;
-				for (uint i = 0; i < memsize; i += 1)
-				{
-					memPtr[i] = 0;
-				}
+				memPtr[i] = 0;
 			}
+
 			SetPanMatrixCoefficients();
 		}
 

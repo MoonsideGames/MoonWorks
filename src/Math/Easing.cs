@@ -1,45 +1,53 @@
 using MoonWorks.Math.Fixed;
-using EasingFunctionFloat = System.Func<float, float, float, float, float>;
-using EasingFunctionFixed = System.Func<MoonWorks.Math.Fixed.Fix64, MoonWorks.Math.Fixed.Fix64, MoonWorks.Math.Fixed.Fix64, MoonWorks.Math.Fixed.Fix64, MoonWorks.Math.Fixed.Fix64>;
 using System.Collections.Generic;
 
 namespace MoonWorks.Math
 {
 	public static class Easing
 	{
+		private const float C1 = 1.70158f;
+		private const float C2 = C1 * 1.525f;
+		private const float C3 = C1 + 1;
+		private const float C4 = (2 * System.MathF.PI) / 3;
+		private const float C5 = (2 * System.MathF.PI) / 4.5f;
+
+		private static readonly Fix64 HALF = Fix64.FromFraction(1, 2);
+		private static readonly Fix64 FIXED_C1 = Fix64.FromFraction(170158, 100000);
+		private static readonly Fix64 FIXED_C2 = FIXED_C1 * Fix64.FromFraction(61, 40);
+		private static readonly Fix64 FIXED_C3 = FIXED_C1 + Fix64.One;
+		private static readonly Fix64 FIXED_C4 = Fix64.PiTimes2 / new Fix64(3);
+		private static readonly Fix64 FIXED_C5 = Fix64.PiTimes2 / Fix64.FromFraction(9, 2);
+
+		private static readonly Fix64 FIXED_N1 = Fix64.FromFraction(121, 16);
+		private static readonly Fix64 FIXED_D1 = Fix64.FromFraction(11, 4);
+
 		private static float OutIn(
-			EasingFunctionFloat outFunc,
-			EasingFunctionFloat inFunc,
-			float start,
-			float end,
-			float time,
-			float duration
+			System.Func<float, float> outFunc,
+			System.Func<float, float> inFunc,
+			float t
 		) {
-			if (time < duration / 2)
+			if (t < 0.5f)
 			{
-				return outFunc(start, end / 2, time * 2, duration);
+				return outFunc(t);
 			}
 			else
 			{
-				return inFunc(start + (end / 2), end / 2, (time * 2) - duration, duration);
+				return inFunc(t);
 			}
 		}
 
 		private static Fix64 OutIn(
-			EasingFunctionFixed outFunc,
-			EasingFunctionFixed inFunc,
-			Fix64 start,
-			Fix64 end,
-			Fix64 time,
-			Fix64 duration
+			System.Func<Fix64, Fix64> outFunc,
+			System.Func<Fix64, Fix64> inFunc,
+			Fix64 t
 		) {
-			if (time < duration / 2)
+			if (t < HALF)
 			{
-				return outFunc(start, end / 2, time * 2, duration);
+				return outFunc(t);
 			}
 			else
 			{
-				return inFunc(start + (end / 2), end / 2, (time * 2) - duration, duration);
+				return inFunc(t);
 			}
 		}
 
@@ -51,14 +59,14 @@ namespace MoonWorks.Math
 			float end,
 			float time,
 			float attackDuration,
-			EasingFunctionFloat attackEasingFunction,
+			Function.Float attackEasingFunction,
 			float holdDuration,
 			float releaseDuration,
-			EasingFunctionFloat releaseEasingFunction
+			Function.Float releaseEasingFunction
 		) {
 			if (time < attackDuration)
 			{
-				return attackEasingFunction.Invoke(start, hold, time, attackDuration);
+				return Interp(start, hold, time, attackDuration, Function.Get(attackEasingFunction));
 			}
 			else if (time >= attackDuration && time < holdDuration)
 			{
@@ -66,7 +74,7 @@ namespace MoonWorks.Math
 			}
 			else // time >= attackDuration + holdDuration
 			{
-				return releaseEasingFunction.Invoke(hold, end, time - holdDuration - attackDuration, releaseDuration);
+				return Interp(hold, end, time - holdDuration - attackDuration, releaseDuration, Function.Get(releaseEasingFunction));
 			}
 		}
 
@@ -76,14 +84,14 @@ namespace MoonWorks.Math
 			Fix64 end,
 			Fix64 time,
 			Fix64 attackDuration,
-			EasingFunctionFixed attackEasingFunction,
+			Function.Fixed attackEasingFunction,
 			Fix64 holdDuration,
 			Fix64 releaseDuration,
-			EasingFunctionFixed releaseEasingFunction
+			Function.Fixed releaseEasingFunction
 		) {
 			if (time < attackDuration)
 			{
-				return attackEasingFunction.Invoke(start, hold, time, attackDuration);
+				return Interp(start, hold, time, attackDuration, Function.Get(attackEasingFunction));
 			}
 			else if (time >= attackDuration && time < holdDuration)
 			{
@@ -91,688 +99,612 @@ namespace MoonWorks.Math
 			}
 			else // time >= attackDuration + holdDuration
 			{
-				return releaseEasingFunction.Invoke(hold, end, time - holdDuration - attackDuration, releaseDuration);
+				return Interp(hold, end, time - holdDuration - attackDuration, releaseDuration, Function.Get(releaseEasingFunction));
 			}
 		}
 
-		/* EASING FUNCTIONS */
+		public static float Lerp(float start, float end, float time)
+		{
+			return (start + (end - start) * time);
+		}
+
+		public static float Interp(float start, float end, float time, float duration, System.Func<float, float> easingFunc)
+		{
+			return Lerp(start, end, easingFunc(time / duration));
+		}
+
+		public static float Interp(float start, float end, float time, float duration, MoonWorks.Math.Easing.Function.Float easingFunc)
+		{
+			return Interp(start, end, time, duration, Function.Get(easingFunc));
+		}
+
+		public static Fix64 Lerp(Fix64 start, Fix64 end, Fix64 time)
+		{
+			return (start + (end - start) * time);
+		}
+
+		public static Fix64 Interp(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, System.Func<Fix64, Fix64> easingFunc)
+		{
+			return Lerp(start, end, easingFunc(time / duration));
+		}
+
+		public static Fix64 Interp(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, MoonWorks.Math.Easing.Function.Fixed easingFunc)
+		{
+			return Interp(start, end, time, duration, Function.Get(easingFunc));
+		}
+
+		/* FLOAT EASING FUNCTIONS */
 
 		// LINEAR
 
-		public static float Linear(float start, float end, float time, float duration)
+		public static float Linear(float t)
 		{
-			return (end * (time / duration)) + start;
-		}
-
-		public static Fix64 Linear(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			return (end * (time / duration)) + start;
+			return t;
 		}
 
 		// QUADRATIC
 
-		public static float InQuad(float start, float end, float time, float duration)
+		public static float InQuad(float t)
 		{
-			time /= duration;
-			return (end * (time * time)) + start;
+			return t * t;
 		}
 
-		public static float OutQuad(float start, float end, float time, float duration)
+		public static float OutQuad(float t)
 		{
-			time /= duration;
-			return (-end * time * (time - 2)) + start;
+			return 1 - (1 - t) * (1 - t);
 		}
 
-		public static float InOutQuad(float start, float end, float time, float duration)
+		public static float InOutQuad(float t)
 		{
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (end / 2 * (time * time)) + start;
+				return 2 * t * t;
 			}
 			else
 			{
-				return (-end / 2 * (((time - 1) * (time - 3)) - 1)) + start;
+				var x = (-2 * t + 2);
+				return 1 - ((x * x) / 2);
 			}
 		}
 
-		public static float OutInQuad(float start, float end, float time, float duration) => OutIn(OutQuad, InQuad, time, start, end, duration);
-
-		public static Fix64 InQuad(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (end * (time * time)) + start;
-		}
-
-		public static Fix64 OutQuad(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (-end * time * (time - 2)) + start;
-		}
-
-		public static Fix64 InOutQuad(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = time / duration * 2;
-			if (time < 1)
-			{
-				return (end / 2 * (time * time)) + start;
-			}
-			else
-			{
-				return (-end / 2 * (((time - 1) * (time - 3)) - 1)) + start;
-			}
-		}
-
-		public static Fix64 OutInQuad(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutQuad, InQuad, time, start, end, duration);
-
+		public static float OutInQuad(float t) => OutIn(OutQuad, InQuad, t);
 
 		// CUBIC
 
-		public static float InCubic(float start, float end, float time, float duration)
+		public static float InCubic(float t)
 		{
-			time /= duration;
-			return (end * (time * time * time)) + start;
+			return t * t * t;
 		}
 
-		public static float OutCubic(float start, float end, float time, float duration)
+		public static float OutCubic(float t)
 		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * time) + 1)) + start;
+			var x = 1 - t;
+			return 1 - (x * x * x);
 		}
 
-		public static float InOutCubic(float start, float end, float time, float duration)
+		public static float InOutCubic(float t)
 		{
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (end / 2 * time * time * time) + start;
+				return 4 * t * t * t;
 			}
 			else
 			{
-				time -= 2;
-				return (end / 2 * ((time * time * time) + 2)) + start;
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x) / 2);
 			}
 		}
 
-		public static float OutInCubic(float start, float end, float time, float duration) => OutIn(OutCubic, InCubic, start, end, time, duration);
-
-		public static Fix64 InCubic(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (end * (time * time * time)) + start;
-		}
-
-		public static Fix64 OutCubic(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * time) + 1)) + start;
-		}
-
-		public static Fix64 InOutCubic(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = time / duration * 2;
-			if (time < 1)
-			{
-				return (end / 2 * time * time * time) + start;
-			}
-			else
-			{
-				time -= 2;
-				return (end / 2 * ((time * time * time) + 2)) + start;
-			}
-		}
-
-		public static Fix64 OutInCubic(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutCubic, InCubic, start, end, time, duration);
+		public static float OutInCubic(float t) => OutIn(OutCubic, InCubic, t);
 
 		// QUARTIC
 
-		public static float InQuart(float start, float end, float time, float duration)
+		public static float InQuart(float t)
 		{
-			time /= duration;
-			return (end * (time * time * time * time)) + start;
+			return t * t * t * t;
 		}
 
-		public static float OutQuart(float start, float end, float time, float duration)
+		public static float OutQuart(float t)
 		{
-			time = (time / duration) - 1;
-			return (-end * ((time * time * time * time) - 1)) + start;
+			var x = 1 - t;
+			return 1 - (x * x * x * x);
 		}
 
-		public static float InOutQuart(float start, float end, float time, float duration)
+		public static float InOutQuart(float t)
 		{
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (end / 2 * (time * time * time * time)) + start;
+				return 8 * t * t * t * t;
 			}
 			else
 			{
-				time -= 2;
-				return (-end / 2 * ((time * time * time * time) - 2)) + start;
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x * x) / 2);
 			}
 		}
 
-		public static float OutInQuart(float start, float end, float time, float duration) => OutIn(OutQuart, InQuart, time, start, end, duration);
-
-		public static Fix64 InQuart(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (end * (time * time * time * time)) + start;
-		}
-
-		public static Fix64 OutQuart(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = (time / duration) - 1;
-			return (-end * ((time * time * time * time) - 1)) + start;
-		}
-
-		public static Fix64 InOutQuart(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = time / duration * 2;
-			if (time < 1)
-			{
-				return (end / 2 * (time * time * time * time)) + start;
-			}
-			else
-			{
-				time -= 2;
-				return (-end / 2 * ((time * time * time * time) - 2)) + start;
-			}
-		}
-
-		public static Fix64 OutInQuart(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutQuart, InQuart, time, start, end, duration);
+		public static float OutInQuart(float t) => OutIn(OutQuart, InQuart, t);
 
 		// QUINTIC
 
-		public static float InQuint(float start, float end, float time, float duration)
+		public static float InQuint(float t)
 		{
-			time /= duration;
-			return (end * (time * time * time * time * time)) + start;
+			return t * t * t * t * t;
 		}
 
-		public static float OutQuint(float start, float end, float time, float duration)
+		public static float OutQuint(float t)
 		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * time * time * time) + 1)) + start;
+			var x = 1 - t;
+			return 1 - (x * x * x * x * x);
 		}
 
-		public static float InOutQuint(float start, float end, float time, float duration)
+		public static float InOutQuint(float t)
 		{
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (end / 2 * (time * time * time * time * time)) + start;
+				return 16 * t * t * t * t * t;
 			}
 			else
 			{
-				time -= 2;
-				return (end / 2 * ((time * time * time * time * time) + 2)) + start;
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x * x * x) / 2);
 			}
 		}
 
-		public static float OutInQuint(float start, float end, float time, float duration) => OutIn(OutQuint, InQuint, time, start, end, duration);
-
-		public static Fix64 InQuint(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (end * (time * time * time * time * time)) + start;
-		}
-
-		public static Fix64 OutQuint(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * time * time * time) + 1)) + start;
-		}
-
-		public static Fix64 InOutQuint(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = time / duration * 2;
-			if (time < 1)
-			{
-				return (end / 2 * (time * time * time * time * time)) + start;
-			}
-			else
-			{
-				time -= 2;
-				return (end / 2 * ((time * time * time * time * time) + 2)) + start;
-			}
-		}
-
-		public static Fix64 OutInQuint(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutQuint, InQuint, time, start, end, duration);
-
+		public static float OutInQuint(float t) => OutIn(OutQuint, InQuint, t);
 
 		// SINE
 
-		public static float InSine(float start, float end, float time, float duration)
+		public static float InSine(float t)
 		{
-			return (-end * System.MathF.Cos(time / duration * (System.MathF.PI / 2))) + end + start;
+			return 1 - System.MathF.Cos((t * System.MathF.PI) / 2);
 		}
 
-		public static float OutSine(float start, float end, float time, float duration)
+		public static float OutSine(float t)
 		{
-			return (end * System.MathF.Sin(time / duration * (System.MathF.PI / 2))) + start;
+			return System.MathF.Sin((t * System.MathF.PI) / 2);
 		}
 
-		public static float InOutSine(float start, float end, float time, float duration)
+		public static float InOutSine(float t)
 		{
-			return (-end / 2 * (System.MathF.Cos(System.MathF.PI * time / duration) - 1)) + start;
+			return -(System.MathF.Cos(System.MathF.PI * t) - 1) / 2;
 		}
 
-		public static float OutInSine(float start, float end, float time, float duration) => OutIn(OutSine, InSine, time, start, end, duration);
-
-		public static Fix64 InSine(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			return (-end * Fix64.Cos((time / duration) * Fix64.PiOver2)) + end + start;
-		}
-
-		public static Fix64 OutSine(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			return (end * Fix64.Sin((time / duration) * Fix64.PiOver2)) + start;
-		}
-
-		public static Fix64 InOutSine(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			return (-end / 2 * (Fix64.Cos(Fix64.Pi * time / duration) - 1)) + start;
-		}
-
-		public static Fix64 OutInSine(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutSine, InSine, time, start, end, duration);
+		public static float OutInSine(float t) => OutIn(OutSine, InSine, t);
 
 		// EXPONENTIAL
 
-		public static float InExpo(float start, float end, float time, float duration)
+		public static float InExpo(float t)
 		{
-			if (time == 0)
+			if (t == 0)
 			{
-				return start;
+				return 0;
 			}
 			else
 			{
-				return (end * System.MathF.Pow(2, 10 * ((time / duration) - 1))) + start - (end * 0.001f);
+				return System.MathF.Pow(2, 10 * t - 10);
 			}
 		}
 
-		public static float OutExpo(float start, float end, float time, float duration)
+		public static float OutExpo(float t)
 		{
-			if (time == duration)
+			if (t == 1)
 			{
-				return start + end;
+				return 1;
 			}
 			else
 			{
-				return (end * 1.001f * (-System.MathF.Pow(2, -10 * time / duration) + 1)) + start;
+				return 1 - System.MathF.Pow(2, -10 * t);
 			}
 		}
 
-		public static float InOutExpo(float start, float end, float time, float duration)
+		public static float InOutExpo(float t)
 		{
-			if (time == 0) { return start; }
-			if (time == duration) { return start + end; }
-			time = time / duration * 2;
-			if (time < 1)
+			if (t == 0)
 			{
-				return (end / 2 * System.MathF.Pow(2, 10 * (time - 1))) + start - (end * 0.0005f);
+				return 0;
+			}
+			else if (t == 1)
+			{
+				return 1;
+			}
+			else if (t < 0.5f)
+			{
+				return System.MathF.Pow(2, 20 * t - 10) / 2;
 			}
 			else
 			{
-				time--;
-				return (end / 2 * 1.0005f * (-System.MathF.Pow(2, -10 * time) + 2)) + start;
+				return (2 - System.MathF.Pow(2, -20 * t + 10)) / 2;
 			}
 		}
 
-		public static float OutInExpo(float start, float end, float time, float duration) => OutIn(OutExpo, InExpo, time, start, end, duration);
-
-		// TODO: need Fix64 power function for Expo
+		public static float OutInExpo(float t) => OutIn(OutExpo, InExpo, t);
 
 		// CIRCULAR
 
-		public static float InCirc(float start, float end, float time, float duration)
+		public static float InCirc(float t)
 		{
-			time /= duration;
-			return (-end * (System.MathF.Sqrt(1 - (time * time)) - 1)) + start;
+			return 1 - System.MathF.Sqrt(1 - (t * t));
 		}
 
-		public static float OutCirc(float start, float end, float time, float duration)
+		public static float OutCirc(float t)
 		{
-			time = (time / duration) - 1;
-			return (end * System.MathF.Sqrt(1 - (time * time))) + start;
+			return System.MathF.Sqrt(1 - ((t - 1) * (t - 1)));
 		}
 
-		public static float InOutCirc(float start, float end, float time, float duration)
+		public static float InOutCirc(float t)
 		{
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (-end / 2 * (System.MathF.Sqrt(1 - (time * time)) - 1)) + start;
+				return (1 - System.MathF.Sqrt(1 - ((2 * t) * (2 * t)))) / 2;
 			}
 			else
 			{
-				time -= 2;
-				return (end / 2 * (System.MathF.Sqrt(1 - (time * time)) + 1)) + start;
+				var x = -2 * t + 2;
+				return (System.MathF.Sqrt(1 - (x * x)) + 1) / 2;
 			}
 		}
 
-		public static float OutInCirc(float start, float end, float time, float duration) => OutIn(OutCirc, InCirc, time, start, end, duration);
-
-		public static Fix64 InCirc(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time /= duration;
-			return (-end * (Fix64.Sqrt(1 - (time * time)) - 1)) + start;
-		}
-
-		public static Fix64 OutCirc(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = (time / duration) - 1;
-			return (end * Fix64.Sqrt(1 - (time * time))) + start;
-		}
-
-		public static Fix64 InOutCirc(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
-		{
-			time = time / duration * 2;
-			if (time < 1)
-			{
-				return (-end / 2 * (Fix64.Sqrt(1 - (time * time)) - 1)) + start;
-			}
-			else
-			{
-				time -= 2;
-				return (end / 2 * (Fix64.Sqrt(1 - (time * time)) + 1)) + start;
-			}
-		}
-
-		public static Fix64 OutInCirc(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutCirc, InCirc, time, start, end, duration);
-
-		// ELASTIC
-
-		public static float InElastic(float start, float end, float time, float duration, float a, float p)
-		{
-			if (time == 0) { return start; }
-
-			time /= duration;
-
-			if (time == 1) { return start + end; }
-
-			float s;
-			if (a < System.MathF.Abs(end))
-			{
-				a = end;
-				s = p / 4;
-			}
-			else
-			{
-				s = p / (2 * System.MathF.PI) * System.MathF.Asin(end / a);
-			}
-
-			time--;
-
-			return -(a * System.MathF.Pow(2, 10 * time) * System.MathF.Sin(((time * duration) - s) * (2 * System.MathF.PI) / p)) + start;
-		}
-
-		public static float InElastic(float start, float end, float time, float duration) => InElastic(start, end, time, duration, end, duration * 0.3f);
-
-		public static float OutElastic(float start, float end, float time, float duration, float a, float p)
-		{
-			if (time == 0) { return start; }
-
-			time /= duration;
-
-			if (time == 1) { return start + end; }
-
-			float s;
-
-			if (a < System.MathF.Abs(end))
-			{
-				a = end;
-				s = p / 4;
-			}
-			else
-			{
-				s = p / (2 * System.MathF.PI) * System.MathF.Asin(end / a);
-			}
-
-			return (a * System.MathF.Pow(2, -10 * time) * System.MathF.Sin(((time * duration) - s) * (2 * System.MathF.PI) / p)) + end + start;
-		}
-
-		public static float OutElastic(float start, float end, float time, float duration) => OutElastic(start, end, time, duration, end, duration * 0.3f);
-
-		public static float InOutElastic(float start, float end, float time, float duration, float a, float p)
-		{
-			if (time == 0) { return start; }
-
-			time = time / duration * 2;
-
-			if (time == 2) { return start + end; }
-
-			float s;
-
-			if (a < System.MathF.Abs(end))
-			{
-				a = end;
-				s = p / 4;
-			}
-			else
-			{
-				s = p / (2 * System.MathF.PI) * System.MathF.Asin(end / a);
-			}
-
-			if (time < 1)
-			{
-				time--;
-				return (-0.5f * (a * System.MathF.Pow(2, 10 * time) * System.MathF.Sin(((time * duration) - s) * (2 * System.MathF.PI) / p))) + start;
-			}
-			else
-			{
-				time--;
-				return (a * System.MathF.Pow(2, -10 * time) * System.MathF.Sin(((time * duration) - s) * (2 * System.MathF.PI) / p) * 0.5f) + end + start;
-			}
-		}
-
-		public static float InOutElastic(float start, float end, float time, float duration) => InOutElastic(start, end, time, duration, end, duration * 0.3f * 1.5f);
-
-		public static float OutInElastic(float start, float end, float time, float duration, float a, float p)
-		{
-			if (time < duration / 2)
-			{
-				return OutElastic(time * 2, start, end / 2, duration, a, p);
-			}
-			else
-			{
-				return InElastic((time * 2) - duration, start + (end / 2), end / 2, duration, a, p);
-			}
-		}
-
-		public static float OutInElastic(float start, float end, float time, float duration) => OutInElastic(start, end, time, duration, end, duration * 0.3f);
-
-		// TODO: Need Fix64 Asin for elastic
+		public static float OutInCirc(float t) => OutIn(OutCirc, InCirc, t);
 
 		// BACK
 
-		public static float InBack(float start, float end, float time, float duration, float s = 1.70158f)
+		public static float InBack(float t)
 		{
-			time /= duration;
-			return (end * time * time * (((s + 1) * time) - s)) + start;
+			return C3 * t * t * t - C1 * t * t;
 		}
 
-		public static float InBack(float start, float end, float time, float duration) => InBack(start, end, time, duration, 1.70158f);
-
-		public static float OutBack(float start, float end, float time, float duration, float s = 1.70158f)
+		public static float OutBack(float t)
 		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * (((s + 1) * time) + s)) + 1)) + start;
+			return 1 + C3 * (t - 1) * (t - 1) * (t - 1) + C1 * (t - 1) * (t - 1);
 		}
 
-		public static float OutBack(float start, float end, float time, float duration) => OutBack(start, end, time, duration, 1.70158f);
-
-		public static float InOutBack(float start, float end, float time, float duration, float s = 1.70158f)
+		public static float InOutBack(float t)
 		{
-			s *= 1.525f;
-			time = time / duration * 2;
-			if (time < 1)
+			if (t < 0.5f)
 			{
-				return (end / 2 * (time * time * (((s + 1) * time) - s))) + start;
+				return ((2 * t) * (2 * t) * ((C2 + 1) * 2 * t - C2)) / 2;
 			}
 			else
 			{
-				time -= 2;
-				return (end / 2 * ((time * time * (((s + 1) * time) + s)) + 2)) + start;
+				var x = 2 * t - 2;
+				return ((t * t) * ((C2 + 1) * (x) + C2) + 2) / 2;
 			}
 		}
 
-		public static float InOutBack(float start, float end, float time, float duration) => InOutBack(start, end, time, duration, 1.70158f);
+		public static float OutInBack(float t) => OutIn(OutBack, InBack, t);
 
-		public static float OutInBack(float start, float end, float time, float duration, float s = 1.70158f)
+		// ELASTIC
+
+		public static float InElastic(float t)
 		{
-			if (time < duration / 2)
+			if (t == 0)
 			{
-				return OutBack(time * 2, start, end / 2, duration, s);
+				return 0;
+			}
+			else if (t == 1)
+			{
+				return 1;
 			}
 			else
 			{
-				return InBack((time * 2) - duration, start + (end / 2), end / 2, duration, s);
+				return -System.MathF.Pow(2, 10 * t - 10) * System.MathF.Sin((t * 10 - 10.75f) * C4);
 			}
 		}
 
-		public static float OutInBack(float start, float end, float time, float duration) => OutInBack(start, end, time, duration, 1.70158f);
-
-		private static readonly Fix64 S_DEFAULT = Fix64.FromFraction(170158, 100000);
-		private static readonly Fix64 S_MULTIPLIER = Fix64.FromFraction(61, 40);
-
-		public static Fix64 InBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, Fix64 s)
+		public static float OutElastic(float t)
 		{
-			time /= duration;
-			return (end * time * time * (((s + 1) * time) - s)) + start;
-		}
-
-		public static Fix64 InBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => InBack(start, end, time, duration, S_DEFAULT);
-
-		public static Fix64 OutBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, Fix64 s)
-		{
-			time = (time / duration) - 1;
-			return (end * ((time * time * (((s + 1) * time) + s)) + 1)) + start;
-		}
-
-		public static Fix64 OutBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutBack(start, end, time, duration, S_DEFAULT);
-
-		public static Fix64 InOutBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, Fix64 s)
-		{
-			s *= S_MULTIPLIER;
-			time = time / duration * 2;
-			if (time < 1)
+			if (t == 0)
 			{
-				return (end / 2 * (time * time * (((s + 1) * time) - s))) + start;
+				return 0;
+			}
+			else if (t == 1)
+			{
+				return 1;
 			}
 			else
 			{
-				time -= 2;
-				return (end / 2 * ((time * time * (((s + 1) * time) + s)) + 2)) + start;
+				return System.MathF.Pow(2, -10 * t) * System.MathF.Sin((t * 10 - 0.75f) * C4) + 1;
 			}
 		}
 
-		public static Fix64 InOutBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => InOutBack(start, end, time, duration, S_DEFAULT);
-
-		public static Fix64 OutInBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration, Fix64 s)
+		public static float InOutElastic(float t)
 		{
-			if (time < duration / 2)
+			if (t == 0)
 			{
-				return OutBack(time * 2, start, end / 2, duration, s);
+				return 0;
+			}
+			else if (t == 1)
+			{
+				return 1;
+			}
+			else if (t < 0.5f)
+			{
+				return -(System.MathF.Pow(2, 20 * t - 10) * System.MathF.Sin((20 * t - 11.125f) * C5)) / 2;
 			}
 			else
 			{
-				return InBack((time * 2) - duration, start + (end / 2), end / 2, duration, s);
+				return (System.MathF.Pow(2, -20 * t + 10) * System.MathF.Sin((20 * t - 11.125f) * C5)) / 2 + 1;
 			}
 		}
 
-		public static Fix64 OutInBack(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutInBack(start, end, time, duration, S_DEFAULT);
+		public static float OutInElastic(float t) => OutIn(OutElastic, InElastic, t);
 
 		// BOUNCE
 
-		public static float InBounce(float start, float end, float time, float duration)
+		public static float InBounce(float t)
 		{
-			return end - OutBounce(duration - time, 0, end, duration) + start;
+			return 1 - OutBounce(1 - t);
 		}
 
-		public static float OutBounce(float start, float end, float time, float duration)
+		public static float OutBounce(float t)
 		{
-			time /= duration;
-			if (time < 1 / 2.75f)
+			const float N1 = 7.5625f;
+			const float D1 = 2.75f;
+
+			if (t < 1 / D1)
 			{
-				return (end * (7.5625f * time * time)) + start;
+				return N1 * t * t;
 			}
-			else if (time < 2 / 2.75f)
-			{
-				time -= (1.5f / 2.75f);
-				return (end * ((7.5625f * time * time) + 0.75f)) + start;
+			else if (t < 2 / D1) {
+				return N1 * (t -= 1.5f / D1) * t + 0.75f;
 			}
-			else if (time < 2.5 / 2.75)
+			else if (t < 2.5f / D1)
 			{
-				time -= (2.25f / 2.75f);
-				return (end * ((7.5625f * time * time) + 0.9375f)) + start;
+				return N1 * (t -= 2.25f / D1) * t + 0.9375f;
 			}
 			else
 			{
-				time -= (2.625f / 2.75f);
-				return (end * ((7.5625f * time * time) + 0.984375f)) + start;
+				return N1 * (t -= 2.625f / D1) * t + 0.984375f;
 			}
 		}
 
-		public static float InOutBounce(float start, float end, float time, float duration)
+		public static float InOutBounce(float t)
 		{
-			if (time < duration / 2)
+			if (t < 0.5f)
 			{
-				return (InBounce(time * 2, 0, end, duration) * 0.5f) + start;
+				return (1 - OutBounce(1 - 2 * t)) / 2;
 			}
 			else
 			{
-				return (OutBounce((time * 2) - duration, 0, end, duration) * 0.5f) + (end * 0.5f) + start;
+				return (1 + OutBounce(2 * t - 1)) / 2;
 			}
 		}
 
-		public static float OutInBounce(float start, float end, float time, float duration) => OutIn(OutBounce, InBounce, time, start, end, duration);
+		public static float OutInBounce(float t) => OutIn(OutBounce, InBounce, t);
 
-		private static readonly Fix64 BOUNCE_MULTIPLIER = Fix64.FromFraction(121, 16);
+		/* FIXED EASING FUNCTIONS */
 
-		public static Fix64 InBounce(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
+		// LINEAR
+
+		public static Fix64 Linear(Fix64 t)
 		{
-			return end - OutBounce(duration - time, Fix64.Zero, end, duration) + start;
+			return t;
 		}
 
-		// FIXME: these constants are kinda gnarly, could maybe define them as static readonlys
-		public static Fix64 OutBounce(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
+		// QUADRATIC
+
+		public static Fix64 InQuad(Fix64 t)
 		{
-			time /= duration;
-			if (time < Fix64.FromFraction(4, 11))
+			return t * t;
+		}
+
+		public static Fix64 OutQuad(Fix64 t)
+		{
+			return 1 - (1 - t) * (1 - t);
+		}
+
+		public static Fix64 InOutQuad(Fix64 t)
+		{
+			if (t < HALF)
 			{
-				return (end * (BOUNCE_MULTIPLIER * time * time)) + start;
-			}
-			else if (time < Fix64.FromFraction(8, 11))
-			{
-				time -= Fix64.FromFraction(6, 11);
-				return (end * ((BOUNCE_MULTIPLIER * time * time) + Fix64.FromFraction(3, 4))) + start;
-			}
-			else if (time < Fix64.FromFraction(10, 11))
-			{
-				time -= Fix64.FromFraction(9, 11);
-				return (end * ((BOUNCE_MULTIPLIER * time * time) + Fix64.FromFraction(15, 16))) + start;
+				return 2 * t * t;
 			}
 			else
 			{
-				time -= Fix64.FromFraction(21, 22);
-				return (end * ((BOUNCE_MULTIPLIER * time * time) + Fix64.FromFraction(63, 64))) + start;
+				var x = (-2 * t + 2);
+				return 1 - ((x * x) / 2);
 			}
 		}
 
-		public static Fix64 InOutBounce(Fix64 start, Fix64 end, Fix64 time, Fix64 duration)
+		public static Fix64 OutInQuad(Fix64 t) => OutIn(OutQuad, InQuad, t);
+
+		// CUBIC
+
+		public static Fix64 InCubic(Fix64 t)
 		{
-			if (time < duration / 2)
+			return t * t * t;
+		}
+
+		public static Fix64 OutCubic(Fix64 t)
+		{
+			var x = 1 - t;
+			return 1 - (x * x * x);
+		}
+
+		public static Fix64 InOutCubic(Fix64 t)
+		{
+			if (t < HALF)
 			{
-				return (InBounce(time * 2, Fix64.Zero, end, duration) * Fix64.FromFraction(1, 2)) + start;
+				return 4 * t * t * t;
 			}
 			else
 			{
-				return (OutBounce((time * 2) - duration, Fix64.Zero, end, duration) * Fix64.FromFraction(1, 2)) + (end * Fix64.FromFraction(1, 2)) + start;
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x) / 2);
 			}
 		}
 
-		public static Fix64 OutInBounce(Fix64 start, Fix64 end, Fix64 time, Fix64 duration) => OutIn(OutBounce, InBounce, time, start, end, duration);
+		public static Fix64 OutInCubic(Fix64 t) => OutIn(OutCubic, InCubic, t);
+
+		// QUARTIC
+
+		public static Fix64 InQuart(Fix64 t)
+		{
+			return t * t * t * t;
+		}
+
+		public static Fix64 OutQuart(Fix64 t)
+		{
+			var x = 1 - t;
+			return 1 - (x * x * x * x);
+		}
+
+		public static Fix64 InOutQuart(Fix64 t)
+		{
+			if (t < HALF)
+			{
+				return 8 * t * t * t * t;
+			}
+			else
+			{
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x * x) / 2);
+			}
+		}
+
+		public static Fix64 OutInQuart(Fix64 t) => OutIn(OutQuart, InQuart, t);
+
+		// QUINTIC
+
+		public static Fix64 InQuint(Fix64 t)
+		{
+			return t * t * t * t * t;
+		}
+
+		public static Fix64 OutQuint(Fix64 t)
+		{
+			var x = 1 - t;
+			return 1 - (x * x * x * x * x);
+		}
+
+		public static Fix64 InOutQuint(Fix64 t)
+		{
+			if (t < HALF)
+			{
+				return 16 * t * t * t * t * t;
+			}
+			else
+			{
+				var x = -2 * t + 2;
+				return 1 - ((x * x * x * x * x) / 2);
+			}
+		}
+
+		public static Fix64 OutInQuint(Fix64 t) => OutIn(OutQuint, InQuint, t);
+
+		// SINE
+
+		public static Fix64 InSine(Fix64 t)
+		{
+			return 1 - Fix64.Cos((t * Fix64.Pi) / 2);
+		}
+
+		public static Fix64 OutSine(Fix64 t)
+		{
+			return Fix64.Sin((t * Fix64.Pi) / 2);
+		}
+
+		public static Fix64 InOutSine(Fix64 t)
+		{
+			return -(Fix64.Cos(Fix64.Pi * t) - 1) / 2;
+		}
+
+		public static Fix64 OutInSine(Fix64 t) => OutIn(OutSine, InSine, t);
+
+		// CIRCULAR
+
+		public static Fix64 InCirc(Fix64 t)
+		{
+			return 1 - Fix64.Sqrt(1 - (t * t));
+		}
+
+		public static Fix64 OutCirc(Fix64 t)
+		{
+			return Fix64.Sqrt(1 - ((t - 1) * (t - 1)));
+		}
+
+		public static Fix64 InOutCirc(Fix64 t)
+		{
+			if (t < HALF)
+			{
+				return (1 - Fix64.Sqrt(1 - ((2 * t) * (2 * t)))) / 2;
+			}
+			else
+			{
+				var x = -2 * t + 2;
+				return (Fix64.Sqrt(1 - (x * x)) + 1) / 2;
+			}
+		}
+
+		public static Fix64 OutInCirc(Fix64 t) => OutIn(OutCirc, InCirc, t);
+
+		// BACK
+
+		public static Fix64 InBack(Fix64 t)
+		{
+			return FIXED_C3 * t * t * t - FIXED_C1 * t * t;
+		}
+
+		public static Fix64 OutBack(Fix64 t)
+		{
+			return 1 + FIXED_C3 * (t - 1) * (t - 1) * (t - 1) + FIXED_C1 * (t - 1) * (t - 1);
+		}
+
+		public static Fix64 InOutBack(Fix64 t)
+		{
+			if (t < HALF)
+			{
+				return ((2 * t) * (2 * t) * ((FIXED_C2 + 1) * 2 * t - FIXED_C2)) / 2;
+			}
+			else
+			{
+				var x = 2 * t - 2;
+				return ((t * t) * ((FIXED_C2 + 1) * (x) + FIXED_C2) + 2) / 2;
+			}
+		}
+
+		public static Fix64 OutInBack(Fix64 t) => OutIn(OutBack, InBack, t);
+
+		// BOUNCE
+
+		public static Fix64 InBounce(Fix64 t)
+		{
+			return 1 - OutBounce(1 - t);
+		}
+
+		public static Fix64 OutBounce(Fix64 t)
+		{
+			if (t < 1 / FIXED_D1)
+			{
+				return FIXED_N1 * t * t;
+			}
+			else if (t < 2 / FIXED_D1) {
+				return FIXED_N1 * (t -= Fix64.FromFraction(3, 2) / FIXED_D1) * t + Fix64.FromFraction(3, 4);
+			}
+			else if (t < Fix64.FromFraction(5, 2) / FIXED_D1)
+			{
+				return FIXED_N1 * (t -= Fix64.FromFraction(9, 4) / FIXED_D1) * t + Fix64.FromFraction(15, 16);
+			}
+			else
+			{
+				return FIXED_N1 * (t -= Fix64.FromFraction(181, 80) / FIXED_D1) * t + Fix64.FromFraction(63, 64);
+			}
+		}
+
+		public static Fix64 InOutBounce(Fix64 t)
+		{
+			if (t < HALF)
+			{
+				return (1 - OutBounce(1 - 2 * t)) / 2;
+			}
+			else
+			{
+				return (1 + OutBounce(2 * t - 1)) / 2;
+			}
+		}
+
+		public static Fix64 OutInBounce(Fix64 t) => OutIn(OutBounce, InBounce, t);
 
 		public static class Function
 		{
@@ -858,7 +790,7 @@ namespace MoonWorks.Math
 				OutInBounce
 			}
 
-			private static Dictionary<Float, EasingFunctionFloat> FloatLookup = new Dictionary<Float, EasingFunctionFloat>
+			private static Dictionary<Float, System.Func<float, float>> FloatLookup = new Dictionary<Float, System.Func<float, float>>
 			{
 				{ Float.Linear, Linear },
 				{ Float.InQuad, InQuad },
@@ -903,7 +835,7 @@ namespace MoonWorks.Math
 				{ Float.OutInBounce, OutInBounce }
 			};
 
-			private static Dictionary<Fixed, EasingFunctionFixed> FixedLookup = new Dictionary<Fixed, EasingFunctionFixed>
+			private static Dictionary<Fixed, System.Func<Fix64, Fix64>> FixedLookup = new Dictionary<Fixed, System.Func<Fix64, Fix64>>
 			{
 				{ Fixed.Linear, Linear },
 				{ Fixed.InQuad, InQuad },
@@ -940,12 +872,12 @@ namespace MoonWorks.Math
 				{ Fixed.OutInBounce, OutInBounce }
 			};
 
-			public static EasingFunctionFloat Get(Float functionEnum)
+			public static System.Func<float, float> Get(Float functionEnum)
 			{
 				return FloatLookup[functionEnum];
 			}
 
-			public static EasingFunctionFixed Get(Fixed functionEnum)
+			public static System.Func<Fix64, Fix64> Get(Fixed functionEnum)
 			{
 				return FixedLookup[functionEnum];
 			}

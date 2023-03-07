@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
-		private WeakReference<GraphicsResource> selfReference;
+		internal WeakReference<GraphicsResource> weakReference;
 
 		public GraphicsResource(GraphicsDevice device, bool trackResource = true)
 		{
@@ -18,8 +18,8 @@ namespace MoonWorks.Graphics
 
 			if (trackResource)
 			{
-				selfReference = new WeakReference<GraphicsResource>(this);
-				Device.AddResourceReference(selfReference);
+				weakReference = new WeakReference<GraphicsResource>(this);
+				Device.AddResourceReference(weakReference);
 			}
 		}
 
@@ -27,11 +27,11 @@ namespace MoonWorks.Graphics
 		{
 			if (!IsDisposed)
 			{
-				if (selfReference != null)
+				if (weakReference != null)
 				{
 					QueueDestroyFunction(Device.Handle, Handle);
-					Device.RemoveResourceReference(selfReference);
-					selfReference = null;
+					Device.RemoveResourceReference(weakReference);
+					weakReference = null;
 				}
 
 				IsDisposed = true;

@@ -168,9 +168,8 @@ namespace MoonWorks
 				while (accumulatedUpdateTime >= Timestep)
 				{
 					Inputs.Update();
-					AudioDevice.Update();
-
 					Update(Timestep);
+					AudioDevice.WakeThread();
 
 					accumulatedUpdateTime -= Timestep;
 				}

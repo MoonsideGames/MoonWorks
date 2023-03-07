@@ -10,11 +10,21 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public abstract class StreamingSound : SoundInstance
 	{
+		// How big should each buffer we consume be?
+		protected abstract int BUFFER_SIZE { get; }
+
+		// Should the AudioDevice thread automatically update this class?
+		public abstract bool AutoUpdate { get; }
+
+		// Are we actively consuming buffers?
+		protected bool ConsumingBuffers = false;
+
 		private const int BUFFER_COUNT = 3;
 		private readonly IntPtr[] buffers;
 		private int nextBufferIndex = 0;
 		private uint queuedBufferCount = 0;
-		protected abstract int BUFFER_SIZE { get; }
+
+		private readonly object StateLock = new object();
 
 		public unsafe StreamingSound(
 			AudioDevice device,
@@ -25,8 +35,6 @@ namespace MoonWorks.Audio
 			uint samplesPerSecond
 		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
 		{
-			device.AddDynamicSoundInstance(this);
-
 			buffers = new IntPtr[BUFFER_COUNT];
 			for (int i = 0; i < BUFFER_COUNT; i += 1)
 			{
@@ -46,47 +54,74 @@ namespace MoonWorks.Audio
 
 		private void PlayUsingOperationSet(uint operationSet)
 		{
-			if (State == SoundState.Playing)
+			lock (StateLock)
 			{
-				return;
+				if (State == SoundState.Playing)
+				{
+					return;
+				}
+
+				State = SoundState.Playing;
+
+				ConsumingBuffers = true;
+				QueueBuffers();
+				FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 			}
-
-			State = SoundState.Playing;
-
-			Update();
-			FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 		}
 
 		public override void Pause()
 		{
-			if (State == SoundState.Playing)
+			lock (StateLock)
 			{
-				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
-				State = SoundState.Paused;
+				if (State == SoundState.Playing)
+				{
+					ConsumingBuffers = false;
+					FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
+					State = SoundState.Paused;
+				}
 			}
 		}
 
 		public override void Stop()
 		{
-			State = SoundState.Stopped;
+			lock (StateLock)
+			{
+				ConsumingBuffers = false;
+				State = SoundState.Stopped;
+			}
 		}
 
 		public override void StopImmediate()
 		{
-			FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
-			FAudio.FAudioSourceVoice_FlushSourceBuffers(Voice);
-			ClearBuffers();
+			lock (StateLock)
+			{
+				ConsumingBuffers = false;
+				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
+				FAudio.FAudioSourceVoice_FlushSourceBuffers(Voice);
+				ClearBuffers();
 
-			State = SoundState.Stopped;
+				State = SoundState.Stopped;
+			}
 		}
 
 		internal unsafe void Update()
 		{
-			if (State != SoundState.Playing)
+			lock (StateLock)
 			{
-				return;
-			}
+				if (!IsDisposed)
+				{
+					if (State != SoundState.Playing)
+					{
+						return;
+					}
 
+					QueueBuffers();
+				}
+			}
+		}
+
+		protected void QueueBuffers()
+		{
 			FAudio.FAudioSourceVoice_GetState(
 				Voice,
 				out var state,
@@ -95,14 +130,16 @@ namespace MoonWorks.Audio
 
 			queuedBufferCount = state.BuffersQueued;
 
-			QueueBuffers();
-		}
-
-		protected void QueueBuffers()
-		{
-			for (int i = 0; i < BUFFER_COUNT - queuedBufferCount; i += 1)
+			if (ConsumingBuffers)
 			{
-				AddBuffer();
+				for (int i = 0; i < BUFFER_COUNT - queuedBufferCount; i += 1)
+				{
+					AddBuffer();
+				}
+			}
+			else if (queuedBufferCount == 0)
+			{
+				Stop();
 			}
 		}
 
@@ -124,35 +161,34 @@ namespace MoonWorks.Audio
 				out bool reachedEnd
 			);
 
-			FAudio.FAudioBuffer buf = new FAudio.FAudioBuffer
+			if (filledLengthInBytes > 0)
 			{
-				AudioBytes = (uint) filledLengthInBytes,
-				pAudioData = (IntPtr) buffer,
-				PlayLength = (
-					(uint) (filledLengthInBytes /
-					Format.nChannels /
-					(uint) (Format.wBitsPerSample / 8))
-				)
-			};
+				FAudio.FAudioBuffer buf = new FAudio.FAudioBuffer
+				{
+					AudioBytes = (uint) filledLengthInBytes,
+					pAudioData = (IntPtr) buffer,
+					PlayLength = (
+						(uint) (filledLengthInBytes /
+						Format.nChannels /
+						(uint) (Format.wBitsPerSample / 8))
+					)
+				};
 
-			FAudio.FAudioSourceVoice_SubmitSourceBuffer(
-				Voice,
-				ref buf,
-				IntPtr.Zero
-			);
+				FAudio.FAudioSourceVoice_SubmitSourceBuffer(
+					Voice,
+					ref buf,
+					IntPtr.Zero
+				);
 
-			queuedBufferCount += 1;
+				queuedBufferCount += 1;
+			}
 
-			/* We have reached the end of the file, what do we do? */
 			if (reachedEnd)
 			{
+				/* We have reached the end of the data, what do we do? */
+				ConsumingBuffers = false;
 				OnReachedEnd();
 			}
-		}
-
-		protected virtual void OnReachedEnd()
-		{
-			Stop();
 		}
 
 		protected unsafe abstract void FillBuffer(
@@ -162,13 +198,21 @@ namespace MoonWorks.Audio
 			out bool reachedEnd
 		);
 
+		protected abstract void OnReachedEnd();
+
 		protected unsafe override void Destroy()
 		{
-			StopImmediate();
-
-			for (int i = 0; i < BUFFER_COUNT; i += 1)
+			lock (StateLock)
 			{
-				NativeMemory.Free((void*) buffers[i]);
+				if (!IsDisposed)
+				{
+					StopImmediate();
+
+					for (int i = 0; i < BUFFER_COUNT; i += 1)
+					{
+						NativeMemory.Free((void*) buffers[i]);
+					}
+				}
 			}
 		}
 	}

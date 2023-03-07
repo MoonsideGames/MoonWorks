@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace MoonWorks.Audio
 {
@@ -26,13 +26,25 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private readonly List<WeakReference<AudioResource>> resources = new List<WeakReference<AudioResource>>();
-		private readonly List<WeakReference<StreamingSound>> streamingSounds = new List<WeakReference<StreamingSound>>();
+		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
+		private readonly HashSet<WeakReference> autoUpdateStreamingSoundReferences = new HashSet<WeakReference>();
+
+		private AudioTweenManager AudioTweenManager;
+
+		private const int Step = 200;
+		private TimeSpan UpdateInterval;
+		private System.Diagnostics.Stopwatch TickStopwatch = new System.Diagnostics.Stopwatch();
+		private long previousTickTime;
+		private Thread Thread;
+		private AutoResetEvent WakeSignal;
+		internal readonly object StateLock = new object();
 
 		private bool IsDisposed;
 
 		public unsafe AudioDevice()
 		{
+			UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / Step);
+
 			FAudio.FAudioCreate(out var handle, 0, FAudio.FAUDIO_DEFAULT_PROCESSOR);
 			Handle = handle;
 
@@ -90,8 +102,8 @@ namespace MoonWorks.Audio
 			) != 0)
 			{
 				Logger.LogError("No mastering voice found!");
-				Handle = IntPtr.Zero;
 				FAudio.FAudio_Release(Handle);
+				Handle = IntPtr.Zero;
 				return;
 			}
 
@@ -105,22 +117,52 @@ namespace MoonWorks.Audio
 				SpeedOfSound,
 				Handle3D
 			);
+
+			AudioTweenManager = new AudioTweenManager();
+
+			Logger.LogInfo("Setting up audio thread...");
+			WakeSignal = new AutoResetEvent(true);
+
+			Thread = new Thread(ThreadMain);
+			Thread.IsBackground = true;
+			Thread.Start();
+
+			TickStopwatch.Start();
+			previousTickTime = 0;
 		}
 
-		internal void Update()
+		private void ThreadMain()
 		{
-			for (var i = streamingSounds.Count - 1; i >= 0; i--)
+			while (!IsDisposed)
 			{
-				var weakReference = streamingSounds[i];
-				if (weakReference.TryGetTarget(out var streamingSound))
+				lock (StateLock)
+				{
+					ThreadMainTick();
+				}
+
+				WakeSignal.WaitOne(UpdateInterval);
+			}
+		}
+
+		private void ThreadMainTick()
+		{
+			long tickDelta = TickStopwatch.Elapsed.Ticks - previousTickTime;
+			previousTickTime = TickStopwatch.Elapsed.Ticks;
+			float elapsedSeconds = (float) tickDelta / System.TimeSpan.TicksPerSecond;
+
+			foreach (var weakReference in autoUpdateStreamingSoundReferences)
+			{
+				if (weakReference.Target is StreamingSound streamingSound)
 				{
 					streamingSound.Update();
 				}
 				else
 				{
-					streamingSounds.RemoveAt(i);
+					autoUpdateStreamingSoundReferences.Remove(weakReference);
 				}
 			}
+
+			AudioTweenManager.Update(elapsedSeconds);
 		}
 
 		public void SyncPlay()
@@ -128,53 +170,108 @@ namespace MoonWorks.Audio
 			FAudio.FAudio_CommitChanges(Handle, 1);
 		}
 
-		internal void AddDynamicSoundInstance(StreamingSound instance)
-		{
-			streamingSounds.Add(new WeakReference<StreamingSound>(instance));
-		}
-
-		internal void AddResourceReference(WeakReference<AudioResource> resourceReference)
-		{
-			lock (resources)
+		internal void CreateTween(
+			SoundInstance soundInstance,
+			AudioTweenProperty property,
+			System.Func<float, float> easingFunction,
+			float start,
+			float end,
+			float duration,
+			float delayTime
+		) {
+			lock (StateLock)
 			{
-				resources.Add(resourceReference);
+				AudioTweenManager.CreateTween(
+					soundInstance,
+					property,
+					easingFunction,
+					start,
+					end,
+					duration,
+					delayTime
+				);
 			}
 		}
 
-		internal void RemoveResourceReference(WeakReference<AudioResource> resourceReference)
-		{
-			lock (resources)
+		internal void ClearTweens(
+			WeakReference soundReference,
+			AudioTweenProperty property
+		) {
+			lock (StateLock)
 			{
-				resources.Remove(resourceReference);
+				AudioTweenManager.ClearTweens(soundReference, property);
 			}
+		}
+
+		internal void WakeThread()
+		{
+			WakeSignal.Set();
+		}
+
+		internal void AddResourceReference(AudioResource resource)
+		{
+			lock (StateLock)
+			{
+				resources.Add(resource.weakReference);
+
+				if (resource is StreamingSound streamingSound && streamingSound.AutoUpdate)
+				{
+					AddAutoUpdateStreamingSoundInstance(streamingSound);
+				}
+			}
+		}
+
+		internal void RemoveResourceReference(AudioResource resource)
+		{
+			lock (StateLock)
+			{
+				resources.Remove(resource.weakReference);
+
+				if (resource is StreamingSound streamingSound && streamingSound.AutoUpdate)
+				{
+					RemoveAutoUpdateStreamingSoundInstance(streamingSound);
+				}
+			}
+		}
+
+		private void AddAutoUpdateStreamingSoundInstance(StreamingSound instance)
+		{
+			autoUpdateStreamingSoundReferences.Add(instance.weakReference);
+		}
+
+		private void RemoveAutoUpdateStreamingSoundInstance(StreamingSound instance)
+		{
+			autoUpdateStreamingSoundReferences.Remove(instance.weakReference);
 		}
 
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
-				if (disposing)
+				lock (StateLock)
 				{
-					for (var i = resources.Count - 1; i >= 0; i--)
+					if (disposing)
 					{
-						var weakReference = resources[i];
-
-						if (weakReference.TryGetTarget(out var resource))
+						foreach (var weakReference in resources)
 						{
-							resource.Dispose();
+							var target = weakReference.Target;
+
+							if (target != null)
+							{
+								(target as IDisposable).Dispose();
+							}
 						}
+						resources.Clear();
 					}
-					resources.Clear();
+
+					FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
+					FAudio.FAudio_Release(Handle);
+
+					IsDisposed = true;
 				}
-
-				FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
-				FAudio.FAudio_Release(Handle);
-
-				IsDisposed = true;
 			}
 		}
 
-		// TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
 		~AudioDevice()
 		{
 			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

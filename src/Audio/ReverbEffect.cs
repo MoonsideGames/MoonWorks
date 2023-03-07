@@ -4,14 +4,12 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Audio
 {
 	// sound instances can send their audio to this voice to add reverb
-	public unsafe class ReverbEffect : IDisposable
+	public unsafe class ReverbEffect : AudioResource
 	{
 		private IntPtr voice;
 		public IntPtr Voice => voice;
 
-		private bool disposedValue;
-
-		public ReverbEffect(AudioDevice audioDevice)
+		public ReverbEffect(AudioDevice audioDevice) : base(audioDevice)
 		{
 			/* Init reverb */
 
@@ -97,32 +95,9 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		protected virtual void Dispose(bool disposing)
+		protected override void Destroy()
 		{
-			if (!disposedValue)
-			{
-				if (disposing)
-				{
-					// TODO: dispose managed state (managed objects)
-				}
-
-				FAudio.FAudioVoice_DestroyVoice(voice);
-
-				disposedValue = true;
-			}
-		}
-
-		~ReverbEffect()
-		{
-		    // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-		    Dispose(disposing: false);
-		}
-
-		public void Dispose()
-		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: true);
-			GC.SuppressFinalize(this);
+			FAudio.FAudioVoice_DestroyVoice(Voice);
 		}
 	}
 }

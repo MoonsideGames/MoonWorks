@@ -8,14 +8,14 @@ namespace MoonWorks.Audio
 
 		public bool IsDisposed { get; private set; }
 
-		private WeakReference<AudioResource> selfReference;
+		internal WeakReference weakReference;
 
 		public AudioResource(AudioDevice device)
 		{
 			Device = device;
 
-			selfReference = new WeakReference<AudioResource>(this);
-			Device.AddResourceReference(selfReference);
+			weakReference = new WeakReference(this);
+			Device.AddResourceReference(this);
 		}
 
 		protected abstract void Destroy();
@@ -26,10 +26,10 @@ namespace MoonWorks.Audio
 			{
 				Destroy();
 
-				if (selfReference != null)
+				if (weakReference != null)
 				{
-					Device.RemoveResourceReference(selfReference);
-					selfReference = null;
+					Device.RemoveResourceReference(this);
+					weakReference = null;
 				}
 
 				IsDisposed = true;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Audio;
@@ -130,6 +130,8 @@ namespace MoonWorks.Video
 
 		public void Play()
 		{
+			if (Video == null) { return; }
+
 			if (State == VideoState.Playing)
 			{
 				return;
@@ -147,6 +149,8 @@ namespace MoonWorks.Video
 
 		public void Pause()
 		{
+			if (Video == null) { return; }
+
 			if (State != VideoState.Playing)
 			{
 				return;
@@ -164,6 +168,8 @@ namespace MoonWorks.Video
 
 		public void Stop()
 		{
+			if (Video == null) { return; }
+
 			if (State == VideoState.Stopped)
 			{
 				return;
@@ -172,18 +178,30 @@ namespace MoonWorks.Video
 			timer.Stop();
 			timer.Reset();
 
-			Theorafile.tf_reset(Video.Handle);
 			lastTimestamp = 0;
 			timeElapsed = 0;
 
-			if (audioStream != null)
-			{
-				audioStream.StopImmediate();
-				audioStream.Dispose();
-				audioStream = null;
-			}
+			DestroyAudioStream();
+
+			Theorafile.tf_reset(Video.Handle);
 
 			State = VideoState.Stopped;
+		}
+
+		public void Unload()
+		{
+			Stop();
+			Video = null;
+		}
+
+		public void Update()
+		{
+			if (Video == null) { return; }
+
+			if (audioStream != null)
+			{
+				audioStream.Update();
+			}
 		}
 
 		public void Render()
@@ -203,7 +221,8 @@ namespace MoonWorks.Video
 					Video.Handle,
 					(IntPtr) yuvData,
 					thisFrame - currentFrame
-				) == 1 || currentFrame == -1) {
+				) == 1 || currentFrame == -1)
+				{
 					UpdateRenderTexture();
 				}
 
@@ -216,12 +235,7 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				if (audioStream != null)
-				{
-					audioStream.Stop();
-					audioStream.Dispose();
-					audioStream = null;
-				}
+				DestroyAudioStream();
 
 				Theorafile.tf_reset(Video.Handle);
 
@@ -299,12 +313,25 @@ namespace MoonWorks.Video
 			// Grab the first bit of audio. We're trying to start the decoding ASAP.
 			if (AudioDevice != null && Theorafile.tf_hasaudio(Video.Handle) == 1)
 			{
+				DestroyAudioStream();
+
 				int channels, sampleRate;
 				Theorafile.tf_audioinfo(Video.Handle, out channels, out sampleRate);
+
 				audioStream = new StreamingSoundTheora(AudioDevice, Video.Handle, channels, (uint) sampleRate);
 			}
 
 			currentFrame = -1;
+		}
+
+		private void DestroyAudioStream()
+		{
+			if (audioStream != null)
+			{
+				audioStream.StopImmediate();
+				audioStream.Dispose();
+				audioStream = null;
+			}
 		}
 
 		protected virtual void Dispose(bool disposing)

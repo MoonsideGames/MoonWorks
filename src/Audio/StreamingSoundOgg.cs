@@ -11,6 +11,7 @@ namespace MoonWorks.Audio
 		private FAudio.stb_vorbis_info Info;
 
 		protected override int BUFFER_SIZE => 32768;
+		public override bool AutoUpdate => true;
 
 		public unsafe static StreamingSoundOgg Load(AudioDevice device, string filePath)
 		{
@@ -35,7 +36,7 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		internal StreamingSoundOgg(
+		internal unsafe StreamingSoundOgg(
 			AudioDevice device,
 			IntPtr fileDataPtr, // MUST BE A NATIVE MEMORY HANDLE!!
 			IntPtr vorbisHandle,
@@ -47,8 +48,7 @@ namespace MoonWorks.Audio
 			(ushort) (4 * info.channels),
 			(ushort) info.channels,
 			info.sample_rate
-		)
-		{
+		) {
 			FileDataPtr = fileDataPtr;
 			VorbisHandle = vorbisHandle;
 			Info = info;
@@ -64,8 +64,7 @@ namespace MoonWorks.Audio
 			int bufferLengthInBytes,
 			out int filledLengthInBytes,
 			out bool reachedEnd
-		)
-		{
+		) {
 			var lengthInFloats = bufferLengthInBytes / sizeof(float);
 
 			/* NOTE: this function returns samples per channel, not total samples */
@@ -83,8 +82,13 @@ namespace MoonWorks.Audio
 
 		protected unsafe override void Destroy()
 		{
-			FAudio.stb_vorbis_close(VorbisHandle);
-			NativeMemory.Free((void*) FileDataPtr);
+			base.Destroy();
+
+			if (!IsDisposed)
+			{
+				FAudio.stb_vorbis_close(VorbisHandle);
+				NativeMemory.Free((void*) FileDataPtr);
+			}
 		}
 	}
 }

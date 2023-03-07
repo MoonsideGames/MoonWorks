@@ -7,6 +7,8 @@ namespace MoonWorks.Video
 	{
 		private IntPtr VideoHandle;
 		protected override int BUFFER_SIZE => 8192;
+		// Theorafile is not thread safe, so let's update on the main thread.
+		public override bool AutoUpdate => false;
 
 		internal StreamingSoundTheora(
 			AudioDevice device,
@@ -32,14 +34,22 @@ namespace MoonWorks.Video
 		) {
 			var lengthInFloats = bufferLengthInBytes / sizeof(float);
 
-			int samples = Theorafile.tf_readaudio(
-				VideoHandle,
-				(IntPtr) buffer,
-				lengthInFloats
-			);
+			// FIXME: this gets gnarly with theorafile being not thread safe
+			// is there some way we could just manually update in VideoPlayer
+			// instead of going through AudioDevice?
+			lock (Device.StateLock)
+			{
+				int samples = Theorafile.tf_readaudio(
+					VideoHandle,
+					(IntPtr) buffer,
+					lengthInFloats
+				);
 
-			filledLengthInBytes = samples * sizeof(float);
-			reachedEnd = Theorafile.tf_eos(VideoHandle) == 1;
+				filledLengthInBytes = samples * sizeof(float);
+				reachedEnd = Theorafile.tf_eos(VideoHandle) == 1;
+			}
 		}
+
+		protected override void OnReachedEnd() { }
 	}
 }

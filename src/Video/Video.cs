@@ -27,7 +27,7 @@ namespace MoonWorks.Video
 		private int yWidth;
 		private int yHeight;
 
-		private bool disposed;
+		private bool IsDisposed;
 
 		public Video(string filename)
 		{
@@ -89,7 +89,7 @@ namespace MoonWorks.Video
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (!disposed)
+			if (!IsDisposed)
 			{
 				if (disposing)
 				{
@@ -100,7 +100,7 @@ namespace MoonWorks.Video
 				Theorafile.tf_close(ref Handle);
 				NativeMemory.Free(videoData);
 
-				disposed = true;
+				IsDisposed = true;
 			}
 		}
 

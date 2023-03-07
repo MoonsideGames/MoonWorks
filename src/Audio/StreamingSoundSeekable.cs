@@ -14,11 +14,8 @@ namespace MoonWorks.Audio
 		{
 			if (Loop)
 			{
+				ConsumingBuffers = true;
 				Seek(0);
-			}
-			else
-			{
-				Stop();
 			}
 		}
 	}

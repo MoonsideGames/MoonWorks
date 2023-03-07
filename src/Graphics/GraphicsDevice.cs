@@ -18,7 +18,7 @@ namespace MoonWorks.Graphics
 
 		public bool IsDisposed { get; private set; }
 
-		private readonly List<WeakReference<GraphicsResource>> resources = new List<WeakReference<GraphicsResource>>();
+		private readonly HashSet<WeakReference<GraphicsResource>> resources = new HashSet<WeakReference<GraphicsResource>>();
 
 		public GraphicsDevice(
 			Backend preferredBackend,
@@ -237,10 +237,9 @@ namespace MoonWorks.Graphics
 				{
 					lock (resources)
 					{
-						for (var i = resources.Count - 1; i >= 0; i--)
+						foreach (var weakReference in resources)
 						{
-							var resource = resources[i];
-							if (resource.TryGetTarget(out var target))
+							if (weakReference.TryGetTarget(out var target))
 							{
 								target.Dispose();
 							}
