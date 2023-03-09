@@ -282,7 +282,12 @@ namespace MoonWorks.Math
 
 		public static float Quantize(float value, float step)
 		{
-			return (float) System.Math.Floor(value / step) * step;
+			return System.MathF.Round(value / step) * step;
+		}
+
+		public static Fixed.Fix64 Quantize(Fixed.Fix64 value, Fixed.Fix64 step)
+		{
+			return Fixed.Fix64.Round(value / step) * step;
 		}
 
 		/// <summary>
