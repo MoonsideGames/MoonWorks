@@ -1758,6 +1758,67 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		// Modified from one of the responses here:
+		// https://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both/6930407#6930407
+		public static Color FromHSV(float r, float g, float b)
+		{
+			r = (100 + r) % 1f;
+
+			float hueSlice = 6 * r; // [0, 6)
+			float hueSliceInteger = MathF.Floor(hueSlice);
+
+			// In [0,1) for each hue slice
+			float hueSliceInterpolant = hueSlice - hueSliceInteger;
+
+			Vector3 tempRGB = new Vector3(
+				b * (1f - g),
+				b * (1f - g * hueSliceInterpolant),
+				b * (1f - g * (1f - hueSliceInterpolant))
+			);
+
+			// The idea here to avoid conditions is to notice that the conversion code can be rewritten:
+			//    if      ( var_i == 0 ) { R = V         ; G = TempRGB.z ; B = TempRGB.x }
+			//    else if ( var_i == 2 ) { R = TempRGB.x ; G = V         ; B = TempRGB.z }
+			//    else if ( var_i == 4 ) { R = TempRGB.z ; G = TempRGB.x ; B = V     }
+			//
+			//    else if ( var_i == 1 ) { R = TempRGB.y ; G = V         ; B = TempRGB.x }
+			//    else if ( var_i == 3 ) { R = TempRGB.x ; G = TempRGB.y ; B = V     }
+			//    else if ( var_i == 5 ) { R = V         ; G = TempRGB.x ; B = TempRGB.y }
+			//
+			// This shows several things:
+			//  . A separation between even and odd slices
+			//  . If slices (0,2,4) and (1,3,5) can be rewritten as basically being slices (0,1,2) then
+			//      the operation simply amounts to performing a "rotate right" on the RGB components
+			//  . The base value to rotate is either (V, B, R) for even slices or (G, V, R) for odd slices
+			//
+			float isOddSlice =  hueSliceInteger % 2f;                          // 0 if even (slices 0, 2, 4), 1 if odd (slices 1, 3, 5)
+			float threeSliceSelector = 0.5f * (hueSliceInteger - isOddSlice);  // (0, 1, 2) corresponding to slices (0, 2, 4) and (1, 3, 5)
+
+			Vector3 scrollingRGBForEvenSlices = new Vector3(b, tempRGB.Z, tempRGB.X); // (V, Temp Blue, Temp Red) for even slices (0, 2, 4)
+			Vector3 scrollingRGBForOddSlices = new Vector3(tempRGB.Y, b, tempRGB.X);  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
+			Vector3 scrollingRGB = Vector3.Lerp(scrollingRGBForEvenSlices, scrollingRGBForOddSlices, isOddSlice);
+
+			float IsNotFirstSlice = MathHelper.Clamp(threeSliceSelector, 0f, 1f);        // 1 if NOT the first slice (true for slices 1 and 2)
+			float IsNotSecondSlice = MathHelper.Clamp(threeSliceSelector - 1f, 0f, 1f);  // 1 if NOT the first or second slice (true only for slice 2)
+
+			Vector3 color = Vector3.Lerp(
+				scrollingRGB,
+				Vector3.Lerp(
+					new Vector3(scrollingRGB.Z, scrollingRGB.X, scrollingRGB.Y),
+					new Vector3(scrollingRGB.Y, scrollingRGB.Z, scrollingRGB.X),
+					IsNotSecondSlice
+				),
+				IsNotFirstSlice
+			);
+
+			return new Color(color);
+		}
+
+		public static Color FromHSV(int r, int g, int b)
+		{
+			return Color.FromHSV(r / 255f, g / 255f, b / 255f);
+		}
+
 		#endregion
 
 		#region Public Static Operators and Override Methods
