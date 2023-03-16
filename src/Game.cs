@@ -109,6 +109,11 @@ namespace MoonWorks
 			}
 		}
 
+		public void Quit()
+		{
+			quit = true;
+		}
+
 		protected abstract void Update(TimeSpan delta);
 		protected abstract void Draw(double alpha);
 		protected virtual void Destroy() {}
