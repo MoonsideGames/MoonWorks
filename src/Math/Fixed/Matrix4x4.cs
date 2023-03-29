@@ -996,8 +996,8 @@ namespace MoonWorks.Math.Fixed
 			z = Vector3.Normalize(forward);
 			Vector3.Cross(ref forward, ref up, out x);
 			Vector3.Cross(ref x, ref forward, out y);
-			x.Normalize();
-			y.Normalize();
+			x = Vector3.Normalize(x);
+			y = Vector3.Normalize(y);
 
 			result = new Matrix4x4();
 			result.Right = x;

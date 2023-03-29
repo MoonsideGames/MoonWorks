@@ -201,16 +201,6 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
-		/// Turns this <see cref="Vector2"/> to a unit vector with the same direction.
-		/// </summary>
-		public void Normalize()
-		{
-			Fix64 val = Fix64.One / Fix64.Sqrt((X * X) + (Y * Y));
-			X *= val;
-			Y *= val;
-		}
-
-		/// <summary>
 		/// Turns this <see cref="Vector2"/> to an angle in radians.
 		/// </summary>
 		public Fix64 Angle()
@@ -423,7 +413,14 @@ namespace MoonWorks.Math.Fixed
 		/// <returns>Unit vector.</returns>
 		public static Vector2 Normalize(Vector2 value)
 		{
-			Fix64 val = Fix64.One / Fix64.Sqrt((value.X * value.X) + (value.Y * value.Y));
+			Fix64 lengthSquared = (value.X * value.X) + (value.Y * value.Y);
+
+			if (lengthSquared == Fix64.Zero)
+			{
+				return Zero;
+			}
+
+			Fix64 val = Fix64.One / Fix64.Sqrt(lengthSquared);
 			value.X *= val;
 			value.Y *= val;
 			return value;

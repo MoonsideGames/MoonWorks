@@ -195,16 +195,6 @@ namespace MoonWorks.Math.Float
 		}
 
 		/// <summary>
-		/// Turns this <see cref="Vector2"/> to a unit vector with the same direction.
-		/// </summary>
-		public void Normalize()
-		{
-			float val = 1.0f / (float) System.Math.Sqrt((X * X) + (Y * Y));
-			X *= val;
-			Y *= val;
-		}
-
-		/// <summary>
 		/// Turns this <see cref="Vector2"/> to an angle in radians.
 		/// </summary>
 		public float Angle()
@@ -717,7 +707,14 @@ namespace MoonWorks.Math.Float
 		/// <returns>Unit vector.</returns>
 		public static Vector2 Normalize(Vector2 value)
 		{
-			float val = 1.0f / (float) System.Math.Sqrt((value.X * value.X) + (value.Y * value.Y));
+			float lengthSquared = (value.X * value.X) + (value.Y * value.Y);
+
+			if (lengthSquared == 0)
+			{
+				return Zero;
+			}
+
+			float val = 1.0f / System.MathF.Sqrt(lengthSquared);
 			value.X *= val;
 			value.Y *= val;
 			return value;

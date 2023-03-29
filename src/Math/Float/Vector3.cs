@@ -303,21 +303,6 @@ namespace MoonWorks.Math.Float
 		}
 
 		/// <summary>
-		/// Turns this <see cref="Vector3"/> to a unit vector with the same direction.
-		/// </summary>
-		public void Normalize()
-		{
-			float factor = 1.0f / (float) System.Math.Sqrt(
-				(X * X) +
-				(Y * Y) +
-				(Z * Z)
-			);
-			X *= factor;
-			Y *= factor;
-			Z *= factor;
-		}
-
-		/// <summary>
 		/// Returns a <see cref="String"/> representation of this <see cref="Vector3"/> in the format:
 		/// {X:[<see cref="X"/>] Y:[<see cref="Y"/>] Z:[<see cref="Z"/>]}
 		/// </summary>
@@ -900,11 +885,14 @@ namespace MoonWorks.Math.Float
 		/// <returns>Unit vector.</returns>
 		public static Vector3 Normalize(Vector3 value)
 		{
-			float factor = 1.0f / (float) System.Math.Sqrt(
-				(value.X * value.X) +
-				(value.Y * value.Y) +
-				(value.Z * value.Z)
-			);
+			float lengthSquared = (value.X * value.X) + (value.Y * value.Y) + (value.Z * value.Z);
+
+			if (lengthSquared == 0f)
+			{
+				return Zero;
+			}
+
+			float factor = 1.0f / System.MathF.Sqrt(lengthSquared);
 			return new Vector3(
 				value.X * factor,
 				value.Y * factor,

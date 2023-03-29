@@ -267,23 +267,6 @@ namespace MoonWorks.Math.Float
 			return (X * X) + (Y * Y) + (Z * Z) + (W * W);
 		}
 
-		/// <summary>
-		/// Turns this <see cref="Vector4"/> to a unit vector with the same direction.
-		/// </summary>
-		public void Normalize()
-		{
-			float factor = 1.0f / (float) System.Math.Sqrt(
-				(X * X) +
-				(Y * Y) +
-				(Z * Z) +
-				(W * W)
-			);
-			X *= factor;
-			Y *= factor;
-			Z *= factor;
-			W *= factor;
-		}
-
 		public override string ToString()
 		{
 			return (
@@ -853,12 +836,15 @@ namespace MoonWorks.Math.Float
 		/// <returns>Unit vector.</returns>
 		public static Vector4 Normalize(Vector4 vector)
 		{
-			float factor = 1.0f / (float) System.Math.Sqrt(
-				(vector.X * vector.X) +
-				(vector.Y * vector.Y) +
-				(vector.Z * vector.Z) +
-				(vector.W * vector.W)
-			);
+			var lengthSquared = (vector.X * vector.X) + (vector.Y * vector.Y) +
+			                        (vector.Z * vector.Z) + (vector.W * vector.W);
+
+			if (lengthSquared == 0)
+			{
+				return Zero;
+			}
+
+			float factor = 1.0f / System.MathF.Sqrt(lengthSquared);
 			return new Vector4(
 				vector.X * factor,
 				vector.Y * factor,
@@ -870,16 +856,20 @@ namespace MoonWorks.Math.Float
 		/// <summary>
 		/// Creates a new <see cref="Vector4"/> that contains a normalized values from another vector.
 		/// </summary>
-		/// <param name="value">Source <see cref="Vector4"/>.</param>
+		/// <param name="vector">Source <see cref="Vector4"/>.</param>
 		/// <param name="result">Unit vector as an output parameter.</param>
 		public static void Normalize(ref Vector4 vector, out Vector4 result)
 		{
-			float factor = 1.0f / (float) System.Math.Sqrt(
-				(vector.X * vector.X) +
-				(vector.Y * vector.Y) +
-				(vector.Z * vector.Z) +
-				(vector.W * vector.W)
-			);
+			float lengthSquared = (vector.X * vector.X) + (vector.Y * vector.Y) +
+			                      (vector.Z * vector.Z) + (vector.W * vector.W);
+
+			if (lengthSquared == 0)
+			{
+				result = Zero;
+				return;
+			}
+
+			float factor = 1.0f / System.MathF.Sqrt(lengthSquared);
 			result.X = vector.X * factor;
 			result.Y = vector.Y * factor;
 			result.Z = vector.Z * factor;

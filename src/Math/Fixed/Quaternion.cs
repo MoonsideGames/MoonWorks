@@ -215,23 +215,6 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
-		/// Scales the quaternion magnitude to unit length.
-		/// </summary>
-		public void Normalize()
-		{
-			Fix64 num = Fix64.One / (Fix64.Sqrt(
-				(X * X) +
-				(Y * Y) +
-				(Z * Z) +
-				(W * W)
-			));
-			this.X *= num;
-			this.Y *= num;
-			this.Z *= num;
-			this.W *= num;
-		}
-
-		/// <summary>
 		/// Returns a <see cref="String"/> representation of this <see cref="Quaternion"/> in the format:
 		/// {X:[<see cref="X"/>] Y:[<see cref="Y"/>] Z:[<see cref="Z"/>] W:[<see cref="W"/>]}
 		/// </summary>
@@ -759,12 +742,16 @@ namespace MoonWorks.Math.Fixed
 		/// <param name="result">The unit length quaternion an output parameter.</param>
 		public static void Normalize(ref Quaternion quaternion, out Quaternion result)
 		{
-			Fix64 num = Fix64.One / (Fix64.Sqrt(
-				(quaternion.X * quaternion.X) +
-				(quaternion.Y * quaternion.Y) +
-				(quaternion.Z * quaternion.Z) +
-				(quaternion.W * quaternion.W)
-			));
+			Fix64 lengthSquared = (quaternion.X * quaternion.X) + (quaternion.Y * quaternion.Y) +
+			                      (quaternion.Z * quaternion.Z) + (quaternion.W * quaternion.W);
+
+			if (lengthSquared == Fix64.Zero)
+			{
+				result = Identity;
+				return;
+			}
+
+			Fix64 num = Fix64.One / Fix64.Sqrt(lengthSquared);
 			result.X = quaternion.X * num;
 			result.Y = quaternion.Y * num;
 			result.Z = quaternion.Z * num;

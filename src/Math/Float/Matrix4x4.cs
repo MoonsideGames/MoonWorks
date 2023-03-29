@@ -611,7 +611,7 @@ namespace MoonWorks.Math.Float
 				);
 			}
 			Vector3.Cross(ref cameraUpVector, ref vector, out vector3);
-			vector3.Normalize();
+			vector3 = Vector3.Normalize(vector3);
 			Vector3.Cross(ref vector, ref vector3, out vector2);
 			result.M11 = vector3.X;
 			result.M12 = vector3.Y;
@@ -730,16 +730,16 @@ namespace MoonWorks.Math.Float
 						Vector3.Forward;
 				}
 				Vector3.Cross(ref rotateAxis, ref vector, out vector3);
-				vector3.Normalize();
+				vector3 = Vector3.Normalize(vector3);
 				Vector3.Cross(ref vector3, ref rotateAxis, out vector);
-				vector.Normalize();
+				vector = Vector3.Normalize(vector);
 			}
 			else
 			{
 				Vector3.Cross(ref rotateAxis, ref vector2, out vector3);
-				vector3.Normalize();
+				vector3 = Vector3.Normalize(vector3);
 				Vector3.Cross(ref vector3, ref vector4, out vector);
-				vector.Normalize();
+				vector = Vector3.Normalize(vector);
 			}
 
 			result.M11 = vector3.X;
@@ -1701,8 +1701,8 @@ namespace MoonWorks.Math.Float
 			Vector3.Normalize(ref forward, out z);
 			Vector3.Cross(ref forward, ref up, out x);
 			Vector3.Cross(ref x, ref forward, out y);
-			x.Normalize();
-			y.Normalize();
+			x = Vector3.Normalize(x);
+			y = Vector3.Normalize(y);
 
 			result = new Matrix4x4();
 			result.Right = x;
