@@ -28,10 +28,13 @@ namespace MoonWorks.Graphics
 		/// <param name="device"></param>
 		/// <param name="commandBuffer"></param>
 		/// <param name="filePath"></param>
-		/// <returns></returns>
-		public static Texture LoadPNG(GraphicsDevice device, CommandBuffer commandBuffer, string filePath)
-		{
-			var pixels = Refresh.Refresh_Image_Load(
+		/// <returns>A Texture object.</returns>
+		public static Texture LoadPNG(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			string filePath
+		) {
+			var pixels = Refresh.Refresh_Image_LoadPNGFromFile(
 				filePath,
 				out var width,
 				out var height,
@@ -53,7 +56,56 @@ namespace MoonWorks.Graphics
 			var texture = new Texture(device, textureCreateInfo);
 			commandBuffer.SetTextureData(texture, pixels, byteCount);
 
-			Refresh.Refresh_Image_Free(pixels);
+			Refresh.Refresh_Image_FreePNG(pixels);
+
+			return texture;
+		}
+
+		/// <summary>
+		/// Loads a PNG from a byte array.
+		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+		/// </summary>
+		/// <param name="device"></param>
+		/// <param name="commandBuffer"></param>
+		/// <param name="data"></param>
+		/// <returns>A Texture object.</returns>
+		public unsafe static Texture LoadPNG(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			byte[] data
+		) {
+			IntPtr pixels;
+			int width, height, numChannels;
+
+			fixed (byte* ptr = &data[0])
+			{
+				pixels = Refresh.Refresh_Image_LoadPNGFromMemory(
+					(nint) ptr,
+					data.Length,
+					out width,
+					out height,
+					out numChannels
+				);
+			}
+
+			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
+			{
+				Width = (uint) width,
+				Height = (uint) height,
+				Depth = 1,
+				Format = TextureFormat.R8G8B8A8,
+				IsCube = false,
+				LevelCount = 1,
+				SampleCount = SampleCount.One,
+				UsageFlags = TextureUsageFlags.Sampler
+			};
+
+			var byteCount = (uint) (width * height * numChannels);
+
+			var texture = new Texture(device, textureCreateInfo);
+			commandBuffer.SetTextureData(texture, pixels, byteCount);
+
+			Refresh.Refresh_Image_FreePNG(pixels);
 
 			return texture;
 		}
@@ -72,6 +124,97 @@ namespace MoonWorks.Graphics
 			{
 				Refresh.Refresh_Image_SavePNG(path, width, height, Conversions.BoolToByte(format == TextureFormat.B8G8R8A8), (IntPtr) ptr);
 			}
+		}
+
+		/// <summary>
+		/// Loads a QOI from a file path.
+		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+		/// </summary>
+		/// <param name="device"></param>
+		/// <param name="commandBuffer"></param>
+		/// <param name="filePath"></param>
+		/// <returns>A Texture object.</returns>
+		public unsafe static Texture LoadQOI(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			string filePath
+		) {
+			var pixels = Refresh.Refresh_Image_LoadQOIFromFile(
+				filePath,
+				out var width,
+				out var height,
+				out var numChannels
+			);
+
+			var byteCount = (uint) (width * height * numChannels);
+
+			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
+			{
+				Width = (uint) width,
+				Height = (uint) height,
+				Depth = 1,
+				Format = TextureFormat.R8G8B8A8,
+				IsCube = false,
+				LevelCount = 1,
+				SampleCount = SampleCount.One,
+				UsageFlags = TextureUsageFlags.Sampler
+			};
+
+			var texture = new Texture(device, textureCreateInfo);
+			commandBuffer.SetTextureData(texture, pixels, byteCount);
+
+			Refresh.Refresh_Image_FreeQOI(pixels);
+
+			return texture;
+		}
+
+		/// <summary>
+		/// Loads a QOI from a byte array.
+		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+		/// </summary>
+		/// <param name="device"></param>
+		/// <param name="commandBuffer"></param>
+		/// <param name="filePath"></param>
+		/// <returns>A Texture object.</returns>
+		public unsafe static Texture LoadQOI(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			byte[] data
+		) {
+			IntPtr pixels;
+			int width, height, numChannels;
+
+			fixed (byte* ptr = &data[0])
+			{
+				pixels = Refresh.Refresh_Image_LoadQOIFromMemory(
+					(nint) ptr,
+					data.Length,
+					out width,
+					out height,
+					out numChannels
+				);
+			}
+
+			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
+			{
+				Width = (uint) width,
+				Height = (uint) height,
+				Depth = 1,
+				Format = TextureFormat.R8G8B8A8,
+				IsCube = false,
+				LevelCount = 1,
+				SampleCount = SampleCount.One,
+				UsageFlags = TextureUsageFlags.Sampler
+			};
+
+			var byteCount = (uint) (width * height * numChannels);
+
+			var texture = new Texture(device, textureCreateInfo);
+			commandBuffer.SetTextureData(texture, pixels, byteCount);
+
+			Refresh.Refresh_Image_FreePNG(pixels);
+
+			return texture;
 		}
 
 		public static Texture LoadDDS(GraphicsDevice graphicsDevice, CommandBuffer commandBuffer, System.IO.Stream stream)
