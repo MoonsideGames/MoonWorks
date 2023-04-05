@@ -1,6 +1,8 @@
 /* Heavily based on https://github.com/FNA-XNA/FNA/blob/master/src/Media/Xiph/VideoPlayer.cs */
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using SDL2;
 
 namespace MoonWorks.Video
 {
@@ -16,6 +18,7 @@ namespace MoonWorks.Video
 		internal IntPtr Handle;
 		private IntPtr rwData;
 		private void* videoData;
+		private int videoDataLength;
 
 		public double FramesPerSecond => fps;
 		public int Width => yWidth;
@@ -31,16 +34,19 @@ namespace MoonWorks.Video
 
 		public Video(string filename)
 		{
-			if (!System.IO.File.Exists(filename))
+			if (!File.Exists(filename))
 			{
 				throw new ArgumentException("Video file not found!");
 			}
 
-			var bytes = System.IO.File.ReadAllBytes(filename);
-			videoData = NativeMemory.Alloc((nuint) bytes.Length);
-			Marshal.Copy(bytes, 0, (IntPtr) videoData, bytes.Length);
-			rwData = SDL2.SDL.SDL_RWFromMem((IntPtr) videoData, bytes.Length);
+			var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
+			videoDataLength = (int) fileStream.Length;
+			videoData = NativeMemory.Alloc((nuint) videoDataLength);
+			var fileBufferSpan = new Span<byte>(videoData, videoDataLength);
+			fileStream.ReadExactly(fileBufferSpan);
+			fileStream.Close();
 
+			rwData = SDL.SDL_RWFromMem((IntPtr) videoData, videoDataLength);
 			if (Theorafile.tf_open_callbacks(rwData, out Handle, callbacks) < 0)
 			{
 				throw new ArgumentException("Invalid video file!");
@@ -98,6 +104,7 @@ namespace MoonWorks.Video
 
 				// free unmanaged resources (unmanaged objects)
 				Theorafile.tf_close(ref Handle);
+				SDL.SDL_RWclose(rwData);
 				NativeMemory.Free(videoData);
 
 				IsDisposed = true;

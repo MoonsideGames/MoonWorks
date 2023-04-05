@@ -53,11 +53,8 @@ namespace MoonWorks.Audio
 		}
 
 		// mostly borrowed from https://github.com/FNA-XNA/FNA/blob/b71b4a35ae59970ff0070dea6f8620856d8d4fec/src/Audio/SoundEffect.cs#L385
-		public static StaticSound LoadWav(AudioDevice device, string filePath)
+		public static unsafe StaticSound LoadWav(AudioDevice device, string filePath)
 		{
-			// Sample data
-			byte[] data;
-
 			// WaveFormatEx data
 			ushort wFormatTag;
 			ushort nChannels;
@@ -68,141 +65,144 @@ namespace MoonWorks.Audio
 			int samplerLoopStart = 0;
 			int samplerLoopEnd = 0;
 
-			using (BinaryReader reader = new BinaryReader(File.OpenRead(filePath)))
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			using var reader = new BinaryReader(stream);
+
+			// RIFF Signature
+			string signature = new string(reader.ReadChars(4));
+			if (signature != "RIFF")
 			{
-				// RIFF Signature
-				string signature = new string(reader.ReadChars(4));
-				if (signature != "RIFF")
-				{
-					throw new NotSupportedException("Specified stream is not a wave file.");
-				}
-
-				reader.ReadUInt32(); // Riff Chunk Size
-
-				string wformat = new string(reader.ReadChars(4));
-				if (wformat != "WAVE")
-				{
-					throw new NotSupportedException("Specified stream is not a wave file.");
-				}
-
-				// WAVE Header
-				string format_signature = new string(reader.ReadChars(4));
-				while (format_signature != "fmt ")
-				{
-					reader.ReadBytes(reader.ReadInt32());
-					format_signature = new string(reader.ReadChars(4));
-				}
-
-				int format_chunk_size = reader.ReadInt32();
-
-				wFormatTag = reader.ReadUInt16();
-				nChannels = reader.ReadUInt16();
-				nSamplesPerSec = reader.ReadUInt32();
-				nAvgBytesPerSec = reader.ReadUInt32();
-				nBlockAlign = reader.ReadUInt16();
-				wBitsPerSample = reader.ReadUInt16();
-
-				// Reads residual bytes
-				if (format_chunk_size > 16)
-				{
-					reader.ReadBytes(format_chunk_size - 16);
-				}
-
-				// data Signature
-				string data_signature = new string(reader.ReadChars(4));
-				while (data_signature.ToLowerInvariant() != "data")
-				{
-					reader.ReadBytes(reader.ReadInt32());
-					data_signature = new string(reader.ReadChars(4));
-				}
-				if (data_signature != "data")
-				{
-					throw new NotSupportedException("Specified wave file is not supported.");
-				}
-
-				int waveDataLength = reader.ReadInt32();
-				data = reader.ReadBytes(waveDataLength);
-
-				// Scan for other chunks
-				while (reader.PeekChar() != -1)
-				{
-					char[] chunkIDChars = reader.ReadChars(4);
-					if (chunkIDChars.Length < 4)
-					{
-						break; // EOL!
-					}
-					byte[] chunkSizeBytes = reader.ReadBytes(4);
-					if (chunkSizeBytes.Length < 4)
-					{
-						break; // EOL!
-					}
-					string chunk_signature = new string(chunkIDChars);
-					int chunkDataSize = BitConverter.ToInt32(chunkSizeBytes, 0);
-					if (chunk_signature == "smpl") // "smpl", Sampler Chunk Found
-					{
-						reader.ReadUInt32(); // Manufacturer
-						reader.ReadUInt32(); // Product
-						reader.ReadUInt32(); // Sample Period
-						reader.ReadUInt32(); // MIDI Unity Note
-						reader.ReadUInt32(); // MIDI Pitch Fraction
-						reader.ReadUInt32(); // SMPTE Format
-						reader.ReadUInt32(); // SMPTE Offset
-						uint numSampleLoops = reader.ReadUInt32();
-						int samplerData = reader.ReadInt32();
-
-						for (int i = 0; i < numSampleLoops; i += 1)
-						{
-							reader.ReadUInt32(); // Cue Point ID
-							reader.ReadUInt32(); // Type
-							int start = reader.ReadInt32();
-							int end = reader.ReadInt32();
-							reader.ReadUInt32(); // Fraction
-							reader.ReadUInt32(); // Play Count
-
-							if (i == 0) // Grab loopStart and loopEnd from first sample loop
-							{
-								samplerLoopStart = start;
-								samplerLoopEnd = end;
-							}
-						}
-
-						if (samplerData != 0) // Read Sampler Data if it exists
-						{
-							reader.ReadBytes(samplerData);
-						}
-					}
-					else // Read unwanted chunk data and try again
-					{
-						reader.ReadBytes(chunkDataSize);
-					}
-				}
-				// End scan
+				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			return new StaticSound(
+			reader.ReadUInt32(); // Riff Chunk Size
+
+			string wformat = new string(reader.ReadChars(4));
+			if (wformat != "WAVE")
+			{
+				throw new NotSupportedException("Specified stream is not a wave file.");
+			}
+
+			// WAVE Header
+			string format_signature = new string(reader.ReadChars(4));
+			while (format_signature != "fmt ")
+			{
+				reader.ReadBytes(reader.ReadInt32());
+				format_signature = new string(reader.ReadChars(4));
+			}
+
+			int format_chunk_size = reader.ReadInt32();
+
+			wFormatTag = reader.ReadUInt16();
+			nChannels = reader.ReadUInt16();
+			nSamplesPerSec = reader.ReadUInt32();
+			nAvgBytesPerSec = reader.ReadUInt32();
+			nBlockAlign = reader.ReadUInt16();
+			wBitsPerSample = reader.ReadUInt16();
+
+			// Reads residual bytes
+			if (format_chunk_size > 16)
+			{
+				reader.ReadBytes(format_chunk_size - 16);
+			}
+
+			// data Signature
+			string data_signature = new string(reader.ReadChars(4));
+			while (data_signature.ToLowerInvariant() != "data")
+			{
+				reader.ReadBytes(reader.ReadInt32());
+				data_signature = new string(reader.ReadChars(4));
+			}
+			if (data_signature != "data")
+			{
+				throw new NotSupportedException("Specified wave file is not supported.");
+			}
+
+			int waveDataLength = reader.ReadInt32();
+			var waveDataBuffer = NativeMemory.Alloc((nuint) waveDataLength);
+			var waveDataSpan = new Span<byte>(waveDataBuffer, waveDataLength);
+			stream.ReadExactly(waveDataSpan);
+
+			// Scan for other chunks
+			while (reader.PeekChar() != -1)
+			{
+				char[] chunkIDChars = reader.ReadChars(4);
+				if (chunkIDChars.Length < 4)
+				{
+					break; // EOL!
+				}
+				byte[] chunkSizeBytes = reader.ReadBytes(4);
+				if (chunkSizeBytes.Length < 4)
+				{
+					break; // EOL!
+				}
+				string chunk_signature = new string(chunkIDChars);
+				int chunkDataSize = BitConverter.ToInt32(chunkSizeBytes, 0);
+				if (chunk_signature == "smpl") // "smpl", Sampler Chunk Found
+				{
+					reader.ReadUInt32(); // Manufacturer
+					reader.ReadUInt32(); // Product
+					reader.ReadUInt32(); // Sample Period
+					reader.ReadUInt32(); // MIDI Unity Note
+					reader.ReadUInt32(); // MIDI Pitch Fraction
+					reader.ReadUInt32(); // SMPTE Format
+					reader.ReadUInt32(); // SMPTE Offset
+					uint numSampleLoops = reader.ReadUInt32();
+					int samplerData = reader.ReadInt32();
+
+					for (int i = 0; i < numSampleLoops; i += 1)
+					{
+						reader.ReadUInt32(); // Cue Point ID
+						reader.ReadUInt32(); // Type
+						int start = reader.ReadInt32();
+						int end = reader.ReadInt32();
+						reader.ReadUInt32(); // Fraction
+						reader.ReadUInt32(); // Play Count
+
+						if (i == 0) // Grab loopStart and loopEnd from first sample loop
+						{
+							samplerLoopStart = start;
+							samplerLoopEnd = end;
+						}
+					}
+
+					if (samplerData != 0) // Read Sampler Data if it exists
+					{
+						reader.ReadBytes(samplerData);
+					}
+				}
+				else // Read unwanted chunk data and try again
+				{
+					reader.ReadBytes(chunkDataSize);
+				}
+			}
+			// End scan
+
+			var sound = new StaticSound(
 				device,
 				wFormatTag,
 				wBitsPerSample,
 				nBlockAlign,
 				nChannels,
 				nSamplesPerSec,
-				data,
-				0,
-				(uint) data.Length
+				(nint) waveDataBuffer,
+				(uint) waveDataLength,
+				true
 			);
+
+			return sound;
 		}
 
-		public unsafe StaticSound(
+		public StaticSound(
 			AudioDevice device,
 			ushort formatTag,
 			ushort bitsPerSample,
 			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
-			byte[] buffer,
-			uint bufferOffset, /* number of bytes */
-			uint bufferLength /* number of bytes */
-		) : base(device)
+			IntPtr bufferPtr,
+			uint bufferLengthInBytes,
+			bool ownsBuffer) : base(device)
 		{
 			FormatTag = formatTag;
 			BitsPerSample = bitsPerSample;
@@ -210,19 +210,17 @@ namespace MoonWorks.Audio
 			Channels = channels;
 			SamplesPerSecond = samplesPerSecond;
 
-			Handle = new FAudio.FAudioBuffer();
-			Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
-			Handle.pContext = IntPtr.Zero;
-			Handle.AudioBytes = bufferLength;
-			Handle.pAudioData = (nint) NativeMemory.Alloc(bufferLength);
-			Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
-			Handle.PlayBegin = 0;
-			Handle.PlayLength = 0;
+			Handle = new FAudio.FAudioBuffer
+			{
+				Flags = FAudio.FAUDIO_END_OF_STREAM,
+				pContext = IntPtr.Zero,
+				pAudioData = bufferPtr,
+				AudioBytes = bufferLengthInBytes,
+				PlayBegin = 0,
+				PlayLength = 0
+			};
 
-			LoopStart = 0;
-			LoopLength = 0;
-
-			OwnsBuffer = true;
+			OwnsBuffer = ownsBuffer;
 		}
 
 		public unsafe StaticSound(
@@ -254,35 +252,6 @@ namespace MoonWorks.Audio
 			LoopLength = 0;
 
 			OwnsBuffer = true;
-		}
-
-		public StaticSound(
-			AudioDevice device,
-			ushort formatTag,
-			ushort bitsPerSample,
-			ushort blockAlign,
-			ushort channels,
-			uint samplesPerSecond,
-			IntPtr bufferPtr,
-			uint bufferLengthInBytes) : base(device)
-		{
-			FormatTag = formatTag;
-			BitsPerSample = bitsPerSample;
-			BlockAlign = blockAlign;
-			Channels = channels;
-			SamplesPerSecond = samplesPerSecond;
-
-			Handle = new FAudio.FAudioBuffer
-			{
-				Flags = FAudio.FAUDIO_END_OF_STREAM,
-				pContext = IntPtr.Zero,
-				pAudioData = bufferPtr,
-				AudioBytes = bufferLengthInBytes,
-				PlayBegin = 0,
-				PlayLength = 0
-			};
-
-			OwnsBuffer = false;
 		}
 
 		/// <summary>

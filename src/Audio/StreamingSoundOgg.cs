@@ -15,10 +15,13 @@ namespace MoonWorks.Audio
 
 		public unsafe static StreamingSoundOgg Load(AudioDevice device, string filePath)
 		{
-			var fileData = File.ReadAllBytes(filePath);
-			var fileDataPtr = NativeMemory.Alloc((nuint) fileData.Length);
-			Marshal.Copy(fileData, 0, (IntPtr) fileDataPtr, fileData.Length);
-			var vorbisHandle = FAudio.stb_vorbis_open_memory((IntPtr) fileDataPtr, fileData.Length, out int error, IntPtr.Zero);
+			var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			var fileDataPtr = NativeMemory.Alloc((nuint) fileStream.Length);
+			var fileDataSpan = new Span<byte>(fileDataPtr, (int) fileStream.Length);
+			fileStream.ReadExactly(fileDataSpan);
+			fileStream.Close();
+
+			var vorbisHandle = FAudio.stb_vorbis_open_memory((IntPtr) fileDataPtr, fileDataSpan.Length, out int error, IntPtr.Zero);
 			if (error != 0)
 			{
 				NativeMemory.Free(fileDataPtr);

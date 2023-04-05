@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -217,47 +218,44 @@ namespace MoonWorks.Graphics
 			return texture;
 		}
 
-		public static Texture LoadDDS(GraphicsDevice graphicsDevice, CommandBuffer commandBuffer, System.IO.Stream stream)
+		public unsafe static Texture LoadDDS(GraphicsDevice graphicsDevice, CommandBuffer commandBuffer, System.IO.Stream stream)
 		{
-			using (var reader = new BinaryReader(stream))
+			using var reader = new BinaryReader(stream);
+			Texture texture;
+			int faces;
+			ParseDDS(reader, out var format, out var width, out var height, out var levels, out var isCube);
+
+			if (isCube)
 			{
-				Texture texture;
-				int faces;
-				ParseDDS(reader, out var format, out var width, out var height, out var levels, out var isCube);
-
-				if (isCube)
-				{
-					texture = CreateTextureCube(graphicsDevice, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
-					faces = 6;
-				}
-				else
-				{
-					texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
-					faces = 1;
-				}
-
-				for (int i = 0; i < faces; i += 1)
-				{
-					for (int j = 0; j < levels; j += 1)
-					{
-						var levelWidth = width >> j;
-						var levelHeight = height >> j;
-
-						var pixels = reader.ReadBytes(
-							Texture.CalculateDDSLevelSize(
-								levelWidth,
-								levelHeight,
-								format
-							)
-						);
-
-						var textureSlice = new TextureSlice(texture, new Rect(0, 0, levelWidth, levelHeight), 0, (uint) i, (uint) j);
-						commandBuffer.SetTextureData(textureSlice, pixels);
-					}
-				}
-
-				return texture;
+				texture = CreateTextureCube(graphicsDevice, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
+				faces = 6;
 			}
+			else
+			{
+				texture = CreateTexture2D(graphicsDevice, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
+				faces = 1;
+			}
+
+			for (int i = 0; i < faces; i += 1)
+			{
+				for (int j = 0; j < levels; j += 1)
+				{
+					var levelWidth = width >> j;
+					var levelHeight = height >> j;
+
+					var levelSize = CalculateDDSLevelSize(levelWidth, levelHeight, format);
+					var byteBuffer = NativeMemory.Alloc((nuint) levelSize);
+					var byteSpan = new Span<byte>(byteBuffer, levelSize);
+					stream.ReadExactly(byteSpan);
+
+					var textureSlice = new TextureSlice(texture, new Rect(0, 0, levelWidth, levelHeight), 0, (uint) i, (uint) j);
+					commandBuffer.SetTextureData(textureSlice, (nint) byteBuffer, (uint) levelSize);
+
+					NativeMemory.Free(byteBuffer);
+				}
+			}
+
+			return texture;
 		}
 
 		/// <summary>

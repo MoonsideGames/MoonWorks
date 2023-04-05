@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using WellspringCS;
 
 namespace MoonWorks.Graphics.Font
@@ -12,11 +13,15 @@ namespace MoonWorks.Graphics.Font
 
         public unsafe Font(string path)
         {
-            var bytes = File.ReadAllBytes(path);
-			fixed (byte* pByte = &bytes[0])
-			{
-				Handle = Wellspring.Wellspring_CreateFont((IntPtr) pByte, (uint) bytes.Length);
-			}
+	        var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+	        var fileByteBuffer = NativeMemory.Alloc((nuint) fileStream.Length);
+	        var fileByteSpan = new Span<byte>(fileByteBuffer, (int) fileStream.Length);
+	        fileStream.ReadExactly(fileByteSpan);
+	        fileStream.Close();
+
+	        Handle = Wellspring.Wellspring_CreateFont((IntPtr) fileByteBuffer, (uint) fileByteSpan.Length);
+
+	        NativeMemory.Free(fileByteBuffer);
         }
 
 		protected virtual void Dispose(bool disposing)

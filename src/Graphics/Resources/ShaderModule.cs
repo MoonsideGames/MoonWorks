@@ -1,6 +1,7 @@
 ﻿using RefreshCS;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics
 {
@@ -13,10 +14,8 @@ namespace MoonWorks.Graphics
 
 		public unsafe ShaderModule(GraphicsDevice device, string filePath) : base(device)
 		{
-			using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-			{
-				Handle = CreateFromStream(device, stream);
-			}
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			Handle = CreateFromStream(device, stream);
 		}
 
 		public unsafe ShaderModule(GraphicsDevice device, Stream stream) : base(device)
@@ -24,19 +23,20 @@ namespace MoonWorks.Graphics
 			Handle = CreateFromStream(device, stream);
 		}
 
-		private unsafe static IntPtr CreateFromStream(GraphicsDevice device, Stream stream)
+		private static unsafe IntPtr CreateFromStream(GraphicsDevice device, Stream stream)
 		{
-			var bytecode = new byte[stream.Length];
-			stream.Read(bytecode, 0, (int) stream.Length);
+			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
+			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
+			stream.ReadExactly(bytecodeSpan);
 
-			fixed (byte* ptr = bytecode)
-			{
-				Refresh.ShaderModuleCreateInfo shaderModuleCreateInfo;
-				shaderModuleCreateInfo.codeSize = (UIntPtr) bytecode.Length;
-				shaderModuleCreateInfo.byteCode = (IntPtr) ptr;
+			Refresh.ShaderModuleCreateInfo shaderModuleCreateInfo;
+			shaderModuleCreateInfo.codeSize = (nuint) stream.Length;
+			shaderModuleCreateInfo.byteCode = (nint) bytecodeBuffer;
 
-				return Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);
-			}
+			var shaderModule = Refresh.Refresh_CreateShaderModule(device.Handle, shaderModuleCreateInfo);
+
+			NativeMemory.Free(bytecodeBuffer);
+			return shaderModule;
 		}
 	}
 }
