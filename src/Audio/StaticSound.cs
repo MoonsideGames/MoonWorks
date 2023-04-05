@@ -19,6 +19,8 @@ namespace MoonWorks.Audio
 
 		private Stack<StaticSoundInstance> Instances = new Stack<StaticSoundInstance>();
 
+		private bool OwnsBuffer;
+
 		public static StaticSound LoadOgg(AudioDevice device, string filePath)
 		{
 			var filePointer = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
@@ -190,7 +192,7 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		public StaticSound(
+		public unsafe StaticSound(
 			AudioDevice device,
 			ushort formatTag,
 			ushort bitsPerSample,
@@ -212,33 +214,18 @@ namespace MoonWorks.Audio
 			Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
 			Handle.pContext = IntPtr.Zero;
 			Handle.AudioBytes = bufferLength;
-			Handle.pAudioData = Marshal.AllocHGlobal((int) bufferLength);
+			Handle.pAudioData = (nint) NativeMemory.Alloc(bufferLength);
 			Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
 			Handle.PlayBegin = 0;
 			Handle.PlayLength = 0;
 
-			if (formatTag == 1)
-			{
-				Handle.PlayLength = (uint) (
-					bufferLength /
-					channels /
-					(bitsPerSample / 8)
-				);
-			}
-			else if (formatTag == 2)
-			{
-				Handle.PlayLength = (uint) (
-					bufferLength /
-					blockAlign *
-					(((blockAlign / channels) - 6) * 2)
-				);
-			}
-
 			LoopStart = 0;
 			LoopLength = 0;
+
+			OwnsBuffer = true;
 		}
 
-		public StaticSound(
+		public unsafe StaticSound(
 			AudioDevice device,
 			ushort channels,
 			uint samplesPerSecond,
@@ -258,13 +245,44 @@ namespace MoonWorks.Audio
 			Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
 			Handle.pContext = IntPtr.Zero;
 			Handle.AudioBytes = (uint) bufferLengthInBytes;
-			Handle.pAudioData = Marshal.AllocHGlobal(bufferLengthInBytes);
+			Handle.pAudioData = (nint) NativeMemory.Alloc((nuint) bufferLengthInBytes);
 			Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
 			Handle.PlayBegin = 0;
 			Handle.PlayLength = 0;
 
 			LoopStart = 0;
 			LoopLength = 0;
+
+			OwnsBuffer = true;
+		}
+
+		public StaticSound(
+			AudioDevice device,
+			ushort formatTag,
+			ushort bitsPerSample,
+			ushort blockAlign,
+			ushort channels,
+			uint samplesPerSecond,
+			IntPtr bufferPtr,
+			uint bufferLengthInBytes) : base(device)
+		{
+			FormatTag = formatTag;
+			BitsPerSample = bitsPerSample;
+			BlockAlign = blockAlign;
+			Channels = channels;
+			SamplesPerSecond = samplesPerSecond;
+
+			Handle = new FAudio.FAudioBuffer
+			{
+				Flags = FAudio.FAUDIO_END_OF_STREAM,
+				pContext = IntPtr.Zero,
+				pAudioData = bufferPtr,
+				AudioBytes = bufferLengthInBytes,
+				PlayBegin = 0,
+				PlayLength = 0
+			};
+
+			OwnsBuffer = false;
 		}
 
 		/// <summary>
@@ -287,9 +305,12 @@ namespace MoonWorks.Audio
 			Instances.Push(instance);
 		}
 
-		protected override void Destroy()
+		protected override unsafe void Destroy()
 		{
-			Marshal.FreeHGlobal(Handle.pAudioData);
+			if (OwnsBuffer)
+			{
+				NativeMemory.Free((void*) Handle.pAudioData);
+			}
 		}
 	}
 }
