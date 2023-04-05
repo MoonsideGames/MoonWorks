@@ -61,14 +61,14 @@ namespace MoonWorks.Graphics
 		/// Reads data out of a buffer and into an array.
 		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
 		/// </summary>
-		/// <param name="data">The array that data will be copied to.</param>
+		/// <param name="data">The span that data will be copied to.</param>
 		/// <param name="dataLengthInBytes">The length of the data to read.</param>
 		public unsafe void GetData<T>(
-			T[] data,
+			Span<T> data,
 			uint dataLengthInBytes
 		) where T : unmanaged
 		{
-			fixed (T* ptr = &data[0])
+			fixed (T* ptr = data)
 			{
 				Refresh.Refresh_GetBufferData(
 					Device.Handle,
