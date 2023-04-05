@@ -1732,6 +1732,28 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
+		/// Copies array data into a buffer.
+		/// </summary>
+		/// <param name="buffer">The buffer to copy to.</param>
+		/// <param name="data">The array to copy from.</param>
+		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
+		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+		public unsafe void SetBufferData<T>(
+			Buffer buffer,
+			T[] data,
+			uint bufferOffsetInBytes = 0
+		) where T : unmanaged
+		{
+			SetBufferData(
+				buffer,
+				new Span<T>(data),
+				bufferOffsetInBytes,
+				0,
+				(uint) data.Length
+			);
+		}
+
+		/// <summary>
 		/// Copies arbitrary data into a buffer.
 		/// </summary>
 		/// <param name="buffer">The buffer to copy into.</param>
@@ -1797,6 +1819,26 @@ namespace MoonWorks.Graphics
 			}
 		}
 
+		/// <summary>
+		/// Copies array data into a buffer.
+		/// </summary>
+		/// <param name="buffer">The buffer to copy to.</param>
+		/// <param name="data">The span to copy from.</param>
+		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
+		/// <param name="startElement">The index of the first element to copy from the array.</param>
+		/// <param name="numElements">How many elements to copy.</param>
+		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
+		public unsafe void SetBufferData<T>(
+			Buffer buffer,
+			T[] data,
+			uint bufferOffsetInBytes,
+			uint startElement,
+			uint numElements
+		) where T : unmanaged
+		{
+			SetBufferData<T>(buffer, new Span<T>(data), bufferOffsetInBytes, startElement, numElements);
+		}
+
 		public unsafe void SetBufferData<T>(
 			Buffer buffer,
 			IntPtr dataPtr,
@@ -1827,6 +1869,15 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
+		/// Asynchronously copies data into a texture.
+		/// </summary>
+		/// <param name="data">An array of data to copy into the texture.</param>
+		public unsafe void SetTextureData<T>(Texture texture, T[] data) where T : unmanaged
+		{
+			SetTextureData(new TextureSlice(texture), new Span<T>(data));
+		}
+
+		/// <summary>
 		/// Asynchronously copies data into a texture slice.
 		/// </summary>
 		/// <param name="textureSlice">The texture slice to copy into.</param>
@@ -1849,6 +1900,16 @@ namespace MoonWorks.Graphics
 					(uint) (data.Length * size)
 				);
 			}
+		}
+
+		/// <summary>
+		/// Asynchronously copies data into a texture slice.
+		/// </summary>
+		/// <param name="textureSlice">The texture slice to copy into.</param>
+		/// <param name="data">An array of data to copy into the texture.</param>
+		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
+		{
+			SetTextureData(textureSlice, new Span<T>(data));
 		}
 
 		/// <summary>
