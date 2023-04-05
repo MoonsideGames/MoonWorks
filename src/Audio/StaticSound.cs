@@ -21,7 +21,7 @@ namespace MoonWorks.Audio
 
 		private bool OwnsBuffer;
 
-		public static StaticSound LoadOgg(AudioDevice device, string filePath)
+		public static unsafe StaticSound LoadOgg(AudioDevice device, string filePath)
 		{
 			var filePointer = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
 
@@ -30,26 +30,30 @@ namespace MoonWorks.Audio
 				throw new AudioLoadException("Error loading file!");
 			}
 			var info = FAudio.stb_vorbis_get_info(filePointer);
-			var bufferSize = FAudio.stb_vorbis_stream_length_in_samples(filePointer) * info.channels;
-			var buffer = new float[bufferSize];
+			var lengthInFloats =
+				FAudio.stb_vorbis_stream_length_in_samples(filePointer) * info.channels;
+			var lengthInBytes = lengthInFloats * Marshal.SizeOf<float>();
+			var buffer = NativeMemory.Alloc((nuint) lengthInBytes);
 
 			FAudio.stb_vorbis_get_samples_float_interleaved(
 				filePointer,
 				info.channels,
-				buffer,
-				(int) bufferSize
+				(nint) buffer,
+				(int) lengthInFloats
 			);
 
 			FAudio.stb_vorbis_close(filePointer);
 
 			return new StaticSound(
 				device,
+				3,
+				32,
+				(ushort) (4 * info.channels),
 				(ushort) info.channels,
 				info.sample_rate,
-				buffer,
-				0,
-				(uint) buffer.Length
-			);
+				(nint) buffer,
+				(uint) lengthInBytes,
+				true);
 		}
 
 		// mostly borrowed from https://github.com/FNA-XNA/FNA/blob/b71b4a35ae59970ff0070dea6f8620856d8d4fec/src/Audio/SoundEffect.cs#L385
@@ -221,37 +225,6 @@ namespace MoonWorks.Audio
 			};
 
 			OwnsBuffer = ownsBuffer;
-		}
-
-		public unsafe StaticSound(
-			AudioDevice device,
-			ushort channels,
-			uint samplesPerSecond,
-			float[] buffer,
-			uint bufferOffset, /* in floats */
-			uint bufferLength  /* in floats */
-		) : base(device)
-		{
-			FormatTag = 3;
-			BitsPerSample = 32;
-			BlockAlign = (ushort) (4 * channels);
-			Channels = channels;
-			SamplesPerSecond = samplesPerSecond;
-
-			var bufferLengthInBytes = (int) (bufferLength * sizeof(float));
-			Handle = new FAudio.FAudioBuffer();
-			Handle.Flags = FAudio.FAUDIO_END_OF_STREAM;
-			Handle.pContext = IntPtr.Zero;
-			Handle.AudioBytes = (uint) bufferLengthInBytes;
-			Handle.pAudioData = (nint) NativeMemory.Alloc((nuint) bufferLengthInBytes);
-			Marshal.Copy(buffer, (int) bufferOffset, Handle.pAudioData, (int) bufferLength);
-			Handle.PlayBegin = 0;
-			Handle.PlayLength = 0;
-
-			LoopStart = 0;
-			LoopLength = 0;
-
-			OwnsBuffer = true;
 		}
 
 		/// <summary>
