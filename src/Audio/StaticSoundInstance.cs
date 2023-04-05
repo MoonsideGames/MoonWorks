@@ -115,6 +115,7 @@ namespace MoonWorks.Audio
 
 		public void Free()
 		{
+			StopImmediate();
 			Parent.FreeInstance(this);
 		}
 
