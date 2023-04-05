@@ -195,6 +195,20 @@ namespace MoonWorks.Input
 			};
 		}
 
+		public void Register(IntPtr handle)
+		{
+			Handle = handle;
+
+			IntPtr joystickHandle = SDL.SDL_GameControllerGetJoystick(Handle);
+			JoystickInstanceID = SDL.SDL_JoystickInstanceID(joystickHandle);
+		}
+
+		public void Unregister()
+		{
+			Handle = IntPtr.Zero;
+			JoystickInstanceID = -1;
+		}
+
 		internal void Update()
 		{
 			AnyPressed = false;

@@ -95,7 +95,7 @@ namespace MoonWorks.Input
 					}
 					else
 					{
-						gamepads[slot].Handle = openResult;
+						gamepads[slot].Register(openResult);
 						System.Console.WriteLine($"Gamepad added to slot {slot}!");
 					}
 					return;
@@ -112,7 +112,7 @@ namespace MoonWorks.Input
 				if (joystickInstanceID == gamepads[slot].JoystickInstanceID)
 				{
 					SDL.SDL_GameControllerClose(gamepads[slot].Handle);
-					gamepads[slot].Handle = IntPtr.Zero;
+					gamepads[slot].Unregister();
 					System.Console.WriteLine($"Removing gamepad from slot {slot}!");
 					return;
 				}
