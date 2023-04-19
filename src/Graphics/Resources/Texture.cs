@@ -23,199 +23,107 @@ namespace MoonWorks.Graphics
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
 		/// <summary>
-		/// Loads a PNG from a file path.
-		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+		/// Creates a 2D Texture using PNG or QOI data from raw byte data.
 		/// </summary>
-		/// <param name="device"></param>
-		/// <param name="commandBuffer"></param>
-		/// <param name="filePath"></param>
-		/// <returns>A Texture object.</returns>
-		public static Texture LoadPNG(
+		public static unsafe Texture FromData(
 			GraphicsDevice device,
 			CommandBuffer commandBuffer,
-			string filePath
+			Span<byte> data
 		) {
-			var pixels = Refresh.Refresh_Image_LoadPNGFromFile(
-				filePath,
-				out var width,
-				out var height,
-				out var channels
+			Texture texture;
+
+			fixed (byte *dataPtr = data)
+			{
+				var pixels = Refresh.Refresh_Image_Load((nint) dataPtr, data.Length, out var width, out var height, out var len);
+
+				TextureCreateInfo textureCreateInfo = new TextureCreateInfo();
+				textureCreateInfo.Width = (uint) width;
+				textureCreateInfo.Height = (uint) height;
+				textureCreateInfo.Depth = 1;
+				textureCreateInfo.Format = TextureFormat.R8G8B8A8;
+				textureCreateInfo.IsCube = false;
+				textureCreateInfo.LevelCount = 1;
+				textureCreateInfo.SampleCount = SampleCount.One;
+				textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
+
+				texture = new Texture(device, textureCreateInfo);
+				commandBuffer.SetTextureData(texture, pixels, (uint) len);
+
+				Refresh.Refresh_Image_Free(pixels);
+			}
+
+			return texture;
+		}
+
+		/// <summary>
+		/// Creates a 2D Texture using PNG or QOI data from a stream.
+		/// </summary>
+		public static unsafe Texture FromStream(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			Stream stream
+		) {
+			var length = stream.Length;
+			var buffer = NativeMemory.Alloc((nuint) length);
+			var span = new Span<byte>(buffer, (int) length);
+			stream.ReadExactly(span);
+
+			var texture = FromData(device, commandBuffer, span);
+
+			NativeMemory.Free((void*) buffer);
+
+			return texture;
+		}
+
+		/// <summary>
+		/// Creates a 2D Texture using PNG or QOI data from a file.
+		/// </summary>
+		public static Texture FromFile(
+			GraphicsDevice device,
+			CommandBuffer commandBuffer,
+			string path
+		) {
+			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			return FromStream(device, commandBuffer, fileStream);
+		}
+
+		/// <summary>
+		/// Sets data for a texture slice using PNG or QOI data from a stream.
+		/// </summary>
+		public static unsafe void SetDataFromStream(
+			CommandBuffer commandBuffer,
+			TextureSlice textureSlice,
+			Stream stream
+		) {
+			var length = stream.Length;
+			var buffer = NativeMemory.Alloc((nuint) length);
+			var span = new Span<byte>(buffer, (int) length);
+			stream.ReadExactly(span);
+
+			var pixels = Refresh.Refresh_Image_Load(
+				(nint) buffer,
+				(int) length,
+				out var w,
+				out var h,
+				out var len
 			);
 
-			var byteCount = (uint) (width * height * channels);
+			commandBuffer.SetTextureData(textureSlice, pixels, (uint) len);
 
-			TextureCreateInfo textureCreateInfo = new TextureCreateInfo();
-			textureCreateInfo.Width = (uint) width;
-			textureCreateInfo.Height = (uint) height;
-			textureCreateInfo.Depth = 1;
-			textureCreateInfo.Format = TextureFormat.R8G8B8A8;
-			textureCreateInfo.IsCube = false;
-			textureCreateInfo.LevelCount = 1;
-			textureCreateInfo.SampleCount = SampleCount.One;
-			textureCreateInfo.UsageFlags = TextureUsageFlags.Sampler;
-
-			var texture = new Texture(device, textureCreateInfo);
-			commandBuffer.SetTextureData(texture, pixels, byteCount);
-
-			Refresh.Refresh_Image_FreePNG(pixels);
-
-			return texture;
+			Refresh.Refresh_Image_Free(pixels);
+			NativeMemory.Free((void*) buffer);
 		}
 
 		/// <summary>
-		/// Loads a PNG from a byte array.
-		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
+		/// Sets data for a texture slice using PNG or QOI data from a file.
 		/// </summary>
-		/// <param name="device"></param>
-		/// <param name="commandBuffer"></param>
-		/// <param name="data"></param>
-		/// <returns>A Texture object.</returns>
-		public unsafe static Texture LoadPNG(
-			GraphicsDevice device,
+		public static void SetDataFromFile(
 			CommandBuffer commandBuffer,
-			byte[] data
+			TextureSlice textureSlice,
+			string path
 		) {
-			IntPtr pixels;
-			int width, height, numChannels;
-
-			fixed (byte* ptr = &data[0])
-			{
-				pixels = Refresh.Refresh_Image_LoadPNGFromMemory(
-					(nint) ptr,
-					data.Length,
-					out width,
-					out height,
-					out numChannels
-				);
-			}
-
-			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
-			{
-				Width = (uint) width,
-				Height = (uint) height,
-				Depth = 1,
-				Format = TextureFormat.R8G8B8A8,
-				IsCube = false,
-				LevelCount = 1,
-				SampleCount = SampleCount.One,
-				UsageFlags = TextureUsageFlags.Sampler
-			};
-
-			var byteCount = (uint) (width * height * numChannels);
-
-			var texture = new Texture(device, textureCreateInfo);
-			commandBuffer.SetTextureData(texture, pixels, byteCount);
-
-			Refresh.Refresh_Image_FreePNG(pixels);
-
-			return texture;
-		}
-
-		/// <summary>
-		/// Saves RGBA or BGRA pixel data to a file in PNG format.
-		/// </summary>
-		public unsafe static void SavePNG(string path, int width, int height, TextureFormat format, byte[] pixels)
-		{
-			if (format != TextureFormat.R8G8B8A8 && format != TextureFormat.B8G8R8A8)
-			{
-				throw new ArgumentException("Texture format must be RGBA8 or BGRA8!", "format");
-			}
-
-			fixed (byte* ptr = &pixels[0])
-			{
-				Refresh.Refresh_Image_SavePNG(path, width, height, Conversions.BoolToByte(format == TextureFormat.B8G8R8A8), (IntPtr) ptr);
-			}
-		}
-
-		/// <summary>
-		/// Loads a QOI from a file path.
-		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
-		/// </summary>
-		/// <param name="device"></param>
-		/// <param name="commandBuffer"></param>
-		/// <param name="filePath"></param>
-		/// <returns>A Texture object.</returns>
-		public unsafe static Texture LoadQOI(
-			GraphicsDevice device,
-			CommandBuffer commandBuffer,
-			string filePath
-		) {
-			var pixels = Refresh.Refresh_Image_LoadQOIFromFile(
-				filePath,
-				out var width,
-				out var height,
-				out var numChannels
-			);
-
-			var byteCount = (uint) (width * height * numChannels);
-
-			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
-			{
-				Width = (uint) width,
-				Height = (uint) height,
-				Depth = 1,
-				Format = TextureFormat.R8G8B8A8,
-				IsCube = false,
-				LevelCount = 1,
-				SampleCount = SampleCount.One,
-				UsageFlags = TextureUsageFlags.Sampler
-			};
-
-			var texture = new Texture(device, textureCreateInfo);
-			commandBuffer.SetTextureData(texture, pixels, byteCount);
-
-			Refresh.Refresh_Image_FreeQOI(pixels);
-
-			return texture;
-		}
-
-		/// <summary>
-		/// Loads a QOI from a byte array.
-		/// NOTE: You can queue as many of these as you want on to a command buffer but it MUST be submitted!
-		/// </summary>
-		/// <param name="device"></param>
-		/// <param name="commandBuffer"></param>
-		/// <param name="filePath"></param>
-		/// <returns>A Texture object.</returns>
-		public unsafe static Texture LoadQOI(
-			GraphicsDevice device,
-			CommandBuffer commandBuffer,
-			byte[] data
-		) {
-			IntPtr pixels;
-			int width, height, numChannels;
-
-			fixed (byte* ptr = &data[0])
-			{
-				pixels = Refresh.Refresh_Image_LoadQOIFromMemory(
-					(nint) ptr,
-					data.Length,
-					out width,
-					out height,
-					out numChannels
-				);
-			}
-
-			TextureCreateInfo textureCreateInfo = new TextureCreateInfo
-			{
-				Width = (uint) width,
-				Height = (uint) height,
-				Depth = 1,
-				Format = TextureFormat.R8G8B8A8,
-				IsCube = false,
-				LevelCount = 1,
-				SampleCount = SampleCount.One,
-				UsageFlags = TextureUsageFlags.Sampler
-			};
-
-			var byteCount = (uint) (width * height * numChannels);
-
-			var texture = new Texture(device, textureCreateInfo);
-			commandBuffer.SetTextureData(texture, pixels, byteCount);
-
-			Refresh.Refresh_Image_FreePNG(pixels);
-
-			return texture;
+			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			SetDataFromStream(commandBuffer, textureSlice, fileStream);
 		}
 
 		public unsafe static Texture LoadDDS(GraphicsDevice graphicsDevice, CommandBuffer commandBuffer, System.IO.Stream stream)
@@ -668,6 +576,62 @@ namespace MoonWorks.Graphics
 					blockSize
 				);
 			}
+		}
+
+		/// <summary>
+		/// Asynchronously saves RGBA or BGRA pixel data to a file in PNG format.
+		/// Warning: this is expensive!
+		/// </summary>
+		public unsafe void SavePNG(string path)
+		{
+#if DEBUG
+			if (Format != TextureFormat.R8G8B8A8 && Format != TextureFormat.B8G8R8A8)
+			{
+				throw new ArgumentException("Texture format must be RGBA or BGRA!", "format");
+			}
+#endif
+
+			var buffer = new Buffer(Device, 0, Width * Height * 4); // this creates garbage... oh well
+
+			// immediately request the data copy
+			var commandBuffer = Device.AcquireCommandBuffer();
+			commandBuffer.CopyTextureToBuffer(this, buffer);
+			Device.Submit(commandBuffer);
+
+			var byteCount = buffer.Size;
+
+			var pixelsPtr = NativeMemory.Alloc((nuint) byteCount);
+			var pixelsSpan = new Span<byte>(pixelsPtr, (int) byteCount);
+
+			Device.Wait(); // make sure the data transfer is done...
+			buffer.GetData(pixelsSpan);
+
+			if (Format == TextureFormat.B8G8R8A8)
+			{
+				var rgbaPtr = NativeMemory.Alloc((nuint) byteCount);
+				var rgbaSpan = new Span<byte>(rgbaPtr, (int) byteCount);
+
+				for (var i = 0; i < byteCount; i += 4)
+				{
+					rgbaSpan[i] = pixelsSpan[i + 2];
+					rgbaSpan[i + 1] = pixelsSpan[i + 1];
+					rgbaSpan[i + 2] = pixelsSpan[i];
+					rgbaSpan[i + 3] = pixelsSpan[i + 3];
+				}
+
+				Refresh.Refresh_Image_SavePNG(path, (nint) rgbaPtr, (int) Width, (int) Height);
+
+				NativeMemory.Free((void*) rgbaPtr);
+			}
+			else
+			{
+				fixed (byte* ptr = pixelsSpan)
+				{
+					Refresh.Refresh_Image_SavePNG(path, (nint) ptr, (int) Width, (int) Height);
+				}
+			}
+
+			NativeMemory.Free(pixelsPtr);
 		}
 	}
 }
