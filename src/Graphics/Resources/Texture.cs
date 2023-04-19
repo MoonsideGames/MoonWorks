@@ -25,7 +25,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture using PNG or QOI data from raw byte data.
 		/// </summary>
-		public static unsafe Texture FromData(
+		public static unsafe Texture FromImageBytes(
 			GraphicsDevice device,
 			CommandBuffer commandBuffer,
 			Span<byte> data
@@ -58,7 +58,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture using PNG or QOI data from a stream.
 		/// </summary>
-		public static unsafe Texture FromStream(
+		public static unsafe Texture FromImageStream(
 			GraphicsDevice device,
 			CommandBuffer commandBuffer,
 			Stream stream
@@ -68,7 +68,7 @@ namespace MoonWorks.Graphics
 			var span = new Span<byte>(buffer, (int) length);
 			stream.ReadExactly(span);
 
-			var texture = FromData(device, commandBuffer, span);
+			var texture = FromImageBytes(device, commandBuffer, span);
 
 			NativeMemory.Free((void*) buffer);
 
@@ -78,19 +78,40 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture using PNG or QOI data from a file.
 		/// </summary>
-		public static Texture FromFile(
+		public static Texture FromImageFile(
 			GraphicsDevice device,
 			CommandBuffer commandBuffer,
 			string path
 		) {
 			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-			return FromStream(device, commandBuffer, fileStream);
+			return FromImageStream(device, commandBuffer, fileStream);
+		}
+
+		public static unsafe void SetDataFromImageBytes(
+			CommandBuffer commandBuffer,
+			TextureSlice textureSlice,
+			Span<byte> data
+		) {
+			fixed (byte* ptr = data)
+			{
+				var pixels = Refresh.Refresh_Image_Load(
+					(nint) ptr,
+					(int) data.Length,
+					out var w,
+					out var h,
+					out var len
+				);
+
+				commandBuffer.SetTextureData(textureSlice, pixels, (uint) len);
+
+				Refresh.Refresh_Image_Free(pixels);
+			}
 		}
 
 		/// <summary>
 		/// Sets data for a texture slice using PNG or QOI data from a stream.
 		/// </summary>
-		public static unsafe void SetDataFromStream(
+		public static unsafe void SetDataFromImageStream(
 			CommandBuffer commandBuffer,
 			TextureSlice textureSlice,
 			Stream stream
@@ -100,30 +121,21 @@ namespace MoonWorks.Graphics
 			var span = new Span<byte>(buffer, (int) length);
 			stream.ReadExactly(span);
 
-			var pixels = Refresh.Refresh_Image_Load(
-				(nint) buffer,
-				(int) length,
-				out var w,
-				out var h,
-				out var len
-			);
+			SetDataFromImageBytes(commandBuffer, textureSlice, span);
 
-			commandBuffer.SetTextureData(textureSlice, pixels, (uint) len);
-
-			Refresh.Refresh_Image_Free(pixels);
 			NativeMemory.Free((void*) buffer);
 		}
 
 		/// <summary>
 		/// Sets data for a texture slice using PNG or QOI data from a file.
 		/// </summary>
-		public static void SetDataFromFile(
+		public static void SetDataFromImageFile(
 			CommandBuffer commandBuffer,
 			TextureSlice textureSlice,
 			string path
 		) {
 			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-			SetDataFromStream(commandBuffer, textureSlice, fileStream);
+			SetDataFromImageStream(commandBuffer, textureSlice, fileStream);
 		}
 
 		public unsafe static Texture LoadDDS(GraphicsDevice graphicsDevice, CommandBuffer commandBuffer, System.IO.Stream stream)
