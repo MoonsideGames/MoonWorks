@@ -10,9 +10,6 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public abstract class StreamingSound : SoundInstance
 	{
-		// How big should each buffer we consume be?
-		protected abstract int BUFFER_SIZE { get; }
-
 		// Should the AudioDevice thread automatically update this class?
 		public abstract bool AutoUpdate { get; }
 
@@ -20,6 +17,7 @@ namespace MoonWorks.Audio
 		protected bool ConsumingBuffers = false;
 
 		private const int BUFFER_COUNT = 3;
+		private nuint BufferSize;
 		private readonly IntPtr[] buffers;
 		private int nextBufferIndex = 0;
 		private uint queuedBufferCount = 0;
@@ -32,13 +30,17 @@ namespace MoonWorks.Audio
 			ushort bitsPerSample,
 			ushort blockAlign,
 			ushort channels,
-			uint samplesPerSecond
+			uint samplesPerSecond,
+			uint bufferSize
 		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
 		{
+			BufferSize = bufferSize;
+			System.Console.WriteLine(BufferSize);
+
 			buffers = new IntPtr[BUFFER_COUNT];
 			for (int i = 0; i < BUFFER_COUNT; i += 1)
 			{
-				buffers[i] = (IntPtr) NativeMemory.Alloc((nuint) BUFFER_SIZE);
+				buffers[i] = (IntPtr) NativeMemory.Alloc(bufferSize);
 			}
 		}
 
@@ -156,7 +158,7 @@ namespace MoonWorks.Audio
 
 			FillBuffer(
 				(void*) buffer,
-				BUFFER_SIZE,
+				(int) BufferSize,
 				out int filledLengthInBytes,
 				out bool reachedEnd
 			);

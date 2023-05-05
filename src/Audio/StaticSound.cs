@@ -197,6 +197,44 @@ namespace MoonWorks.Audio
 			return sound;
 		}
 
+		public static unsafe StaticSound FromQOA(AudioDevice device, string path)
+		{
+			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			var fileDataPtr = NativeMemory.Alloc((nuint) fileStream.Length);
+			var fileDataSpan = new Span<byte>(fileDataPtr, (int) fileStream.Length);
+			fileStream.ReadExactly(fileDataSpan);
+			fileStream.Close();
+
+			var qoaHandle = FAudio.qoa_open_from_memory((char*) fileDataPtr, (uint) fileDataSpan.Length, 0);
+			if (qoaHandle == 0)
+			{
+				NativeMemory.Free(fileDataPtr);
+				Logger.LogError("Error opening QOA file!");
+				throw new AudioLoadException("Error opening QOA file!");
+			}
+
+			FAudio.qoa_attributes(qoaHandle, out var channels, out var samplerate, out var samples_per_channel_per_frame, out var total_samples_per_channel);
+
+			var bufferLengthInBytes = total_samples_per_channel * channels * sizeof(short);
+			var buffer = NativeMemory.Alloc(bufferLengthInBytes);
+			FAudio.qoa_decode_entire(qoaHandle, (short*) buffer);
+
+			FAudio.qoa_close(qoaHandle);
+			NativeMemory.Free(fileDataPtr);
+
+			return new StaticSound(
+				device,
+				1,
+				16,
+				(ushort) (channels * 2),
+				(ushort) channels,
+				samplerate,
+				(nint) buffer,
+				bufferLengthInBytes,
+				true
+			);
+		}
+
 		public StaticSound(
 			AudioDevice device,
 			ushort formatTag,

@@ -9,8 +9,6 @@ namespace MoonWorks.Audio
 		private IntPtr VorbisHandle;
 		private IntPtr FileDataPtr;
 		private FAudio.stb_vorbis_info Info;
-
-		protected override int BUFFER_SIZE => 32768;
 		public override bool AutoUpdate => true;
 
 		public unsafe static StreamingSoundOgg Load(AudioDevice device, string filePath)
@@ -43,14 +41,16 @@ namespace MoonWorks.Audio
 			AudioDevice device,
 			IntPtr fileDataPtr, // MUST BE A NATIVE MEMORY HANDLE!!
 			IntPtr vorbisHandle,
-			FAudio.stb_vorbis_info info
+			FAudio.stb_vorbis_info info,
+			uint bufferSize = 32768
 		) : base(
 			device,
 			3, /* float type */
 			32, /* size of float */
 			(ushort) (4 * info.channels),
 			(ushort) info.channels,
-			info.sample_rate
+			info.sample_rate,
+			bufferSize
 		) {
 			FileDataPtr = fileDataPtr;
 			VorbisHandle = vorbisHandle;

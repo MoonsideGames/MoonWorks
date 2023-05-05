@@ -6,7 +6,7 @@ namespace MoonWorks.Video
 	public unsafe class StreamingSoundTheora : StreamingSound
 	{
 		private IntPtr VideoHandle;
-		protected override int BUFFER_SIZE => 8192;
+
 		// Theorafile is not thread safe, so let's update on the main thread.
 		public override bool AutoUpdate => false;
 
@@ -14,14 +14,16 @@ namespace MoonWorks.Video
 			AudioDevice device,
 			IntPtr videoHandle,
 			int channels,
-			uint sampleRate
+			uint sampleRate,
+			uint bufferSize = 8192
 		) : base(
 			device,
 			3, /* float type */
 			32, /* size of float */
 			(ushort) (4 * channels),
 			(ushort) channels,
-			sampleRate
+			sampleRate,
+			bufferSize
 		) {
 			VideoHandle = videoHandle;
 		}
