@@ -35,7 +35,6 @@ namespace MoonWorks.Audio
 		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
 		{
 			BufferSize = bufferSize;
-			System.Console.WriteLine(BufferSize);
 
 			buffers = new IntPtr[BUFFER_COUNT];
 			for (int i = 0; i < BUFFER_COUNT; i += 1)
