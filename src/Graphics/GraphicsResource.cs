@@ -31,6 +31,7 @@ namespace MoonWorks.Graphics
 				{
 					QueueDestroyFunction(Device.Handle, Handle);
 					Device.RemoveResourceReference(weakReference);
+					weakReference.SetTarget(null);
 					weakReference = null;
 				}
 

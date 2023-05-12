@@ -6,39 +6,31 @@ namespace MoonWorks.Audio
 {
 	public class StreamingSoundQoa : StreamingSoundSeekable
 	{
-		private IntPtr QoaHandle;
-		private IntPtr FileDataPtr;
-
-		public override bool AutoUpdate => true;
+		private IntPtr QoaHandle = IntPtr.Zero;
+		private IntPtr FileDataPtr = IntPtr.Zero;
 
 		uint Channels;
 		uint SamplesPerChannelPerFrame;
 		uint TotalSamplesPerChannel;
 
-		public unsafe static StreamingSoundQoa Load(AudioDevice device, string filePath)
-		{
-			var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var fileDataPtr = NativeMemory.Alloc((nuint) fileStream.Length);
-			var fileDataSpan = new Span<byte>(fileDataPtr, (int) fileStream.Length);
-			fileStream.ReadExactly(fileDataSpan);
-			fileStream.Close();
+		public override bool Loaded => QoaHandle != IntPtr.Zero;
+		private string FilePath;
 
-			var qoaHandle = FAudio.qoa_open_from_memory((char*) fileDataPtr, (uint) fileDataSpan.Length, 0);
-			if (qoaHandle == 0)
+		public unsafe static StreamingSoundQoa Create(AudioDevice device, string filePath)
+		{
+			var handle = FAudio.qoa_open_from_filename(filePath);
+			if (handle == IntPtr.Zero)
 			{
-				NativeMemory.Free(fileDataPtr);
-				Logger.LogError("Error opening QOA file!");
 				throw new AudioLoadException("Error opening QOA file!");
 			}
 
-			FAudio.qoa_attributes(qoaHandle, out var channels, out var sampleRate, out var samplesPerChannelPerFrame, out var totalSamplesPerChannel);
+			FAudio.qoa_attributes(handle, out var channels, out var samplerate, out var samplesPerChannelPerFrame, out var totalSamplesPerChannel);
 
 			return new StreamingSoundQoa(
 				device,
-				(IntPtr) fileDataPtr,
-				qoaHandle,
+				filePath,
 				channels,
-				sampleRate,
+				samplerate,
 				samplesPerChannelPerFrame,
 				totalSamplesPerChannel
 			);
@@ -46,8 +38,7 @@ namespace MoonWorks.Audio
 
 		internal unsafe StreamingSoundQoa(
 			AudioDevice device,
-			IntPtr fileDataPtr, // MUST BE A NATIVE MEMORY HANDLE!!
-			IntPtr qoaHandle,
+			string filePath,
 			uint channels,
 			uint samplesPerSecond,
 			uint samplesPerChannelPerFrame,
@@ -59,18 +50,47 @@ namespace MoonWorks.Audio
 			(ushort) (2 * channels),
 			(ushort) channels,
 			samplesPerSecond,
-			samplesPerChannelPerFrame * channels * sizeof(short)
+			samplesPerChannelPerFrame * channels * sizeof(short),
+			true
 		) {
-			FileDataPtr = fileDataPtr;
-			QoaHandle = qoaHandle;
 			Channels = channels;
 			SamplesPerChannelPerFrame = samplesPerChannelPerFrame;
 			TotalSamplesPerChannel = totalSamplesPerChannel;
+			FilePath = filePath;
 		}
 
 		public override void Seek(uint sampleFrame)
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
+		}
+
+		public override unsafe void Load()
+		{
+			var fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
+			FileDataPtr = (nint) NativeMemory.Alloc((nuint) fileStream.Length);
+			var fileDataSpan = new Span<byte>((void*) FileDataPtr, (int) fileStream.Length);
+			fileStream.ReadExactly(fileDataSpan);
+			fileStream.Close();
+
+			QoaHandle = FAudio.qoa_open_from_memory((char*) FileDataPtr, (uint) fileDataSpan.Length, 0);
+			if (QoaHandle == IntPtr.Zero)
+			{
+				NativeMemory.Free((void*) FileDataPtr);
+				Logger.LogError("Error opening QOA file!");
+				throw new AudioLoadException("Error opening QOA file!");
+			}
+		}
+
+		public override unsafe void Unload()
+		{
+			if (Loaded)
+			{
+				FAudio.qoa_close(QoaHandle);
+				NativeMemory.Free((void*) FileDataPtr);
+
+				QoaHandle = IntPtr.Zero;
+				FileDataPtr = IntPtr.Zero;
+			}
 		}
 
 		protected override unsafe void FillBuffer(
@@ -87,17 +107,6 @@ namespace MoonWorks.Audio
 			var sampleCount = samples * Channels;
 			reachedEnd = sampleCount < lengthInShorts;
 			filledLengthInBytes = (int) (sampleCount * sizeof(short));
-		}
-
-		protected override unsafe void Destroy()
-		{
-			base.Destroy();
-
-			if (!IsDisposed)
-			{
-				FAudio.qoa_close(QoaHandle);
-				NativeMemory.Free((void*) FileDataPtr);
-			}
 		}
 	}
 }

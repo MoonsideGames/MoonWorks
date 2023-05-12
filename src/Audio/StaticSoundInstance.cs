@@ -32,12 +32,21 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		public bool AutoFree { get; }
+
 		internal StaticSoundInstance(
 			AudioDevice device,
-			StaticSound parent
+			StaticSound parent,
+			bool autoFree
 		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond)
 		{
 			Parent = parent;
+			AutoFree = autoFree;
+
+			if (AutoFree)
+			{
+				device.AddAutoFreeStaticSoundInstance(this);
+			}
 		}
 
 		public override void Play()
@@ -113,9 +122,11 @@ namespace MoonWorks.Audio
 			Parent.Handle.PlayBegin = sampleFrame;
 		}
 
+		// Call this when you no longer need the sound instance.
+		// If AutoFree is set, this will automatically be called when the sound instance stops playing.
+		// If the sound isn't stopped when you call this, things might get weird!
 		public void Free()
 		{
-			StopImmediate();
 			Parent.FreeInstance(this);
 		}
 

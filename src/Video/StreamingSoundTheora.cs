@@ -3,12 +3,11 @@ using MoonWorks.Audio;
 
 namespace MoonWorks.Video
 {
-	public unsafe class StreamingSoundTheora : StreamingSound
+	// TODO: should we just not handle theora sound? it sucks!
+	internal unsafe class StreamingSoundTheora : StreamingSound
 	{
 		private IntPtr VideoHandle;
-
-		// Theorafile is not thread safe, so let's update on the main thread.
-		public override bool AutoUpdate => false;
+		public override bool Loaded => true;
 
 		internal StreamingSoundTheora(
 			AudioDevice device,
@@ -23,9 +22,20 @@ namespace MoonWorks.Video
 			(ushort) (4 * channels),
 			(ushort) channels,
 			sampleRate,
-			bufferSize
+			bufferSize,
+			false // Theorafile is not thread safe, so let's update on the main thread
 		) {
 			VideoHandle = videoHandle;
+		}
+
+		public override unsafe void Load()
+		{
+			// no-op
+		}
+
+		public override unsafe void Unload()
+		{
+			// no-op
 		}
 
 		protected override unsafe void FillBuffer(

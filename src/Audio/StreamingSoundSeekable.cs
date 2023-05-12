@@ -11,7 +11,8 @@ namespace MoonWorks.Audio
 			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
-			uint bufferSize
+			uint bufferSize,
+			bool autoUpdate
 		) : base(
 			device,
 			formatTag,
@@ -19,7 +20,8 @@ namespace MoonWorks.Audio
 			blockAlign,
 			channels,
 			samplesPerSecond,
-			bufferSize
+			bufferSize,
+			autoUpdate
 		) {
 
 		}

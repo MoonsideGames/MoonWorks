@@ -29,6 +29,7 @@ namespace MoonWorks.Audio
 				if (weakReference != null)
 				{
 					Device.RemoveResourceReference(this);
+					weakReference.Target = null;
 					weakReference = null;
 				}
 

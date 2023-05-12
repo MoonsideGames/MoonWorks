@@ -10,9 +10,6 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public abstract class StreamingSound : SoundInstance
 	{
-		// Should the AudioDevice thread automatically update this class?
-		public abstract bool AutoUpdate { get; }
-
 		// Are we actively consuming buffers?
 		protected bool ConsumingBuffers = false;
 
@@ -24,6 +21,10 @@ namespace MoonWorks.Audio
 
 		private readonly object StateLock = new object();
 
+		public bool AutoUpdate { get; }
+
+		public abstract bool Loaded { get; }
+
 		public unsafe StreamingSound(
 			AudioDevice device,
 			ushort formatTag,
@@ -31,7 +32,8 @@ namespace MoonWorks.Audio
 			ushort blockAlign,
 			ushort channels,
 			uint samplesPerSecond,
-			uint bufferSize
+			uint bufferSize,
+			bool autoUpdate // should the AudioDevice thread automatically update this sound?
 		) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
 		{
 			BufferSize = bufferSize;
@@ -41,6 +43,8 @@ namespace MoonWorks.Audio
 			{
 				buffers[i] = (IntPtr) NativeMemory.Alloc(bufferSize);
 			}
+
+			AutoUpdate = autoUpdate;
 		}
 
 		public override void Play()
@@ -57,6 +61,12 @@ namespace MoonWorks.Audio
 		{
 			lock (StateLock)
 			{
+				if (!Loaded)
+				{
+					Logger.LogError("Cannot play StreamingSound before calling Load!");
+					return;
+				}
+
 				if (State == SoundState.Playing)
 				{
 					return;
@@ -65,6 +75,11 @@ namespace MoonWorks.Audio
 				State = SoundState.Playing;
 
 				ConsumingBuffers = true;
+				if (AutoUpdate)
+				{
+					Device.AddAutoUpdateStreamingSoundInstance(this);
+				}
+
 				QueueBuffers();
 				FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 			}
@@ -192,6 +207,9 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		public abstract void Load();
+		public abstract void Unload();
+
 		protected unsafe abstract void FillBuffer(
 			void* buffer,
 			int bufferLengthInBytes, /* in bytes */
@@ -208,6 +226,7 @@ namespace MoonWorks.Audio
 				if (!IsDisposed)
 				{
 					StopImmediate();
+					Unload();
 
 					for (int i = 0; i < BUFFER_COUNT; i += 1)
 					{

@@ -17,7 +17,8 @@ namespace MoonWorks.Audio
 		public uint LoopStart { get; set; } = 0;
 		public uint LoopLength { get; set; } = 0;
 
-		private Stack<StaticSoundInstance> Instances = new Stack<StaticSoundInstance>();
+		private Stack<StaticSoundInstance> AvailableInstances = new Stack<StaticSoundInstance>();
+		private HashSet<StaticSoundInstance> UsedInstances = new HashSet<StaticSoundInstance>();
 
 		private bool OwnsBuffer;
 
@@ -267,22 +268,25 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Gets a sound instance from the pool.
-		/// NOTE: If you lose track of instances, you will create garbage collection pressure!
+		/// NOTE: If AutoFree is false, you will have to call StaticSoundInstance.Free() yourself or leak the instance!
 		/// </summary>
-		public StaticSoundInstance GetInstance()
+		public StaticSoundInstance GetInstance(bool autoFree = true)
 		{
-			if (Instances.Count == 0)
+			if (AvailableInstances.Count == 0)
 			{
-				Instances.Push(new StaticSoundInstance(Device, this));
+				AvailableInstances.Push(new StaticSoundInstance(Device, this, autoFree));
 			}
 
-			return Instances.Pop();
+			var instance = AvailableInstances.Pop();
+			UsedInstances.Add(instance);
+			return instance;
 		}
 
 		internal void FreeInstance(StaticSoundInstance instance)
 		{
 			instance.Reset();
-			Instances.Push(instance);
+			UsedInstances.Remove(instance);
+			AvailableInstances.Push(instance);
 		}
 
 		protected override unsafe void Destroy()

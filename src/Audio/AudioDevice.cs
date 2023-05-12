@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace MoonWorks.Audio
@@ -27,7 +28,8 @@ namespace MoonWorks.Audio
 		}
 
 		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
-		private readonly HashSet<WeakReference> autoUpdateStreamingSoundReferences = new HashSet<WeakReference>();
+		private readonly List<WeakReference> autoUpdateStreamingSoundReferences = new List<WeakReference>();
+		private readonly List<WeakReference> autoFreeStaticSoundInstanceReferences = new List<WeakReference>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -150,15 +152,35 @@ namespace MoonWorks.Audio
 			previousTickTime = TickStopwatch.Elapsed.Ticks;
 			float elapsedSeconds = (float) tickDelta / System.TimeSpan.TicksPerSecond;
 
-			foreach (var weakReference in autoUpdateStreamingSoundReferences)
+			for (var i = autoUpdateStreamingSoundReferences.Count - 1; i >= 0; i -= 1)
 			{
-				if (weakReference.Target is StreamingSound streamingSound)
+				var weakReference = autoUpdateStreamingSoundReferences[i];
+
+				if (weakReference.Target is StreamingSound streamingSound && streamingSound.Loaded)
 				{
 					streamingSound.Update();
 				}
 				else
 				{
-					autoUpdateStreamingSoundReferences.Remove(weakReference);
+					autoUpdateStreamingSoundReferences.RemoveAt(i);
+				}
+			}
+
+			for (var i = autoFreeStaticSoundInstanceReferences.Count - 1; i >= 0; i -= 1)
+			{
+				var weakReference = autoFreeStaticSoundInstanceReferences[i];
+
+				if (weakReference.Target is StaticSoundInstance staticSoundInstance)
+				{
+					if (staticSoundInstance.State == SoundState.Stopped)
+					{
+						staticSoundInstance.Free();
+						autoFreeStaticSoundInstanceReferences.RemoveAt(i);
+					}
+				}
+				else
+				{
+					autoFreeStaticSoundInstanceReferences.RemoveAt(i);
 				}
 			}
 
@@ -213,11 +235,6 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resources.Add(resource.weakReference);
-
-				if (resource is StreamingSound streamingSound && streamingSound.AutoUpdate)
-				{
-					AddAutoUpdateStreamingSoundInstance(streamingSound);
-				}
 			}
 		}
 
@@ -226,22 +243,17 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resources.Remove(resource.weakReference);
-
-				if (resource is StreamingSound streamingSound && streamingSound.AutoUpdate)
-				{
-					RemoveAutoUpdateStreamingSoundInstance(streamingSound);
-				}
 			}
 		}
 
-		private void AddAutoUpdateStreamingSoundInstance(StreamingSound instance)
+		internal void AddAutoUpdateStreamingSoundInstance(StreamingSound instance)
 		{
 			autoUpdateStreamingSoundReferences.Add(instance.weakReference);
 		}
 
-		private void RemoveAutoUpdateStreamingSoundInstance(StreamingSound instance)
+		internal void AddAutoFreeStaticSoundInstance(StaticSoundInstance instance)
 		{
-			autoUpdateStreamingSoundReferences.Remove(instance.weakReference);
+			autoFreeStaticSoundInstanceReferences.Add(instance.weakReference);
 		}
 
 		protected virtual void Dispose(bool disposing)
