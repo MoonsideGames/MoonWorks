@@ -26,7 +26,7 @@ namespace MoonWorks.Audio
 
 			FAudio.qoa_attributes(handle, out var channels, out var samplerate, out var samplesPerChannelPerFrame, out var totalSamplesPerChannel);
 
-			return new StreamingSoundQoa(
+			var streamingSound = new StreamingSoundQoa(
 				device,
 				filePath,
 				channels,
@@ -34,6 +34,10 @@ namespace MoonWorks.Audio
 				samplesPerChannelPerFrame,
 				totalSamplesPerChannel
 			);
+
+			FAudio.qoa_close(handle);
+
+			return streamingSound;
 		}
 
 		internal unsafe StreamingSoundQoa(
