@@ -274,10 +274,11 @@ namespace MoonWorks.Audio
 		{
 			if (AvailableInstances.Count == 0)
 			{
-				AvailableInstances.Push(new StaticSoundInstance(Device, this, autoFree));
+				AvailableInstances.Push(new StaticSoundInstance(Device, this));
 			}
 
 			var instance = AvailableInstances.Pop();
+			instance.AutoFree = autoFree;
 			UsedInstances.Add(instance);
 			return instance;
 		}

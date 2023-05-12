@@ -32,21 +32,14 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public bool AutoFree { get; }
+		public bool AutoFree { get; internal set; }
 
 		internal StaticSoundInstance(
 			AudioDevice device,
-			StaticSound parent,
-			bool autoFree
+			StaticSound parent
 		) : base(device, parent.FormatTag, parent.BitsPerSample, parent.BlockAlign, parent.Channels, parent.SamplesPerSecond)
 		{
 			Parent = parent;
-			AutoFree = autoFree;
-
-			if (AutoFree)
-			{
-				device.AddAutoFreeStaticSoundInstance(this);
-			}
 		}
 
 		public override void Play()
@@ -87,6 +80,11 @@ namespace MoonWorks.Audio
 
 			FAudio.FAudioSourceVoice_Start(Voice, 0, operationSet);
 			State = SoundState.Playing;
+
+			if (AutoFree)
+			{
+				Device.AddAutoFreeStaticSoundInstance(this);
+			}
 		}
 
 		public override void Pause()
