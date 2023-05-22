@@ -29,13 +29,7 @@ namespace MoonWorks.Graphics.Font
 			fixed (FontRange *pFontRanges = &fontRanges[0])
 			{
 				var nativeSize = fontRanges.Length * Marshal.SizeOf<Wellspring.FontRange>();
-				void* fontRangeMemory = NativeMemory.Alloc((nuint) fontRanges.Length, (nuint) Marshal.SizeOf<Wellspring.FontRange>());
-				System.Buffer.MemoryCopy(pFontRanges, fontRangeMemory, nativeSize, nativeSize);
-
-				var result = Wellspring.Wellspring_PackFontRanges(Handle, (IntPtr) fontRangeMemory, (uint) fontRanges.Length);
-
-				NativeMemory.Free(fontRangeMemory);
-
+				var result = Wellspring.Wellspring_PackFontRanges(Handle, (IntPtr) pFontRanges, (uint) fontRanges.Length);
 				return result > 0;
 			}
 		}
