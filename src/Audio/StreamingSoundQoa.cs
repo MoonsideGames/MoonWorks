@@ -16,17 +16,42 @@ namespace MoonWorks.Audio
 		public override bool Loaded => QoaHandle != IntPtr.Zero;
 		private string FilePath;
 
+		private const uint QOA_MAGIC = 0x716f6166; /* 'qoaf' */
+
+		private static unsafe UInt64 ReverseEndianness(UInt64 value)
+		{
+			byte* bytes = (byte*) &value;
+
+			return
+				((UInt64)(bytes[0]) << 56) | ((UInt64)(bytes[1]) << 48) |
+				((UInt64)(bytes[2]) << 40) | ((UInt64)(bytes[3]) << 32) |
+				((UInt64)(bytes[4]) << 24) | ((UInt64)(bytes[5]) << 16) |
+				((UInt64)(bytes[6]) <<  8) | ((UInt64)(bytes[7]) <<  0);
+		}
+
 		public unsafe static StreamingSoundQoa Create(AudioDevice device, string filePath)
 		{
-			var handle = FAudio.qoa_open_from_filename(filePath);
-			if (handle == IntPtr.Zero)
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			using var reader = new BinaryReader(stream);
+
+			UInt64 fileHeader = ReverseEndianness(reader.ReadUInt64());
+			if ((fileHeader >> 32) != QOA_MAGIC)
 			{
-				throw new AudioLoadException("Error opening QOA file!");
+				throw new AudioLoadException("Specified file is not a QOA file.");
 			}
 
-			FAudio.qoa_attributes(handle, out var channels, out var samplerate, out var samplesPerChannelPerFrame, out var totalSamplesPerChannel);
+			uint totalSamplesPerChannel = (uint) (fileHeader & (0xFFFFFFFF));
+			if (totalSamplesPerChannel == 0)
+			{
+				throw new AudioLoadException("Specified file is not a valid QOA file.");
+			}
 
-			var streamingSound = new StreamingSoundQoa(
+			UInt64 frameHeader = ReverseEndianness(reader.ReadUInt64());
+			uint channels = (uint) ((frameHeader >> 56) & 0x0000FF);
+			uint samplerate = (uint) ((frameHeader >> 32) & 0xFFFFFF);
+			uint samplesPerChannelPerFrame = (uint) ((frameHeader >> 16) & 0x00FFFF);
+
+			return new StreamingSoundQoa(
 				device,
 				filePath,
 				channels,
@@ -34,10 +59,6 @@ namespace MoonWorks.Audio
 				samplesPerChannelPerFrame,
 				totalSamplesPerChannel
 			);
-
-			FAudio.qoa_close(handle);
-
-			return streamingSound;
 		}
 
 		internal unsafe StreamingSoundQoa(
