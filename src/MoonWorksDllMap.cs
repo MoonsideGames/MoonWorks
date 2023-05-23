@@ -97,16 +97,12 @@ namespace MoonWorks
 
 			// Get the path to the assembly
 			Assembly assembly = Assembly.GetExecutingAssembly();
-			string assemblyPath = "";
-			if (assembly.Location != null)
-			{
-				assemblyPath = Path.GetDirectoryName(assembly.Location);
-			}
+			string assemblyPath = System.AppContext.BaseDirectory;
 
 			// Locate the config file
 			string xmlPath = Path.Combine(
 				assemblyPath,
-				assembly.GetName().Name + ".dll.config"
+				"MoonWorks.dll.config"
 			);
 			if (!File.Exists(xmlPath))
 			{
