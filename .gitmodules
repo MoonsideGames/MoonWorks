@@ -12,4 +12,4 @@
 	url = https://gitea.moonside.games/MoonsideGames/WellspringCS.git
 [submodule "lib/dav1dfile"]
 	path = lib/dav1dfile
-	url = git@github.com:MoonsideGames/dav1dfile.git
+	url = https://github.com/MoonsideGames/dav1dfile.git
