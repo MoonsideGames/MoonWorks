@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
@@ -11,20 +12,10 @@ namespace MoonWorks.Video
 		public Texture RenderTexture { get; private set; } = null;
 		public VideoState State { get; private set; } = VideoState.Stopped;
 		public bool Loop { get; set; }
-		public float Volume {
-			get => volume;
-			set
-			{
-				volume = value;
-				if (audioStream != null)
-				{
-					audioStream.Volume = value;
-				}
-			}
-		}
 		public float PlaybackSpeed { get; set; } = 1;
 
-		private Video Video = null;
+		private VideoAV1 Video = null;
+		private VideoAV1Stream CurrentStream = null;
 
 		private GraphicsDevice GraphicsDevice;
 		private Texture yTexture = null;
@@ -32,14 +23,7 @@ namespace MoonWorks.Video
 		private Texture vTexture = null;
 		private Sampler LinearSampler;
 
-		private void* yuvData = null;
-		private int yuvDataLength = 0;
-
 		private int currentFrame;
-
-		private AudioDevice AudioDevice;
-		private StreamingSoundTheora audioStream = null;
-		private float volume = 1.0f;
 
 		private Stopwatch timer;
 		private double lastTimestamp;
@@ -47,7 +31,7 @@ namespace MoonWorks.Video
 
 		private bool disposed;
 
-		public VideoPlayer(GraphicsDevice graphicsDevice, AudioDevice audioDevice)
+		public VideoPlayer(GraphicsDevice graphicsDevice)
 		{
 			GraphicsDevice = graphicsDevice;
 			if (GraphicsDevice.VideoPipeline == null)
@@ -55,13 +39,12 @@ namespace MoonWorks.Video
 				throw new InvalidOperationException("Missing video shaders!");
 			}
 
-			AudioDevice = audioDevice;
 			LinearSampler = new Sampler(graphicsDevice, SamplerCreateInfo.LinearClamp);
 
 			timer = new Stopwatch();
 		}
 
-		public void Load(Video video)
+		public void Load(VideoAV1 video)
 		{
 			if (Video != video)
 			{
@@ -111,20 +94,9 @@ namespace MoonWorks.Video
 					vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
 				}
 
-				var newDataLength = (
-					(video.Width * video.Height) +
-					(video.UVWidth * video.UVHeight * 2)
-				);
-
-				if (newDataLength != yuvDataLength)
-				{
-					yuvData = NativeMemory.Realloc(yuvData, (nuint) newDataLength);
-					yuvDataLength = newDataLength;
-				}
-
 				Video = video;
 
-				InitializeTheoraStream();
+				InitializeDav1dStream();
 			}
 		}
 
@@ -139,11 +111,6 @@ namespace MoonWorks.Video
 
 			timer.Start();
 
-			if (audioStream != null)
-			{
-				audioStream.Play();
-			}
-
 			State = VideoState.Playing;
 		}
 
@@ -157,11 +124,6 @@ namespace MoonWorks.Video
 			}
 
 			timer.Stop();
-
-			if (audioStream != null)
-			{
-				audioStream.Pause();
-			}
 
 			State = VideoState.Paused;
 		}
@@ -181,9 +143,7 @@ namespace MoonWorks.Video
 			lastTimestamp = 0;
 			timeElapsed = 0;
 
-			DestroyAudioStream();
-
-			Theorafile.tf_reset(Video.Handle);
+			InitializeDav1dStream();
 
 			State = VideoState.Stopped;
 		}
@@ -192,16 +152,6 @@ namespace MoonWorks.Video
 		{
 			Stop();
 			Video = null;
-		}
-
-		public void Update()
-		{
-			if (Video == null) { return; }
-
-			if (audioStream != null)
-			{
-				audioStream.Update();
-			}
 		}
 
 		public void Render()
@@ -217,33 +167,27 @@ namespace MoonWorks.Video
 			int thisFrame = ((int) (timeElapsed / (1000.0 / Video.FramesPerSecond)));
 			if (thisFrame > currentFrame)
 			{
-				if (Theorafile.tf_readvideo(
-					Video.Handle,
-					(IntPtr) yuvData,
-					thisFrame - currentFrame
-				) == 1 || currentFrame == -1)
+				if (CurrentStream.FrameDataUpdated)
 				{
 					UpdateRenderTexture();
 				}
 
 				currentFrame = thisFrame;
+				Task.Run(CurrentStream.ReadNextFrame);
 			}
 
-			bool ended = Theorafile.tf_eos(Video.Handle) == 1;
-			if (ended)
+			if (CurrentStream.Ended)
 			{
 				timer.Stop();
 				timer.Reset();
 
-				DestroyAudioStream();
-
-				Theorafile.tf_reset(Video.Handle);
+				Task.Run(CurrentStream.Reset);
 
 				if (Loop)
 				{
-					// Start over!
-					InitializeTheoraStream();
-
+					// Start over on the next stream!
+					CurrentStream = (CurrentStream == Video.StreamA) ? Video.StreamB : Video.StreamA;
+					currentFrame = -1;
 					timer.Start();
 				}
 				else
@@ -255,32 +199,40 @@ namespace MoonWorks.Video
 
 		private void UpdateRenderTexture()
 		{
-			var commandBuffer = GraphicsDevice.AcquireCommandBuffer();
+			lock (CurrentStream)
+			{
+				var commandBuffer = GraphicsDevice.AcquireCommandBuffer();
 
-			commandBuffer.SetTextureDataYUV(
-				yTexture,
-				uTexture,
-				vTexture,
-				(IntPtr) yuvData,
-				(uint) yuvDataLength
-			);
+				commandBuffer.SetTextureDataYUV(
+					yTexture,
+					uTexture,
+					vTexture,
+					CurrentStream.yDataHandle,
+					CurrentStream.uDataHandle,
+					CurrentStream.vDataHandle,
+					CurrentStream.yDataLength,
+					CurrentStream.uvDataLength,
+					CurrentStream.yStride,
+					CurrentStream.uvStride
+				);
 
-			commandBuffer.BeginRenderPass(
-				new ColorAttachmentInfo(RenderTexture, Color.Black)
-			);
+				commandBuffer.BeginRenderPass(
+					new ColorAttachmentInfo(RenderTexture, Color.Black)
+				);
 
-			commandBuffer.BindGraphicsPipeline(GraphicsDevice.VideoPipeline);
-			commandBuffer.BindFragmentSamplers(
-				new TextureSamplerBinding(yTexture, LinearSampler),
-				new TextureSamplerBinding(uTexture, LinearSampler),
-				new TextureSamplerBinding(vTexture, LinearSampler)
-			);
+				commandBuffer.BindGraphicsPipeline(GraphicsDevice.VideoPipeline);
+				commandBuffer.BindFragmentSamplers(
+					new TextureSamplerBinding(yTexture, LinearSampler),
+					new TextureSamplerBinding(uTexture, LinearSampler),
+					new TextureSamplerBinding(vTexture, LinearSampler)
+				);
 
-			commandBuffer.DrawPrimitives(0, 1, 0, 0);
+				commandBuffer.DrawPrimitives(0, 1, 0, 0);
 
-			commandBuffer.EndRenderPass();
+				commandBuffer.EndRenderPass();
 
-			GraphicsDevice.Submit(commandBuffer);
+				GraphicsDevice.Submit(commandBuffer);
+			}
 		}
 
 		private static Texture CreateRenderTexture(GraphicsDevice graphicsDevice, int width, int height)
@@ -305,33 +257,13 @@ namespace MoonWorks.Video
 			);
 		}
 
-		private void InitializeTheoraStream()
+		private void InitializeDav1dStream()
 		{
-			// Grab the first video frame ASAP.
-			while (Theorafile.tf_readvideo(Video.Handle, (IntPtr) yuvData, 1) == 0);
+			Task.Run(Video.StreamA.Reset);
+			Task.Run(Video.StreamB.Reset);
 
-			// Grab the first bit of audio. We're trying to start the decoding ASAP.
-			if (AudioDevice != null && Theorafile.tf_hasaudio(Video.Handle) == 1)
-			{
-				DestroyAudioStream();
-
-				int channels, sampleRate;
-				Theorafile.tf_audioinfo(Video.Handle, out channels, out sampleRate);
-
-				audioStream = new StreamingSoundTheora(AudioDevice, Video.Handle, channels, (uint) sampleRate);
-			}
-
+			CurrentStream = Video.StreamA;
 			currentFrame = -1;
-		}
-
-		private void DestroyAudioStream()
-		{
-			if (audioStream != null)
-			{
-				audioStream.StopImmediate();
-				audioStream.Dispose();
-				audioStream = null;
-			}
 		}
 
 		protected virtual void Dispose(bool disposing)
@@ -346,9 +278,6 @@ namespace MoonWorks.Video
 					uTexture.Dispose();
 					vTexture.Dispose();
 				}
-
-				// free unmanaged resources (unmanaged objects) and override finalizer
-				NativeMemory.Free(yuvData);
 
 				disposed = true;
 			}

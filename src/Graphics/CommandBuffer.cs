@@ -1946,7 +1946,17 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Asynchronously copies YUV data into three textures. Use with compressed video.
 		/// </summary>
-		public void SetTextureDataYUV(Texture yTexture, Texture uTexture, Texture vTexture, IntPtr dataPtr, uint dataLengthInBytes)
+		public void SetTextureDataYUV(
+			Texture yTexture,
+			Texture uTexture,
+			Texture vTexture,
+			IntPtr yDataPtr,
+			IntPtr uDataPtr,
+			IntPtr vDataPtr,
+			uint yDataLengthInBytes,
+			uint uvDataLengthInBytes,
+			uint yStride,
+			uint uvStride)
 		{
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
@@ -1962,8 +1972,13 @@ namespace MoonWorks.Graphics
 				yTexture.Height,
 				uTexture.Width,
 				uTexture.Height,
-				dataPtr,
-				dataLengthInBytes
+				yDataPtr,
+				uDataPtr,
+				vDataPtr,
+				yDataLengthInBytes,
+				uvDataLengthInBytes,
+				yStride,
+				uvStride
 			);
 		}
 
