@@ -45,17 +45,21 @@ namespace MoonWorks
 
 			ScreenMode = windowCreateInfo.ScreenMode;
 
+			SDL.SDL_GetDesktopDisplayMode(0, out var displayMode);
+
 			Handle = SDL.SDL_CreateWindow(
 				windowCreateInfo.WindowTitle,
-				SDL.SDL_WINDOWPOS_UNDEFINED,
-				SDL.SDL_WINDOWPOS_UNDEFINED,
-				(int) windowCreateInfo.WindowWidth,
-				(int) windowCreateInfo.WindowHeight,
+				SDL.SDL_WINDOWPOS_CENTERED,
+				SDL.SDL_WINDOWPOS_CENTERED,
+				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowWidth : displayMode.w,
+				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowHeight : displayMode.h,
 				flags
 			);
 
-			Width = windowCreateInfo.WindowWidth;
-			Height = windowCreateInfo.WindowHeight;
+			/* Requested size might be different in fullscreen, so let's just get the area */
+			SDL.SDL_GetWindowSize(Handle, out var width, out var height);
+			Width = (uint) width;
+			Height = (uint) height;
 
 			idLookup.Add(SDL.SDL_GetWindowID(Handle), this);
 		}
