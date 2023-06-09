@@ -5,7 +5,7 @@ namespace MoonWorks.Input
 	public class KeyboardButton : VirtualButton
 	{
 		Keyboard Parent;
-		KeyCode KeyCode;
+		public KeyCode KeyCode { get; }
 
 		internal KeyboardButton(Keyboard parent, KeyCode keyCode)
 		{
