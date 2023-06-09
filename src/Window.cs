@@ -73,9 +73,14 @@ namespace MoonWorks
 				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
 
-			ScreenMode = screenMode;
-
 			SDL.SDL_SetWindowFullscreen(Handle, (uint) windowFlag);
+
+			if (screenMode == ScreenMode.Windowed)
+			{
+				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
+			}
+
+			ScreenMode = screenMode;
 		}
 
 		/// <summary>
@@ -89,6 +94,11 @@ namespace MoonWorks
 			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
 			Width = width;
 			Height = height;
+
+			if (ScreenMode == ScreenMode.Windowed)
+			{
+				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
+			}
 		}
 
 		internal static Window Lookup(uint windowID)
