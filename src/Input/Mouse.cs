@@ -99,6 +99,11 @@ namespace MoonWorks.Input
 			}
 		}
 
+		public MouseButton Button(MouseButtonCode buttonCode)
+		{
+			return CodeToButton[buttonCode];
+		}
+
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
 			return CodeToButton[buttonCode].State;
