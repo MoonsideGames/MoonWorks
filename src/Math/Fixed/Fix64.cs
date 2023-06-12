@@ -7,7 +7,7 @@ namespace MoonWorks.Math.Fixed
 {
 	public struct Fix64 : IEquatable<Fix64>, IComparable<Fix64>
 	{
-		private readonly long RawValue;
+		public long RawValue { get; }
 
 		const long MAX_VALUE = long.MaxValue;
 		const long MIN_VALUE = long.MinValue;
@@ -50,6 +50,11 @@ namespace MoonWorks.Math.Fixed
 		public static Fix64 FromFraction(int numerator, int denominator)
 		{
 			return new Fix64(numerator) / new Fix64(denominator);
+		}
+
+		public static Fix64 FromRawValue(long value)
+		{
+			return new Fix64(value);
 		}
 
 		/// <summary>
