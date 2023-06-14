@@ -170,6 +170,7 @@ namespace MoonWorks.Video
 				if (CurrentStream.FrameDataUpdated)
 				{
 					UpdateRenderTexture();
+					CurrentStream.FrameDataUpdated = false;
 				}
 
 				currentFrame = thisFrame;

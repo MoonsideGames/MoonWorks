@@ -17,7 +17,7 @@ namespace MoonWorks.Video
 		public uint yStride;
 		public uint uvStride;
 
-		public bool FrameDataUpdated { get; private set; }
+		public bool FrameDataUpdated { get; set; }
 
 		bool IsDisposed;
 
@@ -44,18 +44,29 @@ namespace MoonWorks.Video
 		{
 			lock (this)
 			{
-				if (Dav1dfile.df_readvideo(
-					Handle,
-					1,
-					out yDataHandle,
-					out uDataHandle,
-					out vDataHandle,
-					out yDataLength,
-					out uvDataLength,
-					out yStride,
-					out uvStride) == 1
-				) {
-					FrameDataUpdated = true;
+				if (!Ended)
+				{
+					if (Dav1dfile.df_readvideo(
+						Handle,
+						1,
+						out var yDataHandle,
+						out var uDataHandle,
+						out var vDataHandle,
+						out var yDataLength,
+						out var uvDataLength,
+						out var yStride,
+						out var uvStride) == 1
+					) {
+						this.yDataHandle = yDataHandle;
+						this.uDataHandle = uDataHandle;
+						this.vDataHandle = vDataHandle;
+						this.yDataLength = yDataLength;
+						this.uvDataLength = uvDataLength;
+						this.yStride = yStride;
+						this.uvStride = uvStride;
+
+						FrameDataUpdated = true;
+					}
 				}
 			}
 		}
