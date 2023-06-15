@@ -28,8 +28,8 @@ namespace MoonWorks.Audio
 		}
 
 		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
-		private readonly List<WeakReference> autoUpdateStreamingSoundReferences = new List<WeakReference>();
-		private readonly List<WeakReference> autoFreeStaticSoundInstanceReferences = new List<WeakReference>();
+		private readonly List<StreamingSound> autoUpdateStreamingSoundReferences = new List<StreamingSound>();
+		private readonly List<StaticSoundInstance> autoFreeStaticSoundInstanceReferences = new List<StaticSoundInstance>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -154,9 +154,9 @@ namespace MoonWorks.Audio
 
 			for (var i = autoUpdateStreamingSoundReferences.Count - 1; i >= 0; i -= 1)
 			{
-				var weakReference = autoUpdateStreamingSoundReferences[i];
+				var streamingSound = autoUpdateStreamingSoundReferences[i];
 
-				if (weakReference.Target is StreamingSound streamingSound && streamingSound.Loaded)
+				if (streamingSound.Loaded)
 				{
 					streamingSound.Update();
 				}
@@ -168,18 +168,11 @@ namespace MoonWorks.Audio
 
 			for (var i = autoFreeStaticSoundInstanceReferences.Count - 1; i >= 0; i -= 1)
 			{
-				var weakReference = autoFreeStaticSoundInstanceReferences[i];
+				var staticSoundInstance = autoFreeStaticSoundInstanceReferences[i];
 
-				if (weakReference.Target is StaticSoundInstance staticSoundInstance)
+				if (staticSoundInstance.State == SoundState.Stopped)
 				{
-					if (staticSoundInstance.State == SoundState.Stopped)
-					{
-						staticSoundInstance.Free();
-						autoFreeStaticSoundInstanceReferences.RemoveAt(i);
-					}
-				}
-				else
-				{
+					staticSoundInstance.Free();
 					autoFreeStaticSoundInstanceReferences.RemoveAt(i);
 				}
 			}
@@ -216,7 +209,7 @@ namespace MoonWorks.Audio
 		}
 
 		internal void ClearTweens(
-			WeakReference soundReference,
+			SoundInstance soundReference,
 			AudioTweenProperty property
 		) {
 			lock (StateLock)
@@ -248,12 +241,12 @@ namespace MoonWorks.Audio
 
 		internal void AddAutoUpdateStreamingSoundInstance(StreamingSound instance)
 		{
-			autoUpdateStreamingSoundReferences.Add(instance.weakReference);
+			autoUpdateStreamingSoundReferences.Add(instance);
 		}
 
 		internal void AddAutoFreeStaticSoundInstance(StaticSoundInstance instance)
 		{
-			autoFreeStaticSoundInstanceReferences.Add(instance.weakReference);
+			autoFreeStaticSoundInstanceReferences.Add(instance);
 		}
 
 		protected virtual void Dispose(bool disposing)

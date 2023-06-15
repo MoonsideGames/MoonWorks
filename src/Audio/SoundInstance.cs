@@ -308,7 +308,7 @@ namespace MoonWorks.Audio
 		public void SetPan(float targetValue)
 		{
 			Pan = targetValue;
-			Device.ClearTweens(weakReference, AudioTweenProperty.Pan);
+			Device.ClearTweens(this, AudioTweenProperty.Pan);
 		}
 
 		public void SetPan(float targetValue, float duration, EasingFunction easingFunction)
@@ -324,7 +324,7 @@ namespace MoonWorks.Audio
 		public void SetPitch(float targetValue)
 		{
 			Pitch = targetValue;
-			Device.ClearTweens(weakReference, AudioTweenProperty.Pitch);
+			Device.ClearTweens(this, AudioTweenProperty.Pitch);
 		}
 
 		public void SetPitch(float targetValue, float duration, EasingFunction easingFunction)
@@ -340,7 +340,7 @@ namespace MoonWorks.Audio
 		public void SetVolume(float targetValue)
 		{
 			Volume = targetValue;
-			Device.ClearTweens(weakReference, AudioTweenProperty.Volume);
+			Device.ClearTweens(this, AudioTweenProperty.Volume);
 		}
 
 		public void SetVolume(float targetValue, float duration, EasingFunction easingFunction)
@@ -356,7 +356,7 @@ namespace MoonWorks.Audio
 		public void SetFilterFrequency(float targetValue)
 		{
 			FilterFrequency = targetValue;
-			Device.ClearTweens(weakReference, AudioTweenProperty.FilterFrequency);
+			Device.ClearTweens(this, AudioTweenProperty.FilterFrequency);
 		}
 
 		public void SetFilterFrequency(float targetValue, float duration, EasingFunction easingFunction)
@@ -377,7 +377,7 @@ namespace MoonWorks.Audio
 		public void SetReverb(float targetValue)
 		{
 			Reverb = targetValue;
-			Device.ClearTweens(weakReference, AudioTweenProperty.Reverb);
+			Device.ClearTweens(this, AudioTweenProperty.Reverb);
 		}
 
 		public void SetReverb(float targetValue, float duration, EasingFunction easingFunction)

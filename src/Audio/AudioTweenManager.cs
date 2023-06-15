@@ -6,7 +6,7 @@ namespace MoonWorks.Audio
 	internal class AudioTweenManager
 	{
 		private AudioTweenPool AudioTweenPool = new AudioTweenPool();
-		private readonly Dictionary<(WeakReference, AudioTweenProperty), AudioTween> AudioTweens = new Dictionary<(WeakReference, AudioTweenProperty), AudioTween>();
+		private readonly Dictionary<(SoundInstance, AudioTweenProperty), AudioTween> AudioTweens = new Dictionary<(SoundInstance, AudioTweenProperty), AudioTween>();
 		private readonly List<AudioTween> DelayedAudioTweens = new List<AudioTween>();
 
 		public void Update(float elapsedSeconds)
@@ -14,56 +14,46 @@ namespace MoonWorks.Audio
 			for (var i = DelayedAudioTweens.Count - 1; i >= 0; i--)
 			{
 				var audioTween = DelayedAudioTweens[i];
-				if (audioTween.SoundInstanceReference.Target is SoundInstance soundInstance)
-				{
-					audioTween.Time += elapsedSeconds;
+				var soundInstance = audioTween.SoundInstance;
 
-					if (audioTween.Time >= audioTween.DelayTime)
+				audioTween.Time += elapsedSeconds;
+
+				if (audioTween.Time >= audioTween.DelayTime)
+				{
+					// set the tween start value to the current value of the property
+					switch (audioTween.Property)
 					{
-						// set the tween start value to the current value of the property
-						switch (audioTween.Property)
-						{
-							case AudioTweenProperty.Pan:
-								audioTween.StartValue = soundInstance.Pan;
-								break;
+						case AudioTweenProperty.Pan:
+							audioTween.StartValue = soundInstance.Pan;
+							break;
 
-							case AudioTweenProperty.Pitch:
-								audioTween.StartValue = soundInstance.Pitch;
-								break;
+						case AudioTweenProperty.Pitch:
+							audioTween.StartValue = soundInstance.Pitch;
+							break;
 
-							case AudioTweenProperty.Volume:
-								audioTween.StartValue = soundInstance.Volume;
-								break;
+						case AudioTweenProperty.Volume:
+							audioTween.StartValue = soundInstance.Volume;
+							break;
 
-							case AudioTweenProperty.FilterFrequency:
-								audioTween.StartValue = soundInstance.FilterFrequency;
-								break;
+						case AudioTweenProperty.FilterFrequency:
+							audioTween.StartValue = soundInstance.FilterFrequency;
+							break;
 
-							case AudioTweenProperty.Reverb:
-								audioTween.StartValue = soundInstance.Reverb;
-								break;
-						}
-
-						audioTween.Time = 0;
-						DelayedAudioTweens.RemoveAt(i);
-
-						AddTween(audioTween);
+						case AudioTweenProperty.Reverb:
+							audioTween.StartValue = soundInstance.Reverb;
+							break;
 					}
-				}
-				else
-				{
-					AudioTweenPool.Free(audioTween);
+
+					audioTween.Time = 0;
 					DelayedAudioTweens.RemoveAt(i);
+
+					AddTween(audioTween);
 				}
 			}
 
 			foreach (var (key, audioTween) in AudioTweens)
 			{
-				bool finished = true;
-				if (audioTween.SoundInstanceReference.Target is SoundInstance soundInstance)
-				{
-					finished = UpdateAudioTween(audioTween, soundInstance, elapsedSeconds);
-				}
+				bool finished = UpdateAudioTween(audioTween, elapsedSeconds);
 
 				if (finished)
 				{
@@ -83,7 +73,7 @@ namespace MoonWorks.Audio
 			float delayTime
 		) {
 			var tween = AudioTweenPool.Obtain();
-			tween.SoundInstanceReference = soundInstance.weakReference;
+			tween.SoundInstance = soundInstance;
 			tween.Property = property;
 			tween.EasingFunction = easingFunction;
 			tween.StartValue = start;
@@ -102,24 +92,24 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public void ClearTweens(WeakReference soundReference, AudioTweenProperty property)
+		public void ClearTweens(SoundInstance soundInstance, AudioTweenProperty property)
 		{
-			AudioTweens.Remove((soundReference, property));
+			AudioTweens.Remove((soundInstance, property));
 		}
 
 		private void AddTween(
 			AudioTween audioTween
 		) {
 			// if a tween with the same sound and property already exists, get rid of it
-			if (AudioTweens.TryGetValue((audioTween.SoundInstanceReference, audioTween.Property), out var currentTween))
+			if (AudioTweens.TryGetValue((audioTween.SoundInstance, audioTween.Property), out var currentTween))
 			{
 				AudioTweenPool.Free(currentTween);
 			}
 
-			AudioTweens[(audioTween.SoundInstanceReference, audioTween.Property)] = audioTween;
+			AudioTweens[(audioTween.SoundInstance, audioTween.Property)] = audioTween;
 		}
 
-		private static bool UpdateAudioTween(AudioTween audioTween, SoundInstance soundInstance, float delta)
+		private static bool UpdateAudioTween(AudioTween audioTween, float delta)
 		{
 			float value;
 			audioTween.Time += delta;
@@ -143,23 +133,23 @@ namespace MoonWorks.Audio
 			switch (audioTween.Property)
 			{
 				case AudioTweenProperty.Pan:
-					soundInstance.Pan = value;
+					audioTween.SoundInstance.Pan = value;
 					break;
 
 				case AudioTweenProperty.Pitch:
-					soundInstance.Pitch = value;
+					audioTween.SoundInstance.Pitch = value;
 					break;
 
 				case AudioTweenProperty.Volume:
-					soundInstance.Volume = value;
+					audioTween.SoundInstance.Volume = value;
 					break;
 
 				case AudioTweenProperty.FilterFrequency:
-					soundInstance.FilterFrequency = value;
+					audioTween.SoundInstance.FilterFrequency = value;
 					break;
 
 				case AudioTweenProperty.Reverb:
-					soundInstance.Reverb = value;
+					audioTween.SoundInstance.Reverb = value;
 					break;
 			}
 
