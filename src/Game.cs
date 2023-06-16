@@ -89,6 +89,8 @@ namespace MoonWorks
 			Destroy();
 
 			AudioDevice.Dispose();
+
+			GraphicsDevice.UnclaimWindow(MainWindow);
 			MainWindow.Dispose();
 			GraphicsDevice.Dispose();
 
