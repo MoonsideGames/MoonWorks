@@ -22,7 +22,7 @@ For an actual API reference, the source is documented in doc comments that your 
 * [Refresh](https://gitea.moonside.games/MoonsideGames/Refresh) - Graphics
 * [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
 * [Wellspring](https://gitea.moonside.games/MoonsideGames/Wellspring) - Font Rendering
-* [Theorafile](https://github.com/FNA-XNA/Theorafile) - Compressed Video
+* [dav1dfile](https://github.com/MoonsideGames/dav1dfile) - Compressed Video
 
 Prebuilt dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.bz2
 
