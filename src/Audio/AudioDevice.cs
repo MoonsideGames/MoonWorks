@@ -139,7 +139,14 @@ namespace MoonWorks.Audio
 			{
 				lock (StateLock)
 				{
-					ThreadMainTick();
+					try
+					{
+						ThreadMainTick();
+					}
+					catch (Exception e)
+					{
+						Logger.LogError(e.ToString());
+					}
 				}
 
 				WakeSignal.WaitOne(UpdateInterval);
