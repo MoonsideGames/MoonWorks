@@ -100,13 +100,13 @@ namespace MoonWorks.Input
 
 			LeftXLeft = new AxisButton(LeftX, false);
 			LeftXRight = new AxisButton(LeftX, true);
-			LeftYUp = new AxisButton(LeftY, false);
-			LeftYDown = new AxisButton(LeftY, true);
+			LeftYUp = new AxisButton(LeftY, true);
+			LeftYDown = new AxisButton(LeftY, false);
 
 			RightXLeft = new AxisButton(RightX, false);
 			RightXRight = new AxisButton(RightX, true);
-			RightYUp = new AxisButton(RightY, false);
-			RightYDown = new AxisButton(RightY, true);
+			RightYUp = new AxisButton(RightY, true);
+			RightYDown = new AxisButton(RightY, false);
 
 			TriggerLeft = new Trigger(this, TriggerCode.Left, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
 			TriggerRight = new Trigger(this, TriggerCode.Right, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
