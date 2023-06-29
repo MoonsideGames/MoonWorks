@@ -5,7 +5,7 @@ namespace MoonWorks.Input
 		public Axis Parent { get; }
 		public AxisButtonCode Code { get; }
 
-		private float threshold = 0.9f;
+		private float threshold = 0.5f;
 		public float Threshold
 		{
 			get => threshold;
