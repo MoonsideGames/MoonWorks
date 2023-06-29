@@ -299,6 +299,16 @@ namespace MoonWorks
 			Inputs.RemoveGamepad(evt.cdevice.which);
 		}
 
+		public static void ShowRuntimeError(string title, string message)
+		{
+			SDL.SDL_ShowSimpleMessageBox(
+				SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+				title ?? "",
+				message ?? "",
+				IntPtr.Zero
+			);
+		}
+
 		private TimeSpan AdvanceElapsedTime()
 		{
 			long currentTicks = gameTimer.Elapsed.Ticks;
