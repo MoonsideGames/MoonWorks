@@ -272,22 +272,41 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public StaticSoundInstance GetInstance(bool autoFree = true)
 		{
-			if (AvailableInstances.Count == 0)
+			StaticSoundInstance instance;
+
+			lock (AvailableInstances)
 			{
-				AvailableInstances.Push(new StaticSoundInstance(Device, this));
+				if (AvailableInstances.Count == 0)
+				{
+					AvailableInstances.Push(new StaticSoundInstance(Device, this));
+				}
+
+				instance = AvailableInstances.Pop();
 			}
 
-			var instance = AvailableInstances.Pop();
 			instance.AutoFree = autoFree;
-			UsedInstances.Add(instance);
+
+			lock (UsedInstances)
+			{
+				UsedInstances.Add(instance);
+			}
+
 			return instance;
 		}
 
 		internal void FreeInstance(StaticSoundInstance instance)
 		{
 			instance.Reset();
-			UsedInstances.Remove(instance);
-			AvailableInstances.Push(instance);
+
+			lock (UsedInstances)
+			{
+				UsedInstances.Remove(instance);
+			}
+
+			lock (AvailableInstances)
+			{
+				AvailableInstances.Push(instance);
+			}
 		}
 
 		protected override unsafe void Destroy()
