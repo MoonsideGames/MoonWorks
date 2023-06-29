@@ -271,7 +271,7 @@ namespace MoonWorks.Video
 		{
 			if (task.Exception != null)
 			{
-				Logger.LogError(task.Exception.ToString());
+				throw task.Exception;
 			}
 		}
 
