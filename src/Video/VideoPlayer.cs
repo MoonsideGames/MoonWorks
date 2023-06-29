@@ -174,7 +174,7 @@ namespace MoonWorks.Video
 				}
 
 				currentFrame = thisFrame;
-				Task.Run(CurrentStream.ReadNextFrame).ContinueWith(HandleTaskException);
+				Task.Run(CurrentStream.ReadNextFrame).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 			}
 
 			if (CurrentStream.Ended)
@@ -182,7 +182,7 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				Task.Run(CurrentStream.Reset).ContinueWith(HandleTaskException);
+				Task.Run(CurrentStream.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 
 				if (Loop)
 				{
@@ -260,8 +260,8 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			Task.Run(Video.StreamA.Reset).ContinueWith(HandleTaskException);
-			Task.Run(Video.StreamB.Reset).ContinueWith(HandleTaskException);
+			Task.Run(Video.StreamA.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			Task.Run(Video.StreamB.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 
 			CurrentStream = Video.StreamA;
 			currentFrame = -1;
@@ -269,10 +269,7 @@ namespace MoonWorks.Video
 
 		private static void HandleTaskException(Task task)
 		{
-			if (task.Exception != null)
-			{
-				throw task.Exception;
-			}
+			throw task.Exception;
 		}
 
 		protected virtual void Dispose(bool disposing)
