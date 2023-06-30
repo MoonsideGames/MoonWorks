@@ -89,7 +89,7 @@ namespace MoonWorks.Audio
 
 		public override void Pause()
 		{
-			if (State == SoundState.Paused)
+			if (State == SoundState.Playing)
 			{
 				FAudio.FAudioSourceVoice_Stop(Voice, 0, 0);
 				State = SoundState.Paused;
