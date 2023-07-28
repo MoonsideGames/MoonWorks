@@ -30,7 +30,7 @@ namespace MoonWorks.Audio
 		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
 		private readonly List<StreamingSound> autoUpdateStreamingSoundReferences = new List<StreamingSound>();
 		private readonly List<StaticSoundInstance> autoFreeStaticSoundInstanceReferences = new List<StaticSoundInstance>();
-		private readonly List<WeakReference<SoundQueue>> soundQueueReferences = new List<WeakReference<SoundQueue>>();
+		private readonly List<WeakReference<SoundSequence>> soundSequenceReferences = new List<WeakReference<SoundSequence>>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -185,15 +185,15 @@ namespace MoonWorks.Audio
 				}
 			}
 
-			for (var i = soundQueueReferences.Count - 1; i >= 0; i -= 1)
+			for (var i = soundSequenceReferences.Count - 1; i >= 0; i -= 1)
 			{
-				if (soundQueueReferences[i].TryGetTarget(out var soundQueue))
+				if (soundSequenceReferences[i].TryGetTarget(out var soundSequence))
 				{
-					soundQueue.Update();
+					soundSequence.Update();
 				}
 				else
 				{
-					soundQueueReferences.RemoveAt(i);
+					soundSequenceReferences.RemoveAt(i);
 				}
 			}
 
@@ -269,9 +269,9 @@ namespace MoonWorks.Audio
 			autoFreeStaticSoundInstanceReferences.Add(instance);
 		}
 
-		internal void AddSoundQueueReference(SoundQueue queue)
+		internal void AddSoundSequenceReference(SoundSequence sequence)
 		{
-			soundQueueReferences.Add(new WeakReference<SoundQueue>(queue));
+			soundSequenceReferences.Add(new WeakReference<SoundSequence>(sequence));
 		}
 
 		protected virtual void Dispose(bool disposing)

@@ -2,8 +2,8 @@ using System;
 
 namespace MoonWorks.Audio
 {
-	// NOTE: all sounds played with a SoundQueue must have the same audio format!
-	public class SoundQueue : SoundInstance
+	// NOTE: all sounds played with a SoundSequence must have the same audio format!
+	public class SoundSequence : SoundInstance
 	{
 		public int NeedSoundThreshold = 0;
 		public delegate void OnSoundNeededFunc();
@@ -11,14 +11,14 @@ namespace MoonWorks.Audio
 
 		private object StateLock = new object();
 
-		public SoundQueue(AudioDevice device, ushort formatTag, ushort bitsPerSample, ushort blockAlign, ushort channels, uint samplesPerSecond) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
+		public SoundSequence(AudioDevice device, ushort formatTag, ushort bitsPerSample, ushort blockAlign, ushort channels, uint samplesPerSecond) : base(device, formatTag, bitsPerSample, blockAlign, channels, samplesPerSecond)
 		{
-			device.AddSoundQueueReference(this);
+			device.AddSoundSequenceReference(this);
 		}
 
-		public SoundQueue(AudioDevice device, StaticSound templateSound) : base(device, templateSound.FormatTag, templateSound.BitsPerSample, templateSound.BlockAlign, templateSound.Channels, templateSound.SamplesPerSecond)
+		public SoundSequence(AudioDevice device, StaticSound templateSound) : base(device, templateSound.FormatTag, templateSound.BitsPerSample, templateSound.BlockAlign, templateSound.Channels, templateSound.SamplesPerSecond)
 		{
-			device.AddSoundQueueReference(this);
+			device.AddSoundSequenceReference(this);
 		}
 
 		public void Update()
