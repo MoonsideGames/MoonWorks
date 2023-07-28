@@ -2,14 +2,12 @@ using System;
 
 namespace MoonWorks.Audio
 {
-	// NOTE: all sounds played with a playlist must have the same audio format!
+	// NOTE: all sounds played with a SoundQueue must have the same audio format!
 	public class SoundQueue : SoundInstance
 	{
-		public int NeedBufferThreshold = 0;
-		private uint queuedBufferCount = 0;
-
-		public delegate void OnBufferNeededFunc();
-		public OnBufferNeededFunc OnBufferNeeded;
+		public int NeedSoundThreshold = 0;
+		public delegate void OnSoundNeededFunc();
+		public OnSoundNeededFunc OnSoundNeeded;
 
 		private object StateLock = new object();
 
@@ -30,7 +28,7 @@ namespace MoonWorks.Audio
 				if (IsDisposed) { return; }
 				if (State != SoundState.Playing) { return; }
 
-				if (NeedBufferThreshold > 0)
+				if (NeedSoundThreshold > 0)
 				{
 					FAudio.FAudioSourceVoice_GetState(
 						Voice,
@@ -39,11 +37,11 @@ namespace MoonWorks.Audio
 					);
 
 					var queuedBufferCount = state.BuffersQueued;
-					for (int i = 0; i < NeedBufferThreshold - queuedBufferCount; i += 1)
+					for (int i = 0; i < NeedSoundThreshold - queuedBufferCount; i += 1)
 					{
-						if (OnBufferNeeded != null)
+						if (OnSoundNeeded != null)
 						{
-							OnBufferNeeded();
+							OnSoundNeeded();
 						}
 					}
 				}
