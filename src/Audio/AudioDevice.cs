@@ -42,6 +42,7 @@ namespace MoonWorks.Audio
 		private AutoResetEvent WakeSignal;
 		internal readonly object StateLock = new object();
 
+		private bool Running;
 		private bool IsDisposed;
 
 		public unsafe AudioDevice()
@@ -130,13 +131,15 @@ namespace MoonWorks.Audio
 			Thread.IsBackground = true;
 			Thread.Start();
 
+			Running = true;
+
 			TickStopwatch.Start();
 			previousTickTime = 0;
 		}
 
 		private void ThreadMain()
 		{
-			while (!IsDisposed)
+			while (Running)
 			{
 				lock (StateLock)
 				{
@@ -278,27 +281,27 @@ namespace MoonWorks.Audio
 		{
 			if (!IsDisposed)
 			{
-				lock (StateLock)
+				Running = false;
+				Thread.Join();
+
+				if (disposing)
 				{
-					if (disposing)
+					foreach (var weakReference in resources)
 					{
-						foreach (var weakReference in resources)
+						var target = weakReference.Target;
+
+						if (target != null)
 						{
-							var target = weakReference.Target;
-
-							if (target != null)
-							{
-								(target as IDisposable).Dispose();
-							}
+							(target as IDisposable).Dispose();
 						}
-						resources.Clear();
 					}
-
-					FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
-					FAudio.FAudio_Release(Handle);
-
-					IsDisposed = true;
+					resources.Clear();
 				}
+
+				FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
+				FAudio.FAudio_Release(Handle);
+
+				IsDisposed = true;
 			}
 		}
 

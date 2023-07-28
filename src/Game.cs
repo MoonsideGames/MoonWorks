@@ -86,12 +86,21 @@ namespace MoonWorks
 				Tick();
 			}
 
+			Logger.LogInfo("Starting shutdown sequence...");
+
+			Logger.LogInfo("Cleaning up game...");
 			Destroy();
 
+			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
 
+			Logger.LogInfo("Unclaiming window...");
 			GraphicsDevice.UnclaimWindow(MainWindow);
+
+			Logger.LogInfo("Disposing window...");
 			MainWindow.Dispose();
+
+			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
 
 			SDL.SDL_Quit();

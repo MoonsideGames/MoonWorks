@@ -311,6 +311,18 @@ namespace MoonWorks.Audio
 
 		protected override unsafe void Destroy()
 		{
+			foreach (var instance in UsedInstances)
+			{
+				instance.Free();
+			}
+
+			foreach (var instance in AvailableInstances)
+			{
+				instance.Dispose();
+			}
+
+			AvailableInstances.Clear();
+
 			if (OwnsBuffer)
 			{
 				NativeMemory.Free((void*) Handle.pAudioData);
