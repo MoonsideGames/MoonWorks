@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace MoonWorks.Audio
@@ -9,30 +8,26 @@ namespace MoonWorks.Audio
 	{
 		public IntPtr Handle { get; }
 		public byte[] Handle3D { get; }
-		public IntPtr MasteringVoice { get; }
 		public FAudio.FAudioDeviceDetails DeviceDetails { get; }
+
+		private IntPtr trueMasteringVoice;
+
+		// this is a fun little trick where we use a submix voice as a "faux" mastering voice
+		// this lets us maintain API consistency for effects like panning and reverb
+		private SubmixVoice fauxMasteringVoice;
+		public SubmixVoice MasteringVoice => fauxMasteringVoice;
 
 		public float CurveDistanceScalar = 1f;
 		public float DopplerScale = 1f;
 		public float SpeedOfSound = 343.5f;
 
-		private float masteringVolume = 1f;
-		public float MasteringVolume
-		{
-			get => masteringVolume;
-			set
-			{
-				masteringVolume = value;
-				FAudio.FAudioVoice_SetVolume(MasteringVoice, masteringVolume, 0);
-			}
-		}
-
 		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
-		private readonly List<StreamingSound> autoUpdateStreamingSoundReferences = new List<StreamingSound>();
-		private readonly List<StaticSoundInstance> autoFreeStaticSoundInstanceReferences = new List<StaticSoundInstance>();
-		private readonly List<WeakReference<SoundSequence>> soundSequenceReferences = new List<WeakReference<SoundSequence>>();
+		private readonly HashSet<SourceVoice> activeSourceVoices = new HashSet<SourceVoice>();
 
 		private AudioTweenManager AudioTweenManager;
+
+		private SourceVoicePool VoicePool;
+		private List<SourceVoice> VoicesToReturn = new List<SourceVoice>();
 
 		private const int Step = 200;
 		private TimeSpan UpdateInterval;
@@ -93,25 +88,24 @@ namespace MoonWorks.Audio
 			}
 
 			/* Init Mastering Voice */
-			IntPtr masteringVoice;
-
-			if (FAudio.FAudio_CreateMasteringVoice(
+			var result = FAudio.FAudio_CreateMasteringVoice(
 				Handle,
-				out masteringVoice,
+				out trueMasteringVoice,
 				FAudio.FAUDIO_DEFAULT_CHANNELS,
 				FAudio.FAUDIO_DEFAULT_SAMPLERATE,
 				0,
 				i,
 				IntPtr.Zero
-			) != 0)
+			);
+
+			if (result != 0)
 			{
-				Logger.LogError("No mastering voice found!");
-				FAudio.FAudio_Release(Handle);
-				Handle = IntPtr.Zero;
+				Logger.LogError("Failed to create a mastering voice!");
+				Logger.LogError("Audio device creation failed!");
 				return;
 			}
 
-			MasteringVoice = masteringVoice;
+			fauxMasteringVoice = new SubmixVoice(this, DeviceDetails.OutputFormat.Format.nChannels, DeviceDetails.OutputFormat.Format.nSamplesPerSec, int.MaxValue);
 
 			/* Init 3D Audio */
 
@@ -123,6 +117,7 @@ namespace MoonWorks.Audio
 			);
 
 			AudioTweenManager = new AudioTweenManager();
+			VoicePool = new SourceVoicePool(this);
 
 			Logger.LogInfo("Setting up audio thread...");
 			WakeSignal = new AutoResetEvent(true);
@@ -163,53 +158,60 @@ namespace MoonWorks.Audio
 			previousTickTime = TickStopwatch.Elapsed.Ticks;
 			float elapsedSeconds = (float) tickDelta / System.TimeSpan.TicksPerSecond;
 
-			for (var i = autoUpdateStreamingSoundReferences.Count - 1; i >= 0; i -= 1)
-			{
-				var streamingSound = autoUpdateStreamingSoundReferences[i];
-
-				if (streamingSound.Loaded)
-				{
-					streamingSound.Update();
-				}
-				else
-				{
-					autoUpdateStreamingSoundReferences.RemoveAt(i);
-				}
-			}
-
-			for (var i = autoFreeStaticSoundInstanceReferences.Count - 1; i >= 0; i -= 1)
-			{
-				var staticSoundInstance = autoFreeStaticSoundInstanceReferences[i];
-
-				if (staticSoundInstance.State == SoundState.Stopped)
-				{
-					staticSoundInstance.Free();
-					autoFreeStaticSoundInstanceReferences.RemoveAt(i);
-				}
-			}
-
-			for (var i = soundSequenceReferences.Count - 1; i >= 0; i -= 1)
-			{
-				if (soundSequenceReferences[i].TryGetTarget(out var soundSequence))
-				{
-					soundSequence.Update();
-				}
-				else
-				{
-					soundSequenceReferences.RemoveAt(i);
-				}
-			}
-
 			AudioTweenManager.Update(elapsedSeconds);
+
+			foreach (var voice in activeSourceVoices)
+			{
+				voice.Update();
+			}
+
+			foreach (var voice in VoicesToReturn)
+			{
+				voice.Reset();
+				activeSourceVoices.Remove(voice);
+				VoicePool.Return(voice);
+			}
+
+			VoicesToReturn.Clear();
 		}
 
-		public void SyncPlay()
+		/// <summary>
+		/// Triggers all pending operations with the given syncGroup value.
+		/// </summary>
+		public void TriggerSyncGroup(uint syncGroup)
 		{
-			FAudio.FAudio_CommitChanges(Handle, 1);
+			FAudio.FAudio_CommitChanges(Handle, syncGroup);
+		}
+
+		/// <summary>
+		/// Obtains an appropriate source voice from the voice pool.
+		/// </summary>
+		/// <param name="format">The format that the voice must match.</param>
+		/// <returns>A source voice with the given format.</returns>
+		public T Obtain<T>(Format format) where T : SourceVoice, IPoolable<T>
+		{
+			lock (StateLock)
+			{
+				var voice = VoicePool.Obtain<T>(format);
+				activeSourceVoices.Add(voice);
+				return voice;
+			}
+		}
+
+		/// <summary>
+		/// Returns the source voice to the voice pool.
+		/// </summary>
+		/// <param name="voice"></param>
+		internal void Return(SourceVoice voice)
+		{
+			lock (StateLock)
+			{
+				VoicesToReturn.Add(voice);
+			}
 		}
 
 		internal void CreateTween(
-			SoundInstance soundInstance,
+			Voice voice,
 			AudioTweenProperty property,
 			System.Func<float, float> easingFunction,
 			float start,
@@ -220,7 +222,7 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				AudioTweenManager.CreateTween(
-					soundInstance,
+					voice,
 					property,
 					easingFunction,
 					start,
@@ -232,12 +234,12 @@ namespace MoonWorks.Audio
 		}
 
 		internal void ClearTweens(
-			SoundInstance soundReference,
+			Voice voice,
 			AudioTweenProperty property
 		) {
 			lock (StateLock)
 			{
-				AudioTweenManager.ClearTweens(soundReference, property);
+				AudioTweenManager.ClearTweens(voice, property);
 			}
 		}
 
@@ -262,21 +264,6 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		internal void AddAutoUpdateStreamingSoundInstance(StreamingSound instance)
-		{
-			autoUpdateStreamingSoundReferences.Add(instance);
-		}
-
-		internal void AddAutoFreeStaticSoundInstance(StaticSoundInstance instance)
-		{
-			autoFreeStaticSoundInstanceReferences.Add(instance);
-		}
-
-		internal void AddSoundSequenceReference(SoundSequence sequence)
-		{
-			soundSequenceReferences.Add(new WeakReference<SoundSequence>(sequence));
-		}
-
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
@@ -286,6 +273,18 @@ namespace MoonWorks.Audio
 
 				if (disposing)
 				{
+					// stop all source voices
+					foreach (var weakReference in resources)
+					{
+						var target = weakReference.Target;
+
+						if (target != null && target is SourceVoice voice)
+						{
+							voice.Stop();
+						}
+					}
+
+					// destroy all audio resources
 					foreach (var weakReference in resources)
 					{
 						var target = weakReference.Target;
@@ -295,10 +294,11 @@ namespace MoonWorks.Audio
 							(target as IDisposable).Dispose();
 						}
 					}
+
 					resources.Clear();
 				}
 
-				FAudio.FAudioVoice_DestroyVoice(MasteringVoice);
+				FAudio.FAudioVoice_DestroyVoice(trueMasteringVoice);
 				FAudio.FAudio_Release(Handle);
 
 				IsDisposed = true;

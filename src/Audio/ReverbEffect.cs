@@ -3,53 +3,33 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
-	// sound instances can send their audio to this voice to add reverb
-	public unsafe class ReverbEffect : AudioResource
+	/// <summary>
+	/// Use this in conjunction with SourceVoice.SetReverbEffectChain to add reverb to a voice.
+	/// </summary>
+	public unsafe class ReverbEffect : SubmixVoice
 	{
-		private IntPtr voice;
-		public IntPtr Voice => voice;
-
-		public ReverbEffect(AudioDevice audioDevice) : base(audioDevice)
+		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
 		{
 			/* Init reverb */
-
 			IntPtr reverb;
 			FAudio.FAudioCreateReverb(out reverb, 0);
 
-			IntPtr chainPtr;
-			chainPtr = (nint) NativeMemory.Alloc(
-				(nuint) Marshal.SizeOf<FAudio.FAudioEffectChain>()
+			var chain = new FAudio.FAudioEffectChain();
+			var descriptor = new FAudio.FAudioEffectDescriptor();
+
+			descriptor.InitialState = 1;
+			descriptor.OutputChannels = 1;
+			descriptor.pEffect = reverb;
+
+			chain.EffectCount = 1;
+			chain.pEffectDescriptors = (nint) (&descriptor);
+
+			FAudio.FAudioVoice_SetEffectChain(
+				Handle,
+				ref chain
 			);
 
-			FAudio.FAudioEffectChain* reverbChain = (FAudio.FAudioEffectChain*) chainPtr;
-			reverbChain->EffectCount = 1;
-			reverbChain->pEffectDescriptors = (nint) NativeMemory.Alloc(
-				(nuint) Marshal.SizeOf<FAudio.FAudioEffectDescriptor>()
-			);
-
-			FAudio.FAudioEffectDescriptor* reverbDescriptor =
-				(FAudio.FAudioEffectDescriptor*) reverbChain->pEffectDescriptors;
-
-			reverbDescriptor->InitialState = 1;
-			reverbDescriptor->OutputChannels = (uint) (
-				(audioDevice.DeviceDetails.OutputFormat.Format.nChannels == 6) ? 6 : 1
-			);
-			reverbDescriptor->pEffect = reverb;
-
-			FAudio.FAudio_CreateSubmixVoice(
-				audioDevice.Handle,
-				out voice,
-				1, /* omnidirectional reverb */
-				audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec,
-				0,
-				0,
-				IntPtr.Zero,
-				chainPtr
-			);
 			FAudio.FAPOBase_Release(reverb);
-
-			NativeMemory.Free((void*) reverbChain->pEffectDescriptors);
-			NativeMemory.Free((void*) chainPtr);
 
 			/* Init reverb params */
 			// Defaults based on FAUDIOFX_I3DL2_PRESET_GENERIC
@@ -86,18 +66,13 @@ namespace MoonWorks.Audio
 			fixed (FAudio.FAudioFXReverbParameters* reverbParamsPtr = &reverbParams)
 			{
 				FAudio.FAudioVoice_SetEffectParameters(
-					voice,
+					Handle,
 					0,
 					(nint) reverbParamsPtr,
 					(uint) Marshal.SizeOf<FAudio.FAudioFXReverbParameters>(),
 					0
 				);
 			}
-		}
-
-		protected override void Destroy()
-		{
-			FAudio.FAudioVoice_DestroyVoice(Voice);
 		}
 	}
 }

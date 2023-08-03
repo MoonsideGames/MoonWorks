@@ -14,7 +14,7 @@ namespace MoonWorks.Audio
 
 	internal class AudioTween
 	{
-		public SoundInstance SoundInstance;
+		public Voice Voice;
 		public AudioTweenProperty Property;
 		public EasingFunction EasingFunction;
 		public float Time;
@@ -51,7 +51,7 @@ namespace MoonWorks.Audio
 
 		public void Free(AudioTween tween)
 		{
-			tween.SoundInstance = null;
+			tween.Voice = null;
 			Tweens.Enqueue(tween);
 		}
 	}
