@@ -127,7 +127,6 @@ namespace MoonWorks.Audio
 				if (Loop)
 				{
 					AudioData.Seek(0);
-					AddBuffer();
 				}
 			}
 		}
