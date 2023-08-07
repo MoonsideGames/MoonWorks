@@ -1718,10 +1718,6 @@ namespace MoonWorks.Graphics
 			uint bufferOffsetInBytes = 0
 		) where T : unmanaged
 		{
-#if DEBUG
-			AssertRenderPassInactive("Cannot copy during render pass!");
-#endif
-
 			SetBufferData(
 				buffer,
 				data,
@@ -1770,6 +1766,7 @@ namespace MoonWorks.Graphics
 		{
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertNonEmptyCopy(dataLengthInBytes);
 #endif
 
 			Refresh.Refresh_SetBufferData(
@@ -1799,12 +1796,14 @@ namespace MoonWorks.Graphics
 			uint numElements
 		) where T : unmanaged
 		{
+			var elementSize = Marshal.SizeOf<T>();
+			var dataLengthInBytes = (uint) (elementSize * numElements);
+			var dataOffsetInBytes = (int) startElement * elementSize;
+
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertNonEmptyCopy(dataLengthInBytes);
 #endif
-
-			var elementSize = Marshal.SizeOf<T>();
-			var dataOffsetInBytes = (int) startElement * elementSize;
 
 			fixed (T* ptr = data)
 			{
@@ -1814,7 +1813,7 @@ namespace MoonWorks.Graphics
 					buffer.Handle,
 					bufferOffsetInBytes,
 					(IntPtr) ptr + dataOffsetInBytes,
-					(uint) (numElements * elementSize)
+					dataLengthInBytes
 				);
 			}
 		}
@@ -1844,18 +1843,23 @@ namespace MoonWorks.Graphics
 			IntPtr dataPtr,
 			uint bufferOffsetInElements,
 			uint numElements
-		) where T : unmanaged {
+		) where T : unmanaged
+		{
+			var elementSize = Marshal.SizeOf<T>();
+			var dataLengthInBytes = (uint) (elementSize * numElements);
+
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertNonEmptyCopy((uint) (elementSize * numElements));
 #endif
 
 			Refresh.Refresh_SetBufferData(
 				Device.Handle,
 				Handle,
 				buffer.Handle,
-				(uint) Marshal.SizeOf<T>() * bufferOffsetInElements,
+				(uint) elementSize * bufferOffsetInElements,
 				dataPtr,
-				(uint) Marshal.SizeOf<T>() * numElements
+				dataLengthInBytes
 			);
 		}
 
@@ -2195,6 +2199,14 @@ namespace MoonWorks.Graphics
 			if ((texture.UsageFlags & TextureUsageFlags.Sampler) == 0)
 			{
 				throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.Sampler!");
+			}
+		}
+
+		private void AssertNonEmptyCopy(uint dataLengthInBytes)
+		{
+			if (dataLengthInBytes == 0)
+			{
+				throw new System.InvalidOperationException("SetBufferData must have a length greater than 0 bytes!");
 			}
 		}
 #endif
