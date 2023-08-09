@@ -253,6 +253,11 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resources.Add(resource.weakReference);
+
+				if (resource is SourceVoice voice)
+				{
+					activeSourceVoices.Add(voice);
+				}
 			}
 		}
 

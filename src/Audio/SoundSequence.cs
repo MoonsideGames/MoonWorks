@@ -3,7 +3,7 @@ namespace MoonWorks.Audio
 	/// <summary>
 	/// Plays back a series of AudioBuffers in sequence. Set the OnSoundNeeded callback to add AudioBuffers dynamically.
 	/// </summary>
-	public class SoundSequence : SourceVoice
+	public class SoundSequence : SourceVoice, IPoolable<SoundSequence>
 	{
 		public int NeedSoundThreshold = 0;
 		public delegate void OnSoundNeededFunc();
@@ -19,6 +19,11 @@ namespace MoonWorks.Audio
 
 		}
 
+		public static SoundSequence Create(AudioDevice device, Format format)
+		{
+			return new SoundSequence(device, format);
+		}
+
 		public override void Update()
 		{
 			lock (StateLock)
@@ -27,7 +32,9 @@ namespace MoonWorks.Audio
 
 				if (NeedSoundThreshold > 0)
 				{
-					for (int i = 0; i < NeedSoundThreshold - BuffersQueued; i += 1)
+					var buffersNeeded = NeedSoundThreshold - (int) BuffersQueued;
+
+					for (int i = 0; i < buffersNeeded; i += 1)
 					{
 						if (OnSoundNeeded != null)
 						{
@@ -44,6 +51,7 @@ namespace MoonWorks.Audio
 			if (!(buffer.Format == Format))
 			{
 				Logger.LogWarn("Sound sequence audio format mismatch!");
+				return;
 			}
 #endif
 
