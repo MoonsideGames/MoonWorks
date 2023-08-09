@@ -30,7 +30,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private SoundState state;
+		private SoundState state = SoundState.Stopped;
 		public SoundState State
 		{
 			get
