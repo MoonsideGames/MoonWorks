@@ -105,7 +105,7 @@ namespace MoonWorks.Audio
 				return;
 			}
 
-			fauxMasteringVoice = new SubmixVoice(this, DeviceDetails.OutputFormat.Format.nChannels, DeviceDetails.OutputFormat.Format.nSamplesPerSec, int.MaxValue);
+			fauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
 
 			/* Init 3D Audio */
 

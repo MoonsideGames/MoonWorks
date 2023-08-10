@@ -69,6 +69,8 @@ namespace MoonWorks.Audio
 				IntPtr.Zero, // default sends to mastering voice!
 				IntPtr.Zero
 			);
+
+			SetOutputVoice(device.MasteringVoice);
 		}
 
 		/// <summary>

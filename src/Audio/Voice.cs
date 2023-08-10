@@ -261,7 +261,6 @@ namespace MoonWorks.Audio
 		{
 			SourceChannelCount = sourceChannelCount;
 			DestinationChannelCount = destinationChannelCount;
-			OutputVoice = device.MasteringVoice;
 			nuint memsize = 4 * sourceChannelCount * destinationChannelCount;
 			pMatrixCoefficients = (byte*) NativeMemory.AllocZeroed(memsize);
 			SetPanMatrixCoefficients();

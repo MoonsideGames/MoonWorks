@@ -23,9 +23,34 @@ namespace MoonWorks.Audio
 				sampleRate,
 				FAudio.FAUDIO_VOICE_USEFILTER,
 				processingStage,
+				IntPtr.Zero,
+				IntPtr.Zero
+			);
+
+			SetOutputVoice(device.MasteringVoice);
+		}
+
+		private SubmixVoice(
+			AudioDevice device
+		) : base(device, device.DeviceDetails.OutputFormat.Format.nChannels, device.DeviceDetails.OutputFormat.Format.nChannels)
+		{
+			FAudio.FAudio_CreateSubmixVoice(
+				device.Handle,
+				out handle,
+				device.DeviceDetails.OutputFormat.Format.nChannels,
+				device.DeviceDetails.OutputFormat.Format.nSamplesPerSec,
+				FAudio.FAUDIO_VOICE_USEFILTER,
+				int.MaxValue,
 				IntPtr.Zero, // default sends to mastering voice
 				IntPtr.Zero
 			);
+
+			OutputVoice = null;
+		}
+
+		internal static SubmixVoice CreateFauxMasteringVoice(AudioDevice device)
+		{
+			return new SubmixVoice(device);
 		}
 	}
 }
