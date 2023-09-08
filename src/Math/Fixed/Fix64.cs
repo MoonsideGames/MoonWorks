@@ -17,6 +17,9 @@ namespace MoonWorks.Math.Fixed
 		const long PI_TIMES_2 = 0x6487ED511;
 		const long PI = 0x3243F6A88;
 		const long PI_OVER_2 = 0x1921FB544;
+		const long LN2 = 0xB17217F7;
+		const long LOG2MAX = 0x1F00000000;
+		const long LOG2MIN = -0x2000000000;
 
 		public static readonly Fix64 MaxValue = new Fix64(MAX_VALUE);
 		public static readonly Fix64 MinValue = new Fix64(MIN_VALUE);
@@ -27,6 +30,10 @@ namespace MoonWorks.Math.Fixed
 		public static readonly Fix64 PiOver2 = new Fix64(PI_OVER_2);
 		public static readonly Fix64 PiOver4 = PiOver2 / new Fix64(2);
 		public static readonly Fix64 PiTimes2 = new Fix64(PI_TIMES_2);
+
+		static readonly Fix64 Ln2 = new Fix64(LN2);
+		static readonly Fix64 Log2Max = new Fix64(LOG2MAX);
+		static readonly Fix64 Log2Min = new Fix64(LOG2MIN);
 
 		const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
 		static readonly Fix64 LutInterval = (Fix64)(LUT_SIZE - 1) / PiOver2;
@@ -122,27 +129,27 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64((value.RawValue + mask) ^ mask);
 		}
 
-        /// <summary>
-        /// Returns the largest integral value less than or equal to the specified number.
-        /// </summary>
+		/// <summary>
+		/// Returns the largest integral value less than or equal to the specified number.
+		/// </summary>
 		public static Fix64 Floor(Fix64 value)
 		{
 			// Zero out the fractional part.
 			return new Fix64((long)((ulong)value.RawValue & 0xFFFFFFFF00000000));
 		}
 
-        /// <summary>
-        /// Returns the smallest integral value that is greater than or equal to the specified number.
-        /// </summary>
+		/// <summary>
+		/// Returns the smallest integral value that is greater than or equal to the specified number.
+		/// </summary>
 		public static Fix64 Ceiling(Fix64 value)
 		{
 			return value.IsFractional ? Floor(value) + One : value;
 		}
 
-        /// <summary>
-        /// Rounds to the nearest integral value.
-        /// If the value is halfway between an even and an uneven value, returns the even value.
-        /// </summary>
+		/// <summary>
+		/// Rounds to the nearest integral value.
+		/// If the value is halfway between an even and an uneven value, returns the even value.
+		/// </summary>
 		public static Fix64 Round(Fix64 value)
 		{
 			var fractionalPart = value.RawValue & 0x00000000FFFFFFFF;
@@ -217,7 +224,145 @@ namespace MoonWorks.Math.Fixed
 			return Fix64.Floor(value / step) * step;
 		}
 
-		// Trigonometry functions
+		// Exponentiation functions
+
+		/// <summary>
+		/// Returns 2 raised to the specified power.
+		/// Provides at least 6 decimals of accuracy.
+		/// </summary>
+		internal static Fix64 Pow2(Fix64 x)
+		{
+			if (x.RawValue == 0)
+			{
+				return One;
+			}
+
+			// Avoid negative arguments by exploiting that exp(-x) = 1/exp(x).
+			bool neg = x.RawValue < 0;
+			if (neg)
+			{
+				x = -x;
+			}
+
+			if (x == One)
+			{
+				return neg ? One / (Fix64)2 : (Fix64)2;
+			}
+			if (x >= Log2Max)
+			{
+				return neg ? One / MaxValue : MaxValue;
+			}
+			if (x <= Log2Min)
+			{
+				return neg ? MaxValue : Zero;
+			}
+
+			/* The algorithm is based on the power series for exp(x):
+			 * http://en.wikipedia.org/wiki/Exponential_function#Formal_definition
+			 *
+			 * From term n, we get term n+1 by multiplying with x/n.
+			 * When the sum term drops to zero, we can stop summing.
+			 */
+
+			int integerPart = (int)Floor(x);
+			// Take fractional part of exponent
+			x = new Fix64(x.RawValue & 0x00000000FFFFFFFF);
+
+			var result = One;
+			var term = One;
+			int i = 1;
+			while (term.RawValue != 0)
+			{
+				term = FastMul(FastMul(x, term), Ln2) / (Fix64)i;
+				result += term;
+				i++;
+			}
+
+			result = new Fix64(result.RawValue << integerPart);
+			if (neg)
+			{
+				result = One / result;
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Returns the base-2 logarithm of a specified number.
+		/// Provides at least 9 decimals of accuracy.
+		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// The argument was non-positive
+		/// </exception>
+		internal static Fix64 Log2(Fix64 x)
+		{
+			if (x.RawValue <= 0)
+			{
+				throw new ArgumentOutOfRangeException("Non-positive value passed to Ln", "x");
+			}
+
+			// This implementation is based on Clay. S. Turner's fast binary logarithm
+			// algorithm (C. S. Turner,  "A Fast Binary Logarithm Algorithm", IEEE Signal
+			//     Processing Mag., pp. 124,140, Sep. 2010.)
+
+			long b = 1U << (FRACTIONAL_PLACES - 1);
+			long y = 0;
+
+			long rawX = x.RawValue;
+			while (rawX < ONE)
+			{
+				rawX <<= 1;
+				y -= ONE;
+			}
+
+			while (rawX >= (ONE << 1))
+			{
+				rawX >>= 1;
+				y += ONE;
+			}
+
+			var z = new Fix64(rawX);
+
+			for (int i = 0; i < FRACTIONAL_PLACES; i++)
+			{
+				z = FastMul(z, z);
+				if (z.RawValue >= (ONE << 1))
+				{
+					z = new Fix64(z.RawValue >> 1);
+					y += b;
+				}
+				b >>= 1;
+			}
+
+			return new Fix64(y);
+		}
+
+		public static Fix64 Pow(Fix64 b, Fix64 exp)
+		{
+			if (b == One)
+			{
+				return One;
+			}
+			if (exp.RawValue == 0)
+			{
+				return One;
+			}
+			if (exp.RawValue == ONE)
+			{
+				return b;
+			}
+			if (b.RawValue == 0)
+			{
+				if (exp.RawValue < 0)
+				{
+					throw new DivideByZeroException();
+				}
+				return Zero;
+			}
+
+			Fix64 log2 = Log2(b);
+			return Pow2(exp * log2);
+		}
 
 		/// <summary>
 		/// Returns the square root of the given Fix64 value.
