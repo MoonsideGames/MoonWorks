@@ -1,5 +1,8 @@
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// VirtualButtons map inputs to binary inputs, like a trigger threshold or joystick axis threshold.
+	/// </summary>
 	public abstract class VirtualButton
 	{
 		public ButtonState State { get; protected set; }

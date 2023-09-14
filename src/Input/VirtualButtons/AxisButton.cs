@@ -1,5 +1,9 @@
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A virtual button corresponding to a direction on a joystick.
+	/// If the axis value exceeds the threshold, it will be treated as a press.
+	/// </summary>
 	public class AxisButton : VirtualButton
 	{
 		public Axis Parent { get; }

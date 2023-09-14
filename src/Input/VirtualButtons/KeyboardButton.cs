@@ -2,6 +2,9 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A virtual button corresponding to a keyboard button.
+	/// </summary>
 	public class KeyboardButton : VirtualButton
 	{
 		Keyboard Parent;

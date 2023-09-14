@@ -1,5 +1,9 @@
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A virtual button corresponding to a trigger on a gamepad.
+	/// If the trigger value exceeds the threshold, it will be treated as a press.
+	/// </summary>
 	public class TriggerButton : VirtualButton
 	{
 		public Trigger Parent { get; }

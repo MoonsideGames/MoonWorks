@@ -1,5 +1,8 @@
 ﻿namespace MoonWorks.Input
 {
+	/// <summary>
+	/// Represents the current status of a binary input.
+	/// </summary>
 	public enum ButtonStatus
 	{
 		/// <summary>

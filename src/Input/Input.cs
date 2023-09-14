@@ -3,18 +3,36 @@ using System;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// The main container class for all input tracking.
+	/// Your Game class will automatically have a reference to this class.
+	/// </summary>
 	public class Inputs
 	{
 		public const int MAX_GAMEPADS = 4;
 
+		/// <summary>
+		/// The reference to the Keyboard input abstraction.
+		/// </summary>
 		public Keyboard Keyboard { get; }
+
+		/// <summary>
+		/// The reference to the Mouse input abstraction.
+		/// </summary>
 		public Mouse Mouse { get; }
 
-		Gamepad[] gamepads;
+		Gamepad[] Gamepads;
 
 		public static event Action<char> TextInput;
 
+		/// <summary>
+		/// True if any input on any input device is active. Useful for input remapping.
+		/// </summary>
 		public bool AnyPressed { get; private set; }
+
+		/// <summary>
+		/// Contains a reference to an arbitrary VirtualButton that was pressed this frame. Useful for input remapping.
+		/// </summary>
 		public VirtualButton AnyPressedButton { get; private set; }
 
 		internal Inputs()
@@ -22,12 +40,12 @@ namespace MoonWorks.Input
 			Keyboard = new Keyboard();
 			Mouse = new Mouse();
 
-			gamepads = new Gamepad[MAX_GAMEPADS];
+			Gamepads = new Gamepad[MAX_GAMEPADS];
 
 			// initialize dummy controllers
 			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
 			{
-				gamepads[slot] = new Gamepad(IntPtr.Zero, slot);
+				Gamepads[slot] = new Gamepad(IntPtr.Zero, slot);
 			}
 		}
 
@@ -53,7 +71,7 @@ namespace MoonWorks.Input
 				AnyPressedButton = Mouse.AnyPressedButton;
 			}
 
-			foreach (var gamepad in gamepads)
+			foreach (var gamepad in Gamepads)
 			{
 				gamepad.Update();
 
@@ -65,6 +83,11 @@ namespace MoonWorks.Input
 			}
 		}
 
+		/// <summary>
+		/// Returns true if a gamepad is currently connected in the given slot.
+		/// </summary>
+		/// <param name="slot">Range: 0-3</param>
+		/// <returns></returns>
 		public bool GamepadExists(int slot)
 		{
 			if (slot < 0 || slot >= MAX_GAMEPADS)
@@ -72,13 +95,19 @@ namespace MoonWorks.Input
 				return false;
 			}
 
-			return !gamepads[slot].IsDummy;
+			return !Gamepads[slot].IsDummy;
 		}
 
-		// From 0-4
+		/// <summary>
+		/// Gets a gamepad associated with the given slot.
+		/// The first n slots are guaranteed to occupied with gamepads if they are connected.
+		/// If a gamepad does not exist for the given slot, a dummy object with all inputs in default state will be returned.
+		/// You can check if a gamepad is connected in a slot with the GamepadExists function.
+		/// </summary>
+		/// <param name="slot">Range: 0-3</param>
 		public Gamepad GetGamepad(int slot)
 		{
-			return gamepads[slot];
+			return Gamepads[slot];
 		}
 
 		internal void AddGamepad(int index)
@@ -95,7 +124,7 @@ namespace MoonWorks.Input
 					}
 					else
 					{
-						gamepads[slot].Register(openResult);
+						Gamepads[slot].Register(openResult);
 						System.Console.WriteLine($"Gamepad added to slot {slot}!");
 					}
 					return;
@@ -109,10 +138,10 @@ namespace MoonWorks.Input
 		{
 			for (int slot = 0; slot < MAX_GAMEPADS; slot += 1)
 			{
-				if (joystickInstanceID == gamepads[slot].JoystickInstanceID)
+				if (joystickInstanceID == Gamepads[slot].JoystickInstanceID)
 				{
-					SDL.SDL_GameControllerClose(gamepads[slot].Handle);
-					gamepads[slot].Unregister();
+					SDL.SDL_GameControllerClose(Gamepads[slot].Handle);
+					Gamepads[slot].Unregister();
 					System.Console.WriteLine($"Removing gamepad from slot {slot}!");
 					return;
 				}

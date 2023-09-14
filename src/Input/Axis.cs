@@ -3,6 +3,9 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// Represents a specific joystick direction on a gamepad.
+	/// </summary>
 	public class Axis
 	{
 		public Gamepad Parent { get; }

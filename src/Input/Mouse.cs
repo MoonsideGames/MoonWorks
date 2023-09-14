@@ -3,6 +3,9 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// The mouse input device abstraction.
+	/// </summary>
 	public class Mouse
 	{
 		public MouseButton LeftButton { get; }
@@ -21,12 +24,23 @@ namespace MoonWorks.Input
 		internal int WheelRaw;
 		private int previousWheelRaw = 0;
 
+		/// <summary>
+		/// True if any button on the keyboard is active. Useful for input remapping.
+		/// </summary>
 		public bool AnyPressed { get; private set; }
+
+		/// <summary>
+		/// Contains a reference to an arbitrary MouseButton that was pressed this frame. Useful for input remapping.
+		/// </summary>
 		public MouseButton AnyPressedButton { get; private set; }
 
-		public uint ButtonMask { get; private set; }
+		internal uint ButtonMask { get; private set; }
 
 		private bool relativeMode;
+		/// <summary>
+		/// If set to true, the cursor is hidden, the mouse position is constrained to the window,
+		/// and relative mouse motion will be reported even if the mouse is at the edge of the window.
+		/// </summary>
 		public bool RelativeMode
 		{
 			get => relativeMode;
@@ -42,6 +56,9 @@ namespace MoonWorks.Input
 		}
 
 		private bool hidden;
+		/// <summary>
+		/// If set to true, the OS cursor will not be shown in your application window.
+		/// </summary>
 		public bool Hidden
 		{
 			get => hidden;
@@ -54,7 +71,7 @@ namespace MoonWorks.Input
 
 		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
 
-		public Mouse()
+		internal Mouse()
 		{
 			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_BUTTON_LMASK);
 			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_BUTTON_MMASK);
@@ -99,11 +116,17 @@ namespace MoonWorks.Input
 			}
 		}
 
+		/// <summary>
+		/// Gets a button from the mouse given a MouseButtonCode.
+		/// </summary>
 		public MouseButton Button(MouseButtonCode buttonCode)
 		{
 			return CodeToButton[buttonCode];
 		}
 
+		/// <summary>
+		/// Gets a button state from a mouse button corresponding to the given MouseButtonCode.
+		/// </summary>
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
 			return CodeToButton[buttonCode].State;

@@ -3,6 +3,9 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// Represents a trigger input on a gamepad.
+	/// </summary>
 	public class Trigger
 	{
 		public Gamepad Parent { get; }

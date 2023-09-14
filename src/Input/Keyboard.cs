@@ -4,12 +4,22 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// The keyboard input device abstraction.
+	/// </summary>
 	public class Keyboard
 	{
+		/// <summary>
+		/// True if any button on the keyboard is active. Useful for input remapping.
+		/// </summary>
 		public bool AnyPressed { get; private set; }
+
+		/// <summary>
+		/// Contains a reference to an arbitrary KeyboardButton that was pressed this frame. Useful for input remapping.
+		/// </summary>
 		public KeyboardButton AnyPressedButton { get; private set; }
 
-		public IntPtr State { get; private set; }
+		internal IntPtr State { get; private set; }
 
 		private KeyCode[] KeyCodes;
 		private KeyboardButton[] Keys { get; }
@@ -78,41 +88,65 @@ namespace MoonWorks.Input
 			}
 		}
 
+		/// <summary>
+		/// True if the button was pressed this frame.
+		/// </summary>
 		public bool IsPressed(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsPressed;
 		}
 
+		/// <summary>
+		/// True if the button was pressed this frame and the previous frame.
+		/// </summary>
 		public bool IsHeld(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsHeld;
 		}
 
+		/// <summary>
+		/// True if the button was either pressed or continued to be held this frame.
+		/// </summary>
 		public bool IsDown(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsDown;
 		}
 
+		/// <summary>
+		/// True if the button was let go this frame.
+		/// </summary>
 		public bool IsReleased(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsReleased;
 		}
 
+		/// <summary>
+		/// True if the button was not pressed this frame or the previous frame.
+		/// </summary>
 		public bool IsIdle(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsIdle;
 		}
 
+		/// <summary>
+		/// True if the button was either idle or released this frame.
+		/// </summary>
 		public bool IsUp(KeyCode keycode)
 		{
 			return Keys[(int) keycode].IsUp;
 		}
 
+		/// <summary>
+		/// Gets a reference to a keyboard button object using a key code.
+		/// </summary>
 		public KeyboardButton Button(KeyCode keycode)
 		{
 			return Keys[(int) keycode];
 		}
 
+		/// <summary>
+		/// Gets the state of a keyboard button from a key code.
+		/// </summary>
 		public ButtonState ButtonState(KeyCode keycode)
 		{
 			return Keys[(int) keycode].State;

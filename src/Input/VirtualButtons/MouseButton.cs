@@ -1,5 +1,8 @@
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A virtual button corresponding to a mouse button.
+	/// </summary>
 	public class MouseButton : VirtualButton
 	{
 		Mouse Parent;

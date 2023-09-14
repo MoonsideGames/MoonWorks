@@ -5,6 +5,11 @@ using SDL2;
 
 namespace MoonWorks
 {
+	/// <summary>
+	/// Represents a window in the client operating system.
+	/// Every Game has a MainWindow automatically.
+	/// You can create dditional Windows if you desire. They must be Claimed by the GraphicsDevice to be rendered to.
+	/// </summary>
 	public class Window : IDisposable
 	{
 		internal IntPtr Handle { get; }

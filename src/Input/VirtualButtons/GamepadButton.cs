@@ -2,6 +2,9 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A virtual button corresponding to a gamepad button.
+	/// </summary>
 	public class GamepadButton : VirtualButton
 	{
 		public Gamepad Parent { get; }

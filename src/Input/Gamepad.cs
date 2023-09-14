@@ -5,6 +5,12 @@ using SDL2;
 
 namespace MoonWorks.Input
 {
+	/// <summary>
+	/// A Gamepad input abstraction that represents input coming from a console controller or other such devices.
+	/// The button names map to a standard Xbox 360 controller.
+	/// For different controllers the relative position of the face buttons will determine the button mapping.
+	/// For example on a DualShock controller the Cross button will map to the A button.
+	/// </summary>
 	public class Gamepad
 	{
 		internal IntPtr Handle;
@@ -51,7 +57,14 @@ namespace MoonWorks.Input
 
 		public bool IsDummy => Handle == IntPtr.Zero;
 
+		/// <summary>
+		/// True if any input on the gamepad is active. Useful for input remapping.
+		/// </summary>
 		public bool AnyPressed { get; private set; }
+
+		/// <summary>
+		/// Contains a reference to an arbitrary VirtualButton that was pressed on the gamepad this frame. Useful for input remapping.
+		/// </summary>
 		public VirtualButton AnyPressedButton { get; private set; }
 
 		private Dictionary<SDL.SDL_GameControllerButton, GamepadButton> EnumToButton;
@@ -195,7 +208,7 @@ namespace MoonWorks.Input
 			};
 		}
 
-		public void Register(IntPtr handle)
+		internal void Register(IntPtr handle)
 		{
 			Handle = handle;
 
@@ -203,7 +216,7 @@ namespace MoonWorks.Input
 			JoystickInstanceID = SDL.SDL_JoystickInstanceID(joystickHandle);
 		}
 
-		public void Unregister()
+		internal void Unregister()
 		{
 			Handle = IntPtr.Zero;
 			JoystickInstanceID = -1;
@@ -267,16 +280,25 @@ namespace MoonWorks.Input
 			) == 0;
 		}
 
+		/// <summary>
+		/// Obtains a gamepad button object given a button code.
+		/// </summary>
 		public GamepadButton Button(GamepadButtonCode buttonCode)
 		{
 			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode];
 		}
 
+		/// <summary>
+		/// Obtains an axis button object given a button code.
+		/// </summary>
 		public AxisButton Button(AxisButtonCode axisButtonCode)
 		{
 			return AxisButtonCodeToAxisButton[axisButtonCode];
 		}
 
+		/// <summary>
+		/// Obtains a trigger button object given a button code.
+		/// </summary>
 		public TriggerButton Button(TriggerCode triggerCode)
 		{
 			return TriggerCodeToTriggerButton[triggerCode];
