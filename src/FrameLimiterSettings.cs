@@ -1,6 +1,5 @@
 namespace MoonWorks
 {
-
 	public enum FrameLimiterMode
 	{
 		/// <summary>
@@ -15,7 +14,8 @@ namespace MoonWorks
 	}
 
 	/// <summary>
-	/// The Game's frame limiter setting. Specifies uncapped framerate or a maximum rendering frames per second value.
+	/// The Game's frame limiter setting. Specifies uncapped framerate or a maximum rendering frames per second value. <br/>
+	/// Note that this is separate from the Game's Update timestep and can be a different value.
 	/// </summary>
 	public struct FrameLimiterSettings
 	{
