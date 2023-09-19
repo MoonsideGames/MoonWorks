@@ -19,6 +19,7 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 
 		private readonly HashSet<WeakReference<GraphicsResource>> resources = new HashSet<WeakReference<GraphicsResource>>();
+		private FencePool FencePool;
 
 		public GraphicsDevice(
 			Backend preferredBackend,
@@ -72,6 +73,8 @@ namespace MoonWorks.Graphics
 					}
 				);
 			}
+
+			FencePool = new FencePool(this);
 		}
 
 		public bool ClaimWindow(Window window, PresentMode presentMode)
@@ -120,92 +123,172 @@ namespace MoonWorks.Graphics
 			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle));
 		}
 
-		public unsafe void Submit(CommandBuffer commandBuffer)
+		/// <summary>
+		/// Submits a command buffer to the GPU for processing.
+		/// </summary>
+		public void Submit(CommandBuffer commandBuffer)
 		{
-			var commandBufferPtrs = stackalloc IntPtr[1];
-
-			commandBufferPtrs[0] = commandBuffer.Handle;
-
 			Refresh.Refresh_Submit(
 				Handle,
-				1,
-				(IntPtr) commandBufferPtrs
+				commandBuffer.Handle
 			);
 		}
 
-		public unsafe void Submit(
-			CommandBuffer commandBufferOne,
-			CommandBuffer commandBufferTwo
-		) {
-			var commandBufferPtrs = stackalloc IntPtr[2];
-
-			commandBufferPtrs[0] = commandBufferOne.Handle;
-			commandBufferPtrs[1] = commandBufferTwo.Handle;
-
-			Refresh.Refresh_Submit(
-				Handle,
-				2,
-				(IntPtr) commandBufferPtrs
-			);
-		}
-
-		public unsafe void Submit(
-			CommandBuffer commandBufferOne,
-			CommandBuffer commandBufferTwo,
-			CommandBuffer commandBufferThree
-		) {
-			var commandBufferPtrs = stackalloc IntPtr[3];
-
-			commandBufferPtrs[0] = commandBufferOne.Handle;
-			commandBufferPtrs[1] = commandBufferTwo.Handle;
-			commandBufferPtrs[2] = commandBufferThree.Handle;
-
-			Refresh.Refresh_Submit(
-				Handle,
-				3,
-				(IntPtr) commandBufferPtrs
-			);
-		}
-
-		public unsafe void Submit(
-			CommandBuffer commandBufferOne,
-			CommandBuffer commandBufferTwo,
-			CommandBuffer commandBufferThree,
-			CommandBuffer commandBufferFour
-		) {
-			var commandBufferPtrs = stackalloc IntPtr[4];
-
-			commandBufferPtrs[0] = commandBufferOne.Handle;
-			commandBufferPtrs[1] = commandBufferTwo.Handle;
-			commandBufferPtrs[2] = commandBufferThree.Handle;
-			commandBufferPtrs[3] = commandBufferFour.Handle;
-
-			Refresh.Refresh_Submit(
-				Handle,
-				4,
-				(IntPtr) commandBufferPtrs
-			);
-		}
-
-		public unsafe void Submit(params CommandBuffer[] commandBuffers)
+		/// <summary>
+		/// Submits a command buffer to the GPU for processing and acquires a fence associated with the submission.
+		/// </summary>
+		/// <returns></returns>
+		public Fence SubmitAndAcquireFence(CommandBuffer commandBuffer)
 		{
-			var commandBufferPtrs = stackalloc IntPtr[commandBuffers.Length];
-
-			for (var i = 0; i < commandBuffers.Length; i += 1)
-			{
-				commandBufferPtrs[i] = commandBuffers[i].Handle;
-			}
-
-			Refresh.Refresh_Submit(
+			var fenceHandle = Refresh.Refresh_SubmitAndAcquireFence(
 				Handle,
-				(uint) commandBuffers.Length,
-				(IntPtr) commandBufferPtrs
+				commandBuffer.Handle
 			);
+
+			var fence = FencePool.Obtain();
+			fence.SetHandle(fenceHandle);
+
+			return fence;
 		}
 
+		/// <summary>
+		/// Wait for the graphics device to become idle.
+		/// </summary>
 		public void Wait()
 		{
 			Refresh.Refresh_Wait(Handle);
+		}
+
+		/// <summary>
+		/// Waits for the given fence to become signaled.
+		/// </summary>
+		public unsafe void WaitForFences(Fence fence)
+		{
+			var handlePtr = stackalloc nint[1];
+			handlePtr[0] = fence.Handle;
+
+			Refresh.Refresh_WaitForFences(
+				Handle,
+				1,
+				1,
+				(nint) handlePtr
+			);
+		}
+
+		/// <summary>
+		/// Wait for one or more fences to become signaled.
+		/// </summary>
+		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
+		public unsafe void WaitForFences(
+			Fence fenceOne,
+			Fence fenceTwo,
+			bool waitAll
+		) {
+			var handlePtr = stackalloc nint[2];
+			handlePtr[0] = fenceOne.Handle;
+			handlePtr[1] = fenceTwo.Handle;
+
+			Refresh.Refresh_WaitForFences(
+				Handle,
+				Conversions.BoolToByte(waitAll),
+				2,
+				(nint) handlePtr
+			);
+		}
+
+		/// <summary>
+		/// Wait for one or more fences to become signaled.
+		/// </summary>
+		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
+		public unsafe void WaitForFences(
+			Fence fenceOne,
+			Fence fenceTwo,
+			Fence fenceThree,
+			bool waitAll
+		) {
+			var handlePtr = stackalloc nint[3];
+			handlePtr[0] = fenceOne.Handle;
+			handlePtr[1] = fenceTwo.Handle;
+			handlePtr[2] = fenceThree.Handle;
+
+			Refresh.Refresh_WaitForFences(
+				Handle,
+				Conversions.BoolToByte(waitAll),
+				3,
+				(nint) handlePtr
+			);
+		}
+
+		/// <summary>
+		/// Wait for one or more fences to become signaled.
+		/// </summary>
+		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
+		public unsafe void WaitForFences(
+			Fence fenceOne,
+			Fence fenceTwo,
+			Fence fenceThree,
+			Fence fenceFour,
+			bool waitAll
+		) {
+			var handlePtr = stackalloc nint[4];
+			handlePtr[0] = fenceOne.Handle;
+			handlePtr[1] = fenceTwo.Handle;
+			handlePtr[2] = fenceThree.Handle;
+			handlePtr[3] = fenceFour.Handle;
+
+			Refresh.Refresh_WaitForFences(
+				Handle,
+				Conversions.BoolToByte(waitAll),
+				4,
+				(nint) handlePtr
+			);
+		}
+
+		/// <summary>
+		/// Wait for one or more fences to become signaled.
+		/// </summary>
+		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
+		public unsafe void WaitForFences(Fence[] fences, bool waitAll)
+		{
+			var handlePtr = stackalloc nint[fences.Length];
+
+			for (var i = 0; i < fences.Length; i += 1)
+			{
+				handlePtr[i] = fences[i].Handle;
+			}
+
+			Refresh.Refresh_WaitForFences(
+				Handle,
+				Conversions.BoolToByte(waitAll),
+				4,
+				(nint) handlePtr
+			);
+		}
+
+		/// <summary>
+		/// Returns true if the fence is signaled, indicating that the associated command buffer has finished processing.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">Throws if the fence query indicates that the graphics device has been lost.</exception>
+		public bool QueryFence(Fence fence)
+		{
+			var result = Refresh.Refresh_QueryFence(Handle, fence.Handle);
+
+			if (result < 0)
+			{
+				throw new InvalidOperationException("The graphics device has been lost.");
+			}
+
+			return result != 0;
+		}
+
+		/// <summary>
+		/// Release reference to an acquired fence, enabling it to be reused.
+		/// </summary>
+		public void ReleaseFence(Fence fence)
+		{
+			Refresh.Refresh_ReleaseFence(Handle, fence.Handle);
+			fence.Handle = IntPtr.Zero;
+			FencePool.Return(fence);
 		}
 
 		private TextureFormat GetSwapchainFormat(Window window)

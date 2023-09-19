@@ -592,7 +592,7 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Asynchronously saves RGBA or BGRA pixel data to a file in PNG format.
-		/// Warning: this is expensive!
+		/// Warning: this is expensive and will block to wait for data download from GPU!
 		/// </summary>
 		public unsafe void SavePNG(string path)
 		{
@@ -608,14 +608,16 @@ namespace MoonWorks.Graphics
 			// immediately request the data copy
 			var commandBuffer = Device.AcquireCommandBuffer();
 			commandBuffer.CopyTextureToBuffer(this, buffer);
-			Device.Submit(commandBuffer);
+			var fence = Device.SubmitAndAcquireFence(commandBuffer);
 
 			var byteCount = buffer.Size;
 
 			var pixelsPtr = NativeMemory.Alloc((nuint) byteCount);
 			var pixelsSpan = new Span<byte>(pixelsPtr, (int) byteCount);
 
-			Device.Wait(); // make sure the data transfer is done...
+			Device.WaitForFences(fence); // make sure the data transfer is done...
+			Device.ReleaseFence(fence); // and then release the fence
+
 			buffer.GetData(pixelsSpan);
 
 			if (Format == TextureFormat.B8G8R8A8)
