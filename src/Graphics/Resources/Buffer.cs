@@ -74,7 +74,7 @@ namespace MoonWorks.Graphics
 				Logger.LogWarn("Requested too many bytes from buffer!");
 			}
 
-			if (dataLengthInBytes > data.Length)
+			if (dataLengthInBytes > data.Length * Marshal.SizeOf<T>())
 			{
 				Logger.LogWarn("Data length is larger than the provided Span!");
 			}
