@@ -1,8 +1,8 @@
 namespace MoonWorks.Audio
 {
 	/// <summary>
-	/// TransientVoice is intended for playing one-off sound effects that don't have a long term reference.
-	/// It will be automatically returned to the source voice pool once it is done playing back.
+	/// TransientVoice is intended for playing one-off sound effects that don't have a long term reference. <br/>
+	/// It will be automatically returned to the AudioDevice SourceVoice pool once it is done playing back.
 	/// </summary>
 	public class TransientVoice : SourceVoice, IPoolable<TransientVoice>
 	{

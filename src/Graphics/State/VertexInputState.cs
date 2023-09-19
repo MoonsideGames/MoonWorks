@@ -1,7 +1,7 @@
 ﻿namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// Specifies how to interpet vertex data in a buffer to be passed to the vertex shader.
+	/// Specifies how the vertex shader will interpet vertex data in a buffer.
 	/// </summary>
 	public struct VertexInputState
 	{

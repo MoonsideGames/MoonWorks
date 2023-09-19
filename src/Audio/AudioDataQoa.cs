@@ -68,6 +68,9 @@ namespace MoonWorks.Audio
 			filledLengthInBytes = (int) (sampleCount * sizeof(short));
 		}
 
+		/// <summary>
+		/// Prepares qoa data for streaming.
+		/// </summary>
 		public override unsafe void Load()
 		{
 			if (!Loaded)
@@ -93,6 +96,9 @@ namespace MoonWorks.Audio
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
 		}
 
+		/// <summary>
+		/// Unloads the qoa data, freeing resources.
+		/// </summary>
 		public override unsafe void Unload()
 		{
 			if (Loaded)
@@ -105,6 +111,9 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		/// <summary>
+		/// Loads the entire qoa file into an AudioBuffer. Useful for static audio.
+		/// </summary>
 		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
 		{
 			using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);

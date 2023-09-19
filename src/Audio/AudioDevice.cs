@@ -4,6 +4,9 @@ using System.Threading;
 
 namespace MoonWorks.Audio
 {
+	/// <summary>
+	/// AudioDevice manages all audio-related concerns.
+	/// </summary>
 	public class AudioDevice : IDisposable
 	{
 		public IntPtr Handle { get; }

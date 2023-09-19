@@ -58,6 +58,9 @@ namespace MoonWorks.Audio
 			filledLengthInBytes = sampleCount * sizeof(float);
 		}
 
+		/// <summary>
+		/// Prepares the Ogg data for streaming.
+		/// </summary>
 		public override unsafe void Load()
 		{
 			if (!Loaded)
@@ -84,6 +87,9 @@ namespace MoonWorks.Audio
 			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
 		}
 
+		/// <summary>
+		/// Unloads the Ogg data, freeing resources.
+		/// </summary>
 		public override unsafe void Unload()
 		{
 			if (Loaded)
@@ -96,6 +102,9 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		/// <summary>
+		/// Loads an entire ogg file into an AudioBuffer. Useful for static audio.
+		/// </summary>
 		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
 		{
 			var filePointer = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);

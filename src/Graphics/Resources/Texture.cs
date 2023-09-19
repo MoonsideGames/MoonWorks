@@ -591,8 +591,9 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Asynchronously saves RGBA or BGRA pixel data to a file in PNG format.
-		/// Warning: this is expensive and will block to wait for data download from GPU!
+		/// Asynchronously saves RGBA or BGRA pixel data to a file in PNG format. <br/>
+		/// Warning: this is expensive and will block to wait for data download from GPU! <br/>
+		/// You can avoid blocking by calling this method from a thread.
 		/// </summary>
 		public unsafe void SavePNG(string path)
 		{

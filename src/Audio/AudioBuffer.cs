@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Audio
 {
 	/// <summary>
-	/// Contains raw audio data in the format specified by Format.
+	/// Contains raw audio data in a specified Format. <br/>
 	/// Submit this to a SourceVoice to play audio.
 	/// </summary>
 	public class AudioBuffer : AudioResource
@@ -15,6 +15,10 @@ namespace MoonWorks.Audio
 
 		public Format Format { get; }
 
+		/// <summary>
+		/// Create a new AudioBuffer.
+		/// </summary>
+		/// <param name="ownsBufferData">If true, the buffer data will be destroyed when this AudioBuffer is destroyed.</param>
 		public AudioBuffer(
 			AudioDevice device,
 			Format format,

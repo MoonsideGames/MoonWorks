@@ -25,6 +25,9 @@ namespace MoonWorks.Video
 		private int height;
 		private Dav1dfile.PixelLayout pixelLayout;
 
+		/// <summary>
+		/// Opens an AV1 file so it can be loaded by VideoPlayer. You must also provide a playback framerate.
+		/// </summary>
 		public VideoAV1(string filename, double framesPerSecond)
 		{
 			if (!File.Exists(filename))

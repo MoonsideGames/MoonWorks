@@ -2,6 +2,9 @@
 
 namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// All of the information that is used to create a texture.
+	/// </summary>
 	public struct TextureCreateInfo
 	{
 		public uint Width;

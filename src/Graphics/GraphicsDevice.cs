@@ -5,6 +5,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// GraphicsDevice manages all graphics-related concerns.
+	/// </summary>
 	public class GraphicsDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
@@ -21,7 +24,7 @@ namespace MoonWorks.Graphics
 		private readonly HashSet<WeakReference<GraphicsResource>> resources = new HashSet<WeakReference<GraphicsResource>>();
 		private FencePool FencePool;
 
-		public GraphicsDevice(
+		internal GraphicsDevice(
 			Backend preferredBackend,
 			bool debugMode
 		) {
@@ -77,6 +80,11 @@ namespace MoonWorks.Graphics
 			FencePool = new FencePool(this);
 		}
 
+		/// <summary>
+		/// Prepares a window so that frames can be presented to it.
+		/// </summary>
+		/// <param name="presentMode">The desired presentation mode for the window. Roughly equivalent to V-Sync.</param>
+		/// <returns>True if successfully claimed.</returns>
 		public bool ClaimWindow(Window window, PresentMode presentMode)
 		{
 			var success = Conversions.ByteToBool(
@@ -100,6 +108,9 @@ namespace MoonWorks.Graphics
 			return success;
 		}
 
+		/// <summary>
+		/// Unclaims a window, making it unavailable for presenting and freeing associated resources.
+		/// </summary>
 		public void UnclaimWindow(Window window)
 		{
 			Refresh.Refresh_UnclaimWindow(
@@ -109,8 +120,18 @@ namespace MoonWorks.Graphics
 			window.Claimed = false;
 		}
 
+		/// <summary>
+		/// Changes the present mode of a claimed window. Does nothing if the window is not claimed.
+		/// </summary>
+		/// <param name="window"></param>
+		/// <param name="presentMode"></param>
 		public void SetPresentMode(Window window, PresentMode presentMode)
 		{
+			if (!window.Claimed)
+			{
+				return;
+			}
+
 			Refresh.Refresh_SetSwapchainPresentMode(
 				Handle,
 				window.Handle,
@@ -118,6 +139,11 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		/// <summary>
+		/// Acquires a command buffer.
+		/// This is the start of your rendering process.
+		/// </summary>
+		/// <returns></returns>
 		public CommandBuffer AcquireCommandBuffer()
 		{
 			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle));

@@ -4,6 +4,9 @@ using EasingFunction = System.Func<float, float>;
 
 namespace MoonWorks.Audio
 {
+	/// <summary>
+	/// Handles audio playback from audio buffer data. Can be configured with a variety of parameters.
+	/// </summary>
 	public abstract unsafe class Voice : AudioResource
 	{
 		protected IntPtr handle;

@@ -2,6 +2,9 @@
 
 namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// Defines how color blending will be performed in a GraphicsPipeline.
+	/// </summary>
 	public struct ColorAttachmentBlendState
 	{
 		/// <summary>

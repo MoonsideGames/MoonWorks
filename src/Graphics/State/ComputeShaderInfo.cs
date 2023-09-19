@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// Information that the pipeline needs about a shader.
+	/// Information that the compute pipeline needs about a compute shader.
 	/// </summary>
 	public struct ComputeShaderInfo
 	{

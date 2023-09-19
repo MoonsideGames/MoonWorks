@@ -6,9 +6,9 @@ using SDL2;
 namespace MoonWorks
 {
 	/// <summary>
-	/// Represents a window in the client operating system.
-	/// Every Game has a MainWindow automatically.
-	/// You can create dditional Windows if you desire. They must be Claimed by the GraphicsDevice to be rendered to.
+	/// Represents a window in the client operating system. <br/>
+	/// Every Game has a MainWindow automatically. <br/>
+	/// You can create additional Windows if you desire. They must be Claimed by the GraphicsDevice to be rendered to.
 	/// </summary>
 	public class Window : IDisposable
 	{
@@ -69,6 +69,9 @@ namespace MoonWorks
 			idLookup.Add(SDL.SDL_GetWindowID(Handle), this);
 		}
 
+		/// <summary>
+		/// Changes the ScreenMode of this window.
+		/// </summary>
 		public void SetScreenMode(ScreenMode screenMode)
 		{
 			SDL.SDL_WindowFlags windowFlag = 0;
@@ -93,7 +96,7 @@ namespace MoonWorks
 		}
 
 		/// <summary>
-		/// Resizes the window.
+		/// Resizes the window. <br/>
 		/// Note that you are responsible for recreating any graphics resources that need to change as a result of the size change.
 		/// </summary>
 		/// <param name="width"></param>
@@ -131,6 +134,9 @@ namespace MoonWorks
 			}
 		}
 
+		/// <summary>
+		/// You can specify a method to run when the window size changes.
+		/// </summary>
 		public void RegisterSizeChangeCallback(System.Action<uint, uint> sizeChangeCallback)
 		{
 			SizeChangeCallback = sizeChangeCallback;

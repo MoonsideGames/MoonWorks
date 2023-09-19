@@ -1,6 +1,8 @@
 namespace MoonWorks.Graphics
 {
-	// This is a convenience structure for pairing a vertex binding with its associated attributes.
+	/// <summary>
+	/// A convenience structure for pairing a vertex binding with its associated attributes.
+	/// </summary>
 	public struct VertexBindingAndAttributes
 	{
 		public VertexBinding VertexBinding { get; }

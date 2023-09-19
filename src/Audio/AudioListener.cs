@@ -3,6 +3,9 @@ using MoonWorks.Math.Float;
 
 namespace MoonWorks.Audio
 {
+	/// <summary>
+	/// A listener for 3D spatial audio. Usually attached to a camera.
+	/// </summary>
 	public class AudioListener : AudioResource
 	{
 		internal FAudio.F3DAUDIO_LISTENER listenerData;

@@ -2,21 +2,60 @@
 
 namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// All of the information that is used to create a sampler.
+	/// </summary>
 	public struct SamplerCreateInfo
 	{
+		/// <summary>
+		/// Minification filter mode. Used when the image is downscaled.
+		/// </summary>
 		public Filter MinFilter;
+		/// <summary>
+		/// Magnification filter mode. Used when the image is upscaled.
+		/// </summary>
 		public Filter MagFilter;
+		/// <summary>
+		/// Filter mode applied to mipmap lookups.
+		/// </summary>
 		public SamplerMipmapMode MipmapMode;
+		/// <summary>
+		/// Horizontal addressing mode.
+		/// </summary>
 		public SamplerAddressMode AddressModeU;
+		/// <summary>
+		/// Vertical addressing mode.
+		/// </summary>
 		public SamplerAddressMode AddressModeV;
+		/// <summary>
+		/// Depth addressing mode.
+		/// </summary>
 		public SamplerAddressMode AddressModeW;
+		/// <summary>
+		/// Bias value added to mipmap level of detail calculation.
+		/// </summary>
 		public float MipLodBias;
+		/// <summary>
+		/// Enables anisotropic filtering.
+		/// </summary>
 		public bool AnisotropyEnable;
+		/// <summary>
+		/// Maximum anisotropy value.
+		/// </summary>
 		public float MaxAnisotropy;
 		public bool CompareEnable;
 		public CompareOp CompareOp;
+		/// <summary>
+		/// Clamps the LOD value to a specified minimum.
+		/// </summary>
 		public float MinLod;
+		/// <summary>
+		/// Clamps the LOD value to a specified maximum.
+		/// </summary>
 		public float MaxLod;
+		/// <summary>
+		/// If an address mode is set to ClampToBorder, will replace color with this color when samples are outside the [0, 1) range.
+		/// </summary>
 		public BorderColor BorderColor;
 
 		public static readonly SamplerCreateInfo AnisotropicClamp = new SamplerCreateInfo

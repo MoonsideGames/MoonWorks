@@ -8,6 +8,9 @@ namespace MoonWorks.Audio
 		IEEE_FLOAT = 3
 	}
 
+	/// <summary>
+	/// Describes the format of audio data. Usually specified in an audio file's header information.
+	/// </summary>
 	public record struct Format
 	{
 		public FormatTag Tag;

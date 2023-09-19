@@ -2,11 +2,31 @@
 
 namespace MoonWorks
 {
+	/// <summary>
+	/// Presentation mode for a window.
+	/// </summary>
 	public enum PresentMode
 	{
+		/// <summary>
+		/// Does not wait for v-blank to update the window. Can cause visible tearing.
+		/// </summary>
 		Immediate,
+		/// <summary>
+		/// Waits for v-blank and uses a queue to hold present requests.
+		/// Allows for low latency while preventing tearing.
+		/// May not be supported on non-Vulkan non-Linux systems or older hardware.
+		/// </summary>
 		Mailbox,
+		/// <summary>
+		/// Waits for v-blank and adds present requests to a queue.
+		/// Will probably cause latency.
+		/// Required to be supported by all compliant hardware.
+		/// </summary>
 		FIFO,
+		/// <summary>
+		/// Usually waits for v-blank, but if v-blank has passed since last update will update immediately.
+		/// May cause visible tearing.
+		/// </summary>
 		FIFORelaxed
 	}
 }

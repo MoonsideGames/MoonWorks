@@ -3,7 +3,7 @@
 namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// Information that the pipeline needs about a shader.
+	/// Information that the pipeline needs about a graphics shader.
 	/// </summary>
 	public struct GraphicsShaderInfo
 	{

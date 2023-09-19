@@ -4,6 +4,9 @@ using MoonWorks.Math.Float;
 
 namespace MoonWorks.Audio
 {
+	/// <summary>
+	/// An emitter for 3D spatial audio.
+	/// </summary>
 	public class AudioEmitter : AudioResource
 	{
 		internal FAudio.F3DAUDIO_EMITTER emitterData;

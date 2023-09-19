@@ -1,7 +1,8 @@
-﻿using System;
-
-namespace MoonWorks.Graphics
+﻿namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// A texture-sampler pair to be used when binding samplers.
+	/// </summary>
 	public struct TextureSamplerBinding
 	{
 		public Texture Texture;

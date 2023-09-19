@@ -59,7 +59,7 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Reads data out of a buffer and into a span.
-		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
+		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait or GraphicsDevice.WaitForFences is called first.
 		/// </summary>
 		/// <param name="data">The span that data will be copied to.</param>
 		/// <param name="dataLengthInBytes">The length of the data to read.</param>
@@ -72,6 +72,11 @@ namespace MoonWorks.Graphics
 			if (dataLengthInBytes > Size)
 			{
 				Logger.LogWarn("Requested too many bytes from buffer!");
+			}
+
+			if (dataLengthInBytes > data.Length)
+			{
+				Logger.LogWarn("Data length is larger than the provided Span!");
 			}
 #endif
 
@@ -88,7 +93,7 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Reads data out of a buffer and into an array.
-		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
+		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait or GraphicsDevice.WaitForFences is called first.
 		/// </summary>
 		/// <param name="data">The span that data will be copied to.</param>
 		/// <param name="dataLengthInBytes">The length of the data to read.</param>
@@ -102,7 +107,7 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Reads data out of a buffer and into a span.
-		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
+		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait or GraphicsDevice.WaitForFences is called first.
 		/// Fills the span with as much data from the buffer as it can.
 		/// </summary>
 		/// <param name="data">The span that data will be copied to.</param>
@@ -116,7 +121,7 @@ namespace MoonWorks.Graphics
 
 		/// <summary>
 		/// Reads data out of a buffer and into an array.
-		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait is called first.
+		/// This operation is only guaranteed to read up-to-date data if GraphicsDevice.Wait or GraphicsDevice.WaitForFences is called first.
 		/// Fills the array with as much data from the buffer as it can.
 		/// </summary>
 		/// <param name="data">The span that data will be copied to.</param>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using MoonWorks.Audio;
 using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
 {
+	/// <summary>
+	/// A structure for continuous decoding of AV1 videos and rendering them into a texture.
+	/// </summary>
 	public unsafe class VideoPlayer : IDisposable
 	{
 		public Texture RenderTexture { get; private set; } = null;
@@ -44,6 +45,10 @@ namespace MoonWorks.Video
 			timer = new Stopwatch();
 		}
 
+		/// <summary>
+		/// Prepares a VideoAV1 for decoding and rendering.
+		/// </summary>
+		/// <param name="video"></param>
 		public void Load(VideoAV1 video)
 		{
 			if (Video != video)
@@ -100,6 +105,9 @@ namespace MoonWorks.Video
 			}
 		}
 
+		/// <summary>
+		/// Starts playing back and decoding the loaded video.
+		/// </summary>
 		public void Play()
 		{
 			if (Video == null) { return; }
@@ -114,6 +122,9 @@ namespace MoonWorks.Video
 			State = VideoState.Playing;
 		}
 
+		/// <summary>
+		/// Pauses playback and decoding of the currently playing video.
+		/// </summary>
 		public void Pause()
 		{
 			if (Video == null) { return; }
@@ -128,6 +139,9 @@ namespace MoonWorks.Video
 			State = VideoState.Paused;
 		}
 
+		/// <summary>
+		/// Stops and resets decoding of the currently playing video.
+		/// </summary>
 		public void Stop()
 		{
 			if (Video == null) { return; }
@@ -148,12 +162,18 @@ namespace MoonWorks.Video
 			State = VideoState.Stopped;
 		}
 
+		/// <summary>
+		/// Unloads the currently playing video.
+		/// </summary>
 		public void Unload()
 		{
 			Stop();
 			Video = null;
 		}
 
+		/// <summary>
+		/// Renders the video data into RenderTexture.
+		/// </summary>
 		public void Render()
 		{
 			if (Video == null || State == VideoState.Stopped)
