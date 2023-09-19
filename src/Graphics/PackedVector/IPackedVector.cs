@@ -16,7 +16,7 @@
 
 using MoonWorks.Math.Float;
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	// http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.graphics.packedvector.ipackedvector.aspx
 	public interface IPackedVector

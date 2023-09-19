@@ -20,7 +20,7 @@ using MoonWorks.Math;
 using MoonWorks.Math.Float;
 #endregion
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	/// <summary>
 	/// Packed vector type containing four 8-bit unsigned integer values, ranging from 0 to 255.

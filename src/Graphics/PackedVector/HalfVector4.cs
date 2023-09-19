@@ -19,7 +19,7 @@ using System;
 using MoonWorks.Math.Float;
 #endregion
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	/// <summary>
 	/// Packed vector type containing four 16-bit floating-point values.

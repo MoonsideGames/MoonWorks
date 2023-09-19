@@ -19,7 +19,7 @@ using System;
 using MoonWorks.Math.Float;
 #endregion
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	public struct HalfSingle : IPackedVector<ushort>, IEquatable<HalfSingle>, IPackedVector
 	{

@@ -19,7 +19,7 @@ using System;
 using System.Runtime.InteropServices;
 #endregion
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	internal static class HalfTypeHelper
 	{

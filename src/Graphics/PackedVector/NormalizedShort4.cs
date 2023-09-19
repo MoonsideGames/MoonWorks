@@ -20,7 +20,7 @@ using MoonWorks.Math;
 using MoonWorks.Math.Float;
 #endregion
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics.PackedVector
 {
 	public struct NormalizedShort4 : IPackedVector<ulong>, IEquatable<NormalizedShort4>
 	{
