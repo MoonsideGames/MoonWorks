@@ -20,7 +20,7 @@ namespace MoonWorks
 	{
 		public FrameLimiterMode Mode;
 		/// <summary>
-		/// If Mode is set to Uncapped, this is the maximum frames per second that will be rendered.
+		/// If Mode is set to Capped, this is the maximum frames per second that will be rendered.
 		/// </summary>
 		public int Cap;
 
