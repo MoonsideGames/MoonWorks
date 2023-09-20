@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
+using MoonWorks.Graphics.PackedVector;
 
 namespace MoonWorks
 {
+	/// <summary>
+	/// Conversion utilities for interop.
+	/// </summary>
 	public static class Conversions
 	{
 		private readonly static Dictionary<VertexElementFormat, uint> Sizes = new Dictionary<VertexElementFormat, uint>
