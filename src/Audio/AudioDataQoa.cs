@@ -31,13 +31,13 @@ namespace MoonWorks.Audio
 			UInt64 fileHeader = ReverseEndianness(reader.ReadUInt64());
 			if ((fileHeader >> 32) != QOA_MAGIC)
 			{
-				throw new AudioLoadException("Specified file is not a QOA file.");
+				throw new InvalidOperationException("Specified file is not a QOA file.");
 			}
 
 			uint totalSamplesPerChannel = (uint) (fileHeader & (0xFFFFFFFF));
 			if (totalSamplesPerChannel == 0)
 			{
-				throw new AudioLoadException("Specified file is not a valid QOA file.");
+				throw new InvalidOperationException("Specified file is not a valid QOA file.");
 			}
 
 			UInt64 frameHeader = ReverseEndianness(reader.ReadUInt64());
@@ -86,7 +86,7 @@ namespace MoonWorks.Audio
 				{
 					NativeMemory.Free((void*) FileDataPtr);
 					Logger.LogError("Error opening QOA file!");
-					throw new AudioLoadException("Error opening QOA file!");
+					throw new InvalidOperationException("Error opening QOA file!");
 				}
 			}
 		}
@@ -127,7 +127,7 @@ namespace MoonWorks.Audio
 			{
 				NativeMemory.Free(fileDataPtr);
 				Logger.LogError("Error opening QOA file!");
-				throw new AudioLoadException("Error opening QOA file!");
+				throw new InvalidOperationException("Error opening QOA file!");
 			}
 
 			FAudio.qoa_attributes(qoaHandle, out var channels, out var samplerate, out var samples_per_channel_per_frame, out var total_samples_per_channel);

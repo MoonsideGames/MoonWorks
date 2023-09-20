@@ -25,7 +25,7 @@ namespace MoonWorks.Audio
 
 			if (error != 0)
 			{
-				throw new AudioLoadException("Error loading file!");
+				throw new InvalidOperationException("Error loading file!");
 			}
 
 			var info = FAudio.stb_vorbis_get_info(handle);
@@ -77,7 +77,7 @@ namespace MoonWorks.Audio
 					NativeMemory.Free((void*) FileDataPtr);
 					Logger.LogError("Error opening OGG file!");
 					Logger.LogError("Error: " + error);
-					throw new AudioLoadException("Error opening OGG file!");
+					throw new InvalidOperationException("Error opening OGG file!");
 				}
 			}
 		}
@@ -111,7 +111,7 @@ namespace MoonWorks.Audio
 
 			if (error != 0)
 			{
-				throw new AudioLoadException("Error loading file!");
+				throw new InvalidOperationException("Error loading file!");
 			}
 			var info = FAudio.stb_vorbis_get_info(filePointer);
 			var lengthInFloats =

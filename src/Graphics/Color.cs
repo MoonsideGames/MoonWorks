@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Text;
 using MoonWorks.Math;
 using MoonWorks.Math.Float;
+using MoonWorks.Graphics.PackedVector;
 #endregion
 
 namespace MoonWorks.Graphics
