@@ -9,6 +9,12 @@ using System.Diagnostics;
 
 namespace MoonWorks
 {
+	/// <summary>
+	/// This class is your entry point into controlling your game. <br/>
+	/// It manages the main game loop and subsystems. <br/>
+	/// You should inherit this class and implement Update and Draw methods. <br/>
+	/// Then instantiate your Game subclass from your Program.Main method and call the Run method.
+	/// </summary>
 	public abstract class Game
 	{
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
@@ -33,8 +39,18 @@ namespace MoonWorks
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
 
+		/// <summary>
+		/// This Window is automatically created when your Game is instantiated.
+		/// </summary>
 		public Window MainWindow { get; }
 
+		/// <summary>
+		/// Instantiates your Game.
+		/// </summary>
+		/// <param name="windowCreateInfo">The parameters that will be used to create the MainWindow.</param>
+		/// <param name="frameLimiterSettings">The frame limiter settings.</param>
+		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
+		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			FrameLimiterSettings frameLimiterSettings,
@@ -77,6 +93,9 @@ namespace MoonWorks
 			AudioDevice = new AudioDevice();
 		}
 
+		/// <summary>
+		/// Initiates the main game loop. Call this once from your Program.Main method.
+		/// </summary>
 		public void Run()
 		{
 			MainWindow.Show();
@@ -106,6 +125,9 @@ namespace MoonWorks
 			SDL.SDL_Quit();
 		}
 
+		/// <summary>
+		/// Updates the frame limiter settings.
+		/// </summary>
 		public void SetFrameLimiter(FrameLimiterSettings settings)
 		{
 			FramerateCapped = settings.Mode == FrameLimiterMode.Capped;
@@ -120,23 +142,42 @@ namespace MoonWorks
 			}
 		}
 
+		/// <summary>
+		/// Starts the game shutdown process.
+		/// </summary>
 		public void Quit()
 		{
 			quit = true;
 		}
 
+		/// <summary>
+		/// Will execute at the specified targetTimestep you provided when instantiating your Game class.
+		/// </summary>
+		/// <param name="delta"></param>
 		protected abstract void Update(TimeSpan delta);
+
+		/// <summary>
+		/// If the frame limiter mode is Capped, this will run at most Cap times per second. <br />
+		/// Otherwise it will run as many times as possible.
+		/// </summary>
+		/// <param name="alpha">A value from 0-1 describing how "in-between" update ticks it is called. Useful for interpolation.</param>
 		protected abstract void Draw(double alpha);
+
+		/// <summary>
+		/// You can optionally override this to perform cleanup tasks before the game quits.
+		/// </summary>
 		protected virtual void Destroy() {}
 
-		// Called when a file is dropped on the game window.
+		/// <summary>
+		/// Called when a file is dropped on the game window.
+		/// </summary>
 		protected virtual void DropFile(string filePath) {}
 
-		/* Required to distinguish between multiple files dropped at once
-		 * vs multiple files dropped one at a time.
-		 *
-		 * Called once for every multi-file drop.
-		 */
+		/// <summary>
+		/// Required to distinguish between multiple files dropped at once
+		/// vs multiple files dropped one at a time.
+		/// Called once for every multi-file drop.
+		/// </summary>
 		protected virtual void DropBegin() {}
 		protected virtual void DropComplete() {}
 
