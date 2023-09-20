@@ -43,7 +43,7 @@ namespace MoonWorks.Audio
 		private bool Running;
 		private bool IsDisposed;
 
-		public unsafe AudioDevice()
+		internal unsafe AudioDevice()
 		{
 			UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / Step);
 
