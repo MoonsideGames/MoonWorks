@@ -12,9 +12,13 @@ MoonWorks uses strictly Free Open Source Software. It will never have any kind o
 
 ## Documentation
 
+API Reference: https://moonside.games/docs/moonworksapi/
+
 High-level documentation is provided here: https://moonside.games/docs/moonworks/
 
-For an actual API reference, the source is documented in doc comments that your preferred IDE can read.
+The source is documented in doc comments that your preferred IDE can read.
+
+Join our Discord! https://discord.gg/ujhwdkHmhN
 
 ## Dependencies
 
