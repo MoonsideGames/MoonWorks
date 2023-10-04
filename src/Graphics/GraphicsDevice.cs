@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using RefreshCS;
@@ -87,6 +88,12 @@ namespace MoonWorks.Graphics
 		/// <returns>True if successfully claimed.</returns>
 		public bool ClaimWindow(Window window, PresentMode presentMode)
 		{
+			if (window.Claimed)
+			{
+				Logger.LogError("Window already claimed!");
+				return false;
+			}
+
 			var success = Conversions.ByteToBool(
 				Refresh.Refresh_ClaimWindow(
 					Handle,
@@ -101,7 +108,7 @@ namespace MoonWorks.Graphics
 				window.SwapchainFormat = GetSwapchainFormat(window);
 				if (window.SwapchainTexture == null)
 				{
-					window.SwapchainTexture = new Texture(this, IntPtr.Zero, window.SwapchainFormat, 0, 0);
+					window.SwapchainTexture = new Texture(this);
 				}
 			}
 
@@ -113,11 +120,19 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void UnclaimWindow(Window window)
 		{
-			Refresh.Refresh_UnclaimWindow(
-				Handle,
-				window.Handle
-			);
-			window.Claimed = false;
+			if (window.Claimed)
+			{
+				Refresh.Refresh_UnclaimWindow(
+					Handle,
+					window.Handle
+				);
+				window.Claimed = false;
+
+				// The swapchain texture doesn't actually have a permanent texture reference, so we zero the handle before disposing.
+				window.SwapchainTexture.Handle = IntPtr.Zero;
+				window.SwapchainTexture.Dispose();
+				window.SwapchainTexture = null;
+			}
 		}
 
 		/// <summary>
@@ -129,6 +144,7 @@ namespace MoonWorks.Graphics
 		{
 			if (!window.Claimed)
 			{
+				Logger.LogError("Cannot set present mode on unclaimed window!");
 				return;
 			}
 
@@ -338,6 +354,21 @@ namespace MoonWorks.Graphics
 			}
 		}
 
+		ConcurrentQueue<GraphicsResourceDisposalHandle> emergencyDisposalQueue = new ConcurrentQueue<GraphicsResourceDisposalHandle>();
+
+		internal void RegisterForEmergencyDisposal(GraphicsResourceDisposalHandle handle)
+		{
+			emergencyDisposalQueue.Enqueue(handle);
+		}
+
+		internal void FlushEmergencyDisposalQueue()
+		{
+			while (emergencyDisposalQueue.TryDequeue(out var handle))
+			{
+				handle.Dispose(this);
+			}
+		}
+
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
@@ -358,6 +389,8 @@ namespace MoonWorks.Graphics
 
 					Refresh.Refresh_DestroyDevice(Handle);
 				}
+
+				FlushEmergencyDisposalQueue();
 
 				IsDisposed = true;
 			}

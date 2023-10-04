@@ -70,7 +70,7 @@ namespace MoonWorks
 
 			if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
 			{
-				System.Console.WriteLine("Failed to initialize SDL!");
+				Logger.LogError("Failed to initialize SDL!");
 				return;
 			}
 
@@ -235,6 +235,8 @@ namespace MoonWorks
 
 				Draw(alpha);
 				accumulatedDrawTime -= FramerateCapTimeSpan;
+
+				GraphicsDevice.FlushEmergencyDisposalQueue();
 			}
 		}
 
@@ -338,14 +340,14 @@ namespace MoonWorks
 			var index = evt.cdevice.which;
 			if (SDL.SDL_IsGameController(index) == SDL.SDL_bool.SDL_TRUE)
 			{
-				System.Console.WriteLine($"New controller detected!");
+				Logger.LogInfo("New controller detected!");
 				Inputs.AddGamepad(index);
 			}
 		}
 
 		private void HandleControllerRemoved(SDL.SDL_Event evt)
 		{
-			System.Console.WriteLine($"Controller removal detected!");
+			Logger.LogInfo("Controller removal detected!");
 			Inputs.RemoveGamepad(evt.cdevice.which);
 		}
 

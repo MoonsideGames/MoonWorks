@@ -16,23 +16,31 @@ namespace MoonWorks.Graphics
 		{
 			Device = device;
 
-			if (trackResource)
+			weakReference = new WeakReference<GraphicsResource>(this);
+			Device.AddResourceReference(weakReference);
+		}
+
+		internal GraphicsResourceDisposalHandle CreateDisposalHandle()
 			{
-				weakReference = new WeakReference<GraphicsResource>(this);
-				Device.AddResourceReference(weakReference);
-			}
+			return new GraphicsResourceDisposalHandle
+			{
+				QueueDestroyAction = QueueDestroyFunction,
+				ResourceHandle = Handle
+			};
 		}
 
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
-				if (weakReference != null)
+				if (Handle != IntPtr.Zero)
 				{
 					QueueDestroyFunction(Device.Handle, Handle);
 					Device.RemoveResourceReference(weakReference);
 					weakReference.SetTarget(null);
+
 					weakReference = null;
+					Handle = IntPtr.Zero;
 				}
 
 				IsDisposed = true;
@@ -41,8 +49,19 @@ namespace MoonWorks.Graphics
 
 		~GraphicsResource()
 		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: false);
+			#if DEBUG
+			if (!IsDisposed && Device != null && !Device.IsDisposed)
+			{
+				// If you see this log message, you leaked a graphics resource without disposing it!
+				// This means your game may eventually run out of native memory for mysterious reasons.
+				Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
+			}
+			#endif
+
+			// While we only log in debug builds, in both debug and release builds we want to free
+			// any native resources associated with this object at the earliest opportunity.
+			// This will at least prevent you from running out of memory rapidly.
+			Device.RegisterForEmergencyDisposal(CreateDisposalHandle());
 		}
 
 		public void Dispose()

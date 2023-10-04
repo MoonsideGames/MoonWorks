@@ -16,7 +16,7 @@ namespace MoonWorks
 		public ScreenMode ScreenMode { get; private set; }
 		public uint Width { get; private set; }
 		public uint Height { get; private set; }
-		internal Texture SwapchainTexture { get; set; } = null;
+		internal Texture SwapchainTexture { get; set; }
 
 		public bool Claimed { get; internal set; }
 		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }

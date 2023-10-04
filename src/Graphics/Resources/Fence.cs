@@ -12,24 +12,15 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Fence : GraphicsResource
 	{
-		protected override Action<nint, nint> QueueDestroyFunction => Release;
+		protected override Action<nint, nint> QueueDestroyFunction => Refresh.Refresh_ReleaseFence;
 
-		internal Fence(GraphicsDevice device) : base(device, true)
+		internal Fence(GraphicsDevice device) : base(device)
 		{
 		}
 
 		internal void SetHandle(nint handle)
 		{
 			Handle = handle;
-		}
-
-		private void Release(nint deviceHandle, nint fenceHandle)
-		{
-			if (fenceHandle != IntPtr.Zero)
-			{
-				// This will only be called if the client forgot to release a handle. Oh no!
-				Refresh.Refresh_ReleaseFence(deviceHandle, fenceHandle);
-			}
 		}
 	}
 }

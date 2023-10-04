@@ -5,9 +5,9 @@ namespace MoonWorks
 {
 	public static class Logger
 	{
-		public static Action<string> LogInfo;
-		public static Action<string> LogWarn;
-		public static Action<string> LogError;
+		public static Action<string> LogInfo = LogInfoDefault;
+		public static Action<string> LogWarn = LogWarnDefault;
+		public static Action<string> LogError = LogErrorDefault;
 
 		private static RefreshCS.Refresh.Refresh_LogFunc LogInfoFunc = RefreshLogInfo;
 		private static RefreshCS.Refresh.Refresh_LogFunc LogWarnFunc = RefreshLogWarn;
@@ -15,24 +15,35 @@ namespace MoonWorks
 
 		internal static void Initialize()
 		{
-			if (Logger.LogInfo == null)
-			{
-				Logger.LogInfo = Console.WriteLine;
-			}
-			if (Logger.LogWarn == null)
-			{
-				Logger.LogWarn = Console.WriteLine;
-			}
-			if (Logger.LogError == null)
-			{
-				Logger.LogError = Console.WriteLine;
-			}
-
 			Refresh.Refresh_HookLogFunctions(
 				LogInfoFunc,
 				LogWarnFunc,
 				LogErrorFunc
 			);
+		}
+
+		private static void LogInfoDefault(string str)
+		{
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.Write("INFO: ");
+			Console.ForegroundColor = ConsoleColor.White;
+			Console.WriteLine(str);
+		}
+
+		private static void LogWarnDefault(string str)
+		{
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.Write("WARN: ");
+			Console.ForegroundColor = ConsoleColor.White;
+			Console.WriteLine(str);
+		}
+
+		private static void LogErrorDefault(string str)
+		{
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.Write("ERROR: ");
+			Console.ForegroundColor = ConsoleColor.White;
+			Console.WriteLine(str);
 		}
 
 		private static void RefreshLogInfo(IntPtr msg)

@@ -119,19 +119,19 @@ namespace MoonWorks.Input
 					var openResult = SDL.SDL_GameControllerOpen(index);
 					if (openResult == 0)
 					{
-						System.Console.WriteLine($"Error opening gamepad!");
-						System.Console.WriteLine(SDL.SDL_GetError());
+						Logger.LogError("Error opening gamepad!");
+						Logger.LogError(SDL.SDL_GetError());
 					}
 					else
 					{
 						Gamepads[slot].Register(openResult);
-						System.Console.WriteLine($"Gamepad added to slot {slot}!");
+						Logger.LogInfo($"Gamepad added to slot {slot}!");
 					}
 					return;
 				}
 			}
 
-			System.Console.WriteLine("Too many gamepads already!");
+			Logger.LogInfo("Too many gamepads already!");
 		}
 
 		internal void RemoveGamepad(int joystickInstanceID)
@@ -142,7 +142,7 @@ namespace MoonWorks.Input
 				{
 					SDL.SDL_GameControllerClose(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
-					System.Console.WriteLine($"Removing gamepad from slot {slot}!");
+					Logger.LogInfo($"Removing gamepad from slot {slot}!");
 					return;
 				}
 			}

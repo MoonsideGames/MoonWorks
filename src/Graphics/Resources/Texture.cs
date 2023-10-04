@@ -303,18 +303,14 @@ namespace MoonWorks.Graphics
 		// Used by AcquireSwapchainTexture.
 		// Should not be tracked, because swapchain textures are managed by Vulkan.
 		internal Texture(
-			GraphicsDevice device,
-			IntPtr handle,
-			TextureFormat format,
-			uint width,
-			uint height
-		) : base(device, false)
+			GraphicsDevice device
+		) : base(device)
 		{
-			Handle = handle;
+			Handle = IntPtr.Zero;
 
-			Format = format;
-			Width = width;
-			Height = height;
+			Format = TextureFormat.R8G8B8A8;
+			Width = 0;
+			Height = 0;
 			Depth = 1;
 			IsCube = false;
 			LevelCount = 1;
