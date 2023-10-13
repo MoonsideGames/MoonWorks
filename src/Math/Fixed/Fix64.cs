@@ -72,30 +72,6 @@ namespace MoonWorks.Math.Fixed
 			return new Fix64(number.RawValue & 0x00000000FFFFFFFF);
 		}
 
-		public static Fix64 Random(System.Random random, int max)
-		{
-			return new Fix64(random.NextInt64(new Fix64(max).RawValue));
-		}
-
-		public static Fix64 Random(System.Random random, Fix64 max)
-		{
-			return new Fix64(random.NextInt64(max.RawValue));
-		}
-
-		public static Fix64 Random(System.Random random, Fix64 min, Fix64 max)
-		{
-			return new Fix64(random.NextInt64(min.RawValue, max.RawValue));
-		}
-
-		// Max should be between 0.0 and 1.0.
-		public static Fix64 RandomFraction(System.Random random, Fix64 max)
-		{
-			long fractionalPart = (max.RawValue & 0x00000000FFFFFFFF);
-			long fractional = random.NextInt64(fractionalPart);
-
-			return new Fix64(fractional);
-		}
-
 		/// <summary>
 		/// Returns an int indicating the sign of a Fix64 number.
 		/// </summary>
