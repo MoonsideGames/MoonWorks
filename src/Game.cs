@@ -181,6 +181,18 @@ namespace MoonWorks
 		protected virtual void DropBegin() {}
 		protected virtual void DropComplete() {}
 
+		/// <summary>
+		/// Called when a game pad has been connected.
+		/// </summary>
+		/// <param name="slot">The slot where the connection occurred.</param>
+		protected virtual void GamepadConnected(int slot) {}
+
+		/// <summary>
+		/// Called when a game pad has been disconnected.
+		/// </summary>
+		/// <param name="slot">The slot where the disconnection occurred.</param>
+		protected virtual void GamepadDisconnected(int slot) {}
+
 		private void Tick()
 		{
 			AdvanceElapsedTime();
@@ -343,12 +355,15 @@ namespace MoonWorks
 				Logger.LogInfo("New controller detected!");
 				Inputs.AddGamepad(index);
 			}
+			GamepadConnected(index);
 		}
 
 		private void HandleControllerRemoved(SDL.SDL_Event evt)
 		{
+			int index = evt.cdevice.which;
 			Logger.LogInfo("Controller removal detected!");
-			Inputs.RemoveGamepad(evt.cdevice.which);
+			Inputs.RemoveGamepad(index);
+			GamepadDisconnected(index);
 		}
 
 		public static void ShowRuntimeError(string title, string message)
