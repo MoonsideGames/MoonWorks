@@ -35,6 +35,22 @@ namespace MoonWorks.Input
 		/// </summary>
 		public VirtualButton AnyPressedButton { get; private set; }
 
+		public delegate void OnGamepadConnectedFunc(int slot);
+
+		/// <summary>
+		/// Called when a gamepad has been connected.
+		/// </summary>
+		/// <param name="slot">The slot where the connection occurred.</param>
+		public OnGamepadConnectedFunc OnGamepadConnected;
+
+		public delegate void OnGamepadDisconnectedFunc(int slot);
+
+		/// <summary>
+		/// Called when a gamepad has been disconnected.
+		/// </summary>
+		/// <param name="slot">The slot where the disconnection occurred.</param>
+		public OnGamepadDisconnectedFunc OnGamepadDisconnected;
+
 		internal Inputs()
 		{
 			Keyboard = new Keyboard();
@@ -126,7 +142,9 @@ namespace MoonWorks.Input
 					{
 						Gamepads[slot].Register(openResult);
 						Logger.LogInfo($"Gamepad added to slot {slot}!");
+						OnGamepadConnected(slot);
 					}
+
 					return;
 				}
 			}
@@ -143,6 +161,7 @@ namespace MoonWorks.Input
 					SDL.SDL_GameControllerClose(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
 					Logger.LogInfo($"Removing gamepad from slot {slot}!");
+					OnGamepadDisconnected(slot);
 					return;
 				}
 			}
