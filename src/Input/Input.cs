@@ -41,7 +41,7 @@ namespace MoonWorks.Input
 		/// Called when a gamepad has been connected.
 		/// </summary>
 		/// <param name="slot">The slot where the connection occurred.</param>
-		public OnGamepadConnectedFunc OnGamepadConnected;
+		public OnGamepadConnectedFunc OnGamepadConnected = delegate { };
 
 		public delegate void OnGamepadDisconnectedFunc(int slot);
 
@@ -49,7 +49,7 @@ namespace MoonWorks.Input
 		/// Called when a gamepad has been disconnected.
 		/// </summary>
 		/// <param name="slot">The slot where the disconnection occurred.</param>
-		public OnGamepadDisconnectedFunc OnGamepadDisconnected;
+		public OnGamepadDisconnectedFunc OnGamepadDisconnected = delegate { };
 
 		internal Inputs()
 		{
@@ -142,7 +142,11 @@ namespace MoonWorks.Input
 					{
 						Gamepads[slot].Register(openResult);
 						Logger.LogInfo($"Gamepad added to slot {slot}!");
-						OnGamepadConnected(slot);
+
+						if (OnGamepadConnected != null)
+						{
+							OnGamepadConnected(slot);
+						}
 					}
 
 					return;
