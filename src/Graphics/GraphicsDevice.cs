@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics
@@ -22,7 +23,7 @@ namespace MoonWorks.Graphics
 
 		public bool IsDisposed { get; private set; }
 
-		private readonly HashSet<WeakReference<GraphicsResource>> resources = new HashSet<WeakReference<GraphicsResource>>();
+		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
 		private FencePool FencePool;
 
 		internal GraphicsDevice(
@@ -338,7 +339,7 @@ namespace MoonWorks.Graphics
 			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
 		}
 
-		internal void AddResourceReference(WeakReference<GraphicsResource> resourceReference)
+		internal void AddResourceReference(GCHandle resourceReference)
 		{
 			lock (resources)
 			{
@@ -346,7 +347,7 @@ namespace MoonWorks.Graphics
 			}
 		}
 
-		internal void RemoveResourceReference(WeakReference<GraphicsResource> resourceReference)
+		internal void RemoveResourceReference(GCHandle resourceReference)
 		{
 			lock (resources)
 			{
@@ -377,11 +378,12 @@ namespace MoonWorks.Graphics
 				{
 					lock (resources)
 					{
-						foreach (var weakReference in resources)
+						foreach (var resource in resources)
 						{
-							if (weakReference.TryGetTarget(out var target))
+							var target = resource.Target;
+							if (target is IDisposable disposable)
 							{
-								target.Dispose();
+								disposable.Dispose();
 							}
 						}
 						resources.Clear();

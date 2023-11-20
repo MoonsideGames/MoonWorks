@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics
 {
@@ -10,14 +11,14 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
-		internal WeakReference<GraphicsResource> weakReference;
+		internal GCHandle selfReference;
 
 		public GraphicsResource(GraphicsDevice device, bool trackResource = true)
 		{
 			Device = device;
 
-			weakReference = new WeakReference<GraphicsResource>(this);
-			Device.AddResourceReference(weakReference);
+			selfReference = GCHandle.Alloc(this, GCHandleType.Weak);
+			Device.AddResourceReference(selfReference);
 		}
 
 		internal GraphicsResourceDisposalHandle CreateDisposalHandle()
@@ -36,10 +37,9 @@ namespace MoonWorks.Graphics
 				if (Handle != IntPtr.Zero)
 				{
 					QueueDestroyFunction(Device.Handle, Handle);
-					Device.RemoveResourceReference(weakReference);
-					weakReference.SetTarget(null);
+					Device.RemoveResourceReference(selfReference);
+					selfReference.Free();
 
-					weakReference = null;
 					Handle = IntPtr.Zero;
 				}
 
