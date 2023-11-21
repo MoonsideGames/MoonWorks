@@ -380,8 +380,7 @@ namespace MoonWorks.Graphics
 					{
 						foreach (var resource in resources)
 						{
-							var target = resource.Target;
-							if (target is IDisposable disposable)
+							if (resource.Target is IDisposable disposable)
 							{
 								disposable.Dispose();
 							}

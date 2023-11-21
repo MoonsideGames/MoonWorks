@@ -11,18 +11,18 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
-		internal GCHandle selfReference;
+		private GCHandle SelfReference;
 
-		public GraphicsResource(GraphicsDevice device, bool trackResource = true)
+		protected GraphicsResource(GraphicsDevice device)
 		{
 			Device = device;
 
-			selfReference = GCHandle.Alloc(this, GCHandleType.Weak);
-			Device.AddResourceReference(selfReference);
+			SelfReference = GCHandle.Alloc(this, GCHandleType.Weak);
+			Device.AddResourceReference(SelfReference);
 		}
 
-		internal GraphicsResourceDisposalHandle CreateDisposalHandle()
-			{
+		private GraphicsResourceDisposalHandle CreateDisposalHandle()
+		{
 			return new GraphicsResourceDisposalHandle
 			{
 				QueueDestroyAction = QueueDestroyFunction,
@@ -30,15 +30,15 @@ namespace MoonWorks.Graphics
 			};
 		}
 
-		protected virtual void Dispose(bool disposing)
+		protected void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
 				if (Handle != IntPtr.Zero)
 				{
 					QueueDestroyFunction(Device.Handle, Handle);
-					Device.RemoveResourceReference(selfReference);
-					selfReference.Free();
+					Device.RemoveResourceReference(SelfReference);
+					SelfReference.Free();
 
 					Handle = IntPtr.Zero;
 				}
@@ -50,6 +50,8 @@ namespace MoonWorks.Graphics
 		~GraphicsResource()
 		{
 			#if DEBUG
+			// If the graphics device associated with this resource was already disposed, we assume
+			// that your game is in the middle of shutting down.
 			if (!IsDisposed && Device != null && !Device.IsDisposed)
 			{
 				// If you see this log message, you leaked a graphics resource without disposing it!
