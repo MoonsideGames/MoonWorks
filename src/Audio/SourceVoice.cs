@@ -192,12 +192,6 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Called automatically by AudioDevice in the audio thread.
-		/// Don't call this yourself! You might regret it!
-		/// </summary>
-		public virtual void Update() { }
-
-		/// <summary>
 		/// Adds an FAudio buffer to the voice queue.
 		/// The voice processes and plays back the buffers in its queue in the order that they were submitted.
 		/// </summary>
@@ -221,10 +215,9 @@ namespace MoonWorks.Audio
 			base.Reset();
 		}
 
-		protected override unsafe void Destroy()
+		protected override void DisposeManagedState()
 		{
 			Stop();
-			base.Destroy();
 		}
 	}
 }

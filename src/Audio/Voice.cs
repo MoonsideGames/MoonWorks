@@ -565,7 +565,7 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		protected unsafe override void Destroy()
+		protected override void DisposeUnmanagedState()
 		{
 			NativeMemory.Free(pMatrixCoefficients);
 			FAudio.FAudioVoice_DestroyVoice(Handle);

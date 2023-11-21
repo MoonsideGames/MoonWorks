@@ -94,7 +94,5 @@ namespace MoonWorks.Audio
 			/* Unexposed variables, defaults based on XNA behavior */
 			listenerData.pCone = IntPtr.Zero;
 		}
-
-		protected override void Destroy() { }
 	}
 }

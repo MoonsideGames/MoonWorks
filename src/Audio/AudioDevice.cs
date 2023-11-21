@@ -26,7 +26,7 @@ namespace MoonWorks.Audio
 		public float SpeedOfSound = 343.5f;
 
 		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
-		private readonly HashSet<SourceVoice> activeSourceVoices = new HashSet<SourceVoice>();
+		private readonly HashSet<UpdatingSourceVoice> updatingSourceVoices = new HashSet<UpdatingSourceVoice>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -42,7 +42,7 @@ namespace MoonWorks.Audio
 		internal readonly object StateLock = new object();
 
 		private bool Running;
-		private bool IsDisposed;
+		public bool IsDisposed { get; private set; }
 
 		internal unsafe AudioDevice()
 		{
@@ -164,15 +164,19 @@ namespace MoonWorks.Audio
 
 			AudioTweenManager.Update(elapsedSeconds);
 
-			foreach (var voice in activeSourceVoices)
+			foreach (var voice in updatingSourceVoices)
 			{
 				voice.Update();
 			}
 
 			foreach (var voice in VoicesToReturn)
 			{
+				if (voice is UpdatingSourceVoice updatingSourceVoice)
+				{
+					updatingSourceVoices.Remove(updatingSourceVoice);
+				}
+
 				voice.Reset();
-				activeSourceVoices.Remove(voice);
 				VoicePool.Return(voice);
 			}
 
@@ -197,7 +201,12 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				var voice = VoicePool.Obtain<T>(format);
-				activeSourceVoices.Add(voice);
+
+				if (voice is UpdatingSourceVoice updatingSourceVoice)
+				{
+					updatingSourceVoices.Add(updatingSourceVoice);
+				}
+
 				return voice;
 			}
 		}
@@ -258,9 +267,9 @@ namespace MoonWorks.Audio
 			{
 				resources.Add(resourceReference);
 
-				if (resourceReference.Target is SourceVoice voice)
+				if (resourceReference.Target is UpdatingSourceVoice updatableVoice)
 				{
-					activeSourceVoices.Add(voice);
+					updatingSourceVoices.Add(updatableVoice);
 				}
 			}
 		}

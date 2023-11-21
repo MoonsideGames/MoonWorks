@@ -3,7 +3,7 @@ namespace MoonWorks.Audio
 	/// <summary>
 	/// Plays back a series of AudioBuffers in sequence. Set the OnSoundNeeded callback to add AudioBuffers dynamically.
 	/// </summary>
-	public class SoundSequence : SourceVoice, IPoolable<SoundSequence>
+	public class SoundSequence : UpdatingSourceVoice, IPoolable<SoundSequence>
 	{
 		public int NeedSoundThreshold = 0;
 		public delegate void OnSoundNeededFunc();

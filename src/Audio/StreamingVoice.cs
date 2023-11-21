@@ -6,7 +6,7 @@ namespace MoonWorks.Audio
 	/// <summary>
 	/// Use in conjunction with an AudioDataStreamable object to play back streaming audio data.
 	/// </summary>
-	public class StreamingVoice : SourceVoice, IPoolable<StreamingVoice>
+	public class StreamingVoice : UpdatingSourceVoice, IPoolable<StreamingVoice>
 	{
 		private const int BUFFER_COUNT = 3;
 		private readonly IntPtr[] buffers;

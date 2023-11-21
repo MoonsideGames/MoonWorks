@@ -64,7 +64,7 @@ namespace MoonWorks.Audio
 			};
 		}
 
-		protected override unsafe void Destroy()
+		protected override unsafe void DisposeUnmanagedState()
 		{
 			if (OwnsBufferData)
 			{

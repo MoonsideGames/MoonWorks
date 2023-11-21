@@ -132,7 +132,5 @@ namespace MoonWorks.Audio
 			emitterData.pReverbCurve = IntPtr.Zero;
 			emitterData.CurveDistanceScaler = 1.0f;
 		}
-
-		protected override void Destroy() { }
 	}
 }

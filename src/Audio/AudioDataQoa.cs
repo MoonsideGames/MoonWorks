@@ -99,16 +99,9 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Unloads the qoa data, freeing resources.
 		/// </summary>
-		public override unsafe void Unload()
+		public override void Unload()
 		{
-			if (Loaded)
-			{
-				FAudio.qoa_close(QoaHandle);
-				NativeMemory.Free((void*) FileDataPtr);
-
-				QoaHandle = IntPtr.Zero;
-				FileDataPtr = IntPtr.Zero;
-			}
+			DisposeUnmanagedState();
 		}
 
 		/// <summary>
@@ -159,6 +152,18 @@ namespace MoonWorks.Audio
 				((UInt64)(bytes[2]) << 40) | ((UInt64)(bytes[3]) << 32) |
 				((UInt64)(bytes[4]) << 24) | ((UInt64)(bytes[5]) << 16) |
 				((UInt64)(bytes[6]) <<  8) | ((UInt64)(bytes[7]) <<  0);
+		}
+
+		protected override unsafe void DisposeUnmanagedState()
+		{
+			if (Loaded)
+			{
+				FAudio.qoa_close(QoaHandle);
+				NativeMemory.Free((void*) FileDataPtr);
+
+				QoaHandle = IntPtr.Zero;
+				FileDataPtr = IntPtr.Zero;
+			}
 		}
 	}
 }
