@@ -278,10 +278,11 @@ namespace MoonWorks.Audio
 			if (!IsDisposed)
 			{
 				Running = false;
-				Thread.Join();
 
 				if (disposing)
 				{
+					Thread.Join();
+
 					// stop all source voices
 					foreach (var resource in resources)
 					{
