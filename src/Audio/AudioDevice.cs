@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace MoonWorks.Audio
@@ -24,7 +25,7 @@ namespace MoonWorks.Audio
 		public float DopplerScale = 1f;
 		public float SpeedOfSound = 343.5f;
 
-		private readonly HashSet<WeakReference> resources = new HashSet<WeakReference>();
+		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
 		private readonly HashSet<SourceVoice> activeSourceVoices = new HashSet<SourceVoice>();
 
 		private AudioTweenManager AudioTweenManager;
@@ -251,24 +252,24 @@ namespace MoonWorks.Audio
 			WakeSignal.Set();
 		}
 
-		internal void AddResourceReference(AudioResource resource)
+		internal void AddResourceReference(GCHandle resourceReference)
 		{
 			lock (StateLock)
 			{
-				resources.Add(resource.weakReference);
+				resources.Add(resourceReference);
 
-				if (resource is SourceVoice voice)
+				if (resourceReference.Target is SourceVoice voice)
 				{
 					activeSourceVoices.Add(voice);
 				}
 			}
 		}
 
-		internal void RemoveResourceReference(AudioResource resource)
+		internal void RemoveResourceReference(GCHandle resourceReference)
 		{
 			lock (StateLock)
 			{
-				resources.Remove(resource.weakReference);
+				resources.Remove(resourceReference);
 			}
 		}
 
@@ -282,24 +283,20 @@ namespace MoonWorks.Audio
 				if (disposing)
 				{
 					// stop all source voices
-					foreach (var weakReference in resources)
+					foreach (var resource in resources)
 					{
-						var target = weakReference.Target;
-
-						if (target != null && target is SourceVoice voice)
+						if (resource.Target is SourceVoice voice)
 						{
 							voice.Stop();
 						}
 					}
 
 					// destroy all audio resources
-					foreach (var weakReference in resources)
+					foreach (var resource in resources)
 					{
-						var target = weakReference.Target;
-
-						if (target != null)
+						if (resource.Target is IDisposable disposable)
 						{
-							(target as IDisposable).Dispose();
+							disposable.Dispose();
 						}
 					}
 

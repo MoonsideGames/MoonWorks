@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks.Audio
 {
@@ -8,30 +9,26 @@ namespace MoonWorks.Audio
 
 		public bool IsDisposed { get; private set; }
 
-		internal WeakReference weakReference;
+		private GCHandle SelfReference;
 
-		public AudioResource(AudioDevice device)
+		protected AudioResource(AudioDevice device)
 		{
 			Device = device;
 
-			weakReference = new WeakReference(this);
-			Device.AddResourceReference(this);
+			SelfReference = GCHandle.Alloc(this, GCHandleType.Weak);
+			Device.AddResourceReference(SelfReference);
 		}
 
 		protected abstract void Destroy();
 
-		protected virtual void Dispose(bool disposing)
+		protected void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
 				Destroy();
 
-				if (weakReference != null)
-				{
-					Device.RemoveResourceReference(this);
-					weakReference.Target = null;
-					weakReference = null;
-				}
+				Device.RemoveResourceReference(SelfReference);
+				SelfReference.Free();
 
 				IsDisposed = true;
 			}
