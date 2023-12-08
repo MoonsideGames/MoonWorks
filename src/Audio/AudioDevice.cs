@@ -292,16 +292,16 @@ namespace MoonWorks.Audio
 				{
 					Thread.Join();
 
-					// stop all source voices
+					// dispose all voices first
 					foreach (var resource in resources)
 					{
-						if (resource.Target is SourceVoice voice)
+						if (resource.Target is Voice voice)
 						{
-							voice.Stop();
+							voice.Dispose();
 						}
 					}
 
-					// destroy all audio resources
+					// destroy all other audio resources
 					foreach (var resource in resources)
 					{
 						if (resource.Target is IDisposable disposable)
