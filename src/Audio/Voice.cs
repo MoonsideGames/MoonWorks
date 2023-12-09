@@ -565,10 +565,14 @@ namespace MoonWorks.Audio
 			);
 		}
 
-		protected override void DisposeUnmanagedState()
+		protected override unsafe void Dispose(bool disposing)
 		{
-			NativeMemory.Free(pMatrixCoefficients);
-			FAudio.FAudioVoice_DestroyVoice(Handle);
+			if (!IsDisposed)
+			{
+				NativeMemory.Free(pMatrixCoefficients);
+				FAudio.FAudioVoice_DestroyVoice(Handle);
+			}
+			base.Dispose(disposing);
 		}
 	}
 }

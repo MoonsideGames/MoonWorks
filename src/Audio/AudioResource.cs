@@ -19,22 +19,15 @@ namespace MoonWorks.Audio
 			Device.AddResourceReference(SelfReference);
 		}
 
-		protected virtual void DisposeManagedState() { }
-		protected virtual void DisposeUnmanagedState() { }
-
-		protected void Dispose(bool disposing)
+		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
 				if (disposing)
 				{
-					DisposeManagedState();
-
 					Device.RemoveResourceReference(SelfReference);
 					SelfReference.Free();
 				}
-
-				DisposeUnmanagedState();
 
 				IsDisposed = true;
 			}
@@ -43,18 +36,11 @@ namespace MoonWorks.Audio
 		~AudioResource()
 		{
 			#if DEBUG
-			// If the graphics device associated with this resource was already disposed, we assume
-			// that your game is in the middle of shutting down.
-			if (!IsDisposed && Device != null && !Device.IsDisposed)
-			{
-				// If you see this log message, you leaked a graphics resource without disposing it!
-				// This means your game may eventually run out of native memory for mysterious reasons.
-				Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
-			}
+			// If you see this log message, you leaked an audio resource without disposing it!
+			// We can't clean it up for you because this can cause catastrophic issues.
+			// You should really fix this when it happens.
+			Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
 			#endif
-
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: false);
 		}
 
 		public void Dispose()

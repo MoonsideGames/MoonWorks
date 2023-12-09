@@ -36,5 +36,14 @@ namespace MoonWorks.Audio
 		/// <param name="filledLengthInBytes">How much data was actually filled in by the decode.</param>
 		/// <param name="reachedEnd">Whether the end of the data was reached on this decode.</param>
 		public abstract unsafe void Decode(void* buffer, int bufferLengthInBytes, out int filledLengthInBytes, out bool reachedEnd);
+
+		protected override void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				Unload();
+			}
+			base.Dispose(disposing);
+		}
 	}
 }

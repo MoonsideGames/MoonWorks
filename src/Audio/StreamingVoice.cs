@@ -145,5 +145,22 @@ namespace MoonWorks.Audio
 				buffers[i] = (IntPtr) NativeMemory.Alloc(BufferSize);
 			}
 		}
+
+		protected override unsafe void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				Stop();
+
+				for (int i = 0; i < BUFFER_COUNT; i += 1)
+				{
+					if (buffers[i] != IntPtr.Zero)
+					{
+						NativeMemory.Free((void*) buffers[i]);
+					}
+				}
+			}
+			base.Dispose(disposing);
+		}
 	}
 }

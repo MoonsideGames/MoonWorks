@@ -90,9 +90,16 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Unloads the Ogg data, freeing resources.
 		/// </summary>
-		public override void Unload()
+		public override unsafe void Unload()
 		{
-			DisposeUnmanagedState();
+			if (Loaded)
+			{
+				FAudio.stb_vorbis_close(VorbisHandle);
+				NativeMemory.Free((void*) FileDataPtr);
+
+				VorbisHandle = IntPtr.Zero;
+				FileDataPtr = IntPtr.Zero;
+			}
 		}
 
 		/// <summary>
@@ -135,18 +142,6 @@ namespace MoonWorks.Audio
 				(nint) buffer,
 				(uint) lengthInBytes,
 				true);
-		}
-
-		protected override unsafe void DisposeUnmanagedState()
-		{
-			if (Loaded)
-			{
-				FAudio.stb_vorbis_close(VorbisHandle);
-				NativeMemory.Free((void*) FileDataPtr);
-
-				VorbisHandle = IntPtr.Zero;
-				FileDataPtr = IntPtr.Zero;
-			}
 		}
 	}
 }

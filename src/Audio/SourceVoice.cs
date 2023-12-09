@@ -214,10 +214,5 @@ namespace MoonWorks.Audio
 			PlaybackInitiated = false;
 			base.Reset();
 		}
-
-		protected override void DisposeManagedState()
-		{
-			Stop();
-		}
 	}
 }

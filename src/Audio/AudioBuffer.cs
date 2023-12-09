@@ -64,12 +64,16 @@ namespace MoonWorks.Audio
 			};
 		}
 
-		protected override unsafe void DisposeUnmanagedState()
+		protected override unsafe void Dispose(bool disposing)
 		{
-			if (OwnsBufferData)
+			if (!IsDisposed)
 			{
-				NativeMemory.Free((void*) BufferDataPtr);
+				if (OwnsBufferData)
+				{
+					NativeMemory.Free((void*) BufferDataPtr);
+				}
 			}
+			base.Dispose(disposing);
 		}
 	}
 }
