@@ -235,8 +235,6 @@ namespace MoonWorks
 
 				Draw(alpha);
 				accumulatedDrawTime -= FramerateCapTimeSpan;
-
-				GraphicsDevice.FlushEmergencyDisposalQueue();
 			}
 		}
 

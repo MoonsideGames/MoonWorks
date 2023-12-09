@@ -355,21 +355,6 @@ namespace MoonWorks.Graphics
 			}
 		}
 
-		ConcurrentQueue<GraphicsResourceDisposalHandle> emergencyDisposalQueue = new ConcurrentQueue<GraphicsResourceDisposalHandle>();
-
-		internal void RegisterForEmergencyDisposal(GraphicsResourceDisposalHandle handle)
-		{
-			emergencyDisposalQueue.Enqueue(handle);
-		}
-
-		internal void FlushEmergencyDisposalQueue()
-		{
-			while (emergencyDisposalQueue.TryDequeue(out var handle))
-			{
-				handle.Dispose(this);
-			}
-		}
-
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
@@ -387,11 +372,9 @@ namespace MoonWorks.Graphics
 						}
 						resources.Clear();
 					}
-
-					Refresh.Refresh_DestroyDevice(Handle);
 				}
 
-				FlushEmergencyDisposalQueue();
+				Refresh.Refresh_DestroyDevice(Handle);
 
 				IsDisposed = true;
 			}

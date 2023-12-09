@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace MoonWorks.Graphics
 {
+	// TODO: give this a Name property for debugging use
 	public abstract class GraphicsResource : IDisposable
 	{
 		public GraphicsDevice Device { get; }
-		public IntPtr Handle { get; internal set; }
+		public IntPtr Handle { get => handle; internal set => handle = value; }
+		private nint handle;
 
 		public bool IsDisposed { get; private set; }
 		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
 		private GCHandle SelfReference;
-
 		protected GraphicsResource(GraphicsDevice device)
 		{
 			Device = device;
@@ -21,26 +23,21 @@ namespace MoonWorks.Graphics
 			Device.AddResourceReference(SelfReference);
 		}
 
-		private GraphicsResourceDisposalHandle CreateDisposalHandle()
-		{
-			return new GraphicsResourceDisposalHandle
-			{
-				QueueDestroyAction = QueueDestroyFunction,
-				ResourceHandle = Handle
-			};
-		}
-
 		protected void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
-				if (Handle != IntPtr.Zero)
+				if (disposing)
 				{
-					QueueDestroyFunction(Device.Handle, Handle);
 					Device.RemoveResourceReference(SelfReference);
 					SelfReference.Free();
+				}
 
-					Handle = IntPtr.Zero;
+				// Atomically call destroy function in case this is called from the finalizer thread
+				var toDispose = Interlocked.Exchange(ref handle, IntPtr.Zero);
+				if (toDispose != IntPtr.Zero)
+				{
+					QueueDestroyFunction(Device.Handle, toDispose);
 				}
 
 				IsDisposed = true;
@@ -50,20 +47,12 @@ namespace MoonWorks.Graphics
 		~GraphicsResource()
 		{
 			#if DEBUG
-			// If the graphics device associated with this resource was already disposed, we assume
-			// that your game is in the middle of shutting down.
-			if (!IsDisposed && Device != null && !Device.IsDisposed)
-			{
-				// If you see this log message, you leaked a graphics resource without disposing it!
-				// This means your game may eventually run out of native memory for mysterious reasons.
-				Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
-			}
+			// If you see this log message, you leaked a graphics resource without disposing it!
+			// We'll try to clean it up for you but you really should fix this.
+			Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
 			#endif
 
-			// While we only log in debug builds, in both debug and release builds we want to free
-			// any native resources associated with this object at the earliest opportunity.
-			// This will at least prevent you from running out of memory rapidly.
-			Device.RegisterForEmergencyDisposal(CreateDisposalHandle());
+			Dispose(false);
 		}
 
 		public void Dispose()
