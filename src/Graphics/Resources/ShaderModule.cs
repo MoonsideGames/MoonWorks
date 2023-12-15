@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// Shader modules expect input in Refresh bytecode format.
 	/// </summary>
-	public class ShaderModule : GraphicsResource
+	public class ShaderModule : RefreshResource
 	{
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyShaderModule;
 

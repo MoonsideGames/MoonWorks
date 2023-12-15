@@ -1,12 +1,13 @@
 using System;
 using System.IO;
+using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
 {
 	/// <summary>
 	/// This class takes in a filename for AV1 data in .obu (open bitstream unit) format
 	/// </summary>
-	public unsafe class VideoAV1
+	public unsafe class VideoAV1 : GraphicsResource
 	{
 		public string Filename { get; }
 
@@ -28,7 +29,7 @@ namespace MoonWorks.Video
 		/// <summary>
 		/// Opens an AV1 file so it can be loaded by VideoPlayer. You must also provide a playback framerate.
 		/// </summary>
-		public VideoAV1(string filename, double framesPerSecond)
+		public VideoAV1(GraphicsDevice device, string filename, double framesPerSecond) : base(device)
 		{
 			if (!File.Exists(filename))
 			{
@@ -67,8 +68,22 @@ namespace MoonWorks.Video
 
 			Filename = filename;
 
-			StreamA = new VideoAV1Stream(this);
-			StreamB = new VideoAV1Stream(this);
+			StreamA = new VideoAV1Stream(device, this);
+			StreamB = new VideoAV1Stream(device, this);
+		}
+
+		// NOTE: if you call this while a VideoPlayer is playing the stream, your program will explode
+		protected override void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				if (disposing)
+				{
+					StreamA.Dispose();
+					StreamB.Dispose();
+				}
+			}
+			base.Dispose(disposing);
 		}
 	}
 }

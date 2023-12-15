@@ -150,13 +150,16 @@ namespace MoonWorks.Audio
 		{
 			if (!IsDisposed)
 			{
-				Stop();
-
-				for (int i = 0; i < BUFFER_COUNT; i += 1)
+				lock (StateLock)
 				{
-					if (buffers[i] != IntPtr.Zero)
+					Stop();
+
+					for (int i = 0; i < BUFFER_COUNT; i += 1)
 					{
-						NativeMemory.Free((void*) buffers[i]);
+						if (buffers[i] != IntPtr.Zero)
+						{
+							NativeMemory.Free((void*) buffers[i]);
+						}
 					}
 				}
 			}

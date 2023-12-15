@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using SDL2;
+﻿using SDL2;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -58,6 +57,7 @@ namespace MoonWorks
 			bool debugMode = false
 		)
 		{
+			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
 
@@ -68,6 +68,7 @@ namespace MoonWorks
 				previousSleepTimes[i] = TimeSpan.FromMilliseconds(1);
 			}
 
+			Logger.LogInfo("Initializing SDL...");
 			if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
 			{
 				Logger.LogError("Failed to initialize SDL!");
@@ -76,13 +77,16 @@ namespace MoonWorks
 
 			Logger.Initialize();
 
+			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
+			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
 				Backend.Vulkan,
 				debugMode
 			);
 
+			Logger.LogInfo("Initializing main window...");
 			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
 			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.PresentMode))
@@ -90,6 +94,7 @@ namespace MoonWorks
 				throw new System.SystemException("Could not claim window!");
 			}
 
+			Logger.LogInfo("Initializing audio thread...");
 			AudioDevice = new AudioDevice();
 		}
 
@@ -110,9 +115,6 @@ namespace MoonWorks
 			Logger.LogInfo("Cleaning up game...");
 			Destroy();
 
-			Logger.LogInfo("Closing audio thread...");
-			AudioDevice.Dispose();
-
 			Logger.LogInfo("Unclaiming window...");
 			GraphicsDevice.UnclaimWindow(MainWindow);
 
@@ -121,6 +123,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
+
+			Logger.LogInfo("Closing audio thread...");
+			AudioDevice.Dispose();
 
 			SDL.SDL_Quit();
 		}

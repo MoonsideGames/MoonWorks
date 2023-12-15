@@ -8,7 +8,7 @@ namespace MoonWorks.Video
 	/// <summary>
 	/// A structure for continuous decoding of AV1 videos and rendering them into a texture.
 	/// </summary>
-	public unsafe class VideoPlayer : IDisposable
+	public unsafe class VideoPlayer : GraphicsResource
 	{
 		public Texture RenderTexture { get; private set; } = null;
 		public VideoState State { get; private set; } = VideoState.Stopped;
@@ -17,6 +17,10 @@ namespace MoonWorks.Video
 
 		private VideoAV1 Video = null;
 		private VideoAV1Stream CurrentStream = null;
+
+		private Task ReadNextFrameTask;
+		private Task ResetStreamATask;
+		private Task ResetStreamBTask;
 
 		private GraphicsDevice GraphicsDevice;
 		private Texture yTexture = null;
@@ -30,17 +34,11 @@ namespace MoonWorks.Video
 		private double lastTimestamp;
 		private double timeElapsed;
 
-		private bool disposed;
-
-		public VideoPlayer(GraphicsDevice graphicsDevice)
+		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
-			GraphicsDevice = graphicsDevice;
-			if (GraphicsDevice.VideoPipeline == null)
-			{
-				throw new InvalidOperationException("Missing video shaders!");
-			}
+			GraphicsDevice = device;
 
-			LinearSampler = new Sampler(graphicsDevice, SamplerCreateInfo.LinearClamp);
+			LinearSampler = new Sampler(device, SamplerCreateInfo.LinearClamp);
 
 			timer = new Stopwatch();
 		}
@@ -168,6 +166,8 @@ namespace MoonWorks.Video
 		public void Unload()
 		{
 			Stop();
+			ResetStreamATask?.Wait();
+			ResetStreamBTask?.Wait();
 			Video = null;
 		}
 
@@ -194,7 +194,8 @@ namespace MoonWorks.Video
 				}
 
 				currentFrame = thisFrame;
-				Task.Run(CurrentStream.ReadNextFrame).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				ReadNextFrameTask = Task.Run(CurrentStream.ReadNextFrame);
+				ReadNextFrameTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 			}
 
 			if (CurrentStream.Ended)
@@ -202,7 +203,17 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				Task.Run(CurrentStream.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				var task = Task.Run(CurrentStream.Reset);
+				task.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+
+				if (CurrentStream == Video.StreamA)
+				{
+					ResetStreamATask = task;
+				}
+				else
+				{
+					ResetStreamBTask = task;
+				}
 
 				if (Loop)
 				{
@@ -280,8 +291,12 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			Task.Run(Video.StreamA.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			Task.Run(Video.StreamB.Reset).ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			ReadNextFrameTask?.Wait();
+
+			ResetStreamATask = Task.Run(Video.StreamA.Reset);
+			ResetStreamATask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			ResetStreamBTask = Task.Run(Video.StreamB.Reset);
+			ResetStreamBTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 
 			CurrentStream = Video.StreamA;
 			currentFrame = -1;
@@ -289,37 +304,27 @@ namespace MoonWorks.Video
 
 		private static void HandleTaskException(Task task)
 		{
-			throw task.Exception;
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!disposed)
+			if (task.Exception.InnerException is not TaskCanceledException)
 			{
-				if (disposing)
-				{
-					// dispose managed state (managed objects)
-					RenderTexture.Dispose();
-					yTexture.Dispose();
-					uTexture.Dispose();
-					vTexture.Dispose();
-				}
-
-				disposed = true;
+				throw task.Exception;
 			}
 		}
 
-		~VideoPlayer()
+		protected override void Dispose(bool disposing)
 		{
-		    // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-		    Dispose(disposing: false);
-		}
+			if (!IsDisposed)
+			{
+				if (disposing)
+				{
+					Unload();
 
-		public void Dispose()
-		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: true);
-			GC.SuppressFinalize(this);
+					RenderTexture?.Dispose();
+					yTexture?.Dispose();
+					uTexture?.Dispose();
+					vTexture?.Dispose();
+				}
+			}
+			base.Dispose(disposing);
 		}
 	}
 }

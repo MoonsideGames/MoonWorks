@@ -25,7 +25,7 @@ namespace MoonWorks.Audio
 		public float DopplerScale = 1f;
 		public float SpeedOfSound = 343.5f;
 
-		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
+		private readonly HashSet<GCHandle> resourceHandles = new HashSet<GCHandle>();
 		private readonly HashSet<UpdatingSourceVoice> updatingSourceVoices = new HashSet<UpdatingSourceVoice>();
 
 		private AudioTweenManager AudioTweenManager;
@@ -123,7 +123,6 @@ namespace MoonWorks.Audio
 			AudioTweenManager = new AudioTweenManager();
 			VoicePool = new SourceVoicePool(this);
 
-			Logger.LogInfo("Setting up audio thread...");
 			WakeSignal = new AutoResetEvent(true);
 
 			Thread = new Thread(ThreadMain);
@@ -265,7 +264,7 @@ namespace MoonWorks.Audio
 		{
 			lock (StateLock)
 			{
-				resources.Add(resourceReference);
+				resourceHandles.Add(resourceReference);
 
 				if (resourceReference.Target is UpdatingSourceVoice updatableVoice)
 				{
@@ -278,7 +277,12 @@ namespace MoonWorks.Audio
 		{
 			lock (StateLock)
 			{
-				resources.Remove(resourceReference);
+				resourceHandles.Remove(resourceReference);
+
+				if (resourceReference.Target is UpdatingSourceVoice updatableVoice)
+				{
+					updatingSourceVoices.Remove(updatableVoice);
+				}
 			}
 		}
 
@@ -292,28 +296,42 @@ namespace MoonWorks.Audio
 				{
 					Thread.Join();
 
-					// dispose all voices first
-					foreach (var resource in resources)
+					// dispose all source voices first
+					foreach (var handle in resourceHandles)
 					{
-						if (resource.Target is Voice voice)
+						if (handle.Target is SourceVoice voice)
 						{
 							voice.Dispose();
 						}
 					}
 
-					// destroy all other audio resources
-					foreach (var resource in resources)
+					// dispose all submix voices except the faux mastering voice
+					foreach (var handle in resourceHandles)
 					{
-						if (resource.Target is IDisposable disposable)
+						if (handle.Target is SubmixVoice voice && voice != fauxMasteringVoice)
 						{
-							disposable.Dispose();
+							voice.Dispose();
 						}
 					}
 
-					resources.Clear();
+					// dispose the faux mastering voice
+					fauxMasteringVoice.Dispose();
+
+					// dispose the true mastering voice
+					FAudio.FAudioVoice_DestroyVoice(trueMasteringVoice);
+
+					// destroy all other audio resources
+					foreach (var handle in resourceHandles)
+					{
+						if (handle.Target is AudioResource resource)
+						{
+							resource.Dispose();
+						}
+					}
+
+					resourceHandles.Clear();
 				}
 
-				FAudio.FAudioVoice_DestroyVoice(trueMasteringVoice);
 				FAudio.FAudio_Release(Handle);
 
 				IsDisposed = true;

@@ -1,8 +1,9 @@
 using System;
+using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
 {
-	internal class VideoAV1Stream
+	internal class VideoAV1Stream : GraphicsResource
 	{
 		public IntPtr Handle => handle;
 		IntPtr handle;
@@ -19,9 +20,7 @@ namespace MoonWorks.Video
 
 		public bool FrameDataUpdated { get; set; }
 
-		bool IsDisposed;
-
-		public VideoAV1Stream(VideoAV1 video)
+		public VideoAV1Stream(GraphicsDevice device, VideoAV1 video) : base(device)
 		{
 			if (Dav1dfile.df_fopen(video.Filename, out handle) == 0)
 			{
@@ -71,32 +70,13 @@ namespace MoonWorks.Video
 			}
 		}
 
-		protected virtual void Dispose(bool disposing)
+		protected override void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
-				if (disposing)
-				{
-					// dispose managed state (managed objects)
-				}
-
-				// free unmanaged resources (unmanaged objects)
 				Dav1dfile.df_close(Handle);
-
-				IsDisposed = true;
 			}
-		}
-
-		~VideoAV1Stream()
-		{
-			Dispose(disposing: false);
-		}
-
-		public void Dispose()
-		{
-			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-			Dispose(disposing: true);
-			GC.SuppressFinalize(this);
+			base.Dispose(disposing);
 		}
 	}
 }

@@ -7,7 +7,7 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// Buffers are generic data containers that can be used by the GPU.
 	/// </summary>
-	public class Buffer : GraphicsResource
+	public class Buffer : RefreshResource
 	{
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyBuffer;
 

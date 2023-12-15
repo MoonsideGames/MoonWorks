@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	/// Graphics pipelines encapsulate all of the render state in a single object. <br/>
 	/// These pipelines are bound before draw calls are issued.
 	/// </summary>
-	public class GraphicsPipeline : GraphicsResource
+	public class GraphicsPipeline : RefreshResource
 	{
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 

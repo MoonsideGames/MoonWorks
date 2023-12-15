@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Video;
 using RefreshCS;
+using WellspringCS;
 
 namespace MoonWorks.Graphics
 {
@@ -20,6 +21,15 @@ namespace MoonWorks.Graphics
 
 		// Built-in video pipeline
 		internal GraphicsPipeline VideoPipeline { get; }
+
+		// Built-in text shader info
+		public GraphicsShaderInfo TextVertexShaderInfo { get; }
+		public GraphicsShaderInfo TextFragmentShaderInfo { get; }
+		public VertexInputState TextVertexInputState { get; }
+
+		// Built-in samplers
+		public Sampler PointSampler { get; }
+		public Sampler LinearSampler { get; }
 
 		public bool IsDisposed { get; private set; }
 
@@ -41,43 +51,91 @@ namespace MoonWorks.Graphics
 				Conversions.BoolToByte(debugMode)
 			);
 
-			// Check for optional video shaders
+			// TODO: check for CreateDevice fail
+
+			// Check for replacement stock shaders
 			string basePath = System.AppContext.BaseDirectory;
+
 			string videoVertPath = Path.Combine(basePath, "video_fullscreen.vert.refresh");
 			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
+
+			string textVertPath = Path.Combine(basePath, "text_transform.vert.refresh");
+			string textFragPath = Path.Combine(basePath, "text_msdf.frag.refresh");
+
+			ShaderModule videoVertShader;
+			ShaderModule videoFragShader;
+
+			ShaderModule textVertShader;
+			ShaderModule textFragShader;
+
 			if (File.Exists(videoVertPath) && File.Exists(videoFragPath))
 			{
-				ShaderModule videoVertShader = new ShaderModule(this, videoVertPath);
-				ShaderModule videoFragShader = new ShaderModule(this, videoFragPath);
-
-				VideoPipeline = new GraphicsPipeline(
-					this,
-					new GraphicsPipelineCreateInfo
-					{
-						AttachmentInfo = new GraphicsPipelineAttachmentInfo(
-							new ColorAttachmentDescription(
-								TextureFormat.R8G8B8A8,
-								ColorAttachmentBlendState.None
-							)
-						),
-						DepthStencilState = DepthStencilState.Disable,
-						VertexShaderInfo = GraphicsShaderInfo.Create(
-							videoVertShader,
-							"main",
-							0
-						),
-						FragmentShaderInfo = GraphicsShaderInfo.Create(
-							videoFragShader,
-							"main",
-							3
-						),
-						VertexInputState = VertexInputState.Empty,
-						RasterizerState = RasterizerState.CCW_CullNone,
-						PrimitiveType = PrimitiveType.TriangleList,
-						MultisampleState = MultisampleState.None
-					}
-				);
+				videoVertShader = new ShaderModule(this, videoVertPath);
+				videoFragShader = new ShaderModule(this, videoFragPath);
 			}
+			else
+			{
+				// use defaults
+				var assembly = typeof(GraphicsDevice).Assembly;
+
+				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoFullscreen.vert.refresh");
+				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh");
+
+				videoVertShader = new ShaderModule(this, vertStream);
+				videoFragShader = new ShaderModule(this, fragStream);
+			}
+
+			if (File.Exists(textVertPath) && File.Exists(textFragPath))
+			{
+				textVertShader = new ShaderModule(this, textVertPath);
+				textFragShader = new ShaderModule(this, textFragPath);
+			}
+			else
+			{
+				// use defaults
+				var assembly = typeof(GraphicsDevice).Assembly;
+
+				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.refresh");
+				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh");
+
+				textVertShader = new ShaderModule(this, vertStream);
+				textFragShader = new ShaderModule(this, fragStream);
+			}
+
+			VideoPipeline = new GraphicsPipeline(
+				this,
+				new GraphicsPipelineCreateInfo
+				{
+					AttachmentInfo = new GraphicsPipelineAttachmentInfo(
+						new ColorAttachmentDescription(
+							TextureFormat.R8G8B8A8,
+							ColorAttachmentBlendState.None
+						)
+					),
+					DepthStencilState = DepthStencilState.Disable,
+					VertexShaderInfo = GraphicsShaderInfo.Create(
+						videoVertShader,
+						"main",
+						0
+					),
+					FragmentShaderInfo = GraphicsShaderInfo.Create(
+						videoFragShader,
+						"main",
+						3
+					),
+					VertexInputState = VertexInputState.Empty,
+					RasterizerState = RasterizerState.CCW_CullNone,
+					PrimitiveType = PrimitiveType.TriangleList,
+					MultisampleState = MultisampleState.None
+				}
+			);
+
+			TextVertexShaderInfo = GraphicsShaderInfo.Create<Math.Float.Matrix4x4>(textVertShader, "main", 0);
+			TextFragmentShaderInfo = GraphicsShaderInfo.Create<float>(textFragShader, "main", 1);
+			TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>();
+
+			PointSampler = new Sampler(this, SamplerCreateInfo.PointClamp);
+			LinearSampler = new Sampler(this, SamplerCreateInfo.LinearClamp);
 
 			FencePool = new FencePool(this);
 		}
@@ -363,6 +421,16 @@ namespace MoonWorks.Graphics
 				{
 					lock (resources)
 					{
+						// Dispose video players first to avoid race condition on threaded decoding
+						foreach (var resource in resources)
+						{
+							if (resource.Target is VideoPlayer player)
+							{
+								player.Dispose();
+							}
+						}
+
+						// Dispose everything else
 						foreach (var resource in resources)
 						{
 							if (resource.Target is IDisposable disposable)

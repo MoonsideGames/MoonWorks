@@ -24,4 +24,19 @@
 			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
 		</None>
 	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_fullscreen.vert.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoFullscreen.vert.refresh</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_transform.vert.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.refresh</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
 </Project>

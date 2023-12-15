@@ -1,75 +1,87 @@
 using System;
+using System.Runtime.InteropServices;
 using WellspringCS;
 
 namespace MoonWorks.Graphics.Font
 {
-	public class TextBatch
+	public unsafe class TextBatch : GraphicsResource
 	{
+		public const int INITIAL_CHAR_COUNT = 64;
+		public const int INITIAL_VERTEX_COUNT = INITIAL_CHAR_COUNT * 4;
+		public const int INITIAL_INDEX_COUNT = INITIAL_CHAR_COUNT * 6;
+
 		private GraphicsDevice GraphicsDevice { get; }
 		public IntPtr Handle { get; }
 
 		public Buffer VertexBuffer { get; protected set; } = null;
 		public Buffer IndexBuffer { get; protected set; } = null;
-		public Texture Texture { get; protected set; }
 		public uint PrimitiveCount { get; protected set; }
 
-		private byte[] StringBytes;
+		public Font CurrentFont { get; private set; }
 
-		public TextBatch(GraphicsDevice graphicsDevice)
+		private byte* StringBytes;
+		private int StringBytesLength;
+
+		public TextBatch(GraphicsDevice device) : base(device)
 		{
-			GraphicsDevice = graphicsDevice;
+			GraphicsDevice = device;
 			Handle = Wellspring.Wellspring_CreateTextBatch();
-			StringBytes = new byte[128];
+
+			StringBytesLength = 128;
+			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
+
+			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
+			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 		}
 
-		public void Start(Packer packer)
+		// Call this to initialize or reset the batch.
+		public void Start(Font font)
 		{
-			Wellspring.Wellspring_StartTextBatch(Handle, packer.Handle);
-			Texture = packer.Texture;
+			Wellspring.Wellspring_StartTextBatch(Handle, font.Handle);
+			CurrentFont = font;
 			PrimitiveCount = 0;
 		}
 
-		public unsafe void Draw(
+		// Add text with size and color to the batch
+		public unsafe bool Add(
 			string text,
-			float x,
-			float y,
-			float depth,
+			int pixelSize,
 			Color color,
 			HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
 			VerticalAlignment verticalAlignment = VerticalAlignment.Baseline
 		) {
 			var byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
 
-			if (StringBytes.Length < byteCount)
+			if (StringBytesLength < byteCount)
 			{
-				System.Array.Resize(ref StringBytes, byteCount);
+				StringBytes = (byte*) NativeMemory.Realloc(StringBytes, (nuint) byteCount);
 			}
 
 			fixed (char* chars = text)
-			fixed (byte* bytes = StringBytes)
 			{
-				System.Text.Encoding.UTF8.GetBytes(chars, text.Length, bytes, byteCount);
+				System.Text.Encoding.UTF8.GetBytes(chars, text.Length, StringBytes, byteCount);
 
-				var result = Wellspring.Wellspring_Draw(
+				var result = Wellspring.Wellspring_AddToTextBatch(
 					Handle,
-					x,
-					y,
-					depth,
+					pixelSize,
 					new Wellspring.Color { R = color.R, G = color.G, B = color.B, A = color.A },
 					(Wellspring.HorizontalAlignment) horizontalAlignment,
 					(Wellspring.VerticalAlignment) verticalAlignment,
-					(IntPtr) bytes,
+					(IntPtr) StringBytes,
 					(uint) byteCount
 				);
 
 				if (result == 0)
 				{
-					throw new System.ArgumentException("Could not decode string!");
+					Logger.LogWarn("Could not decode string: " + text);
+					return false;
 				}
 			}
+
+			return true;
 		}
 
-		// Call this after you have made all the Draw calls you want.
+		// Call this after you have made all the Add calls you want, but before beginning a render pass.
 		public unsafe void UploadBufferData(CommandBuffer commandBuffer)
 		{
 			Wellspring.Wellspring_GetBufferData(
@@ -81,24 +93,16 @@ namespace MoonWorks.Graphics.Font
 				out uint indexDataLengthInBytes
 			);
 
-			if (VertexBuffer == null)
-			{
-				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
-			}
-			else if (VertexBuffer.Size < vertexDataLengthInBytes)
+			if (VertexBuffer.Size < vertexDataLengthInBytes)
 			{
 				VertexBuffer.Dispose();
 				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
 			}
 
-			if (IndexBuffer == null)
-			{
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, indexDataLengthInBytes);
-			}
-			else if (IndexBuffer.Size < indexDataLengthInBytes)
+			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, indexDataLengthInBytes);
+				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
@@ -107,7 +111,41 @@ namespace MoonWorks.Graphics.Font
 				commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
 			}
 
-			PrimitiveCount = vertexCount / 2; // FIXME: is this jank?
+			PrimitiveCount = vertexCount / 2;
+		}
+
+		// Call this AFTER binding your text pipeline!
+		public void Render(CommandBuffer commandBuffer, Math.Float.Matrix4x4 transformMatrix)
+		{
+			commandBuffer.BindFragmentSamplers(new TextureSamplerBinding(
+				CurrentFont.Texture,
+				GraphicsDevice.LinearSampler
+			));
+			commandBuffer.BindVertexBuffers(VertexBuffer);
+			commandBuffer.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
+			commandBuffer.DrawIndexedPrimitives(
+				0,
+				0,
+				PrimitiveCount,
+				commandBuffer.PushVertexShaderUniforms(transformMatrix),
+				commandBuffer.PushFragmentShaderUniforms(CurrentFont.DistanceRange)
+			);
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			if (!IsDisposed)
+			{
+				if (disposing)
+				{
+					VertexBuffer.Dispose();
+					IndexBuffer.Dispose();
+				}
+
+				NativeMemory.Free(StringBytes);
+				Wellspring.Wellspring_DestroyTextBatch(Handle);
+			}
+			base.Dispose(disposing);
 		}
 	}
 }

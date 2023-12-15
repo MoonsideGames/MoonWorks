@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace MoonWorks.Graphics
 {
@@ -8,13 +7,11 @@ namespace MoonWorks.Graphics
 	public abstract class GraphicsResource : IDisposable
 	{
 		public GraphicsDevice Device { get; }
-		public IntPtr Handle { get => handle; internal set => handle = value; }
-		private nint handle;
-
-		public bool IsDisposed { get; private set; }
-		protected abstract Action<IntPtr, IntPtr> QueueDestroyFunction { get; }
 
 		private GCHandle SelfReference;
+
+		public bool IsDisposed { get; private set; }
+
 		protected GraphicsResource(GraphicsDevice device)
 		{
 			Device = device;
@@ -23,7 +20,7 @@ namespace MoonWorks.Graphics
 			Device.AddResourceReference(SelfReference);
 		}
 
-		protected void Dispose(bool disposing)
+		protected virtual void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
@@ -31,13 +28,6 @@ namespace MoonWorks.Graphics
 				{
 					Device.RemoveResourceReference(SelfReference);
 					SelfReference.Free();
-				}
-
-				// Atomically call destroy function in case this is called from the finalizer thread
-				var toDispose = Interlocked.Exchange(ref handle, IntPtr.Zero);
-				if (toDispose != IntPtr.Zero)
-				{
-					QueueDestroyFunction(Device.Handle, toDispose);
 				}
 
 				IsDisposed = true;

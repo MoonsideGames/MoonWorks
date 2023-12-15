@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
 	/// The Fence object itself is basically just a wrapper for the Refresh_Fence. <br/>
 	/// The internal handle is replaced so that we can pool Fence objects to manage garbage.
 	/// </summary>
-	public class Fence : GraphicsResource
+	public class Fence : RefreshResource
 	{
 		protected override Action<nint, nint> QueueDestroyFunction => Refresh.Refresh_ReleaseFence;
 

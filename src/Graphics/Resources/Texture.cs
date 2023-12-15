@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// A container for pixel data.
 	/// </summary>
-	public class Texture : GraphicsResource
+	public class Texture : RefreshResource
 	{
 		public uint Width { get; internal set; }
 		public uint Height { get; internal set; }
