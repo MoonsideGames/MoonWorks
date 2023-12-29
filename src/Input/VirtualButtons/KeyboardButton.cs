@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace MoonWorks.Input
 {
 	/// <summary>
@@ -16,9 +14,9 @@ namespace MoonWorks.Input
 			KeyCode = keyCode;
 		}
 
-		internal override bool CheckPressed()
+		internal unsafe override bool CheckPressed()
 		{
-			return Conversions.ByteToBool(Marshal.ReadByte(Parent.State, (int) KeyCode));
+			return Conversions.ByteToBool(((byte*) Parent.State)[(int) KeyCode]);
 		}
 	}
 }
