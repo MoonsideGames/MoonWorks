@@ -167,7 +167,7 @@ namespace MoonWorks.Graphics
 				window.SwapchainFormat = GetSwapchainFormat(window);
 				if (window.SwapchainTexture == null)
 				{
-					window.SwapchainTexture = new Texture(this);
+					window.SwapchainTexture = new Texture(this, window.SwapchainFormat);
 				}
 			}
 

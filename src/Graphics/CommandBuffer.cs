@@ -1767,6 +1767,7 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy(dataLengthInBytes);
+			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
 #endif
 
 			Refresh.Refresh_SetBufferData(
@@ -1803,6 +1804,7 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy(dataLengthInBytes);
+			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
 #endif
 
 			fixed (T* ptr = data)
@@ -1847,17 +1849,19 @@ namespace MoonWorks.Graphics
 		{
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * numElements);
+			var offsetLengthInBytes = (uint) elementSize * bufferOffsetInElements;
 
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy((uint) (elementSize * numElements));
+			AssertBufferBoundsCheck(buffer.Size, offsetLengthInBytes, dataLengthInBytes);
 #endif
 
 			Refresh.Refresh_SetBufferData(
 				Device.Handle,
 				Handle,
 				buffer.Handle,
-				(uint) elementSize * bufferOffsetInElements,
+				offsetLengthInBytes,
 				dataPtr,
 				dataLengthInBytes
 			);
@@ -1888,11 +1892,12 @@ namespace MoonWorks.Graphics
 		/// <param name="data">A span of data to copy into the texture.</param>
 		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, Span<T> data) where T : unmanaged
 		{
+			var dataLengthInBytes = (uint) (data.Length * Marshal.SizeOf<T>());
+
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
 #endif
-
-			var size = sizeof(T);
 
 			fixed (T* ptr = data)
 			{
@@ -1901,7 +1906,7 @@ namespace MoonWorks.Graphics
 					Handle,
 					textureSlice.ToRefreshTextureSlice(),
 					(IntPtr) ptr,
-					(uint) (data.Length * size)
+					dataLengthInBytes
 				);
 			}
 		}
@@ -1926,6 +1931,7 @@ namespace MoonWorks.Graphics
 		{
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
 #endif
 
 			Refresh.Refresh_SetTextureData(
@@ -2027,6 +2033,7 @@ namespace MoonWorks.Graphics
 		{
 #if DEBUG
 			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertBufferBoundsCheck(buffer.Size, 0, textureSlice.Size);
 #endif
 
 			var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
@@ -2207,6 +2214,22 @@ namespace MoonWorks.Graphics
 			if (dataLengthInBytes == 0)
 			{
 				throw new System.InvalidOperationException("SetBufferData must have a length greater than 0 bytes!");
+			}
+		}
+
+		private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
+		{
+			if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
+			{
+				throw new System.InvalidOperationException($"SetBufferData overflow! buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
+			}
+		}
+
+		private void AssertTextureBoundsCheck(uint textureSizeInBytes, uint dataLengthInBytes)
+		{
+			if (dataLengthInBytes > textureSizeInBytes)
+			{
+				throw new System.InvalidOperationException($"SetTextureData overflow! texture size {textureSizeInBytes}, data size {dataLengthInBytes}");
 			}
 		}
 #endif

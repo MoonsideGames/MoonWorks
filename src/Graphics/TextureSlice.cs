@@ -14,6 +14,8 @@ namespace MoonWorks.Graphics
 		public uint Layer { get; }
 		public uint Level { get; }
 
+		public uint Size => (uint) (Rectangle.W * Rectangle.H * Texture.BytesPerPixel(Texture.Format) / Texture.BlockSizeSquared(Texture.Format));
+
 		public TextureSlice(Texture texture)
 		{
 			Texture = texture;
