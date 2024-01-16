@@ -17,11 +17,14 @@ namespace MoonWorks.Graphics
 		GraphicsPipeline currentGraphicsPipeline;
 		ComputePipeline currentComputePipeline;
 		bool renderPassActive;
-		SampleCount currentSampleCount;
+		SampleCount colorAttachmentSampleCount;
+		uint colorAttachmentCount;
 		TextureFormat colorFormatOne;
 		TextureFormat colorFormatTwo;
 		TextureFormat colorFormatThree;
 		TextureFormat colorFormatFour;
+		bool hasDepthStencilAttachment;
+		SampleCount depthStencilAttachmentSampleCount;
 		TextureFormat depthStencilFormat;
 #endif
 
@@ -35,7 +38,9 @@ namespace MoonWorks.Graphics
 			currentGraphicsPipeline = null;
 			currentComputePipeline = null;
 			renderPassActive = false;
-			currentSampleCount = SampleCount.One;
+			colorAttachmentSampleCount = SampleCount.One;
+			depthStencilAttachmentSampleCount = SampleCount.One;
+			colorAttachmentCount = 0;
 			colorFormatOne = TextureFormat.R8G8B8A8;
 			colorFormatTwo = TextureFormat.R8G8B8A8;
 			colorFormatThree = TextureFormat.R8G8B8A8;
@@ -71,7 +76,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			hasDepthStencilAttachment = false;
+			colorAttachmentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			colorAttachmentCount = 1;
 			colorFormatOne = colorAttachmentInfo.Texture.Format;
 #endif
 		}
@@ -94,7 +101,7 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoTwo);
 			AssertColorTarget(colorAttachmentInfoTwo);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
@@ -111,7 +118,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = false;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 2;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 #endif
@@ -140,8 +149,8 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoThree);
 			AssertColorTarget(colorAttachmentInfoThree);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
@@ -159,7 +168,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = false;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 3;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
@@ -194,9 +205,9 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoFour);
 			AssertColorTarget(colorAttachmentInfoFour);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoFour);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoFour.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
@@ -215,7 +226,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = false;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 4;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
@@ -248,6 +261,8 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
+			hasDepthStencilAttachment = true;
+			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.Texture.SampleCount;
 			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
 #endif
 		}
@@ -268,6 +283,7 @@ namespace MoonWorks.Graphics
 
 			AssertTextureNotNull(colorAttachmentInfo);
 			AssertColorTarget(colorAttachmentInfo);
+			AssertSameSampleCount(colorAttachmentInfo.Texture, depthStencilAttachmentInfo.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
@@ -285,7 +301,10 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			hasDepthStencilAttachment = true;
+			colorAttachmentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			colorAttachmentCount = 1;
+			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.Texture.SampleCount;
 			colorFormatOne = colorAttachmentInfo.Texture.Format;
 			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
 #endif
@@ -313,7 +332,8 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoTwo);
 			AssertColorTarget(colorAttachmentInfoTwo);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
@@ -332,7 +352,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = true;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 2;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
@@ -366,8 +388,9 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoThree);
 			AssertColorTarget(colorAttachmentInfoThree);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
@@ -387,7 +410,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = true;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 3;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
@@ -427,9 +452,10 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoFour);
 			AssertColorTarget(colorAttachmentInfoFour);
 
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoTwo);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoThree);
-			AssertSameSampleCount(colorAttachmentInfoOne, colorAttachmentInfoFour);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoFour.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
@@ -450,7 +476,9 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			renderPassActive = true;
-			currentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			hasDepthStencilAttachment = true;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentCount = 4;
 			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
 			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
 			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
@@ -784,9 +812,20 @@ namespace MoonWorks.Graphics
 			AssertRenderPassActive();
 			AssertRenderPassPipelineFormatMatch(graphicsPipeline);
 
-			if (graphicsPipeline.SampleCount != currentSampleCount)
+			if (colorAttachmentCount > 0)
 			{
-				throw new System.ArgumentException("The sample count of the bound GraphicsPipeline must match the sample count of the current render pass!");
+				if (graphicsPipeline.SampleCount != colorAttachmentSampleCount)
+				{
+					throw new System.InvalidOperationException($"Sample count mismatch! Graphics pipeline sample count: {graphicsPipeline.SampleCount}, Color attachment sample count: {colorAttachmentSampleCount}");
+				}
+			}
+
+			if (hasDepthStencilAttachment)
+			{
+				if (graphicsPipeline.SampleCount != depthStencilAttachmentSampleCount)
+				{
+					throw new System.InvalidOperationException($"Sample count mismatch! Graphics pipeline sample count: {graphicsPipeline.SampleCount}, Depth stencil attachment sample count: {depthStencilAttachmentSampleCount}");
+				}
 			}
 #endif
 
@@ -2103,6 +2142,12 @@ namespace MoonWorks.Graphics
 			if (graphicsPipeline.AttachmentInfo.HasDepthStencilAttachment)
 			{
 				var pipelineDepthFormat = graphicsPipeline.AttachmentInfo.DepthStencilFormat;
+
+				if (!hasDepthStencilAttachment)
+				{
+					throw new System.InvalidOperationException("Pipeline expects depth attachment!");
+				}
+
 				if (pipelineDepthFormat != depthStencilFormat)
 				{
 					throw new System.InvalidOperationException($"Depth texture format mismatch! Pipeline expects {pipelineDepthFormat}, render pass attachment is {depthStencilFormat}");
@@ -2166,11 +2211,11 @@ namespace MoonWorks.Graphics
 			}
 		}
 
-		private void AssertSameSampleCount(ColorAttachmentInfo a, ColorAttachmentInfo b)
+		private void AssertSameSampleCount(Texture a, Texture b)
 		{
-			if (a.Texture.SampleCount != b.Texture.SampleCount)
+			if (a.SampleCount != b.SampleCount)
 			{
-				throw new System.ArgumentException("All color attachments in a render pass must have the same SampleCount!");
+				throw new System.ArgumentException("All attachments in a render pass must have the same SampleCount!");
 			}
 		}
 
