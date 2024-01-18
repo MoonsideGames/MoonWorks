@@ -35,6 +35,7 @@ namespace MoonWorks.Graphics
 
 		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
 		private FencePool FencePool;
+		private CommandBufferPool CommandBufferPool;
 
 		internal GraphicsDevice(
 			Backend preferredBackend,
@@ -138,6 +139,7 @@ namespace MoonWorks.Graphics
 			LinearSampler = new Sampler(this, SamplerCreateInfo.LinearClamp);
 
 			FencePool = new FencePool(this);
+			CommandBufferPool = new CommandBufferPool(this);
 		}
 
 		/// <summary>
@@ -221,7 +223,12 @@ namespace MoonWorks.Graphics
 		/// <returns></returns>
 		public CommandBuffer AcquireCommandBuffer()
 		{
-			return new CommandBuffer(this, Refresh.Refresh_AcquireCommandBuffer(Handle));
+			var commandBuffer = CommandBufferPool.Obtain();
+			commandBuffer.SetHandle(Refresh.Refresh_AcquireCommandBuffer(Handle));
+#if DEBUG
+			commandBuffer.ResetStateTracking();
+#endif
+			return commandBuffer;
 		}
 
 		/// <summary>
@@ -229,10 +236,23 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void Submit(CommandBuffer commandBuffer)
 		{
+#if DEBUG
+			if (commandBuffer.Submitted)
+			{
+				throw new System.InvalidOperationException("Command buffer already submitted!");
+			}
+#endif
+
 			Refresh.Refresh_Submit(
 				Handle,
 				commandBuffer.Handle
 			);
+
+			CommandBufferPool.Return(commandBuffer);
+
+#if DEBUG
+			commandBuffer.Submitted = true;
+#endif
 		}
 
 		/// <summary>

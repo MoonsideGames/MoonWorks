@@ -8,12 +8,14 @@ namespace MoonWorks.Graphics
 	/// Command buffers are used to apply render state and issue draw calls.
 	/// NOTE: it is not recommended to hold references to command buffers long term.
 	/// </summary>
-	public struct CommandBuffer
+	public class CommandBuffer
 	{
 		public GraphicsDevice Device { get; }
-		public IntPtr Handle { get; }
+		public IntPtr Handle { get; internal set; }
 
 #if DEBUG
+		bool swapchainTextureAcquired;
+
 		GraphicsPipeline currentGraphicsPipeline;
 		ComputePipeline currentComputePipeline;
 		bool renderPassActive;
@@ -26,15 +28,31 @@ namespace MoonWorks.Graphics
 		bool hasDepthStencilAttachment;
 		SampleCount depthStencilAttachmentSampleCount;
 		TextureFormat depthStencilFormat;
+
+		internal bool Submitted;
 #endif
 
-		// called from RefreshDevice
-		internal CommandBuffer(GraphicsDevice device, IntPtr handle)
+		// called from CommandBufferPool
+		internal CommandBuffer(GraphicsDevice device)
 		{
 			Device = device;
-			Handle = handle;
+			Handle = IntPtr.Zero;
 
 #if DEBUG
+			ResetStateTracking();
+#endif
+		}
+
+		internal void SetHandle(nint handle)
+		{
+			Handle = handle;
+		}
+
+#if DEBUG
+		internal void ResetStateTracking()
+		{
+			swapchainTextureAcquired = false;
+
 			currentGraphicsPipeline = null;
 			currentComputePipeline = null;
 			renderPassActive = false;
@@ -46,8 +64,10 @@ namespace MoonWorks.Graphics
 			colorFormatThree = TextureFormat.R8G8B8A8;
 			colorFormatFour = TextureFormat.R8G8B8A8;
 			depthStencilFormat = TextureFormat.D16;
-#endif
+
+			Submitted = false;
 		}
+#endif
 
 		/// <summary>
 		/// Begins a render pass.
@@ -59,6 +79,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertTextureNotNull(colorAttachmentInfo);
 			AssertColorTarget(colorAttachmentInfo);
 #endif
@@ -95,6 +116,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertTextureNotNull(colorAttachmentInfoOne);
 			AssertColorTarget(colorAttachmentInfoOne);
 
@@ -140,6 +162,8 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
+
 			AssertTextureNotNull(colorAttachmentInfoOne);
 			AssertColorTarget(colorAttachmentInfoOne);
 
@@ -193,6 +217,8 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
+
 			AssertTextureNotNull(colorAttachmentInfoOne);
 			AssertColorTarget(colorAttachmentInfoOne);
 
@@ -246,6 +272,7 @@ namespace MoonWorks.Graphics
 			in DepthStencilAttachmentInfo depthStencilAttachmentInfo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 #endif
 
@@ -279,6 +306,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 
 			AssertTextureNotNull(colorAttachmentInfo);
@@ -324,6 +352,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 
 			AssertTextureNotNull(colorAttachmentInfoOne);
@@ -377,6 +406,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 
 			AssertTextureNotNull(colorAttachmentInfoOne);
@@ -438,6 +468,7 @@ namespace MoonWorks.Graphics
 			in ColorAttachmentInfo colorAttachmentInfoFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertValidDepthAttachment(depthStencilAttachmentInfo);
 
 			AssertTextureNotNull(colorAttachmentInfoOne);
@@ -494,6 +525,10 @@ namespace MoonWorks.Graphics
 		public void BindComputePipeline(
 			ComputePipeline computePipeline
 		) {
+#if DEBUG
+			AssertNotSubmitted();
+#endif
+
 			Refresh.Refresh_BindComputePipeline(
 				Device.Handle,
 				Handle,
@@ -513,6 +548,7 @@ namespace MoonWorks.Graphics
 			Buffer buffer
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(1);
 #endif
@@ -537,6 +573,7 @@ namespace MoonWorks.Graphics
 			Buffer bufferTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(2);
 #endif
@@ -564,6 +601,7 @@ namespace MoonWorks.Graphics
 			Buffer bufferThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(3);
 #endif
@@ -594,6 +632,7 @@ namespace MoonWorks.Graphics
 			Buffer bufferFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(4);
 #endif
@@ -619,6 +658,7 @@ namespace MoonWorks.Graphics
 			in Span<Buffer> buffers
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(buffers.Length);
 #endif
@@ -645,6 +685,7 @@ namespace MoonWorks.Graphics
 			Texture texture
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(1);
 #endif
@@ -669,6 +710,7 @@ namespace MoonWorks.Graphics
 			Texture textureTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(2);
 #endif
@@ -696,6 +738,7 @@ namespace MoonWorks.Graphics
 			Texture textureThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(3);
 #endif
@@ -726,6 +769,7 @@ namespace MoonWorks.Graphics
 			Texture textureFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(4);
 #endif
@@ -751,6 +795,7 @@ namespace MoonWorks.Graphics
 			in Span<Texture> textures
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(textures.Length);
 #endif
@@ -783,6 +828,7 @@ namespace MoonWorks.Graphics
 			uint computeParamOffset
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 
 			if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
@@ -809,6 +855,7 @@ namespace MoonWorks.Graphics
 			GraphicsPipeline graphicsPipeline
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassActive();
 			AssertRenderPassPipelineFormatMatch(graphicsPipeline);
 
@@ -846,6 +893,7 @@ namespace MoonWorks.Graphics
 		public void SetViewport(in Viewport viewport)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassActive();
 #endif
 
@@ -862,6 +910,7 @@ namespace MoonWorks.Graphics
 		public void SetScissor(in Rect scissor)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassActive();
 
 			if (scissor.X < 0 || scissor.Y < 0 || scissor.W <= 0 || scissor.H <= 0)
@@ -887,6 +936,7 @@ namespace MoonWorks.Graphics
 			uint firstBinding = 0
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -918,6 +968,7 @@ namespace MoonWorks.Graphics
 			uint firstBinding = 0
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -954,6 +1005,7 @@ namespace MoonWorks.Graphics
 			uint firstBinding = 0
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -994,6 +1046,7 @@ namespace MoonWorks.Graphics
 			uint firstBinding = 0
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1030,6 +1083,7 @@ namespace MoonWorks.Graphics
 			uint firstBinding = 0
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1064,6 +1118,10 @@ namespace MoonWorks.Graphics
 			uint offset = 0
 		)
 		{
+#if DEBUG
+			AssertNotSubmitted();
+#endif
+
 			Refresh.Refresh_BindIndexBuffer(
 				Device.Handle,
 				Handle,
@@ -1081,6 +1139,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBinding
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertVertexSamplerCount(1);
 			AssertTextureSamplerBindingNonNull(textureSamplerBinding);
@@ -1111,6 +1170,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertVertexSamplerCount(2);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1148,6 +1208,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertVertexSamplerCount(3);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1191,6 +1252,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertVertexSamplerCount(4);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1232,6 +1294,7 @@ namespace MoonWorks.Graphics
 			in Span<TextureSamplerBinding> textureSamplerBindings
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertVertexSamplerCount(textureSamplerBindings.Length);
 #endif
@@ -1266,6 +1329,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBinding
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertFragmentSamplerCount(1);
 			AssertTextureSamplerBindingNonNull(textureSamplerBinding);
@@ -1296,6 +1360,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingTwo
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertFragmentSamplerCount(2);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1333,6 +1398,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingThree
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertFragmentSamplerCount(3);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1376,6 +1442,7 @@ namespace MoonWorks.Graphics
 			in TextureSamplerBinding textureSamplerBindingFour
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertFragmentSamplerCount(4);
 			AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
@@ -1417,6 +1484,7 @@ namespace MoonWorks.Graphics
 			in Span<TextureSamplerBinding> textureSamplerBindings
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 			AssertFragmentSamplerCount(textureSamplerBindings.Length);
 #endif
@@ -1452,6 +1520,7 @@ namespace MoonWorks.Graphics
 			uint size
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 
 			if (currentGraphicsPipeline.VertexShaderInfo.UniformBufferSize == 0)
@@ -1491,6 +1560,7 @@ namespace MoonWorks.Graphics
 			uint size
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 
 			if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize == 0)
@@ -1530,6 +1600,7 @@ namespace MoonWorks.Graphics
 			uint size
 		) {
 #if DEBUG
+			AssertNotSubmitted();
 			AssertComputePipelineBound();
 
 			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
@@ -1579,6 +1650,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1611,6 +1683,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1640,6 +1713,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1672,6 +1746,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertGraphicsPipelineBound();
 #endif
 
@@ -1693,6 +1768,10 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void EndRenderPass()
 		{
+#if DEBUG
+			AssertNotSubmitted();
+#endif
+
 			Refresh.Refresh_EndRenderPass(
 				Device.Handle,
 				Handle
@@ -1716,9 +1795,16 @@ namespace MoonWorks.Graphics
 			Window window
 		) {
 #if DEBUG
+			AssertNotSubmitted();
+
 			if (!window.Claimed)
 			{
 				throw new System.InvalidOperationException("Cannot acquire swapchain texture, window has not been claimed!");
+			}
+
+			if (swapchainTextureAcquired)
+			{
+				throw new System.InvalidOperationException("Cannot acquire two swapchain textures on the same command buffer!");
 			}
 #endif
 
@@ -1740,6 +1826,10 @@ namespace MoonWorks.Graphics
 			window.SwapchainTexture.Width = width;
 			window.SwapchainTexture.Height = height;
 			window.SwapchainTexture.Format = window.SwapchainFormat;
+
+#if DEBUG
+			swapchainTextureAcquired = true;
+#endif
 
 			return window.SwapchainTexture;
 		}
@@ -1804,6 +1894,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy(dataLengthInBytes);
 			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
@@ -1841,6 +1932,7 @@ namespace MoonWorks.Graphics
 			var dataOffsetInBytes = (int) startElement * elementSize;
 
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy(dataLengthInBytes);
 			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
@@ -1891,6 +1983,7 @@ namespace MoonWorks.Graphics
 			var offsetLengthInBytes = (uint) elementSize * bufferOffsetInElements;
 
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertNonEmptyCopy((uint) (elementSize * numElements));
 			AssertBufferBoundsCheck(buffer.Size, offsetLengthInBytes, dataLengthInBytes);
@@ -1934,6 +2027,7 @@ namespace MoonWorks.Graphics
 			var dataLengthInBytes = (uint) (data.Length * Marshal.SizeOf<T>());
 
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
 #endif
@@ -1969,6 +2063,7 @@ namespace MoonWorks.Graphics
 		public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
 #endif
@@ -2008,6 +2103,7 @@ namespace MoonWorks.Graphics
 			uint uvStride)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 #endif
 
@@ -2044,6 +2140,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 #endif
 
@@ -2071,6 +2168,7 @@ namespace MoonWorks.Graphics
 		)
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertRenderPassInactive("Cannot copy during render pass!");
 			AssertBufferBoundsCheck(buffer.Size, 0, textureSlice.Size);
 #endif
@@ -2275,6 +2373,14 @@ namespace MoonWorks.Graphics
 			if (dataLengthInBytes > textureSizeInBytes)
 			{
 				throw new System.InvalidOperationException($"SetTextureData overflow! texture size {textureSizeInBytes}, data size {dataLengthInBytes}");
+			}
+		}
+
+		private void AssertNotSubmitted()
+		{
+			if (Submitted)
+			{
+				throw new System.InvalidOperationException("Cannot add commands to a submitted command buffer!");
 			}
 		}
 #endif
