@@ -14,9 +14,9 @@ namespace MoonWorks.Graphics
 			VertexAttributes = attributes;
 		}
 
-		public static VertexBindingAndAttributes Create<T>(uint bindingIndex) where T : unmanaged, IVertexType
+		public static VertexBindingAndAttributes Create<T>(uint bindingIndex, uint locationOffset = 0, VertexInputRate inputRate = VertexInputRate.Vertex) where T : unmanaged, IVertexType
 		{
-			VertexBinding binding = VertexBinding.Create<T>(bindingIndex);
+			VertexBinding binding = VertexBinding.Create<T>(bindingIndex, inputRate);
 			VertexAttribute[] attributes = new VertexAttribute[T.Formats.Length];
 			uint offset = 0;
 
@@ -27,7 +27,7 @@ namespace MoonWorks.Graphics
 				attributes[i] = new VertexAttribute
 				{
 					Binding = bindingIndex,
-					Location = i,
+					Location = locationOffset + i,
 					Format = format,
 					Offset = offset
 				};

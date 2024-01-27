@@ -127,12 +127,12 @@ namespace MoonWorks.Graphics
 		public uint Stride;
 		public VertexInputRate InputRate;
 
-		public static VertexBinding Create<T>(uint binding = 0) where T : unmanaged
+		public static VertexBinding Create<T>(uint binding = 0, VertexInputRate inputRate = VertexInputRate.Vertex) where T : unmanaged
 		{
 			return new VertexBinding
 			{
 				Binding = binding,
-				InputRate = VertexInputRate.Vertex,
+				InputRate = inputRate,
 				Stride = (uint) Marshal.SizeOf<T>()
 			};
 		}
