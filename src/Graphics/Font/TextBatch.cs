@@ -102,7 +102,7 @@ namespace MoonWorks.Graphics.Font
 			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
