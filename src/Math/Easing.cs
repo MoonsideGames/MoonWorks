@@ -68,7 +68,7 @@ namespace MoonWorks.Math
 			{
 				return Interp(start, hold, time, attackDuration, Function.Get(attackEasingFunction));
 			}
-			else if (time >= attackDuration && time < holdDuration)
+			else if (time >= attackDuration && time < attackDuration + holdDuration)
 			{
 				return hold;
 			}
@@ -93,7 +93,7 @@ namespace MoonWorks.Math
 			{
 				return Interp(start, hold, time, attackDuration, Function.Get(attackEasingFunction));
 			}
-			else if (time >= attackDuration && time < holdDuration)
+			else if (time >= attackDuration && time < attackDuration + holdDuration)
 			{
 				return hold;
 			}
