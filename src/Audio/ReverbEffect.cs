@@ -35,6 +35,8 @@ namespace MoonWorks.Audio
 			RoomSize = FAudio.FAUDIOFX_REVERB_DEFAULT_ROOM_SIZE
 		};
 
+		public FAudio.FAudioFXReverbParameters Params { get; private set; }
+
 		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
 		{
 			/* Init reverb */
@@ -64,6 +66,8 @@ namespace MoonWorks.Audio
 
 		public void SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
 		{
+			Params = reverbParams;
+
 			fixed (FAudio.FAudioFXReverbParameters* reverbParamsPtr = &reverbParams)
 			{
 				FAudio.FAudioVoice_SetEffectParameters(
