@@ -182,6 +182,30 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void Upload()
 		{
+			CopyToTransferBuffer();
+
+			var commandBuffer = Device.AcquireCommandBuffer();
+			RecordUploadCommands(commandBuffer);
+			Device.Submit(commandBuffer);
+		}
+
+		/// <summary>
+		/// Uploads and then blocks until the upload is finished.
+		/// This is useful for keeping memory usage down during threaded upload.
+		/// </summary>
+		public void UploadAndWait()
+		{
+			CopyToTransferBuffer();
+
+			var commandBuffer = Device.AcquireCommandBuffer();
+			RecordUploadCommands(commandBuffer);
+			var fence = Device.SubmitAndAcquireFence(commandBuffer);
+			Device.WaitForFences(fence);
+			Device.ReleaseFence(fence);
+		}
+
+		private void CopyToTransferBuffer()
+		{
 			if (TransferBuffer == null || TransferBuffer.Size < dataSize)
 			{
 				TransferBuffer?.Dispose();
@@ -190,9 +214,10 @@ namespace MoonWorks.Graphics
 
 			var dataSpan = new Span<byte>(data, (int) dataSize);
 			TransferBuffer.SetData(dataSpan, SetDataOptions.Discard);
+		}
 
-			var commandBuffer = Device.AcquireCommandBuffer();
-
+		private void RecordUploadCommands(CommandBuffer commandBuffer)
+		{
 			commandBuffer.BeginCopyPass();
 
 			foreach (var (gpuBuffer, offset, size) in BufferUploads)
@@ -222,7 +247,6 @@ namespace MoonWorks.Graphics
 			}
 
 			commandBuffer.EndCopyPass();
-			Device.Submit(commandBuffer);
 
 			BufferUploads.Clear();
 			TextureUploads.Clear();
