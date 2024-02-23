@@ -29,6 +29,10 @@ namespace MoonWorks.Graphics
 		SampleCount depthStencilAttachmentSampleCount;
 		TextureFormat depthStencilFormat;
 
+		bool copyPassActive;
+
+		bool computePassActive;
+
 		internal bool Submitted;
 #endif
 
@@ -65,6 +69,9 @@ namespace MoonWorks.Graphics
 			colorFormatFour = TextureFormat.R8G8B8A8;
 			depthStencilFormat = TextureFormat.D16;
 
+			copyPassActive = false;
+			computePassActive = false;
+
 			Submitted = false;
 		}
 #endif
@@ -72,7 +79,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Begins a render pass.
 		/// All render state, resource binding, and draw commands must be made within a render pass.
-		/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+		/// It is an error to call this during any kind of pass.
 		/// </summary>
 		/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
 		public unsafe void BeginRenderPass(
@@ -545,7 +552,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="buffer">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			Buffer buffer
+			GpuBuffer buffer
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -569,8 +576,8 @@ namespace MoonWorks.Graphics
 		/// <param name="bufferOne">A buffer to bind.</param>
 		/// <param name="bufferTwo">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			Buffer bufferOne,
-			Buffer bufferTwo
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -596,9 +603,9 @@ namespace MoonWorks.Graphics
 		/// <param name="bufferTwo">A buffer to bind.</param>
 		/// <param name="bufferThree">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			Buffer bufferOne,
-			Buffer bufferTwo,
-			Buffer bufferThree
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo,
+			GpuBuffer bufferThree
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -626,10 +633,10 @@ namespace MoonWorks.Graphics
 		/// <param name="bufferThree">A buffer to bind.</param>
 		/// <param name="bufferFour">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			Buffer bufferOne,
-			Buffer bufferTwo,
-			Buffer bufferThree,
-			Buffer bufferFour
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo,
+			GpuBuffer bufferThree,
+			GpuBuffer bufferFour
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -655,7 +662,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="buffers">A Span of buffers to bind.</param>
 		public unsafe void BindComputeBuffers(
-			in Span<Buffer> buffers
+			in Span<GpuBuffer> buffers
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -680,9 +687,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds a texture to be used in the compute shader.
 		/// </summary>
-		/// <param name="texture">A texture to bind.</param>
+		/// <param name="binding">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			Texture texture
+			TextureLevelBinding binding
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -691,23 +698,27 @@ namespace MoonWorks.Graphics
 #endif
 
 			var texturePtrs = stackalloc IntPtr[1];
-			texturePtrs[0] = texture.Handle;
+			texturePtrs[0] = binding.Texture.Handle;
+
+			var mipLevels = stackalloc uint[1];
+			mipLevels[0] = binding.MipLevel;
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="textureOne">A texture to bind.</param>
-		/// <param name="textureTwo">A texture to bind.</param>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			Texture textureOne,
-			Texture textureTwo
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -716,26 +727,31 @@ namespace MoonWorks.Graphics
 #endif
 
 			var texturePtrs = stackalloc IntPtr[2];
-			texturePtrs[0] = textureOne.Handle;
-			texturePtrs[1] = textureTwo.Handle;
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+
+			var mipLevels = stackalloc uint[2];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="textureOne">A texture to bind.</param>
-		/// <param name="textureTwo">A texture to bind.</param>
-		/// <param name="textureThree">A texture to bind.</param>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		/// <param name="bindingThree">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			Texture textureOne,
-			Texture textureTwo,
-			Texture textureThree
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo,
+			TextureLevelBinding bindingThree
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -744,29 +760,35 @@ namespace MoonWorks.Graphics
 #endif
 
 			var texturePtrs = stackalloc IntPtr[3];
-			texturePtrs[0] = textureOne.Handle;
-			texturePtrs[1] = textureTwo.Handle;
-			texturePtrs[2] = textureThree.Handle;
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+			texturePtrs[2] = bindingThree.Texture.Handle;
+
+			var mipLevels = stackalloc uint[3];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
+			mipLevels[2] = bindingThree.MipLevel;
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="textureOne">A texture to bind.</param>
-		/// <param name="textureTwo">A texture to bind.</param>
-		/// <param name="textureThree">A texture to bind.</param>
-		/// <param name="textureFour">A texture to bind.</param>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		/// <param name="bindingThree">A texture-level pair to bind.</param>
+		/// <param name="bindingFour">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			Texture textureOne,
-			Texture textureTwo,
-			Texture textureThree,
-			Texture textureFour
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo,
+			TextureLevelBinding bindingThree,
+			TextureLevelBinding bindingFour
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -775,42 +797,52 @@ namespace MoonWorks.Graphics
 #endif
 
 			var texturePtrs = stackalloc IntPtr[4];
-			texturePtrs[0] = textureOne.Handle;
-			texturePtrs[1] = textureTwo.Handle;
-			texturePtrs[2] = textureThree.Handle;
-			texturePtrs[3] = textureFour.Handle;
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+			texturePtrs[2] = bindingThree.Texture.Handle;
+			texturePtrs[3] = bindingFour.Texture.Handle;
+
+			var mipLevels = stackalloc uint[4];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
+			mipLevels[2] = bindingThree.MipLevel;
+			mipLevels[3] = bindingFour.MipLevel;
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="textures">A set of textures to bind.</param>
+		/// <param name="bindings">A set of texture-level pairs to bind.</param>
 		public unsafe void BindComputeTextures(
-			in Span<Texture> textures
+			in Span<TextureLevelBinding> bindings
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertComputePipelineBound();
-			AssertComputeTextureCount(textures.Length);
+			AssertComputeTextureCount(bindings.Length);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textures.Length];
+			var texturePtrs = stackalloc IntPtr[bindings.Length];
+			var mipLevels = stackalloc uint[bindings.Length];
 
-			for (var i = 0; i < textures.Length; i += 1)
+			for (var i = 0; i < bindings.Length; i += 1)
 			{
-				texturePtrs[i] = textures[i].Handle;
+				texturePtrs[i] = bindings[i].Texture.Handle;
+				mipLevels[i] = bindings[i].MipLevel;
 			}
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
 			);
 		}
 
@@ -824,8 +856,7 @@ namespace MoonWorks.Graphics
 		public void DispatchCompute(
 			uint groupCountX,
 			uint groupCountY,
-			uint groupCountZ,
-			uint computeParamOffset
+			uint groupCountZ
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -842,8 +873,7 @@ namespace MoonWorks.Graphics
 				Handle,
 				groupCountX,
 				groupCountY,
-				groupCountZ,
-				computeParamOffset
+				groupCountZ
 			);
 		}
 
@@ -1113,7 +1143,7 @@ namespace MoonWorks.Graphics
 		/// <param name="indexElementSize">The size in bytes of the index buffer elements.</param>
 		/// <param name="offset">The offset index for the buffer.</param>
 		public void BindIndexBuffer(
-			Buffer indexBuffer,
+			GpuBuffer indexBuffer,
 			IndexElementSize indexElementSize,
 			uint offset = 0
 		)
@@ -1515,7 +1545,7 @@ namespace MoonWorks.Graphics
 		/// Pushes vertex shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset value to be used with draw calls.</returns>
-		public unsafe uint PushVertexShaderUniforms(
+		public unsafe void PushVertexShaderUniforms(
 			void* uniformsPtr,
 			uint size
 		) {
@@ -1527,9 +1557,14 @@ namespace MoonWorks.Graphics
 			{
 				throw new InvalidOperationException("The current vertex shader does not take a uniform buffer!");
 			}
+
+			if (currentGraphicsPipeline.VertexShaderInfo.UniformBufferSize != size)
+			{
+				throw new InvalidOperationException("Vertex uniform data size mismatch!");
+			}
 #endif
 
-			return Refresh.Refresh_PushVertexShaderUniforms(
+			Refresh.Refresh_PushVertexShaderUniforms(
 				Device.Handle,
 				Handle,
 				(IntPtr) uniformsPtr,
@@ -1541,13 +1576,13 @@ namespace MoonWorks.Graphics
 		/// Pushes vertex shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset value to be used with draw calls.</returns>
-		public unsafe uint PushVertexShaderUniforms<T>(
+		public unsafe void PushVertexShaderUniforms<T>(
 			in T uniforms
 		) where T : unmanaged
 		{
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return PushVertexShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
+				PushVertexShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
 		}
 
@@ -1555,7 +1590,7 @@ namespace MoonWorks.Graphics
 		/// Pushes fragment shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset to be used with draw calls.</returns>
-		public unsafe uint PushFragmentShaderUniforms(
+		public unsafe void PushFragmentShaderUniforms(
 			void* uniformsPtr,
 			uint size
 		) {
@@ -1567,9 +1602,14 @@ namespace MoonWorks.Graphics
 			{
 				throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
 			}
+
+			if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize != size)
+			{
+				throw new InvalidOperationException("Fragment uniform data size mismatch!");
+			}
 #endif
 
-			return Refresh.Refresh_PushFragmentShaderUniforms(
+			Refresh.Refresh_PushFragmentShaderUniforms(
 				Device.Handle,
 				Handle,
 				(IntPtr) uniformsPtr,
@@ -1581,13 +1621,13 @@ namespace MoonWorks.Graphics
 		/// Pushes fragment shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset to be used with draw calls.</returns>
-		public unsafe uint PushFragmentShaderUniforms<T>(
+		public unsafe void PushFragmentShaderUniforms<T>(
 			in T uniforms
 		) where T : unmanaged
 		{
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return PushFragmentShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
+				PushFragmentShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
 		}
 
@@ -1595,7 +1635,7 @@ namespace MoonWorks.Graphics
 		/// Pushes compute shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset to be used with dispatch calls.</returns>
-		public unsafe uint PushComputeShaderUniforms(
+		public unsafe void PushComputeShaderUniforms(
 			void* uniformsPtr,
 			uint size
 		) {
@@ -1607,9 +1647,14 @@ namespace MoonWorks.Graphics
 			{
 				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
 			}
+
+			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize != size)
+			{
+				throw new InvalidOperationException("Compute uniform data size mismatch!");
+			}
 #endif
 
-			return Refresh.Refresh_PushComputeShaderUniforms(
+			Refresh.Refresh_PushComputeShaderUniforms(
 				Device.Handle,
 				Handle,
 				(IntPtr) uniformsPtr,
@@ -1621,13 +1666,13 @@ namespace MoonWorks.Graphics
 		/// Pushes compute shader uniforms to the device.
 		/// </summary>
 		/// <returns>A starting offset to be used with dispatch calls.</returns>
-		public unsafe uint PushComputeShaderUniforms<T>(
+		public unsafe void PushComputeShaderUniforms<T>(
 			in T uniforms
 		) where T : unmanaged
 		{
 			fixed (T* uniformsPtr = &uniforms)
 			{
-				return PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
+				PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
 			}
 		}
 
@@ -1638,15 +1683,11 @@ namespace MoonWorks.Graphics
 		/// <param name="startIndex">The starting index offset for the index buffer.</param>
 		/// <param name="primitiveCount">The number of primitives to draw.</param>
 		/// <param name="instanceCount">The number of instances to draw.</param>
-		/// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
-		/// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
 		public void DrawInstancedPrimitives(
 			uint baseVertex,
 			uint startIndex,
 			uint primitiveCount,
-			uint instanceCount,
-			uint vertexParamOffset,
-			uint fragmentParamOffset
+			uint instanceCount
 		)
 		{
 #if DEBUG
@@ -1660,9 +1701,7 @@ namespace MoonWorks.Graphics
 				baseVertex,
 				startIndex,
 				primitiveCount,
-				instanceCount,
-				vertexParamOffset,
-				fragmentParamOffset
+				instanceCount
 			);
 		}
 
@@ -1672,14 +1711,10 @@ namespace MoonWorks.Graphics
 		/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
 		/// <param name="startIndex">The starting index offset for the index buffer.</param>
 		/// <param name="primitiveCount">The number of primitives to draw.</param>
-		/// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
-		/// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
 		public void DrawIndexedPrimitives(
 			uint baseVertex,
 			uint startIndex,
-			uint primitiveCount,
-			uint vertexParamOffset,
-			uint fragmentParamOffset
+			uint primitiveCount
 		)
 		{
 #if DEBUG
@@ -1692,9 +1727,7 @@ namespace MoonWorks.Graphics
 				Handle,
 				baseVertex,
 				startIndex,
-				primitiveCount,
-				vertexParamOffset,
-				fragmentParamOffset
+				primitiveCount
 			);
 		}
 
@@ -1703,13 +1736,9 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="vertexStart"></param>
 		/// <param name="primitiveCount"></param>
-		/// <param name="vertexParamOffset"></param>
-		/// <param name="fragmentParamOffset"></param>
 		public void DrawPrimitives(
 			uint vertexStart,
-			uint primitiveCount,
-			uint vertexParamOffset,
-			uint fragmentParamOffset
+			uint primitiveCount
 		)
 		{
 #if DEBUG
@@ -1721,9 +1750,7 @@ namespace MoonWorks.Graphics
 				Device.Handle,
 				Handle,
 				vertexStart,
-				primitiveCount,
-				vertexParamOffset,
-				fragmentParamOffset
+				primitiveCount
 			);
 		}
 
@@ -1737,12 +1764,10 @@ namespace MoonWorks.Graphics
 		/// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
 		/// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
 		public void DrawPrimitivesIndirect(
-			Buffer buffer,
+			GpuBuffer buffer,
 			uint offsetInBytes,
 			uint drawCount,
-			uint stride,
-			uint vertexParamOffset,
-			uint fragmentParamOffset
+			uint stride
 		)
 		{
 #if DEBUG
@@ -1756,9 +1781,7 @@ namespace MoonWorks.Graphics
 				buffer.Handle,
 				offsetInBytes,
 				drawCount,
-				stride,
-				vertexParamOffset,
-				fragmentParamOffset
+				stride
 			);
 		}
 
@@ -1834,352 +1857,350 @@ namespace MoonWorks.Graphics
 			return window.SwapchainTexture;
 		}
 
+		// Copy Pass
+
 		/// <summary>
-		/// Copies array data into a buffer.
+		/// Begins a copy pass.
+		/// All copy commands must be made within a copy pass.
+		/// It is an error to call this during any kind of pass.
 		/// </summary>
-		/// <param name="buffer">The buffer to copy to.</param>
-		/// <param name="data">The array to copy from.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			Span<T> data,
-			uint bufferOffsetInBytes = 0
-		) where T : unmanaged
+		public void BeginCopyPass()
 		{
-			SetBufferData(
-				buffer,
-				data,
-				bufferOffsetInBytes,
-				0,
-				(uint) data.Length
+#if DEBUG
+			AssertNotSubmitted();
+			AssertNotInPass("Cannot begin copy pass while in another pass!");
+			copyPassActive = true;
+#endif
+
+			Refresh.Refresh_BeginCopyPass(
+				Device.Handle,
+				Handle
 			);
 		}
 
 		/// <summary>
-		/// Copies array data into a buffer.
+		/// Uploads data from a CpuBuffer to a TextureSlice.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// Overwriting the contents of the CpuBuffer before the command buffer
+		/// has finished execution will cause undefined behavior.
+		///
+		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
-		/// <param name="buffer">The buffer to copy to.</param>
-		/// <param name="data">The array to copy from.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			T[] data,
-			uint bufferOffsetInBytes = 0
-		) where T : unmanaged
-		{
-			SetBufferData(
-				buffer,
-				new Span<T>(data),
-				bufferOffsetInBytes,
-				0,
-				(uint) data.Length
-			);
-		}
-
-		/// <summary>
-		/// Copies arbitrary data into a buffer.
-		/// </summary>
-		/// <param name="buffer">The buffer to copy into.</param>
-		/// <param name="dataPtr">Pointer to the data to copy into the buffer.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to copy data.</param>
-		/// <param name="dataLengthInBytes">The length of data that should be copied.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public void SetBufferData(
-			Buffer buffer,
-			IntPtr dataPtr,
-			uint bufferOffsetInBytes,
-			uint dataLengthInBytes
+		public void UploadToTexture(
+			CpuBuffer cpuBuffer,
+			in TextureSlice textureSlice,
+			in BufferImageCopy copyParams
 		)
 		{
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertNonEmptyCopy(dataLengthInBytes);
-			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
+			AssertInCopyPass("Cannot upload to texture outside of copy pass!");
 #endif
 
-			Refresh.Refresh_SetBufferData(
+			Refresh.Refresh_UploadToTexture(
 				Device.Handle,
 				Handle,
-				buffer.Handle,
-				bufferOffsetInBytes,
-				dataPtr,
-				dataLengthInBytes
+				cpuBuffer.Handle,
+				textureSlice.ToRefreshTextureSlice(),
+				copyParams.ToRefresh()
 			);
 		}
 
 		/// <summary>
-		/// Copies array data into a buffer.
+		/// Uploads the contents of an entire buffer to a texture with no mips.
 		/// </summary>
-		/// <param name="buffer">The buffer to copy to.</param>
-		/// <param name="data">The span to copy from.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
-		/// <param name="startElement">The index of the first element to copy from the array.</param>
-		/// <param name="numElements">How many elements to copy.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			Span<T> data,
-			uint bufferOffsetInBytes,
-			uint startElement,
-			uint numElements
-		) where T : unmanaged
-		{
-			var elementSize = Marshal.SizeOf<T>();
-			var dataLengthInBytes = (uint) (elementSize * numElements);
-			var dataOffsetInBytes = (int) startElement * elementSize;
-
-#if DEBUG
-			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertNonEmptyCopy(dataLengthInBytes);
-			AssertBufferBoundsCheck(buffer.Size, bufferOffsetInBytes, dataLengthInBytes);
-#endif
-
-			fixed (T* ptr = data)
-			{
-				Refresh.Refresh_SetBufferData(
-					Device.Handle,
-					Handle,
-					buffer.Handle,
-					bufferOffsetInBytes,
-					(IntPtr) ptr + dataOffsetInBytes,
-					dataLengthInBytes
-				);
-			}
-		}
-
-		/// <summary>
-		/// Copies array data into a buffer.
-		/// </summary>
-		/// <param name="buffer">The buffer to copy to.</param>
-		/// <param name="data">The span to copy from.</param>
-		/// <param name="bufferOffsetInBytes">Specifies where in the buffer to start copying.</param>
-		/// <param name="startElement">The index of the first element to copy from the array.</param>
-		/// <param name="numElements">How many elements to copy.</param>
-		/// <param name="setDataOption">Specifies whether the buffer should be copied in immediate or deferred mode. When in doubt, use deferred.</param>
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			T[] data,
-			uint bufferOffsetInBytes,
-			uint startElement,
-			uint numElements
-		) where T : unmanaged
-		{
-			SetBufferData<T>(buffer, new Span<T>(data), bufferOffsetInBytes, startElement, numElements);
-		}
-
-		public unsafe void SetBufferData<T>(
-			Buffer buffer,
-			IntPtr dataPtr,
-			uint bufferOffsetInElements,
-			uint numElements
-		) where T : unmanaged
-		{
-			var elementSize = Marshal.SizeOf<T>();
-			var dataLengthInBytes = (uint) (elementSize * numElements);
-			var offsetLengthInBytes = (uint) elementSize * bufferOffsetInElements;
-
-#if DEBUG
-			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertNonEmptyCopy((uint) (elementSize * numElements));
-			AssertBufferBoundsCheck(buffer.Size, offsetLengthInBytes, dataLengthInBytes);
-#endif
-
-			Refresh.Refresh_SetBufferData(
-				Device.Handle,
-				Handle,
-				buffer.Handle,
-				offsetLengthInBytes,
-				dataPtr,
-				dataLengthInBytes
+		public void UploadToTexture(
+			CpuBuffer cpuBuffer,
+			Texture texture
+		) {
+			UploadToTexture(
+				cpuBuffer,
+				new TextureSlice(texture),
+				new BufferImageCopy(0, 0, 0)
 			);
 		}
 
 		/// <summary>
-		/// Asynchronously copies data into a texture.
+		/// Uploads data from a CpuBuffer to a GpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// Overwriting the contents of the CpuBuffer before the command buffer
+		/// has finished execution will cause undefined behavior.
+		///
+		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
-		/// <param name="data">A span of data to copy into the texture.</param>
-		public unsafe void SetTextureData<T>(Texture texture, Span<T> data) where T : unmanaged
-		{
-			SetTextureData(new TextureSlice(texture), data);
-		}
-
-		/// <summary>
-		/// Asynchronously copies data into a texture.
-		/// </summary>
-		/// <param name="data">An array of data to copy into the texture.</param>
-		public unsafe void SetTextureData<T>(Texture texture, T[] data) where T : unmanaged
-		{
-			SetTextureData(new TextureSlice(texture), new Span<T>(data));
-		}
-
-		/// <summary>
-		/// Asynchronously copies data into a texture slice.
-		/// </summary>
-		/// <param name="textureSlice">The texture slice to copy into.</param>
-		/// <param name="data">A span of data to copy into the texture.</param>
-		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, Span<T> data) where T : unmanaged
-		{
-			var dataLengthInBytes = (uint) (data.Length * Marshal.SizeOf<T>());
-
+		public void UploadToBuffer(
+			CpuBuffer cpuBuffer,
+			GpuBuffer gpuBuffer,
+			in BufferCopy copyParams
+		) {
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
+			AssertInCopyPass("Cannot upload to texture outside of copy pass!");
 #endif
 
-			fixed (T* ptr = data)
+			Refresh.Refresh_UploadToBuffer(
+				Device.Handle,
+				Handle,
+				cpuBuffer.Handle,
+				gpuBuffer.Handle,
+				copyParams.ToRefresh()
+			);
+		}
+
+		/// <summary>
+		/// Copies the entire contents of a CpuBuffer to a GpuBuffer.
+		/// </summary>
+		public void UploadToBuffer(
+			CpuBuffer cpuBuffer,
+			GpuBuffer gpuBuffer
+		) {
+#if DEBUG
+			if (cpuBuffer.Size > gpuBuffer.Size)
 			{
-				Refresh.Refresh_SetTextureData(
-					Device.Handle,
-					Handle,
-					textureSlice.ToRefreshTextureSlice(),
-					(IntPtr) ptr,
-					dataLengthInBytes
-				);
+				throw new InvalidOperationException("CpuBuffer copying to GpuBuffer is too large!");
 			}
+#endif
+			UploadToBuffer(
+				cpuBuffer,
+				gpuBuffer,
+				new BufferCopy(0, 0, cpuBuffer.Size)
+			);
 		}
 
 		/// <summary>
-		/// Asynchronously copies data into a texture slice.
+		/// Downloads data from a Texture to a CpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// fully copied until the command buffer has finished execution.
 		/// </summary>
-		/// <param name="textureSlice">The texture slice to copy into.</param>
-		/// <param name="data">An array of data to copy into the texture.</param>
-		public unsafe void SetTextureData<T>(in TextureSlice textureSlice, T[] data) where T : unmanaged
-		{
-			SetTextureData(textureSlice, new Span<T>(data));
-		}
-
-		/// <summary>
-		/// Asynchronously copies data into a texture slice.
-		/// </summary>
-		/// <param name="textureSlice">The texture slice to copy into.</param>
-		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-		public void SetTextureData(in TextureSlice textureSlice, IntPtr dataPtr, uint dataLengthInBytes)
-		{
+		public void DownloadFromTexture(
+			in TextureSlice textureSlice,
+			CpuBuffer cpuBuffer,
+			in BufferImageCopy copyParams
+		) {
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertTextureBoundsCheck(textureSlice.Size, dataLengthInBytes);
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
 #endif
 
-			Refresh.Refresh_SetTextureData(
+			Refresh.Refresh_DownloadFromTexture(
 				Device.Handle,
 				Handle,
 				textureSlice.ToRefreshTextureSlice(),
-				dataPtr,
-				dataLengthInBytes
+				cpuBuffer.Handle,
+				copyParams.ToRefresh()
 			);
 		}
 
 		/// <summary>
-		/// Asynchronously copies data into a texture.
+		/// Downloads the contents of a Texture with no mips into a CpuBuffer.
 		/// </summary>
-		/// <param name="dataPtr">A pointer to an array of data to copy from.</param>
-		/// <param name="dataLengthInBytes">The amount of data to copy from the array.</param>
-		public void SetTextureData(Texture texture, IntPtr dataPtr, uint dataLengthInBytes)
-		{
-			SetTextureData(new TextureSlice(texture), dataPtr, dataLengthInBytes);
+		public void DownloadFromTexture(
+			Texture texture,
+			CpuBuffer cpuBuffer
+		) {
+			DownloadFromTexture(
+				new TextureSlice(texture),
+				cpuBuffer,
+				new BufferImageCopy(0, 0, 0)
+			);
 		}
 
 		/// <summary>
-		/// Asynchronously copies YUV data into three textures. Use with compressed video.
+		/// Downloads data from a GpuBuffer to a CpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// fully copied until the command buffer has finished execution.
 		/// </summary>
-		public void SetTextureDataYUV(
-			Texture yTexture,
-			Texture uTexture,
-			Texture vTexture,
-			IntPtr yDataPtr,
-			IntPtr uDataPtr,
-			IntPtr vDataPtr,
-			uint yDataLengthInBytes,
-			uint uvDataLengthInBytes,
-			uint yStride,
-			uint uvStride)
-		{
+		public void DownloadFromBuffer(
+			GpuBuffer gpuBuffer,
+			CpuBuffer cpuBuffer,
+			in BufferCopy copyParams
+		) {
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
 #endif
 
-			Refresh.Refresh_SetTextureDataYUV(
+			Refresh.Refresh_DownloadFromBuffer(
 				Device.Handle,
 				Handle,
-				yTexture.Handle,
-				uTexture.Handle,
-				vTexture.Handle,
-				yTexture.Width,
-				yTexture.Height,
-				uTexture.Width,
-				uTexture.Height,
-				yDataPtr,
-				uDataPtr,
-				vDataPtr,
-				yDataLengthInBytes,
-				uvDataLengthInBytes,
-				yStride,
-				uvStride
+				gpuBuffer.Handle,
+				cpuBuffer.Handle,
+				copyParams.ToRefresh()
 			);
 		}
 
 		/// <summary>
-		/// Performs an asynchronous texture-to-texture copy on the GPU.
+		/// Copies the contents of a TextureSlice to another TextureSlice.
+		/// The slices must have the same dimensions.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY assume that the copy has finished in subsequent commands.
 		/// </summary>
-		/// <param name="sourceTextureSlice">The texture slice to copy from.</param>
-		/// <param name="destinationTextureSlice">The texture slice to copy to.</param>
-		/// <param name="filter">The filter to use if the sizes of the texture slices differ.</param>
 		public void CopyTextureToTexture(
-			in TextureSlice sourceTextureSlice,
-			in TextureSlice destinationTextureSlice,
-			Filter filter
-		)
-		{
+			in TextureSlice source,
+			in TextureSlice destination
+		) {
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
 #endif
-
-			var sourceRefreshTextureSlice = sourceTextureSlice.ToRefreshTextureSlice();
-			var destRefreshTextureSlice = destinationTextureSlice.ToRefreshTextureSlice();
 
 			Refresh.Refresh_CopyTextureToTexture(
 				Device.Handle,
 				Handle,
-				sourceRefreshTextureSlice,
-				destRefreshTextureSlice,
-				(Refresh.Filter) filter
+				source.ToRefreshTextureSlice(),
+				destination.ToRefreshTextureSlice()
 			);
 		}
 
 		/// <summary>
-		/// Performs an asynchronous texture-to-buffer copy.
-		/// Note that the buffer is not guaranteed to be filled until you call GraphicsDevice.Wait()
+		/// Copies the contents of an entire Texture with no mips to another Texture with no mips.
+		/// The textures must have the same dimensions.
 		/// </summary>
-		/// <param name="textureSlice"></param>
-		/// <param name="buffer"></param>
+		public void CopyTextureToTexture(
+			Texture source,
+			Texture destination
+		) {
+			CopyTextureToTexture(
+				new TextureSlice(source),
+				new TextureSlice(destination)
+			);
+		}
+
+		/// <summary>
+		/// Copies the contents of a Texture to a GpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY assume that the copy has finished in subsequent commands.
+		/// </summary>
 		public void CopyTextureToBuffer(
 			in TextureSlice textureSlice,
-			Buffer buffer
-		)
-		{
+			GpuBuffer buffer,
+			in BufferImageCopy copyParams
+		) {
 #if DEBUG
 			AssertNotSubmitted();
-			AssertRenderPassInactive("Cannot copy during render pass!");
-			AssertBufferBoundsCheck(buffer.Size, 0, textureSlice.Size);
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
 #endif
-
-			var refreshTextureSlice = textureSlice.ToRefreshTextureSlice();
 
 			Refresh.Refresh_CopyTextureToBuffer(
 				Device.Handle,
 				Handle,
-				refreshTextureSlice,
-				buffer.Handle
+				textureSlice.ToRefreshTextureSlice(),
+				buffer.Handle,
+				copyParams.ToRefresh()
+			);
+		}
+
+		/// <summary>
+		/// Copies the entire contents of a Texture to a GpuBuffer.
+		/// </summary>
+		public void CopyTextureToBuffer(
+			Texture texture,
+			GpuBuffer buffer
+		) {
+			CopyTextureToBuffer(
+				new TextureSlice(texture),
+				buffer,
+				new BufferImageCopy(0, 0, 0)
+			);
+		}
+
+		/// <summary>
+		/// Copies the contents of a GpuBuffer to a Texture.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY assume that the copy has finished in subsequent commands.
+		/// </summary>
+		public void CopyBufferToTexture(
+			GpuBuffer buffer,
+			in TextureSlice textureSlice,
+			in BufferImageCopy copyParams
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+#endif
+
+			Refresh.Refresh_CopyBufferToTexture(
+				Device.Handle,
+				Handle,
+				buffer.Handle,
+				textureSlice.ToRefreshTextureSlice(),
+				copyParams.ToRefresh()
+			);
+		}
+
+		/// <summary>
+		/// Copies the entire contents of a Texture with no mips to a GpuBuffer.
+		/// </summary>
+		public void CopyBufferToTexture(
+			GpuBuffer buffer,
+			Texture texture
+		) {
+			CopyBufferToTexture(
+				buffer,
+				new TextureSlice(texture),
+				new BufferImageCopy(0, 0, 0)
+			);
+		}
+
+		/// <summary>
+		/// Copies data from a GpuBuffer to another GpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY assume that the copy has finished in subsequent commands.
+		/// </summary>
+		public void CopyBufferToBuffer(
+			GpuBuffer source,
+			GpuBuffer destination,
+			in BufferCopy copyParams
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+#endif
+
+			Refresh.Refresh_CopyBufferToBuffer(
+				Device.Handle,
+				Handle,
+				source.Handle,
+				destination.Handle,
+				copyParams.ToRefresh()
+			);
+		}
+
+		/// <summary>
+		/// Copies the entire contents of a GpuBuffer to another GpuBuffer.
+		/// </summary>
+		public void CopyBufferToBuffer(
+			GpuBuffer source,
+			GpuBuffer destination
+		) {
+			CopyBufferToBuffer(
+				source,
+				destination,
+				new BufferCopy(0, 0, source.Size)
+			);
+		}
+
+		public void EndCopyPass()
+		{
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInCopyPass("Cannot end copy pass while not in a copy pass!");
+			copyPassActive = false;
+#endif
+
+			Refresh.Refresh_EndCopyPass(
+				Device.Handle,
+				Handle
 			);
 		}
 
@@ -2373,6 +2394,30 @@ namespace MoonWorks.Graphics
 			if (dataLengthInBytes > textureSizeInBytes)
 			{
 				throw new System.InvalidOperationException($"SetTextureData overflow! texture size {textureSizeInBytes}, data size {dataLengthInBytes}");
+			}
+		}
+
+		private void AssertNotInPass(string message)
+		{
+			if (renderPassActive || copyPassActive || computePassActive)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertInRenderPass(string message)
+		{
+			if (!renderPassActive)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertInCopyPass(string message)
+		{
+			if (!copyPassActive)
+			{
+				throw new System.InvalidOperationException(message);
 			}
 		}
 

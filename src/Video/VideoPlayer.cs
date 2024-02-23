@@ -28,6 +28,8 @@ namespace MoonWorks.Video
 		private Texture vTexture = null;
 		private Sampler LinearSampler;
 
+		private CpuBuffer TransferBuffer;
+
 		private int currentFrame;
 
 		private Stopwatch timer;
@@ -52,6 +54,8 @@ namespace MoonWorks.Video
 			if (Video != video)
 			{
 				Stop();
+
+				var needNewTransferBuffer = TransferBuffer == null;
 
 				if (RenderTexture == null)
 				{
@@ -83,18 +87,31 @@ namespace MoonWorks.Video
 				{
 					yTexture.Dispose();
 					yTexture = CreateSubTexture(GraphicsDevice, video.Width, video.Height);
+					needNewTransferBuffer = true;
 				}
 
 				if (video.UVWidth != uTexture.Width || video.UVHeight != uTexture.Height)
 				{
 					uTexture.Dispose();
 					uTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+					needNewTransferBuffer = true;
 				}
 
 				if (video.UVWidth != vTexture.Width || video.UVHeight != vTexture.Height)
 				{
 					vTexture.Dispose();
 					vTexture = CreateSubTexture(GraphicsDevice, video.UVWidth, video.UVHeight);
+					needNewTransferBuffer = true;
+				}
+
+				if (needNewTransferBuffer)
+				{
+					if (TransferBuffer != null)
+					{
+						TransferBuffer.Dispose();
+					}
+
+					TransferBuffer = new CpuBuffer(Device, yTexture.Size + uTexture.Size + vTexture.Size);
 				}
 
 				Video = video;
@@ -235,17 +252,44 @@ namespace MoonWorks.Video
 			{
 				var commandBuffer = GraphicsDevice.AcquireCommandBuffer();
 
-				commandBuffer.SetTextureDataYUV(
+				var ySpan = new Span<byte>((void*) CurrentStream.yDataHandle, (int) CurrentStream.yDataLength);
+				var uSpan = new Span<byte>((void*) CurrentStream.uDataHandle, (int) CurrentStream.uvDataLength);
+				var vSpan = new Span<byte>((void*) CurrentStream.vDataHandle, (int) CurrentStream.uvDataLength);
+
+				TransferBuffer.SetData(ySpan, SetDataOptions.Discard);
+				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, SetDataOptions.Overwrite);
+				TransferBuffer.SetData(vSpan, (uint) (ySpan.Length + uSpan.Length), SetDataOptions.Overwrite);
+
+				commandBuffer.UploadToTexture(
+					TransferBuffer,
 					yTexture,
+					new BufferImageCopy
+					{
+						BufferOffset = 0,
+						BufferStride = CurrentStream.yStride,
+						BufferImageHeight = yTexture.Height
+					}
+				);
+
+				commandBuffer.UploadToTexture(
+					TransferBuffer,
 					uTexture,
+					new BufferImageCopy{
+						BufferOffset = (uint) ySpan.Length,
+						BufferStride = CurrentStream.uvStride,
+						BufferImageHeight = uTexture.Height
+					}
+				);
+
+				commandBuffer.UploadToTexture(
+					TransferBuffer,
 					vTexture,
-					CurrentStream.yDataHandle,
-					CurrentStream.uDataHandle,
-					CurrentStream.vDataHandle,
-					CurrentStream.yDataLength,
-					CurrentStream.uvDataLength,
-					CurrentStream.yStride,
-					CurrentStream.uvStride
+					new BufferImageCopy
+					{
+						BufferOffset = (uint) (ySpan.Length + uSpan.Length),
+						BufferStride = CurrentStream.uvStride,
+						BufferImageHeight = vTexture.Height
+					}
 				);
 
 				commandBuffer.BeginRenderPass(
@@ -259,7 +303,7 @@ namespace MoonWorks.Video
 					new TextureSamplerBinding(vTexture, LinearSampler)
 				);
 
-				commandBuffer.DrawPrimitives(0, 1, 0, 0);
+				commandBuffer.DrawPrimitives(0, 1);
 
 				commandBuffer.EndRenderPass();
 

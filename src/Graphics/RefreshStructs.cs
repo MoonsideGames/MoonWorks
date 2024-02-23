@@ -354,4 +354,60 @@ namespace MoonWorks.Graphics
 			FirstInstance = firstInstance;
 		}
 	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct BufferCopy
+	{
+		public uint SrcOffset;
+		public uint DstOffset;
+		public uint Size;
+
+		public BufferCopy(
+			uint srcOffset,
+			uint dstOffset,
+			uint size
+		) {
+			SrcOffset = srcOffset;
+			DstOffset = dstOffset;
+			Size = size;
+		}
+
+		public Refresh.BufferCopy ToRefresh()
+		{
+			return new Refresh.BufferCopy
+			{
+				srcOffset = SrcOffset,
+				dstOffset = DstOffset,
+				size = Size
+			};
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct BufferImageCopy
+	{
+		public uint BufferOffset;
+		public uint BufferStride; // if 0, image assumed to be tightly packed
+		public uint BufferImageHeight; // if 0, image assumed to be tightly packed
+
+		public BufferImageCopy(
+			uint bufferOffset,
+			uint bufferStride,
+			uint bufferImageHeight
+		) {
+			BufferOffset = bufferOffset;
+			BufferStride = bufferStride;
+			BufferImageHeight = bufferImageHeight;
+		}
+
+		public Refresh.BufferImageCopy ToRefresh()
+		{
+			return new Refresh.BufferImageCopy
+			{
+				bufferOffset = BufferOffset,
+				bufferStride = BufferStride,
+				bufferImageHeight = BufferImageHeight
+			};
+		}
+	}
 }

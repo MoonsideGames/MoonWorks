@@ -61,12 +61,11 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.blendConstants[2] = blendConstants.B;
 			refreshGraphicsPipelineCreateInfo.blendConstants[3] = blendConstants.A;
 
-			refreshGraphicsPipelineCreateInfo.depthStencilState.backStencilState = depthStencilState.BackStencilState.ToRefresh();
+			refreshGraphicsPipelineCreateInfo.depthStencilState.stencilState = depthStencilState.StencilState.ToRefresh();
 			refreshGraphicsPipelineCreateInfo.depthStencilState.compareOp = (Refresh.CompareOp) depthStencilState.CompareOp;
 			refreshGraphicsPipelineCreateInfo.depthStencilState.depthBoundsTestEnable = Conversions.BoolToByte(depthStencilState.DepthBoundsTestEnable);
 			refreshGraphicsPipelineCreateInfo.depthStencilState.depthTestEnable = Conversions.BoolToByte(depthStencilState.DepthTestEnable);
 			refreshGraphicsPipelineCreateInfo.depthStencilState.depthWriteEnable = Conversions.BoolToByte(depthStencilState.DepthWriteEnable);
-			refreshGraphicsPipelineCreateInfo.depthStencilState.frontStencilState = depthStencilState.FrontStencilState.ToRefresh();
 			refreshGraphicsPipelineCreateInfo.depthStencilState.maxDepthBounds = depthStencilState.MaxDepthBounds;
 			refreshGraphicsPipelineCreateInfo.depthStencilState.minDepthBounds = depthStencilState.MinDepthBounds;
 			refreshGraphicsPipelineCreateInfo.depthStencilState.stencilTestEnable = Conversions.BoolToByte(depthStencilState.StencilTestEnable);

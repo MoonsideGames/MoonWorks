@@ -5,10 +5,10 @@
 	/// </summary>
 	public struct BufferBinding
 	{
-		public Buffer Buffer;
+		public GpuBuffer Buffer;
 		public ulong Offset;
 
-		public BufferBinding(Buffer buffer, ulong offset)
+		public BufferBinding(GpuBuffer buffer, ulong offset)
 		{
 			Buffer = buffer;
 			Offset = offset;

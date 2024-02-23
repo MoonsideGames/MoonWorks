@@ -47,8 +47,26 @@ namespace MoonWorks.Graphics.Font
 				out float distanceRange
 			);
 
-			var texture = Texture.FromImageFile(graphicsDevice, commandBuffer, Path.ChangeExtension(fontPath, ".png"));
+			var imagePath = Path.ChangeExtension(fontPath, ".png");
+			ImageUtils.ImageInfoFromFile(imagePath, out var width, out var height, out var sizeInBytes);
+			var texture = Texture.CreateTexture2D(graphicsDevice, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
 
+			var cpuBuffer = new CpuBuffer(graphicsDevice, sizeInBytes);
+			ImageUtils.DecodeIntoCpuBuffer(
+				imagePath,
+				cpuBuffer,
+				0,
+				SetDataOptions.Overwrite
+			);
+
+			commandBuffer.BeginCopyPass();
+			commandBuffer.UploadToTexture(
+				cpuBuffer,
+				texture
+			);
+			commandBuffer.EndCopyPass();
+
+			cpuBuffer.Dispose();
 			NativeMemory.Free(fontFileByteBuffer);
 			NativeMemory.Free(atlasFileByteBuffer);
 

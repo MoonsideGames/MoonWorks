@@ -8,36 +8,31 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public struct TextureSlice
 	{
-		public Texture Texture { get; }
-		public Rect Rectangle { get; }
-		public uint Depth { get; }
-		public uint Layer { get; }
-		public uint Level { get; }
+		public Texture Texture;
+		public uint MipLevel;
+		public uint BaseLayer;
+		public uint LayerCount;
+		public uint X;
+		public uint Y;
+		public uint Z;
+		public uint Width;
+		public uint Height;
+		public uint Depth;
 
-		public uint Size => (uint) (Rectangle.W * Rectangle.H * Texture.BytesPerPixel(Texture.Format) / Texture.BlockSizeSquared(Texture.Format));
+		public uint Size => (Width * Height * Depth * LayerCount * Texture.BytesPerPixel(Texture.Format) / Texture.BlockSizeSquared(Texture.Format)) >> (int) MipLevel;
 
 		public TextureSlice(Texture texture)
 		{
 			Texture = texture;
-			Rectangle = new Rect
-			{
-				X = 0,
-				Y = 0,
-				W = (int) texture.Width,
-				H = (int) texture.Height
-			};
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
-		}
-
-		public TextureSlice(Texture texture, Rect rectangle, uint depth = 0, uint layer = 0, uint level = 0)
-		{
-			Texture = texture;
-			Rectangle = rectangle;
-			Depth = depth;
-			Layer = layer;
-			Level = level;
+			MipLevel = 0;
+			BaseLayer = 0;
+			LayerCount = (uint) (texture.IsCube ? 6 : 1);
+			X = 0;
+			Y = 0;
+			Z = 0;
+			Width = texture.Width;
+			Height = texture.Height;
+			Depth = texture.Depth;
 		}
 
 		public Refresh.TextureSlice ToRefreshTextureSlice()
@@ -45,10 +40,15 @@ namespace MoonWorks.Graphics
 			Refresh.TextureSlice textureSlice = new Refresh.TextureSlice
 			{
 				texture = Texture.Handle,
-				rectangle = Rectangle.ToRefresh(),
-				depth = Depth,
-				layer = Layer,
-				level = Level
+				mipLevel = MipLevel,
+				baseLayer = BaseLayer,
+				layerCount = LayerCount,
+				x = X,
+				y = Y,
+				z = Z,
+				w = Width,
+				h = Height,
+				d = Depth
 			};
 
 			return textureSlice;

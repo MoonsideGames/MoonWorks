@@ -11,14 +11,9 @@
 		public bool DepthTestEnable;
 
 		/// <summary>
-		/// Describes the stencil operation for back-facing primitives.
+		/// Describes the stencil operation.
 		/// </summary>
-		public StencilOpState BackStencilState;
-
-		/// <summary>
-		/// Describes the stencil operation for front-facing primitives.
-		/// </summary>
-		public StencilOpState FrontStencilState;
+		public StencilOpState StencilState;
 
 		/// <summary>
 		/// The comparison operator used in the depth test.

@@ -13,9 +13,11 @@ namespace MoonWorks.Graphics.Font
 		private GraphicsDevice GraphicsDevice { get; }
 		public IntPtr Handle { get; }
 
-		public Buffer VertexBuffer { get; protected set; } = null;
-		public Buffer IndexBuffer { get; protected set; } = null;
+		public GpuBuffer VertexBuffer { get; protected set; } = null;
+		public GpuBuffer IndexBuffer { get; protected set; } = null;
 		public uint PrimitiveCount { get; protected set; }
+
+		private CpuBuffer TransferBuffer;
 
 		public Font CurrentFont { get; private set; }
 
@@ -30,8 +32,10 @@ namespace MoonWorks.Graphics.Font
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
 
-			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
-			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+			VertexBuffer = GpuBuffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
+			IndexBuffer = GpuBuffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+
+			TransferBuffer = CpuBuffer.Create<byte>(GraphicsDevice, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -93,22 +97,38 @@ namespace MoonWorks.Graphics.Font
 				out uint indexDataLengthInBytes
 			);
 
+			var vertexSpan = new Span<byte>((void*) vertexDataPointer, (int) vertexDataLengthInBytes);
+			var indexSpan = new Span<byte>((void*) indexDataPointer, (int) indexDataLengthInBytes);
+
+			var newTransferBufferNeeded = false;
+
 			if (VertexBuffer.Size < vertexDataLengthInBytes)
 			{
 				VertexBuffer.Dispose();
-				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				VertexBuffer = new GpuBuffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				newTransferBufferNeeded = true;
 			}
 
 			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				IndexBuffer = new GpuBuffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				newTransferBufferNeeded = true;
+			}
+
+			if (newTransferBufferNeeded)
+			{
+				TransferBuffer.Dispose();
+				TransferBuffer = new CpuBuffer(GraphicsDevice, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				commandBuffer.SetBufferData(VertexBuffer, vertexDataPointer, 0, vertexDataLengthInBytes);
-				commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
+				TransferBuffer.SetData(vertexSpan, SetDataOptions.Discard);
+				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, SetDataOptions.Overwrite);
+
+				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length));
+				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length));
 			}
 
 			PrimitiveCount = vertexCount / 2;
@@ -123,12 +143,12 @@ namespace MoonWorks.Graphics.Font
 			));
 			commandBuffer.BindVertexBuffers(VertexBuffer);
 			commandBuffer.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
+			commandBuffer.PushVertexShaderUniforms(transformMatrix);
+			commandBuffer.PushFragmentShaderUniforms(CurrentFont.DistanceRange);
 			commandBuffer.DrawIndexedPrimitives(
 				0,
 				0,
-				PrimitiveCount,
-				commandBuffer.PushVertexShaderUniforms(transformMatrix),
-				commandBuffer.PushFragmentShaderUniforms(CurrentFont.DistanceRange)
+				PrimitiveCount
 			);
 		}
 

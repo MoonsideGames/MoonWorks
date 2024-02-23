@@ -297,6 +297,12 @@ namespace MoonWorks.Graphics
 		IntOpaqueWhite
 	}
 
+	public enum SetDataOptions
+	{
+		Discard,
+		Overwrite
+	}
+
 	public enum Backend
 	{
 		DontCare,
