@@ -77,6 +77,57 @@ namespace MoonWorks.Graphics
 #endif
 
 		/// <summary>
+		/// Acquires a swapchain texture.
+		/// This texture will be presented to the given window when the command buffer is submitted.
+		/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
+		/// If null is returned, presentation will not occur.
+		/// It is an error to acquire two swapchain textures from the same window in one command buffer.
+		/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
+		/// </summary>
+		public Texture AcquireSwapchainTexture(
+			Window window
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+
+			if (!window.Claimed)
+			{
+				throw new System.InvalidOperationException("Cannot acquire swapchain texture, window has not been claimed!");
+			}
+
+			if (swapchainTextureAcquired)
+			{
+				throw new System.InvalidOperationException("Cannot acquire two swapchain textures on the same command buffer!");
+			}
+#endif
+
+			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
+				Device.Handle,
+				Handle,
+				window.Handle,
+				out var width,
+				out var height
+			);
+
+			if (texturePtr == IntPtr.Zero)
+			{
+				return null;
+			}
+
+			// Override the texture properties to avoid allocating a new texture instance!
+			window.SwapchainTexture.Handle = texturePtr;
+			window.SwapchainTexture.Width = width;
+			window.SwapchainTexture.Height = height;
+			window.SwapchainTexture.Format = window.SwapchainFormat;
+
+#if DEBUG
+			swapchainTextureAcquired = true;
+#endif
+
+			return window.SwapchainTexture;
+		}
+
+		/// <summary>
 		/// Begins a render pass.
 		/// All render state, resource binding, and draw commands must be made within a render pass.
 		/// It is an error to call this during any kind of pass.
@@ -524,397 +575,6 @@ namespace MoonWorks.Graphics
 			colorFormatFour = colorAttachmentInfoFour.Texture.Format;
 			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
 #endif
-		}
-
-		public void BeginComputePass()
-		{
-#if DEBUG
-			AssertNotSubmitted();
-			AssertNotInPass("Cannot begin compute pass while in another pass!");
-			computePassActive = true;
-#endif
-
-			Refresh.Refresh_BeginComputePass(
-				Device.Handle,
-				Handle
-			);
-		}
-
-		/// <summary>
-		/// Binds a compute pipeline so that compute work may be dispatched.
-		/// </summary>
-		/// <param name="computePipeline">The compute pipeline to bind.</param>
-		public void BindComputePipeline(
-			ComputePipeline computePipeline
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute pipeline outside of compute pass!");
-#endif
-
-			Refresh.Refresh_BindComputePipeline(
-				Device.Handle,
-				Handle,
-				computePipeline.Handle
-			);
-
-#if DEBUG
-			currentComputePipeline = computePipeline;
-#endif
-		}
-
-		/// <summary>
-		/// Binds a buffer to be used in the compute shader.
-		/// </summary>
-		/// <param name="buffer">A buffer to bind.</param>
-		public unsafe void BindComputeBuffers(
-			GpuBuffer buffer
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeBufferCount(1);
-#endif
-
-			var bufferPtrs = stackalloc IntPtr[1];
-			bufferPtrs[0] = buffer.Handle;
-
-			Refresh.Refresh_BindComputeBuffers(
-				Device.Handle,
-				Handle,
-				(IntPtr) bufferPtrs
-			);
-		}
-
-		/// <summary>
-		/// Binds buffers to be used in the compute shader.
-		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
-		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeBufferCount(2);
-#endif
-
-			var bufferPtrs = stackalloc IntPtr[2];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
-
-			Refresh.Refresh_BindComputeBuffers(
-				Device.Handle,
-				Handle,
-				(IntPtr) bufferPtrs
-			);
-		}
-
-		/// <summary>
-		/// Binds buffers to be used in the compute shader.
-		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
-		/// <param name="bufferThree">A buffer to bind.</param>
-		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo,
-			GpuBuffer bufferThree
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeBufferCount(3);
-#endif
-
-			var bufferPtrs = stackalloc IntPtr[3];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
-			bufferPtrs[2] = bufferThree.Handle;
-
-			Refresh.Refresh_BindComputeBuffers(
-				Device.Handle,
-				Handle,
-				(IntPtr) bufferPtrs
-			);
-		}
-
-		/// <summary>
-		/// Binds buffers to be used in the compute shader.
-		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
-		/// <param name="bufferThree">A buffer to bind.</param>
-		/// <param name="bufferFour">A buffer to bind.</param>
-		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo,
-			GpuBuffer bufferThree,
-			GpuBuffer bufferFour
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeBufferCount(4);
-#endif
-
-			var bufferPtrs = stackalloc IntPtr[4];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
-			bufferPtrs[2] = bufferThree.Handle;
-			bufferPtrs[3] = bufferFour.Handle;
-
-			Refresh.Refresh_BindComputeBuffers(
-				Device.Handle,
-				Handle,
-				(IntPtr) bufferPtrs
-			);
-		}
-
-		/// <summary>
-		/// Binds buffers to be used in the compute shader.
-		/// </summary>
-		/// <param name="buffers">A Span of buffers to bind.</param>
-		public unsafe void BindComputeBuffers(
-			in Span<GpuBuffer> buffers
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeBufferCount(buffers.Length);
-#endif
-
-			var bufferPtrs = stackalloc IntPtr[buffers.Length];
-
-			for (var i = 0; i < buffers.Length; i += 1)
-			{
-				bufferPtrs[i] = buffers[i].Handle;
-			}
-
-			Refresh.Refresh_BindComputeBuffers(
-				Device.Handle,
-				Handle,
-				(IntPtr) bufferPtrs
-			);
-		}
-
-		/// <summary>
-		/// Binds a texture to be used in the compute shader.
-		/// </summary>
-		/// <param name="binding">A texture-level pair to bind.</param>
-		public unsafe void BindComputeTextures(
-			TextureLevelBinding binding
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeTextureCount(1);
-#endif
-
-			var texturePtrs = stackalloc IntPtr[1];
-			texturePtrs[0] = binding.Texture.Handle;
-
-			var mipLevels = stackalloc uint[1];
-			mipLevels[0] = binding.MipLevel;
-
-			Refresh.Refresh_BindComputeTextures(
-				Device.Handle,
-				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
-			);
-		}
-
-		/// <summary>
-		/// Binds textures to be used in the compute shader.
-		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
-		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeTextureCount(2);
-#endif
-
-			var texturePtrs = stackalloc IntPtr[2];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-
-			var mipLevels = stackalloc uint[2];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
-
-			Refresh.Refresh_BindComputeTextures(
-				Device.Handle,
-				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
-			);
-		}
-
-		/// <summary>
-		/// Binds textures to be used in the compute shader.
-		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
-		/// <param name="bindingThree">A texture-level pair to bind.</param>
-		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo,
-			TextureLevelBinding bindingThree
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeTextureCount(3);
-#endif
-
-			var texturePtrs = stackalloc IntPtr[3];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-			texturePtrs[2] = bindingThree.Texture.Handle;
-
-			var mipLevels = stackalloc uint[3];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
-			mipLevels[2] = bindingThree.MipLevel;
-
-			Refresh.Refresh_BindComputeTextures(
-				Device.Handle,
-				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
-			);
-		}
-
-		/// <summary>
-		/// Binds textures to be used in the compute shader.
-		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
-		/// <param name="bindingThree">A texture-level pair to bind.</param>
-		/// <param name="bindingFour">A texture-level pair to bind.</param>
-		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo,
-			TextureLevelBinding bindingThree,
-			TextureLevelBinding bindingFour
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeTextureCount(4);
-#endif
-
-			var texturePtrs = stackalloc IntPtr[4];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-			texturePtrs[2] = bindingThree.Texture.Handle;
-			texturePtrs[3] = bindingFour.Texture.Handle;
-
-			var mipLevels = stackalloc uint[4];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
-			mipLevels[2] = bindingThree.MipLevel;
-			mipLevels[3] = bindingFour.MipLevel;
-
-			Refresh.Refresh_BindComputeTextures(
-				Device.Handle,
-				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
-			);
-		}
-
-		/// <summary>
-		/// Binds textures to be used in the compute shader.
-		/// </summary>
-		/// <param name="bindings">A set of texture-level pairs to bind.</param>
-		public unsafe void BindComputeTextures(
-			in Span<TextureLevelBinding> bindings
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-			AssertComputePipelineBound();
-			AssertComputeTextureCount(bindings.Length);
-#endif
-
-			var texturePtrs = stackalloc IntPtr[bindings.Length];
-			var mipLevels = stackalloc uint[bindings.Length];
-
-			for (var i = 0; i < bindings.Length; i += 1)
-			{
-				texturePtrs[i] = bindings[i].Texture.Handle;
-				mipLevels[i] = bindings[i].MipLevel;
-			}
-
-			Refresh.Refresh_BindComputeTextures(
-				Device.Handle,
-				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
-			);
-		}
-
-		/// <summary>
-		/// Dispatches compute work.
-		/// </summary>
-		/// <param name="groupCountX"></param>
-		/// <param name="groupCountY"></param>
-		/// <param name="groupCountZ"></param>
-		/// <param name="computeParamOffset"></param>
-		public void DispatchCompute(
-			uint groupCountX,
-			uint groupCountY,
-			uint groupCountZ
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertInComputePass("Cannot dispatch compute outside of compute pass!");
-			AssertComputePipelineBound();
-
-			if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
-			{
-				throw new ArgumentException("All dimensions for the compute work group must be >= 1!");
-			}
-#endif
-
-			Refresh.Refresh_DispatchCompute(
-				Device.Handle,
-				Handle,
-				groupCountX,
-				groupCountY,
-				groupCountZ
-			);
-		}
-
-		public void EndComputePass()
-		{
-#if DEBUG
-			AssertInComputePass("Cannot end compute pass while not in a compute pass!");
-			computePassActive = false;
-#endif
-
-			Refresh.Refresh_EndComputePass(
-				Device.Handle,
-				Handle
-			);
 		}
 
 		/// <summary>
@@ -1672,51 +1332,6 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Pushes compute shader uniforms to the device.
-		/// </summary>
-		/// <returns>A starting offset to be used with dispatch calls.</returns>
-		public unsafe void PushComputeShaderUniforms(
-			void* uniformsPtr,
-			uint size
-		) {
-#if DEBUG
-			AssertNotSubmitted();
-			AssertComputePipelineBound();
-
-			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
-			{
-				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
-			}
-
-			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize != size)
-			{
-				throw new InvalidOperationException("Compute uniform data size mismatch!");
-			}
-#endif
-
-			Refresh.Refresh_PushComputeShaderUniforms(
-				Device.Handle,
-				Handle,
-				(IntPtr) uniformsPtr,
-				size
-			);
-		}
-
-		/// <summary>
-		/// Pushes compute shader uniforms to the device.
-		/// </summary>
-		/// <returns>A starting offset to be used with dispatch calls.</returns>
-		public unsafe void PushComputeShaderUniforms<T>(
-			in T uniforms
-		) where T : unmanaged
-		{
-			fixed (T* uniformsPtr = &uniforms)
-			{
-				PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
-			}
-		}
-
-		/// <summary>
 		/// Draws using instanced rendering.
 		/// </summary>
 		/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
@@ -1865,55 +1480,440 @@ namespace MoonWorks.Graphics
 			EndRenderPass();
 		}
 
+		public void BeginComputePass()
+		{
+#if DEBUG
+			AssertNotSubmitted();
+			AssertNotInPass("Cannot begin compute pass while in another pass!");
+			computePassActive = true;
+#endif
+
+			Refresh.Refresh_BeginComputePass(
+				Device.Handle,
+				Handle
+			);
+		}
+
 		/// <summary>
-		/// Acquires a swapchain texture.
-		/// This texture will be presented to the given window when the command buffer is submitted.
-		/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
-		/// If null is returned, presentation will not occur.
-		/// It is an error to acquire two swapchain textures from the same window in one command buffer.
-		/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
+		/// Binds a compute pipeline so that compute work may be dispatched.
 		/// </summary>
-		public Texture AcquireSwapchainTexture(
-			Window window
+		/// <param name="computePipeline">The compute pipeline to bind.</param>
+		public void BindComputePipeline(
+			ComputePipeline computePipeline
 		) {
 #if DEBUG
 			AssertNotSubmitted();
-
-			if (!window.Claimed)
-			{
-				throw new System.InvalidOperationException("Cannot acquire swapchain texture, window has not been claimed!");
-			}
-
-			if (swapchainTextureAcquired)
-			{
-				throw new System.InvalidOperationException("Cannot acquire two swapchain textures on the same command buffer!");
-			}
+			AssertInComputePass("Cannot bind compute pipeline outside of compute pass!");
 #endif
 
-			var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
+			Refresh.Refresh_BindComputePipeline(
 				Device.Handle,
 				Handle,
-				window.Handle,
-				out var width,
-				out var height
+				computePipeline.Handle
 			);
 
-			if (texturePtr == IntPtr.Zero)
-			{
-				return null;
-			}
-
-			// Override the texture properties to avoid allocating a new texture instance!
-			window.SwapchainTexture.Handle = texturePtr;
-			window.SwapchainTexture.Width = width;
-			window.SwapchainTexture.Height = height;
-			window.SwapchainTexture.Format = window.SwapchainFormat;
-
 #if DEBUG
-			swapchainTextureAcquired = true;
+			currentComputePipeline = computePipeline;
+#endif
+		}
+
+		/// <summary>
+		/// Binds a buffer to be used in the compute shader.
+		/// </summary>
+		/// <param name="buffer">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			GpuBuffer buffer
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(1);
 #endif
 
-			return window.SwapchainTexture;
+			var bufferPtrs = stackalloc IntPtr[1];
+			bufferPtrs[0] = buffer.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(2);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[2];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
+		/// <param name="bufferThree">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo,
+			GpuBuffer bufferThree
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(3);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[3];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
+			bufferPtrs[2] = bufferThree.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="bufferOne">A buffer to bind.</param>
+		/// <param name="bufferTwo">A buffer to bind.</param>
+		/// <param name="bufferThree">A buffer to bind.</param>
+		/// <param name="bufferFour">A buffer to bind.</param>
+		public unsafe void BindComputeBuffers(
+			GpuBuffer bufferOne,
+			GpuBuffer bufferTwo,
+			GpuBuffer bufferThree,
+			GpuBuffer bufferFour
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(4);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[4];
+			bufferPtrs[0] = bufferOne.Handle;
+			bufferPtrs[1] = bufferTwo.Handle;
+			bufferPtrs[2] = bufferThree.Handle;
+			bufferPtrs[3] = bufferFour.Handle;
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds buffers to be used in the compute shader.
+		/// </summary>
+		/// <param name="buffers">A Span of buffers to bind.</param>
+		public unsafe void BindComputeBuffers(
+			in Span<GpuBuffer> buffers
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeBufferCount(buffers.Length);
+#endif
+
+			var bufferPtrs = stackalloc IntPtr[buffers.Length];
+
+			for (var i = 0; i < buffers.Length; i += 1)
+			{
+				bufferPtrs[i] = buffers[i].Handle;
+			}
+
+			Refresh.Refresh_BindComputeBuffers(
+				Device.Handle,
+				Handle,
+				(IntPtr) bufferPtrs
+			);
+		}
+
+		/// <summary>
+		/// Binds a texture to be used in the compute shader.
+		/// </summary>
+		/// <param name="binding">A texture-level pair to bind.</param>
+		public unsafe void BindComputeTextures(
+			TextureLevelBinding binding
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(1);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[1];
+			texturePtrs[0] = binding.Texture.Handle;
+
+			var mipLevels = stackalloc uint[1];
+			mipLevels[0] = binding.MipLevel;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		public unsafe void BindComputeTextures(
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(2);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[2];
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+
+			var mipLevels = stackalloc uint[2];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		/// <param name="bindingThree">A texture-level pair to bind.</param>
+		public unsafe void BindComputeTextures(
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo,
+			TextureLevelBinding bindingThree
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(3);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[3];
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+			texturePtrs[2] = bindingThree.Texture.Handle;
+
+			var mipLevels = stackalloc uint[3];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
+			mipLevels[2] = bindingThree.MipLevel;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="bindingOne">A texture-level pair to bind.</param>
+		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		/// <param name="bindingThree">A texture-level pair to bind.</param>
+		/// <param name="bindingFour">A texture-level pair to bind.</param>
+		public unsafe void BindComputeTextures(
+			TextureLevelBinding bindingOne,
+			TextureLevelBinding bindingTwo,
+			TextureLevelBinding bindingThree,
+			TextureLevelBinding bindingFour
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(4);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[4];
+			texturePtrs[0] = bindingOne.Texture.Handle;
+			texturePtrs[1] = bindingTwo.Texture.Handle;
+			texturePtrs[2] = bindingThree.Texture.Handle;
+			texturePtrs[3] = bindingFour.Texture.Handle;
+
+			var mipLevels = stackalloc uint[4];
+			mipLevels[0] = bindingOne.MipLevel;
+			mipLevels[1] = bindingTwo.MipLevel;
+			mipLevels[2] = bindingThree.MipLevel;
+			mipLevels[3] = bindingFour.MipLevel;
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
+			);
+		}
+
+		/// <summary>
+		/// Binds textures to be used in the compute shader.
+		/// </summary>
+		/// <param name="bindings">A set of texture-level pairs to bind.</param>
+		public unsafe void BindComputeTextures(
+			in Span<TextureLevelBinding> bindings
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
+			AssertComputePipelineBound();
+			AssertComputeTextureCount(bindings.Length);
+#endif
+
+			var texturePtrs = stackalloc IntPtr[bindings.Length];
+			var mipLevels = stackalloc uint[bindings.Length];
+
+			for (var i = 0; i < bindings.Length; i += 1)
+			{
+				texturePtrs[i] = bindings[i].Texture.Handle;
+				mipLevels[i] = bindings[i].MipLevel;
+			}
+
+			Refresh.Refresh_BindComputeTextures(
+				Device.Handle,
+				Handle,
+				(IntPtr) texturePtrs,
+				(IntPtr) mipLevels
+			);
+		}
+
+		/// <summary>
+		/// Pushes compute shader uniforms to the device.
+		/// </summary>
+		/// <returns>A starting offset to be used with dispatch calls.</returns>
+		public unsafe void PushComputeShaderUniforms(
+			void* uniformsPtr,
+			uint size
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertComputePipelineBound();
+
+			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
+			{
+				throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
+			}
+
+			if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize != size)
+			{
+				throw new InvalidOperationException("Compute uniform data size mismatch!");
+			}
+#endif
+
+			Refresh.Refresh_PushComputeShaderUniforms(
+				Device.Handle,
+				Handle,
+				(IntPtr) uniformsPtr,
+				size
+			);
+		}
+
+		/// <summary>
+		/// Pushes compute shader uniforms to the device.
+		/// </summary>
+		/// <returns>A starting offset to be used with dispatch calls.</returns>
+		public unsafe void PushComputeShaderUniforms<T>(
+			in T uniforms
+		) where T : unmanaged
+		{
+			fixed (T* uniformsPtr = &uniforms)
+			{
+				PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
+			}
+		}
+
+		/// <summary>
+		/// Dispatches compute work.
+		/// </summary>
+		/// <param name="groupCountX"></param>
+		/// <param name="groupCountY"></param>
+		/// <param name="groupCountZ"></param>
+		/// <param name="computeParamOffset"></param>
+		public void DispatchCompute(
+			uint groupCountX,
+			uint groupCountY,
+			uint groupCountZ
+		) {
+#if DEBUG
+			AssertNotSubmitted();
+			AssertInComputePass("Cannot dispatch compute outside of compute pass!");
+			AssertComputePipelineBound();
+
+			if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
+			{
+				throw new ArgumentException("All dimensions for the compute work group must be >= 1!");
+			}
+#endif
+
+			Refresh.Refresh_DispatchCompute(
+				Device.Handle,
+				Handle,
+				groupCountX,
+				groupCountY,
+				groupCountZ
+			);
+		}
+
+		public void EndComputePass()
+		{
+#if DEBUG
+			AssertInComputePass("Cannot end compute pass while not in a compute pass!");
+			computePassActive = false;
+#endif
+
+			Refresh.Refresh_EndComputePass(
+				Device.Handle,
+				Handle
+			);
 		}
 
 		// Copy Pass
