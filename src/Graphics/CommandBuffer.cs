@@ -87,6 +87,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertNotInPass("Cannot begin a render pass inside another pass!");
 			AssertTextureNotNull(colorAttachmentInfo);
 			AssertColorTarget(colorAttachmentInfo);
 #endif
@@ -528,6 +529,7 @@ namespace MoonWorks.Graphics
 		public void BeginComputePass()
 		{
 #if DEBUG
+			AssertNotSubmitted();
 			AssertNotInPass("Cannot begin compute pass while in another pass!");
 			computePassActive = true;
 #endif
@@ -1842,6 +1844,25 @@ namespace MoonWorks.Graphics
 			currentGraphicsPipeline = null;
 			renderPassActive = false;
 #endif
+		}
+
+		/// <summary>
+		/// Blits a texture to another texture with the specified filter.
+		///
+		/// This operation cannot be performed inside any pass.
+		/// </summary>
+		public void Blit(
+			Texture source,
+			Texture destination,
+			Filter filter
+		) {
+			var sampler = filter == Filter.Linear ? Device.LinearSampler : Device.PointSampler;
+
+			BeginRenderPass(new ColorAttachmentInfo(destination));
+			BindGraphicsPipeline(Device.BlitPipeline);
+			BindFragmentSamplers(new TextureSamplerBinding(source, sampler));
+			DrawPrimitives(0, 2);
+			EndRenderPass();
 		}
 
 		/// <summary>

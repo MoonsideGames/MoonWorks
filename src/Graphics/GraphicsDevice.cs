@@ -22,6 +22,9 @@ namespace MoonWorks.Graphics
 		// Built-in video pipeline
 		internal GraphicsPipeline VideoPipeline { get; }
 
+		// Built-in blit pipeline
+		internal GraphicsPipeline BlitPipeline { get; }
+
 		// Built-in text shader info
 		public GraphicsShaderInfo TextVertexShaderInfo { get; }
 		public GraphicsShaderInfo TextFragmentShaderInfo { get; }
@@ -57,32 +60,43 @@ namespace MoonWorks.Graphics
 			// Check for replacement stock shaders
 			string basePath = System.AppContext.BaseDirectory;
 
-			string videoVertPath = Path.Combine(basePath, "video_fullscreen.vert.refresh");
-			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
+			string fullscreenVertPath = Path.Combine(basePath, "fullscreen.vert.refresh");
 
 			string textVertPath = Path.Combine(basePath, "text_transform.vert.refresh");
 			string textFragPath = Path.Combine(basePath, "text_msdf.frag.refresh");
 
-			ShaderModule videoVertShader;
-			ShaderModule videoFragShader;
+			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
+			string blitFragPath = Path.Combine(basePath, "blit.frag.refresh");
+
+			ShaderModule fullscreenVertShader;
 
 			ShaderModule textVertShader;
 			ShaderModule textFragShader;
 
-			if (File.Exists(videoVertPath) && File.Exists(videoFragPath))
+			ShaderModule videoFragShader;
+			ShaderModule blitFragShader;
+
+			if (File.Exists(fullscreenVertPath))
 			{
-				videoVertShader = new ShaderModule(this, videoVertPath);
+				fullscreenVertShader = new ShaderModule(this, fullscreenVertPath);
+			}
+			else
+			{
+				// use defaults
+				var assembly = typeof(GraphicsDevice).Assembly;
+				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.refresh");
+				fullscreenVertShader = new ShaderModule(this, vertStream);
+			}
+
+			if (File.Exists(videoFragPath))
+			{
 				videoFragShader = new ShaderModule(this, videoFragPath);
 			}
 			else
 			{
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
-
-				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoFullscreen.vert.refresh");
 				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh");
-
-				videoVertShader = new ShaderModule(this, vertStream);
 				videoFragShader = new ShaderModule(this, fragStream);
 			}
 
@@ -103,6 +117,19 @@ namespace MoonWorks.Graphics
 				textFragShader = new ShaderModule(this, fragStream);
 			}
 
+			if (File.Exists(blitFragPath))
+			{
+				blitFragShader = new ShaderModule(this, blitFragPath);
+			}
+			else
+			{
+				// use defaults
+				var assembly = typeof(GraphicsDevice).Assembly;
+
+				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Blit.frag.refresh");
+				blitFragShader = new ShaderModule(this, fragStream);
+			}
+
 			VideoPipeline = new GraphicsPipeline(
 				this,
 				new GraphicsPipelineCreateInfo
@@ -115,7 +142,7 @@ namespace MoonWorks.Graphics
 					),
 					DepthStencilState = DepthStencilState.Disable,
 					VertexShaderInfo = GraphicsShaderInfo.Create(
-						videoVertShader,
+						fullscreenVertShader,
 						"main",
 						0
 					),
@@ -123,6 +150,34 @@ namespace MoonWorks.Graphics
 						videoFragShader,
 						"main",
 						3
+					),
+					VertexInputState = VertexInputState.Empty,
+					RasterizerState = RasterizerState.CCW_CullNone,
+					PrimitiveType = PrimitiveType.TriangleList,
+					MultisampleState = MultisampleState.None
+				}
+			);
+
+			BlitPipeline = new GraphicsPipeline(
+				this,
+				new GraphicsPipelineCreateInfo
+				{
+					AttachmentInfo = new GraphicsPipelineAttachmentInfo(
+						new ColorAttachmentDescription(
+							TextureFormat.R8G8B8A8,
+							ColorAttachmentBlendState.None
+						)
+					),
+					DepthStencilState = DepthStencilState.Disable,
+					VertexShaderInfo = GraphicsShaderInfo.Create(
+						fullscreenVertShader,
+						"main",
+						0
+					),
+					FragmentShaderInfo = GraphicsShaderInfo.Create(
+						blitFragShader,
+						"main",
+						1
 					),
 					VertexInputState = VertexInputState.Empty,
 					RasterizerState = RasterizerState.CCW_CullNone,

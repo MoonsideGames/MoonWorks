@@ -26,8 +26,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_fullscreen.vert.refresh">
-			<LogicalName>MoonWorks.Graphics.StockShaders.VideoFullscreen.vert.refresh</LogicalName>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.refresh</LogicalName>
 		</EmbeddedResource>
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.refresh">
 			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh</LogicalName>
@@ -37,6 +37,9 @@
 		</EmbeddedResource>
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.refresh">
 			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\blit.frag.refresh">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Blit.frag.refresh</LogicalName>
 		</EmbeddedResource>
 	</ItemGroup>
 </Project>

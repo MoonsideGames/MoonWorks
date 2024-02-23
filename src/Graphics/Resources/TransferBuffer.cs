@@ -113,7 +113,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public unsafe void GetData<T>(
 			Span<T> data,
-			uint bufferOffsetInBytes
+			uint bufferOffsetInBytes = 0
 		) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
