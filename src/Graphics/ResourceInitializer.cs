@@ -99,7 +99,8 @@ namespace MoonWorks.Graphics
 				TransferBuffer = new TransferBuffer(Device, dataSize);
 			}
 
-			TransferBuffer.SetData(data, new BufferCopy(0, 0, dataSize), SetDataOptions.Discard);
+			var dataSpan = new Span<byte>(data, (int) dataSize);
+			TransferBuffer.SetData(dataSpan, SetDataOptions.Discard);
 
 			var commandBuffer = Device.AcquireCommandBuffer();
 

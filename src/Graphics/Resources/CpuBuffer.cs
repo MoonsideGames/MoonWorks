@@ -49,29 +49,6 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from a data pointer to the TransferBuffer.
-		///
-		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
-		/// that command will still use the correct data at the cost of increased memory usage.
-		///
-		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
-		/// this could cause a data race.
-		/// </summary>
-		public unsafe void SetData(
-			byte* dataPtr,
-			in BufferCopy copyParams,
-			SetDataOptions setDataOption
-		) {
-			Refresh.Refresh_SetData(
-				Device.Handle,
-				(nint) dataPtr,
-				Handle,
-				copyParams.ToRefresh(),
-				(Refresh.SetDataOptions) setDataOption
-			);
-		}
-
-		/// <summary>
 		/// Immediately copies data from a Span to the TransferBuffer.
 		/// Returns the length of the copy in bytes.
 		///
@@ -90,12 +67,23 @@ namespace MoonWorks.Graphics
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * data.Length);
 
+#if DEBUG
+			AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
+#endif
+
 			fixed (T* dataPtr = data)
 			{
-				SetData(
-					(byte*) dataPtr,
-					new BufferCopy(0, bufferOffsetInBytes, dataLengthInBytes),
-					setDataOption
+				Refresh.Refresh_SetData(
+					Device.Handle,
+					(nint) dataPtr,
+					Handle,
+					new Refresh.BufferCopy
+					{
+						srcOffset = 0,
+						dstOffset = bufferOffsetInBytes,
+						size = dataLengthInBytes
+					},
+					(Refresh.SetDataOptions) setDataOption
 				);
 			}
 
@@ -121,21 +109,6 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from the TransferBuffer into a data pointer.
-		/// </summary>
-		public unsafe void GetData(
-			byte* dataPtr,
-			in BufferCopy copyParams
-		) {
-			Refresh.Refresh_GetData(
-				Device.Handle,
-				Handle,
-				(nint) dataPtr,
-				copyParams.ToRefresh()
-			);
-		}
-
-		/// <summary>
 		/// Immediately copies data from the TransferBuffer into a Span.
 		/// </summary>
 		public unsafe void GetData<T>(
@@ -146,13 +119,34 @@ namespace MoonWorks.Graphics
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * data.Length);
 
+#if DEBUG
+			AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
+#endif
+
 			fixed (T* dataPtr = data)
 			{
-				GetData(
-					(byte*) dataPtr,
-					new BufferCopy(bufferOffsetInBytes, 0, dataLengthInBytes)
+				Refresh.Refresh_GetData(
+					Device.Handle,
+					Handle,
+					(nint) dataPtr,
+					new Refresh.BufferCopy
+					{
+						srcOffset = bufferOffsetInBytes,
+						dstOffset = 0,
+						size = dataLengthInBytes
+					}
 				);
 			}
 		}
+
+#if DEBUG
+		private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
+		{
+			if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
+			{
+				throw new InvalidOperationException($"SetData overflow! Transfer buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
+			}
+		}
+#endif
 	}
 }
