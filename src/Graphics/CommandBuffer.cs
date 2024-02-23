@@ -525,6 +525,19 @@ namespace MoonWorks.Graphics
 #endif
 		}
 
+		public void BeginComputePass()
+		{
+#if DEBUG
+			AssertNotInPass("Cannot begin compute pass while in another pass!");
+			computePassActive = true;
+#endif
+
+			Refresh.Refresh_BeginComputePass(
+				Device.Handle,
+				Handle
+			);
+		}
+
 		/// <summary>
 		/// Binds a compute pipeline so that compute work may be dispatched.
 		/// </summary>
@@ -534,6 +547,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute pipeline outside of compute pass!");
 #endif
 
 			Refresh.Refresh_BindComputePipeline(
@@ -556,6 +570,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(1);
 #endif
@@ -581,6 +596,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(2);
 #endif
@@ -609,6 +625,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(3);
 #endif
@@ -640,6 +657,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(4);
 #endif
@@ -666,6 +684,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeBufferCount(buffers.Length);
 #endif
@@ -693,6 +712,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(1);
 #endif
@@ -722,6 +742,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(2);
 #endif
@@ -755,6 +776,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(3);
 #endif
@@ -792,6 +814,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(4);
 #endif
@@ -825,6 +848,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
 			AssertComputeTextureCount(bindings.Length);
 #endif
@@ -860,6 +884,7 @@ namespace MoonWorks.Graphics
 		) {
 #if DEBUG
 			AssertNotSubmitted();
+			AssertInComputePass("Cannot dispatch compute outside of compute pass!");
 			AssertComputePipelineBound();
 
 			if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
@@ -874,6 +899,19 @@ namespace MoonWorks.Graphics
 				groupCountX,
 				groupCountY,
 				groupCountZ
+			);
+		}
+
+		public void EndComputePass()
+		{
+#if DEBUG
+			AssertInComputePass("Cannot end compute pass while not in a compute pass!");
+			computePassActive = false;
+#endif
+
+			Refresh.Refresh_EndComputePass(
+				Device.Handle,
+				Handle
 			);
 		}
 
@@ -1888,7 +1926,7 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
 		public void UploadToTexture(
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			in TextureSlice textureSlice,
 			in BufferImageCopy copyParams
 		)
@@ -1896,12 +1934,13 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot upload to texture outside of copy pass!");
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
 #endif
 
 			Refresh.Refresh_UploadToTexture(
 				Device.Handle,
 				Handle,
-				cpuBuffer.Handle,
+				transferBuffer.Handle,
 				textureSlice.ToRefreshTextureSlice(),
 				copyParams.ToRefresh()
 			);
@@ -1911,11 +1950,11 @@ namespace MoonWorks.Graphics
 		/// Uploads the contents of an entire buffer to a texture with no mips.
 		/// </summary>
 		public void UploadToTexture(
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			Texture texture
 		) {
 			UploadToTexture(
-				cpuBuffer,
+				transferBuffer,
 				new TextureSlice(texture),
 				new BufferImageCopy(0, 0, 0)
 			);
@@ -1931,19 +1970,21 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
 		public void UploadToBuffer(
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			GpuBuffer gpuBuffer,
 			in BufferCopy copyParams
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot upload to texture outside of copy pass!");
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.SrcOffset, copyParams.Size);
+			AssertBufferBoundsCheck(gpuBuffer.Size, copyParams.DstOffset, copyParams.Size);
 #endif
 
 			Refresh.Refresh_UploadToBuffer(
 				Device.Handle,
 				Handle,
-				cpuBuffer.Handle,
+				transferBuffer.Handle,
 				gpuBuffer.Handle,
 				copyParams.ToRefresh()
 			);
@@ -1953,19 +1994,13 @@ namespace MoonWorks.Graphics
 		/// Copies the entire contents of a CpuBuffer to a GpuBuffer.
 		/// </summary>
 		public void UploadToBuffer(
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			GpuBuffer gpuBuffer
 		) {
-#if DEBUG
-			if (cpuBuffer.Size > gpuBuffer.Size)
-			{
-				throw new InvalidOperationException("CpuBuffer copying to GpuBuffer is too large!");
-			}
-#endif
 			UploadToBuffer(
-				cpuBuffer,
+				transferBuffer,
 				gpuBuffer,
-				new BufferCopy(0, 0, cpuBuffer.Size)
+				new BufferCopy(0, 0, transferBuffer.Size)
 			);
 		}
 
@@ -1978,19 +2013,20 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromTexture(
 			in TextureSlice textureSlice,
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			in BufferImageCopy copyParams
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
 #endif
 
 			Refresh.Refresh_DownloadFromTexture(
 				Device.Handle,
 				Handle,
 				textureSlice.ToRefreshTextureSlice(),
-				cpuBuffer.Handle,
+				transferBuffer.Handle,
 				copyParams.ToRefresh()
 			);
 		}
@@ -2000,11 +2036,11 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromTexture(
 			Texture texture,
-			TransferBuffer cpuBuffer
+			TransferBuffer transferBuffer
 		) {
 			DownloadFromTexture(
 				new TextureSlice(texture),
-				cpuBuffer,
+				transferBuffer,
 				new BufferImageCopy(0, 0, 0)
 			);
 		}
@@ -2018,20 +2054,39 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromBuffer(
 			GpuBuffer gpuBuffer,
-			TransferBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			in BufferCopy copyParams
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.DstOffset, copyParams.Size);
 #endif
 
 			Refresh.Refresh_DownloadFromBuffer(
 				Device.Handle,
 				Handle,
 				gpuBuffer.Handle,
-				cpuBuffer.Handle,
+				transferBuffer.Handle,
 				copyParams.ToRefresh()
+			);
+		}
+
+		/// <summary>
+		/// Downloads data from a GpuBuffer to a CpuBuffer.
+		/// This copy occurs on the GPU timeline.
+		///
+		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// fully copied until the command buffer has finished execution.
+		/// </summary>
+		public void DownloadFromBuffer(
+			GpuBuffer gpuBuffer,
+			TransferBuffer transferBuffer
+		) {
+			DownloadFromBuffer(
+				gpuBuffer,
+				transferBuffer,
+				new BufferCopy(0, 0, gpuBuffer.Size)
 			);
 		}
 
@@ -2049,6 +2104,7 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertTextureBoundsCheck(destination.Size, source.Size);
 #endif
 
 			Refresh.Refresh_CopyTextureToTexture(
@@ -2087,6 +2143,7 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertBufferBoundsCheck(buffer.Size, copyParams.BufferOffset, textureSlice.Size);
 #endif
 
 			Refresh.Refresh_CopyTextureToBuffer(
@@ -2119,19 +2176,20 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished in subsequent commands.
 		/// </summary>
 		public void CopyBufferToTexture(
-			GpuBuffer buffer,
+			GpuBuffer gpuBuffer,
 			in TextureSlice textureSlice,
 			in BufferImageCopy copyParams
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertBufferBoundsCheck(gpuBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
 #endif
 
 			Refresh.Refresh_CopyBufferToTexture(
 				Device.Handle,
 				Handle,
-				buffer.Handle,
+				gpuBuffer.Handle,
 				textureSlice.ToRefreshTextureSlice(),
 				copyParams.ToRefresh()
 			);
@@ -2165,6 +2223,8 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
+			AssertBufferBoundsCheck(source.Size, copyParams.SrcOffset, copyParams.Size);
+			AssertBufferBoundsCheck(destination.Size, copyParams.DstOffset, copyParams.Size);
 #endif
 
 			Refresh.Refresh_CopyBufferToBuffer(
@@ -2416,6 +2476,14 @@ namespace MoonWorks.Graphics
 		private void AssertInCopyPass(string message)
 		{
 			if (!copyPassActive)
+			{
+				throw new System.InvalidOperationException(message);
+			}
+		}
+
+		private void AssertInComputePass(string message)
+		{
+			if (!computePassActive)
 			{
 				throw new System.InvalidOperationException(message);
 			}
