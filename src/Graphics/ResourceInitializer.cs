@@ -19,7 +19,7 @@ namespace MoonWorks.Graphics
 		uint dataSize = 1024;
 
 		List<(GpuBuffer, uint, uint)> BufferUploads = new List<(GpuBuffer, uint, uint)>();
-		List<(Texture, uint, uint)> TextureUploads = new List<(Texture, uint, uint)>();
+		List<(TextureSlice, uint)> TextureUploads = new List<(TextureSlice, uint)>();
 
 		public ResourceInitializer(GraphicsDevice device) : base(device)
 		{
@@ -34,14 +34,13 @@ namespace MoonWorks.Graphics
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
 			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
 
-			BufferUploads.Add((gpuBuffer, dataOffset, lengthInBytes));
-
-			ResizeDataIfNeeded(lengthInBytes);
-
+			uint resourceOffset;
 			fixed (void* spanPtr = data)
 			{
-				CopyData(spanPtr, lengthInBytes);
+				resourceOffset = CopyData(spanPtr, lengthInBytes);
 			}
+
+			BufferUploads.Add((gpuBuffer, resourceOffset, lengthInBytes));
 
 			return gpuBuffer;
 		}
@@ -53,12 +52,11 @@ namespace MoonWorks.Graphics
 		{
 			var pixelData = ImageUtils.GetPixelDataFromBytes(data, out var width, out var height, out var lengthInBytes);
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
-			TextureUploads.Add((texture, dataOffset, lengthInBytes));
 
-			ResizeDataIfNeeded(lengthInBytes);
-			CopyData((void*) pixelData, lengthInBytes);
+			var resourceOffset = CopyData((void*) pixelData, texture.Size);
 			ImageUtils.FreePixelData(pixelData);
 
+			TextureUploads.Add((texture, resourceOffset));
 			return texture;
 		}
 
@@ -86,6 +84,66 @@ namespace MoonWorks.Graphics
 		{
 			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
 			return CreateTexture2D(fileStream);
+		}
+
+		public Texture CreateTextureFromDDS(Stream stream)
+		{
+			using var reader = new BinaryReader(stream);
+			Texture texture;
+			int faces;
+			ImageUtils.ParseDDS(reader, out var format, out var width, out var height, out var levels, out var isCube);
+
+			if (isCube)
+			{
+				texture = Texture.CreateTextureCube(Device, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
+				faces = 6;
+			}
+			else
+			{
+				texture = Texture.CreateTexture2D(Device, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
+				faces = 1;
+			}
+
+			for (int face = 0; face < faces; face += 1)
+			{
+				for (int level = 0; level < levels; level += 1)
+				{
+					var levelWidth = width >> level;
+					var levelHeight = height >> level;
+
+					var levelSize = ImageUtils.CalculateDDSLevelSize(levelWidth, levelHeight, format);
+					var byteBuffer = NativeMemory.Alloc((nuint) levelSize);
+					var byteSpan = new Span<byte>(byteBuffer, levelSize);
+					stream.ReadExactly(byteSpan);
+
+					var textureSlice = new TextureSlice
+					{
+						Texture = texture,
+						MipLevel = (uint) level,
+						BaseLayer = (uint) face,
+						LayerCount = 1,
+						X = 0,
+						Y = 0,
+						Z = 0,
+						Width = (uint) levelWidth,
+						Height = (uint) levelHeight,
+						Depth = 1
+					};
+
+					var resourceOffset = CopyDataAligned(byteBuffer, (uint) levelSize, Texture.TexelSize(format));
+					TextureUploads.Add((textureSlice, resourceOffset));
+
+					NativeMemory.Free(byteBuffer);
+				}
+			}
+
+			return texture;
+		}
+
+		public Texture CreateTextureFromDDS(string path)
+		{
+			var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			return CreateTextureFromDDS(stream);
 		}
 
 		/// <summary>
@@ -119,11 +177,11 @@ namespace MoonWorks.Graphics
 				);
 			}
 
-			foreach (var (texture, offset, size) in TextureUploads)
+			foreach (var (textureSlice, offset) in TextureUploads)
 			{
 				commandBuffer.UploadToTexture(
 					TransferBuffer,
-					texture,
+					textureSlice,
 					new BufferImageCopy(
 						offset,
 						0,
@@ -140,19 +198,31 @@ namespace MoonWorks.Graphics
 			dataOffset = 0;
 		}
 
-		private void ResizeDataIfNeeded(uint lengthInBytes)
+		private uint CopyData(void* ptr, uint lengthInBytes)
 		{
 			if (dataOffset + lengthInBytes >= dataSize)
 			{
 				dataSize = dataOffset + lengthInBytes;
 				data = (byte*) NativeMemory.Realloc(data, dataSize);
 			}
-		}
 
-		private void CopyData(void* ptr, uint lengthInBytes)
-		{
+			var resourceOffset = dataOffset;
+
 			NativeMemory.Copy(ptr, data + dataOffset, lengthInBytes);
 			dataOffset += lengthInBytes;
+
+			return resourceOffset;
+		}
+
+		private uint CopyDataAligned(void* ptr, uint lengthInBytes, uint alignment)
+		{
+			dataOffset = RoundToAlignment(dataOffset, alignment);
+			return CopyData(ptr, lengthInBytes);
+		}
+
+		private uint RoundToAlignment(uint value, uint alignment)
+		{
+			return alignment * ((value + alignment - 1) / alignment);
 		}
 
 		protected override void Dispose(bool disposing)
