@@ -146,56 +146,56 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Decodes image data into a CpuBuffer to prepare for image upload.
+		/// Decodes image data into a TransferBuffer to prepare for image upload.
 		/// </summary>
-		public static unsafe uint DecodeIntoCpuBuffer(
+		public static unsafe uint DecodeIntoTransferBuffer(
 			Span<byte> data,
-			CpuBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
 			SetDataOptions option
 		) {
 			var pixelData = GetPixelDataFromBytes(data, out var w, out var h, out var sizeInBytes);
-			var length = cpuBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
+			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
 			FreePixelData(pixelData);
 			return length;
 		}
 
 		/// <summary>
-		/// Decodes an image stream into a CpuBuffer to prepare for image upload.
+		/// Decodes an image stream into a TransferBuffer to prepare for image upload.
 		/// </summary>
-		public static unsafe uint DecodeIntoCpuBuffer(
+		public static unsafe uint DecodeIntoTransferBuffer(
 			Stream stream,
-			CpuBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
 			SetDataOptions option
 		) {
 			var pixelData = GetPixelDataFromStream(stream, out var w, out var h, out var sizeInBytes);
-			var length = cpuBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
+			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
 			FreePixelData(pixelData);
 			return length;
 		}
 
 		/// <summary>
-		/// Decodes an image file into a CpuBuffer to prepare for image upload.
+		/// Decodes an image file into a TransferBuffer to prepare for image upload.
 		/// </summary>
-		public static unsafe uint DecodeIntoCpuBuffer(
+		public static unsafe uint DecodeIntoTransferBuffer(
 			string path,
-			CpuBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
 			SetDataOptions option
 		) {
 			var pixelData = GetPixelDataFromFile(path, out var w, out var h, out var sizeInBytes);
-			var length = cpuBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
+			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
 			FreePixelData(pixelData);
 			return length;
 		}
 
 		/// <summary>
-		/// Saves pixel data contained in a CpuBuffer to a PNG file.
+		/// Saves pixel data contained in a TransferBuffer to a PNG file.
 		/// </summary>
 		public static unsafe void SavePNG(
 			string path,
-			CpuBuffer cpuBuffer,
+			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
 			int width,
 			int height,
@@ -206,7 +206,7 @@ namespace MoonWorks.Graphics
 			var pixelsPtr = NativeMemory.Alloc((nuint) sizeInBytes);
 			var pixelsSpan = new Span<byte>(pixelsPtr, sizeInBytes);
 
-			cpuBuffer.GetData(pixelsSpan, bufferOffsetInBytes);
+			transferBuffer.GetData(pixelsSpan, bufferOffsetInBytes);
 
 			if (bgra)
 			{

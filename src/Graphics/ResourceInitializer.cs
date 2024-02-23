@@ -12,7 +12,7 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public unsafe class ResourceInitializer : GraphicsResource
 	{
-		CpuBuffer TransferBuffer;
+		TransferBuffer TransferBuffer;
 
 		byte* data;
 		uint dataOffset = 0;
@@ -96,7 +96,7 @@ namespace MoonWorks.Graphics
 			if (TransferBuffer == null || TransferBuffer.Size < dataSize)
 			{
 				TransferBuffer?.Dispose();
-				TransferBuffer = new CpuBuffer(Device, dataSize);
+				TransferBuffer = new TransferBuffer(Device, dataSize);
 			}
 
 			TransferBuffer.SetData(data, new BufferCopy(0, 0, dataSize), SetDataOptions.Discard);

@@ -1888,7 +1888,7 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
 		public void UploadToTexture(
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			in TextureSlice textureSlice,
 			in BufferImageCopy copyParams
 		)
@@ -1911,7 +1911,7 @@ namespace MoonWorks.Graphics
 		/// Uploads the contents of an entire buffer to a texture with no mips.
 		/// </summary>
 		public void UploadToTexture(
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			Texture texture
 		) {
 			UploadToTexture(
@@ -1931,7 +1931,7 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
 		public void UploadToBuffer(
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			GpuBuffer gpuBuffer,
 			in BufferCopy copyParams
 		) {
@@ -1953,7 +1953,7 @@ namespace MoonWorks.Graphics
 		/// Copies the entire contents of a CpuBuffer to a GpuBuffer.
 		/// </summary>
 		public void UploadToBuffer(
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			GpuBuffer gpuBuffer
 		) {
 #if DEBUG
@@ -1978,7 +1978,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromTexture(
 			in TextureSlice textureSlice,
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			in BufferImageCopy copyParams
 		) {
 #if DEBUG
@@ -2000,7 +2000,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromTexture(
 			Texture texture,
-			CpuBuffer cpuBuffer
+			TransferBuffer cpuBuffer
 		) {
 			DownloadFromTexture(
 				new TextureSlice(texture),
@@ -2018,7 +2018,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromBuffer(
 			GpuBuffer gpuBuffer,
-			CpuBuffer cpuBuffer,
+			TransferBuffer cpuBuffer,
 			in BufferCopy copyParams
 		) {
 #if DEBUG

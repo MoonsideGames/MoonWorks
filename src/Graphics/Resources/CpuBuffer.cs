@@ -4,9 +4,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
-	public unsafe class CpuBuffer : RefreshResource
+	public unsafe class TransferBuffer : RefreshResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyCpuBuffer;
+		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTransferBuffer;
 
 		/// <summary>
 		/// Size in bytes.
@@ -20,28 +20,28 @@ namespace MoonWorks.Graphics
 		/// <param name="device">The GraphicsDevice.</param>
 		/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
 		/// <returns></returns>
-		public unsafe static CpuBuffer Create<T>(
+		public unsafe static TransferBuffer Create<T>(
 			GraphicsDevice device,
 			uint elementCount
 		) where T : unmanaged
 		{
-			return new CpuBuffer(
+			return new TransferBuffer(
 				device,
 				(uint) Marshal.SizeOf<T>() * elementCount
 			);
 		}
 
 		/// <summary>
-		/// Creates a CpuBuffer.
+		/// Creates a TransferBuffer.
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
 		/// <param name="sizeInBytes">The length of the buffer. Cannot be resized.</param>
-		public CpuBuffer(
+		public TransferBuffer(
 			GraphicsDevice device,
 			uint sizeInBytes
 		) : base(device)
 		{
-			Handle = Refresh.Refresh_CreateCpuBuffer(
+			Handle = Refresh.Refresh_CreateTransferBuffer(
 				device.Handle,
 				sizeInBytes
 			);
@@ -49,12 +49,12 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from a data pointer to the CpuBuffer.
+		/// Immediately copies data from a data pointer to the TransferBuffer.
 		///
-		/// If setDataOption is DISCARD and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
 		/// that command will still use the correct data at the cost of increased memory usage.
 		///
-		/// If setDataOption is OVERWRITE and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
 		/// this could cause a data race.
 		/// </summary>
 		public unsafe void SetData(
@@ -72,13 +72,13 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from a Span to the CpuBuffer.
+		/// Immediately copies data from a Span to the TransferBuffer.
 		/// Returns the length of the copy in bytes.
 		///
-		/// If setDataOption is DISCARD and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
 		/// that command will still use the correct data at the cost of increased memory usage.
 		///
-		/// If setDataOption is OVERWRITE and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
 		/// the data will be overwritten immediately, which could cause a data race.
 		/// </summary>
 		public unsafe uint SetData<T>(
@@ -103,13 +103,13 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from a Span to the CpuBuffer.
+		/// Immediately copies data from a Span to the TransferBuffer.
 		/// Returns the length of the copy in bytes.
 		///
-		/// If setDataOption is DISCARD and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
 		/// that command will still use the correct data at the cost of increased memory usage.
 		///
-		/// If setDataOption is OVERWRITE and this CpuBuffer was used in an Upload command,
+		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
 		/// the data will be overwritten immediately, which could cause a data race.
 		/// </summary>
 		public unsafe uint SetData<T>(
@@ -121,7 +121,7 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from the CpuBuffer into a data pointer.
+		/// Immediately copies data from the TransferBuffer into a data pointer.
 		/// </summary>
 		public unsafe void GetData(
 			byte* dataPtr,
@@ -136,7 +136,7 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Immediately copies data from the CpuBuffer into a Span.
+		/// Immediately copies data from the TransferBuffer into a Span.
 		/// </summary>
 		public unsafe void GetData<T>(
 			Span<T> data,

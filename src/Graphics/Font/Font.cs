@@ -51,8 +51,8 @@ namespace MoonWorks.Graphics.Font
 			ImageUtils.ImageInfoFromFile(imagePath, out var width, out var height, out var sizeInBytes);
 			var texture = Texture.CreateTexture2D(graphicsDevice, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
 
-			var cpuBuffer = new CpuBuffer(graphicsDevice, sizeInBytes);
-			ImageUtils.DecodeIntoCpuBuffer(
+			var cpuBuffer = new TransferBuffer(graphicsDevice, sizeInBytes);
+			ImageUtils.DecodeIntoTransferBuffer(
 				imagePath,
 				cpuBuffer,
 				0,

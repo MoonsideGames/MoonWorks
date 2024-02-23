@@ -28,7 +28,7 @@ namespace MoonWorks.Video
 		private Texture vTexture = null;
 		private Sampler LinearSampler;
 
-		private CpuBuffer TransferBuffer;
+		private TransferBuffer TransferBuffer;
 
 		private int currentFrame;
 
@@ -111,7 +111,7 @@ namespace MoonWorks.Video
 						TransferBuffer.Dispose();
 					}
 
-					TransferBuffer = new CpuBuffer(Device, yTexture.Size + uTexture.Size + vTexture.Size);
+					TransferBuffer = new TransferBuffer(Device, yTexture.Size + uTexture.Size + vTexture.Size);
 				}
 
 				Video = video;
