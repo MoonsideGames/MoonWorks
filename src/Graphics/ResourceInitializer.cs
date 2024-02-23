@@ -6,9 +6,12 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// A convenience structure for simultaneously creating resources and uploading their data.
+	/// A convenience structure for creating resources and uploading their data.
 	///
 	/// Note that Upload must be called after the Create methods for the data to actually be uploaded.
+	///
+	/// Note that this structure does not magically keep memory usage down -
+	/// you may want to stagger uploads over multiple submissions to minimize memory usage.
 	/// </summary>
 	public unsafe class ResourceInitializer : GraphicsResource
 	{
@@ -48,27 +51,23 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture from compressed image data to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(Span<byte> data)
+		public Texture CreateTexture2D(Span<byte> compressedImageData)
 		{
-			var pixelData = ImageUtils.GetPixelDataFromBytes(data, out var width, out var height, out var lengthInBytes);
+			ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
-
-			var resourceOffset = CopyData((void*) pixelData, texture.Size);
-			ImageUtils.FreePixelData(pixelData);
-
-			TextureUploads.Add((texture, resourceOffset));
+			SetTextureDataFromCompressed(texture, compressedImageData);
 			return texture;
 		}
 
 		/// <summary>
 		/// Creates a 2D Texture from a compressed image stream to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(Stream stream)
+		public Texture CreateTexture2D(Stream compressedImageStream)
 		{
-			var length = stream.Length;
+			var length = compressedImageStream.Length;
 			var buffer = NativeMemory.Alloc((nuint) length);
 			var span = new Span<byte>(buffer, (int) length);
-			stream.ReadExactly(span);
+			compressedImageStream.ReadExactly(span);
 
 			var texture = CreateTexture2D(span);
 
@@ -80,12 +79,15 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture from a compressed image file to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(string path)
+		public Texture CreateTexture2D(string compressedImageFilePath)
 		{
-			var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+			var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
 			return CreateTexture2D(fileStream);
 		}
 
+		/// <summary>
+		/// Creates a texture from a DDS stream.
+		/// </summary>
 		public Texture CreateTextureFromDDS(Stream stream)
 		{
 			using var reader = new BinaryReader(stream);
@@ -140,10 +142,39 @@ namespace MoonWorks.Graphics
 			return texture;
 		}
 
+		/// <summary>
+		/// Creates a texture from a DDS file.
+		/// </summary>
 		public Texture CreateTextureFromDDS(string path)
 		{
 			var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
 			return CreateTextureFromDDS(stream);
+		}
+
+		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Span<byte> compressedImageData)
+		{
+			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
+
+			var resourceOffset = CopyDataAligned((void*) pixelData, sizeInBytes, Texture.TexelSize(textureSlice.Texture.Format));
+			ImageUtils.FreePixelData(pixelData);
+
+			TextureUploads.Add((textureSlice, resourceOffset));
+		}
+
+		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Stream compressedImageStream)
+		{
+			var length = compressedImageStream.Length;
+			var buffer = NativeMemory.Alloc((nuint) length);
+			var span = new Span<byte>(buffer, (int) length);
+			compressedImageStream.ReadExactly(span);
+			SetTextureDataFromCompressed(textureSlice, span);
+			NativeMemory.Free(buffer);
+		}
+
+		public void SetTextureDataFromCompressed(TextureSlice textureSlice, string compressedImageFilePath)
+		{
+			var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
+			SetTextureDataFromCompressed(textureSlice, fileStream);
 		}
 
 		/// <summary>
@@ -231,7 +262,7 @@ namespace MoonWorks.Graphics
 			{
 				if (disposing)
 				{
-					TransferBuffer.Dispose();
+					TransferBuffer?.Dispose();
 				}
 
 				NativeMemory.Free(data);
