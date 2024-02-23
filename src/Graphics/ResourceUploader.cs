@@ -51,7 +51,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture from compressed image data to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(Span<byte> compressedImageData)
+		public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData)
 		{
 			ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
@@ -62,14 +62,14 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture from a compressed image stream to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(Stream compressedImageStream)
+		public Texture CreateTexture2DFromCompressed(Stream compressedImageStream)
 		{
 			var length = compressedImageStream.Length;
 			var buffer = NativeMemory.Alloc((nuint) length);
 			var span = new Span<byte>(buffer, (int) length);
 			compressedImageStream.ReadExactly(span);
 
-			var texture = CreateTexture2D(span);
+			var texture = CreateTexture2DFromCompressed(span);
 
 			NativeMemory.Free(buffer);
 
@@ -79,10 +79,10 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a 2D Texture from a compressed image file to be uploaded.
 		/// </summary>
-		public Texture CreateTexture2D(string compressedImageFilePath)
+		public Texture CreateTexture2DFromCompressed(string compressedImageFilePath)
 		{
 			var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-			return CreateTexture2D(fileStream);
+			return CreateTexture2DFromCompressed(fileStream);
 		}
 
 		/// <summary>
@@ -132,8 +132,7 @@ namespace MoonWorks.Graphics
 						Depth = 1
 					};
 
-					var resourceOffset = CopyDataAligned(byteBuffer, (uint) levelSize, Texture.TexelSize(format));
-					TextureUploads.Add((textureSlice, resourceOffset));
+					SetTextureData(textureSlice, byteSpan);
 
 					NativeMemory.Free(byteBuffer);
 				}
@@ -154,11 +153,11 @@ namespace MoonWorks.Graphics
 		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Span<byte> compressedImageData)
 		{
 			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
+			var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
 
-			var resourceOffset = CopyDataAligned((void*) pixelData, sizeInBytes, Texture.TexelSize(textureSlice.Texture.Format));
+			SetTextureData(textureSlice, pixelSpan);
+
 			ImageUtils.FreePixelData(pixelData);
-
-			TextureUploads.Add((textureSlice, resourceOffset));
 		}
 
 		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Stream compressedImageStream)
@@ -175,6 +174,23 @@ namespace MoonWorks.Graphics
 		{
 			var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
 			SetTextureDataFromCompressed(textureSlice, fileStream);
+		}
+
+		/// <summary>
+		/// Prepares upload of pixel data into a TextureSlice.
+		/// </summary>
+		public void SetTextureData<T>(TextureSlice textureSlice, Span<T> data) where T : unmanaged
+		{
+			var elementSize = Marshal.SizeOf<T>();
+			var dataLengthInBytes = (uint) (elementSize * data.Length);
+
+			uint resourceOffset;
+			fixed (T* dataPtr = data)
+			{
+				resourceOffset = CopyDataAligned(dataPtr, dataLengthInBytes, Texture.TexelSize(textureSlice.Texture.Format));
+			}
+
+			TextureUploads.Add((textureSlice, resourceOffset));
 		}
 
 		/// <summary>
