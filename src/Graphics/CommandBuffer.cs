@@ -1938,10 +1938,10 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Uploads data from a CpuBuffer to a TextureSlice.
+		/// Uploads data from a TransferBuffer to a TextureSlice.
 		/// This copy occurs on the GPU timeline.
 		///
-		/// Overwriting the contents of the CpuBuffer before the command buffer
+		/// Overwriting the contents of the TransferBuffer before the command buffer
 		/// has finished execution will cause undefined behavior.
 		///
 		/// You MAY assume that the copy has finished for subsequent commands.
@@ -1982,10 +1982,10 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Uploads data from a CpuBuffer to a GpuBuffer.
+		/// Uploads data from a TransferBuffer to a GpuBuffer.
 		/// This copy occurs on the GPU timeline.
 		///
-		/// Overwriting the contents of the CpuBuffer before the command buffer
+		/// Overwriting the contents of the TransferBuffer before the command buffer
 		/// has finished execution will cause undefined behavior.
 		///
 		/// You MAY assume that the copy has finished for subsequent commands.
@@ -2012,7 +2012,7 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Copies the entire contents of a CpuBuffer to a GpuBuffer.
+		/// Copies the entire contents of a TransferBuffer to a GpuBuffer.
 		/// </summary>
 		public void UploadToBuffer(
 			TransferBuffer transferBuffer,
@@ -2026,10 +2026,37 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Downloads data from a Texture to a CpuBuffer.
+		/// Copies data element-wise into from a TransferBuffer to a GpuBuffer.
+		/// </summary>
+		public void UploadToBuffer<T>(
+			TransferBuffer transferBuffer,
+			GpuBuffer gpuBuffer,
+			uint sourceStartElement,
+			uint destinationStartElement,
+			uint numElements
+		) where T : unmanaged
+		{
+			var elementSize = Marshal.SizeOf<T>();
+			var dataLengthInBytes = (uint) (elementSize * numElements);
+			var srcOffsetInBytes = (uint) (elementSize * sourceStartElement);
+			var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);
+
+			UploadToBuffer(
+				transferBuffer,
+				gpuBuffer,
+				new BufferCopy(
+					srcOffsetInBytes,
+					dstOffsetInBytes,
+					dataLengthInBytes
+				)
+			);
+		}
+
+		/// <summary>
+		/// Downloads data from a Texture to a TransferBuffer.
 		/// This copy occurs on the GPU timeline.
 		///
-		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// You MAY NOT assume that the data in the TransferBuffer is
 		/// fully copied until the command buffer has finished execution.
 		/// </summary>
 		public void DownloadFromTexture(
@@ -2053,7 +2080,7 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Downloads the contents of a Texture with no mips into a CpuBuffer.
+		/// Downloads the contents of a Texture with no mips into a TransferBuffer.
 		/// </summary>
 		public void DownloadFromTexture(
 			Texture texture,
@@ -2067,10 +2094,10 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Downloads data from a GpuBuffer to a CpuBuffer.
+		/// Downloads data from a GpuBuffer to a TransferBuffer.
 		/// This copy occurs on the GPU timeline.
 		///
-		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// You MAY NOT assume that the data in the TransferBuffer is
 		/// fully copied until the command buffer has finished execution.
 		/// </summary>
 		public void DownloadFromBuffer(
@@ -2094,10 +2121,10 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Downloads data from a GpuBuffer to a CpuBuffer.
+		/// Downloads data from a GpuBuffer to a TransferBuffer.
 		/// This copy occurs on the GPU timeline.
 		///
-		/// You MAY NOT assume that the data in the CpuBuffer is
+		/// You MAY NOT assume that the data in the TransferBuffer is
 		/// fully copied until the command buffer has finished execution.
 		/// </summary>
 		public void DownloadFromBuffer(
