@@ -8,12 +8,12 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// A convenience structure for creating resources and uploading their data.
 	///
-	/// Note that Upload must be called after the Create methods for the data to actually be uploaded.
+	/// Note that Upload or UploadAndWait must be called after the Create methods for the data to actually be uploaded.
 	///
 	/// Note that this structure does not magically keep memory usage down -
 	/// you may want to stagger uploads over multiple submissions to minimize memory usage.
 	/// </summary>
-	public unsafe class ResourceInitializer : GraphicsResource
+	public unsafe class ResourceUploader : GraphicsResource
 	{
 		TransferBuffer TransferBuffer;
 
@@ -24,7 +24,7 @@ namespace MoonWorks.Graphics
 		List<(GpuBuffer, uint, uint)> BufferUploads = new List<(GpuBuffer, uint, uint)>();
 		List<(TextureSlice, uint)> TextureUploads = new List<(TextureSlice, uint)>();
 
-		public ResourceInitializer(GraphicsDevice device) : base(device)
+		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
 			data = (byte*) NativeMemory.Alloc(dataSize);
 		}
