@@ -21,13 +21,15 @@ namespace MoonWorks.Graphics
 		uint dataOffset = 0;
 		uint dataSize = 1024;
 
-		List<(GpuBuffer, uint, uint)> BufferUploads = new List<(GpuBuffer, uint, uint)>();
+		List<(GpuBuffer, BufferCopy)> BufferUploads = new List<(GpuBuffer, BufferCopy)>();
 		List<(TextureSlice, uint)> TextureUploads = new List<(TextureSlice, uint)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
 			data = (byte*) NativeMemory.Alloc(dataSize);
 		}
+
+		// Buffers
 
 		/// <summary>
 		/// Creates a GpuBuffer with data to be uploaded.
@@ -37,16 +39,29 @@ namespace MoonWorks.Graphics
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
 			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
 
+			SetBufferData(gpuBuffer, 0, data);
+
+			return gpuBuffer;
+		}
+
+		/// <summary>
+		/// Prepares upload of data into a GpuBuffer.
+		/// </summary>
+		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffset, Span<T> data) where T : unmanaged
+		{
+			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
+
 			uint resourceOffset;
 			fixed (void* spanPtr = data)
 			{
 				resourceOffset = CopyData(spanPtr, lengthInBytes);
 			}
 
-			BufferUploads.Add((gpuBuffer, resourceOffset, lengthInBytes));
-
-			return gpuBuffer;
+			var bufferCopyParams = new BufferCopy(resourceOffset, bufferOffset, lengthInBytes);
+			BufferUploads.Add((buffer, bufferCopyParams));
 		}
+
+		// Textures
 
 		/// <summary>
 		/// Creates a 2D Texture from compressed image data to be uploaded.
@@ -193,6 +208,8 @@ namespace MoonWorks.Graphics
 			TextureUploads.Add((textureSlice, resourceOffset));
 		}
 
+		// Upload
+
 		/// <summary>
 		/// Uploads all the data corresponding to the created resources.
 		/// </summary>
@@ -220,6 +237,8 @@ namespace MoonWorks.Graphics
 			Device.ReleaseFence(fence);
 		}
 
+		// Helper methods
+
 		private void CopyToTransferBuffer()
 		{
 			if (TransferBuffer == null || TransferBuffer.Size < dataSize)
@@ -236,16 +255,12 @@ namespace MoonWorks.Graphics
 		{
 			commandBuffer.BeginCopyPass();
 
-			foreach (var (gpuBuffer, offset, size) in BufferUploads)
+			foreach (var (gpuBuffer, bufferCopyParams) in BufferUploads)
 			{
 				commandBuffer.UploadToBuffer(
 					TransferBuffer,
 					gpuBuffer,
-					new BufferCopy(
-						offset,
-						0,
-						size
-					)
+					bufferCopyParams
 				);
 			}
 
@@ -296,6 +311,11 @@ namespace MoonWorks.Graphics
 			return alignment * ((value + alignment - 1) / alignment);
 		}
 
+		// Dispose
+
+		/// <summary>
+		/// It is valid to immediately call Dispose after calling Upload.
+		/// </summary>
 		protected override void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
