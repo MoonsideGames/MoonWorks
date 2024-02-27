@@ -47,9 +47,11 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares upload of data into a GpuBuffer.
 		/// </summary>
-		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffset, Span<T> data) where T : unmanaged
+		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data) where T : unmanaged
 		{
-			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
+			uint elementSize = (uint) Marshal.SizeOf<T>();
+			uint offsetInBytes = elementSize * bufferOffsetInElements;
+			uint lengthInBytes = (uint) (elementSize * data.Length);
 
 			uint resourceOffset;
 			fixed (void* spanPtr = data)
@@ -57,11 +59,18 @@ namespace MoonWorks.Graphics
 				resourceOffset = CopyData(spanPtr, lengthInBytes);
 			}
 
-			var bufferCopyParams = new BufferCopy(resourceOffset, bufferOffset, lengthInBytes);
+			var bufferCopyParams = new BufferCopy(resourceOffset, offsetInBytes, lengthInBytes);
 			BufferUploads.Add((buffer, bufferCopyParams));
 		}
 
 		// Textures
+
+		public Texture CreateTexture2D(Span<byte> pixelData, uint width, uint height)
+		{
+			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
+			SetTextureData(texture, pixelData);
+			return texture;
+		}
 
 		/// <summary>
 		/// Creates a 2D Texture from compressed image data to be uploaded.
