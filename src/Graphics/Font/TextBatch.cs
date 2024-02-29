@@ -124,11 +124,11 @@ namespace MoonWorks.Graphics.Font
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				TransferBuffer.SetData(vertexSpan, SetDataOptions.Discard);
-				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, SetDataOptions.Overwrite);
+				TransferBuffer.SetData(vertexSpan, TransferOptions.Discard);
+				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, TransferOptions.Overwrite);
 
-				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length));
-				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length));
+				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), CopyOptions.SafeDiscard);
+				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), CopyOptions.SafeDiscard);
 			}
 
 			PrimitiveCount = vertexCount / 2;

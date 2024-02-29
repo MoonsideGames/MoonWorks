@@ -1949,7 +1949,8 @@ namespace MoonWorks.Graphics
 		public void UploadToTexture(
 			TransferBuffer transferBuffer,
 			in TextureSlice textureSlice,
-			in BufferImageCopy copyParams
+			in BufferImageCopy copyParams,
+			CopyOptions option
 		)
 		{
 #if DEBUG
@@ -1963,7 +1964,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				transferBuffer.Handle,
 				textureSlice.ToRefreshTextureSlice(),
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -1972,12 +1974,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void UploadToTexture(
 			TransferBuffer transferBuffer,
-			Texture texture
+			Texture texture,
+			CopyOptions option
 		) {
 			UploadToTexture(
 				transferBuffer,
 				new TextureSlice(texture),
-				new BufferImageCopy(0, 0, 0)
+				new BufferImageCopy(0, 0, 0),
+				option
 			);
 		}
 
@@ -1993,7 +1997,8 @@ namespace MoonWorks.Graphics
 		public void UploadToBuffer(
 			TransferBuffer transferBuffer,
 			GpuBuffer gpuBuffer,
-			in BufferCopy copyParams
+			in BufferCopy copyParams,
+			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2007,7 +2012,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				transferBuffer.Handle,
 				gpuBuffer.Handle,
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -2016,12 +2022,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void UploadToBuffer(
 			TransferBuffer transferBuffer,
-			GpuBuffer gpuBuffer
+			GpuBuffer gpuBuffer,
+			CopyOptions option
 		) {
 			UploadToBuffer(
 				transferBuffer,
 				gpuBuffer,
-				new BufferCopy(0, 0, transferBuffer.Size)
+				new BufferCopy(0, 0, transferBuffer.Size),
+				option
 			);
 		}
 
@@ -2033,7 +2041,8 @@ namespace MoonWorks.Graphics
 			GpuBuffer gpuBuffer,
 			uint sourceStartElement,
 			uint destinationStartElement,
-			uint numElements
+			uint numElements,
+			CopyOptions option
 		) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
@@ -2048,7 +2057,8 @@ namespace MoonWorks.Graphics
 					srcOffsetInBytes,
 					dstOffsetInBytes,
 					dataLengthInBytes
-				)
+				),
+				option
 			);
 		}
 
@@ -2062,7 +2072,8 @@ namespace MoonWorks.Graphics
 		public void DownloadFromTexture(
 			in TextureSlice textureSlice,
 			TransferBuffer transferBuffer,
-			in BufferImageCopy copyParams
+			in BufferImageCopy copyParams,
+			TransferOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2075,7 +2086,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				textureSlice.ToRefreshTextureSlice(),
 				transferBuffer.Handle,
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.TransferOptions) option
 			);
 		}
 
@@ -2084,12 +2096,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromTexture(
 			Texture texture,
-			TransferBuffer transferBuffer
+			TransferBuffer transferBuffer,
+			TransferOptions option
 		) {
 			DownloadFromTexture(
 				new TextureSlice(texture),
 				transferBuffer,
-				new BufferImageCopy(0, 0, 0)
+				new BufferImageCopy(0, 0, 0),
+				option
 			);
 		}
 
@@ -2103,7 +2117,8 @@ namespace MoonWorks.Graphics
 		public void DownloadFromBuffer(
 			GpuBuffer gpuBuffer,
 			TransferBuffer transferBuffer,
-			in BufferCopy copyParams
+			in BufferCopy copyParams,
+			TransferOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2116,7 +2131,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				gpuBuffer.Handle,
 				transferBuffer.Handle,
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.TransferOptions) option
 			);
 		}
 
@@ -2129,12 +2145,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void DownloadFromBuffer(
 			GpuBuffer gpuBuffer,
-			TransferBuffer transferBuffer
+			TransferBuffer transferBuffer,
+			TransferOptions option
 		) {
 			DownloadFromBuffer(
 				gpuBuffer,
 				transferBuffer,
-				new BufferCopy(0, 0, gpuBuffer.Size)
+				new BufferCopy(0, 0, gpuBuffer.Size),
+				option
 			);
 		}
 
@@ -2147,7 +2165,8 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyTextureToTexture(
 			in TextureSlice source,
-			in TextureSlice destination
+			in TextureSlice destination,
+			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2159,7 +2178,8 @@ namespace MoonWorks.Graphics
 				Device.Handle,
 				Handle,
 				source.ToRefreshTextureSlice(),
-				destination.ToRefreshTextureSlice()
+				destination.ToRefreshTextureSlice(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -2169,11 +2189,13 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyTextureToTexture(
 			Texture source,
-			Texture destination
+			Texture destination,
+			CopyOptions option
 		) {
 			CopyTextureToTexture(
 				new TextureSlice(source),
-				new TextureSlice(destination)
+				new TextureSlice(destination),
+				option
 			);
 		}
 
@@ -2186,7 +2208,8 @@ namespace MoonWorks.Graphics
 		public void CopyTextureToBuffer(
 			in TextureSlice textureSlice,
 			GpuBuffer buffer,
-			in BufferImageCopy copyParams
+			in BufferImageCopy copyParams,
+			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2199,7 +2222,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				textureSlice.ToRefreshTextureSlice(),
 				buffer.Handle,
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -2208,12 +2232,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyTextureToBuffer(
 			Texture texture,
-			GpuBuffer buffer
+			GpuBuffer buffer,
+			CopyOptions option
 		) {
 			CopyTextureToBuffer(
 				new TextureSlice(texture),
 				buffer,
-				new BufferImageCopy(0, 0, 0)
+				new BufferImageCopy(0, 0, 0),
+				option
 			);
 		}
 
@@ -2226,7 +2252,8 @@ namespace MoonWorks.Graphics
 		public void CopyBufferToTexture(
 			GpuBuffer gpuBuffer,
 			in TextureSlice textureSlice,
-			in BufferImageCopy copyParams
+			in BufferImageCopy copyParams,
+			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2239,7 +2266,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				gpuBuffer.Handle,
 				textureSlice.ToRefreshTextureSlice(),
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -2248,12 +2276,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyBufferToTexture(
 			GpuBuffer buffer,
-			Texture texture
+			Texture texture,
+			CopyOptions option
 		) {
 			CopyBufferToTexture(
 				buffer,
 				new TextureSlice(texture),
-				new BufferImageCopy(0, 0, 0)
+				new BufferImageCopy(0, 0, 0),
+				option
 			);
 		}
 
@@ -2266,7 +2296,8 @@ namespace MoonWorks.Graphics
 		public void CopyBufferToBuffer(
 			GpuBuffer source,
 			GpuBuffer destination,
-			in BufferCopy copyParams
+			in BufferCopy copyParams,
+			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2280,7 +2311,8 @@ namespace MoonWorks.Graphics
 				Handle,
 				source.Handle,
 				destination.Handle,
-				copyParams.ToRefresh()
+				copyParams.ToRefresh(),
+				(Refresh.CopyOptions) option
 			);
 		}
 
@@ -2289,12 +2321,14 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyBufferToBuffer(
 			GpuBuffer source,
-			GpuBuffer destination
+			GpuBuffer destination,
+			CopyOptions option
 		) {
 			CopyBufferToBuffer(
 				source,
 				destination,
-				new BufferCopy(0, 0, source.Size)
+				new BufferCopy(0, 0, source.Size),
+				option
 			);
 		}
 

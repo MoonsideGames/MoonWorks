@@ -152,7 +152,7 @@ namespace MoonWorks.Graphics
 			Span<byte> data,
 			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
-			SetDataOptions option
+			TransferOptions option
 		) {
 			var pixelData = GetPixelDataFromBytes(data, out var w, out var h, out var sizeInBytes);
 			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
@@ -167,7 +167,7 @@ namespace MoonWorks.Graphics
 			Stream stream,
 			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
-			SetDataOptions option
+			TransferOptions option
 		) {
 			var pixelData = GetPixelDataFromStream(stream, out var w, out var h, out var sizeInBytes);
 			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
@@ -182,7 +182,7 @@ namespace MoonWorks.Graphics
 			string path,
 			TransferBuffer transferBuffer,
 			uint bufferOffsetInBytes,
-			SetDataOptions option
+			TransferOptions option
 		) {
 			var pixelData = GetPixelDataFromFile(path, out var w, out var h, out var sizeInBytes);
 			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);

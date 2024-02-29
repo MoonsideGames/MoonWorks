@@ -56,13 +56,14 @@ namespace MoonWorks.Graphics.Font
 				imagePath,
 				transferBuffer,
 				0,
-				SetDataOptions.Overwrite
+				TransferOptions.Overwrite
 			);
 
 			commandBuffer.BeginCopyPass();
 			commandBuffer.UploadToTexture(
 				transferBuffer,
-				texture
+				texture,
+				CopyOptions.SafeOverwrite
 			);
 			commandBuffer.EndCopyPass();
 

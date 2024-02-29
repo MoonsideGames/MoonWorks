@@ -61,7 +61,7 @@ namespace MoonWorks.Graphics
 		public unsafe uint SetData<T>(
 			Span<T> data,
 			uint bufferOffsetInBytes,
-			SetDataOptions setDataOption
+			TransferOptions setDataOption
 		) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
@@ -73,7 +73,7 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				Refresh.Refresh_SetData(
+				Refresh.Refresh_SetTransferData(
 					Device.Handle,
 					(nint) dataPtr,
 					Handle,
@@ -83,7 +83,7 @@ namespace MoonWorks.Graphics
 						dstOffset = bufferOffsetInBytes,
 						size = dataLengthInBytes
 					},
-					(Refresh.SetDataOptions) setDataOption
+					(Refresh.TransferOptions) setDataOption
 				);
 			}
 
@@ -102,7 +102,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public unsafe uint SetData<T>(
 			Span<T> data,
-			SetDataOptions setDataOption
+			TransferOptions setDataOption
 		) where T : unmanaged
 		{
 			return SetData(data, 0, setDataOption);
@@ -125,7 +125,7 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				Refresh.Refresh_GetData(
+				Refresh.Refresh_GetTransferData(
 					Device.Handle,
 					Handle,
 					(nint) dataPtr,

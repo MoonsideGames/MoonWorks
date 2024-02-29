@@ -297,10 +297,16 @@ namespace MoonWorks.Graphics
 		IntOpaqueWhite
 	}
 
-	public enum SetDataOptions
+	public enum TransferOptions
 	{
 		Discard,
 		Overwrite
+	}
+
+	public enum CopyOptions
+	{
+		SafeDiscard,
+		SafeOverwrite
 	}
 
 	public enum Backend

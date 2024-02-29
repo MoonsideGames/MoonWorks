@@ -21,8 +21,8 @@ namespace MoonWorks.Graphics
 		uint dataOffset = 0;
 		uint dataSize = 1024;
 
-		List<(GpuBuffer, BufferCopy)> BufferUploads = new List<(GpuBuffer, BufferCopy)>();
-		List<(TextureSlice, uint)> TextureUploads = new List<(TextureSlice, uint)>();
+		List<(GpuBuffer, BufferCopy, CopyOptions)> BufferUploads = new List<(GpuBuffer, BufferCopy, CopyOptions)>();
+		List<(TextureSlice, uint, CopyOptions)> TextureUploads = new List<(TextureSlice, uint, CopyOptions)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
@@ -39,7 +39,7 @@ namespace MoonWorks.Graphics
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
 			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
 
-			SetBufferData(gpuBuffer, 0, data);
+			SetBufferData(gpuBuffer, 0, data, CopyOptions.SafeOverwrite);
 
 			return gpuBuffer;
 		}
@@ -47,7 +47,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares upload of data into a GpuBuffer.
 		/// </summary>
-		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data) where T : unmanaged
+		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data, CopyOptions option) where T : unmanaged
 		{
 			uint elementSize = (uint) Marshal.SizeOf<T>();
 			uint offsetInBytes = elementSize * bufferOffsetInElements;
@@ -60,7 +60,7 @@ namespace MoonWorks.Graphics
 			}
 
 			var bufferCopyParams = new BufferCopy(resourceOffset, offsetInBytes, lengthInBytes);
-			BufferUploads.Add((buffer, bufferCopyParams));
+			BufferUploads.Add((buffer, bufferCopyParams, option));
 		}
 
 		// Textures
@@ -68,7 +68,7 @@ namespace MoonWorks.Graphics
 		public Texture CreateTexture2D(Span<byte> pixelData, uint width, uint height)
 		{
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
-			SetTextureData(texture, pixelData);
+			SetTextureData(texture, pixelData, CopyOptions.SafeOverwrite);
 			return texture;
 		}
 
@@ -156,7 +156,7 @@ namespace MoonWorks.Graphics
 						Depth = 1
 					};
 
-					SetTextureData(textureSlice, byteSpan);
+					SetTextureData(textureSlice, byteSpan, CopyOptions.SafeOverwrite);
 
 					NativeMemory.Free(byteBuffer);
 				}
@@ -179,7 +179,7 @@ namespace MoonWorks.Graphics
 			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
 			var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
 
-			SetTextureData(textureSlice, pixelSpan);
+			SetTextureData(textureSlice, pixelSpan, CopyOptions.SafeOverwrite);
 
 			ImageUtils.FreePixelData(pixelData);
 		}
@@ -203,7 +203,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares upload of pixel data into a TextureSlice.
 		/// </summary>
-		public void SetTextureData<T>(TextureSlice textureSlice, Span<T> data) where T : unmanaged
+		public void SetTextureData<T>(TextureSlice textureSlice, Span<T> data, CopyOptions option) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * data.Length);
@@ -214,7 +214,7 @@ namespace MoonWorks.Graphics
 				resourceOffset = CopyDataAligned(dataPtr, dataLengthInBytes, Texture.TexelSize(textureSlice.Texture.Format));
 			}
 
-			TextureUploads.Add((textureSlice, resourceOffset));
+			TextureUploads.Add((textureSlice, resourceOffset, option));
 		}
 
 		// Upload
@@ -257,23 +257,24 @@ namespace MoonWorks.Graphics
 			}
 
 			var dataSpan = new Span<byte>(data, (int) dataSize);
-			TransferBuffer.SetData(dataSpan, SetDataOptions.Discard);
+			TransferBuffer.SetData(dataSpan, TransferOptions.Discard);
 		}
 
 		private void RecordUploadCommands(CommandBuffer commandBuffer)
 		{
 			commandBuffer.BeginCopyPass();
 
-			foreach (var (gpuBuffer, bufferCopyParams) in BufferUploads)
+			foreach (var (gpuBuffer, bufferCopyParams, option) in BufferUploads)
 			{
 				commandBuffer.UploadToBuffer(
 					TransferBuffer,
 					gpuBuffer,
-					bufferCopyParams
+					bufferCopyParams,
+					option
 				);
 			}
 
-			foreach (var (textureSlice, offset) in TextureUploads)
+			foreach (var (textureSlice, offset, option) in TextureUploads)
 			{
 				commandBuffer.UploadToTexture(
 					TransferBuffer,
@@ -282,7 +283,8 @@ namespace MoonWorks.Graphics
 						offset,
 						0,
 						0
-					)
+					),
+					option
 				);
 			}
 
