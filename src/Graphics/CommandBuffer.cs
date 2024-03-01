@@ -157,9 +157,9 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = false;
-			colorAttachmentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 1;
-			colorFormatOne = colorAttachmentInfo.Texture.Format;
+			colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -182,7 +182,7 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoTwo);
 			AssertColorTarget(colorAttachmentInfoTwo);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
@@ -200,10 +200,10 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = false;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 2;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -232,8 +232,8 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoThree);
 			AssertColorTarget(colorAttachmentInfoThree);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
@@ -252,11 +252,11 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = false;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 3;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
-			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -290,9 +290,9 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoFour);
 			AssertColorTarget(colorAttachmentInfoFour);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoFour.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
@@ -312,12 +312,12 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = false;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 4;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
-			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
-			colorFormatFour = colorAttachmentInfoFour.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+			colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -348,8 +348,8 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = true;
-			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.Texture.SampleCount;
-			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+			depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -370,7 +370,7 @@ namespace MoonWorks.Graphics
 
 			AssertTextureNotNull(colorAttachmentInfo);
 			AssertColorTarget(colorAttachmentInfo);
-			AssertSameSampleCount(colorAttachmentInfo.Texture, depthStencilAttachmentInfo.Texture);
+			AssertSameSampleCount(colorAttachmentInfo.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
@@ -389,11 +389,11 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = true;
-			colorAttachmentSampleCount = colorAttachmentInfo.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 1;
-			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.Texture.SampleCount;
-			colorFormatOne = colorAttachmentInfo.Texture.Format;
-			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+			depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+			colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -420,8 +420,8 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoTwo);
 			AssertColorTarget(colorAttachmentInfoTwo);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
@@ -441,11 +441,11 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = true;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 2;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
-			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -477,9 +477,9 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoThree);
 			AssertColorTarget(colorAttachmentInfoThree);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
@@ -500,12 +500,12 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = true;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 3;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
-			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
-			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -542,10 +542,10 @@ namespace MoonWorks.Graphics
 			AssertTextureNotNull(colorAttachmentInfoFour);
 			AssertColorTarget(colorAttachmentInfoFour);
 
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoTwo.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoThree.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, colorAttachmentInfoFour.Texture);
-			AssertSameSampleCount(colorAttachmentInfoOne.Texture, depthStencilAttachmentInfo.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
+			AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
 			var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
@@ -567,13 +567,13 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			renderPassActive = true;
 			hasDepthStencilAttachment = true;
-			colorAttachmentSampleCount = colorAttachmentInfoOne.Texture.SampleCount;
+			colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
 			colorAttachmentCount = 4;
-			colorFormatOne = colorAttachmentInfoOne.Texture.Format;
-			colorFormatTwo = colorAttachmentInfoTwo.Texture.Format;
-			colorFormatThree = colorAttachmentInfoThree.Texture.Format;
-			colorFormatFour = colorAttachmentInfoFour.Texture.Format;
-			depthStencilFormat = depthStencilAttachmentInfo.Texture.Format;
+			colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+			colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+			colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+			colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
+			depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 		}
 
@@ -1662,9 +1662,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds a texture to be used in the compute shader.
 		/// </summary>
-		/// <param name="binding">A texture-level pair to bind.</param>
+		/// <param name="slice">A texture slice to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureLevelBinding binding
+			TextureSlice slice
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1673,28 +1673,24 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(1);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[1];
-			texturePtrs[0] = binding.Texture.Handle;
-
-			var mipLevels = stackalloc uint[1];
-			mipLevels[0] = binding.MipLevel;
+			var textureSlicePtrs = stackalloc Refresh.TextureSlice[1];
+			textureSlicePtrs[0] = slice.ToRefreshTextureSlice();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
+				(IntPtr) textureSlicePtrs
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
+		/// <param name="sliceOne">A texture-level pair to bind.</param>
+		/// <param name="sliceTwo">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo
+			TextureSlice sliceOne,
+			TextureSlice sliceTwo
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1703,32 +1699,27 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(2);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[2];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-
-			var mipLevels = stackalloc uint[2];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
+			var textureSlicePtrs = stackalloc Refresh.TextureSlice[2];
+			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
+			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
+				(IntPtr) textureSlicePtrs
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
-		/// <param name="bindingThree">A texture-level pair to bind.</param>
+		/// <param name="sliceOne">A texture-level pair to bind.</param>
+		/// <param name="sliceTwo">A texture-level pair to bind.</param>
+		/// <param name="sliceThree">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo,
-			TextureLevelBinding bindingThree
+			TextureSlice sliceOne,
+			TextureSlice sliceTwo,
+			TextureSlice sliceThree
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1737,36 +1728,30 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(3);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[3];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-			texturePtrs[2] = bindingThree.Texture.Handle;
-
-			var mipLevels = stackalloc uint[3];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
-			mipLevels[2] = bindingThree.MipLevel;
+			var textureSlicePtrs = stackalloc Refresh.TextureSlice[3];
+			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
+			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
+			textureSlicePtrs[2] = sliceThree.ToRefreshTextureSlice();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
+				(IntPtr) textureSlicePtrs
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="bindingOne">A texture-level pair to bind.</param>
-		/// <param name="bindingTwo">A texture-level pair to bind.</param>
-		/// <param name="bindingThree">A texture-level pair to bind.</param>
-		/// <param name="bindingFour">A texture-level pair to bind.</param>
+		/// <param name="sliceOne">A texture-level pair to bind.</param>
+		/// <param name="sliceTwo">A texture-level pair to bind.</param>
+		/// <param name="sliceThree">A texture-level pair to bind.</param>
+		/// <param name="sliceFour">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureLevelBinding bindingOne,
-			TextureLevelBinding bindingTwo,
-			TextureLevelBinding bindingThree,
-			TextureLevelBinding bindingFour
+			TextureSlice sliceOne,
+			TextureSlice sliceTwo,
+			TextureSlice sliceThree,
+			TextureSlice sliceFour
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1775,55 +1760,49 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(4);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[4];
-			texturePtrs[0] = bindingOne.Texture.Handle;
-			texturePtrs[1] = bindingTwo.Texture.Handle;
-			texturePtrs[2] = bindingThree.Texture.Handle;
-			texturePtrs[3] = bindingFour.Texture.Handle;
-
-			var mipLevels = stackalloc uint[4];
-			mipLevels[0] = bindingOne.MipLevel;
-			mipLevels[1] = bindingTwo.MipLevel;
-			mipLevels[2] = bindingThree.MipLevel;
-			mipLevels[3] = bindingFour.MipLevel;
+			var textureSlicePtrs = stackalloc Refresh.TextureSlice[4];
+			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
+			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
+			textureSlicePtrs[2] = sliceThree.ToRefreshTextureSlice();
+			textureSlicePtrs[3] = sliceFour.ToRefreshTextureSlice();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
+				(IntPtr) textureSlicePtrs
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="bindings">A set of texture-level pairs to bind.</param>
+		/// <param name="slices">A set of texture-level pairs to bind.</param>
 		public unsafe void BindComputeTextures(
-			in Span<TextureLevelBinding> bindings
+			in Span<TextureSlice> slices
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
-			AssertComputeTextureCount(bindings.Length);
+			AssertComputeTextureCount(slices.Length);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[bindings.Length];
-			var mipLevels = stackalloc uint[bindings.Length];
+			Refresh.TextureSlice* textureSlicePtrs = (Refresh.TextureSlice*) NativeMemory.Alloc(
+				(nuint) (Marshal.SizeOf<Refresh.TextureSlice>() * slices.Length)
+			);
 
-			for (var i = 0; i < bindings.Length; i += 1)
+			for (var i = 0; i < slices.Length; i += 1)
 			{
-				texturePtrs[i] = bindings[i].Texture.Handle;
-				mipLevels[i] = bindings[i].MipLevel;
+				textureSlicePtrs[i] = slices[i].ToRefreshTextureSlice();
 			}
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) mipLevels
+				(IntPtr) textureSlicePtrs
 			);
+
+			NativeMemory.Free(textureSlicePtrs);
 		}
 
 		/// <summary>
@@ -1948,7 +1927,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void UploadToTexture(
 			TransferBuffer transferBuffer,
-			in TextureSlice textureSlice,
+			in TextureRegion textureRegion,
 			in BufferImageCopy copyParams,
 			CopyOptions option
 		)
@@ -1956,14 +1935,14 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot upload to texture outside of copy pass!");
-			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
 #endif
 
 			Refresh.Refresh_UploadToTexture(
 				Device.Handle,
 				Handle,
 				transferBuffer.Handle,
-				textureSlice.ToRefreshTextureSlice(),
+				textureRegion.ToRefreshTextureRegion(),
 				copyParams.ToRefresh(),
 				(Refresh.CopyOptions) option
 			);
@@ -1979,7 +1958,7 @@ namespace MoonWorks.Graphics
 		) {
 			UploadToTexture(
 				transferBuffer,
-				new TextureSlice(texture),
+				new TextureRegion(texture),
 				new BufferImageCopy(0, 0, 0),
 				option
 			);
@@ -2070,7 +2049,7 @@ namespace MoonWorks.Graphics
 		/// fully copied until the command buffer has finished execution.
 		/// </summary>
 		public void DownloadFromTexture(
-			in TextureSlice textureSlice,
+			in TextureRegion textureRegion,
 			TransferBuffer transferBuffer,
 			in BufferImageCopy copyParams,
 			TransferOptions option
@@ -2078,13 +2057,13 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
-			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
+			AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
 #endif
 
 			Refresh.Refresh_DownloadFromTexture(
 				Device.Handle,
 				Handle,
-				textureSlice.ToRefreshTextureSlice(),
+				textureRegion.ToRefreshTextureRegion(),
 				transferBuffer.Handle,
 				copyParams.ToRefresh(),
 				(Refresh.TransferOptions) option
@@ -2100,7 +2079,7 @@ namespace MoonWorks.Graphics
 			TransferOptions option
 		) {
 			DownloadFromTexture(
-				new TextureSlice(texture),
+				new TextureRegion(texture),
 				transferBuffer,
 				new BufferImageCopy(0, 0, 0),
 				option
@@ -2164,8 +2143,8 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished in subsequent commands.
 		/// </summary>
 		public void CopyTextureToTexture(
-			in TextureSlice source,
-			in TextureSlice destination,
+			in TextureRegion source,
+			in TextureRegion destination,
 			CopyOptions option
 		) {
 #if DEBUG
@@ -2177,8 +2156,8 @@ namespace MoonWorks.Graphics
 			Refresh.Refresh_CopyTextureToTexture(
 				Device.Handle,
 				Handle,
-				source.ToRefreshTextureSlice(),
-				destination.ToRefreshTextureSlice(),
+				source.ToRefreshTextureRegion(),
+				destination.ToRefreshTextureRegion(),
 				(Refresh.CopyOptions) option
 			);
 		}
@@ -2193,8 +2172,8 @@ namespace MoonWorks.Graphics
 			CopyOptions option
 		) {
 			CopyTextureToTexture(
-				new TextureSlice(source),
-				new TextureSlice(destination),
+				new TextureRegion(source),
+				new TextureRegion(destination),
 				option
 			);
 		}
@@ -2206,7 +2185,7 @@ namespace MoonWorks.Graphics
 		/// You MAY assume that the copy has finished in subsequent commands.
 		/// </summary>
 		public void CopyTextureToBuffer(
-			in TextureSlice textureSlice,
+			in TextureRegion textureRegion,
 			GpuBuffer buffer,
 			in BufferImageCopy copyParams,
 			CopyOptions option
@@ -2214,13 +2193,13 @@ namespace MoonWorks.Graphics
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
-			AssertBufferBoundsCheck(buffer.Size, copyParams.BufferOffset, textureSlice.Size);
+			AssertBufferBoundsCheck(buffer.Size, copyParams.BufferOffset, textureRegion.Size);
 #endif
 
 			Refresh.Refresh_CopyTextureToBuffer(
 				Device.Handle,
 				Handle,
-				textureSlice.ToRefreshTextureSlice(),
+				textureRegion.ToRefreshTextureRegion(),
 				buffer.Handle,
 				copyParams.ToRefresh(),
 				(Refresh.CopyOptions) option
@@ -2236,7 +2215,7 @@ namespace MoonWorks.Graphics
 			CopyOptions option
 		) {
 			CopyTextureToBuffer(
-				new TextureSlice(texture),
+				new TextureRegion(texture),
 				buffer,
 				new BufferImageCopy(0, 0, 0),
 				option
@@ -2251,21 +2230,21 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void CopyBufferToTexture(
 			GpuBuffer gpuBuffer,
-			in TextureSlice textureSlice,
+			in TextureRegion textureRegion,
 			in BufferImageCopy copyParams,
 			CopyOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInCopyPass("Cannot download from texture outside of copy pass!");
-			AssertBufferBoundsCheck(gpuBuffer.Size, copyParams.BufferOffset, textureSlice.Size);
+			AssertBufferBoundsCheck(gpuBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
 #endif
 
 			Refresh.Refresh_CopyBufferToTexture(
 				Device.Handle,
 				Handle,
 				gpuBuffer.Handle,
-				textureSlice.ToRefreshTextureSlice(),
+				textureRegion.ToRefreshTextureRegion(),
 				copyParams.ToRefresh(),
 				(Refresh.CopyOptions) option
 			);
@@ -2281,7 +2260,7 @@ namespace MoonWorks.Graphics
 		) {
 			CopyBufferToTexture(
 				buffer,
-				new TextureSlice(texture),
+				new TextureRegion(texture),
 				new BufferImageCopy(0, 0, 0),
 				option
 			);
@@ -2458,7 +2437,7 @@ namespace MoonWorks.Graphics
 
 		private void AssertTextureNotNull(ColorAttachmentInfo colorAttachmentInfo)
 		{
-			if (colorAttachmentInfo.Texture == null || colorAttachmentInfo.Texture.Handle == IntPtr.Zero)
+			if (colorAttachmentInfo.TextureSlice.Texture == null || colorAttachmentInfo.TextureSlice.Texture.Handle == IntPtr.Zero)
 			{
 				throw new System.ArgumentException("Render pass color attachment Texture cannot be null!");
 			}
@@ -2466,7 +2445,7 @@ namespace MoonWorks.Graphics
 
 		private void AssertColorTarget(ColorAttachmentInfo colorAttachmentInfo)
 		{
-			if ((colorAttachmentInfo.Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
+			if ((colorAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
 			{
 				throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
 			}
@@ -2482,13 +2461,13 @@ namespace MoonWorks.Graphics
 
 		private void AssertValidDepthAttachment(DepthStencilAttachmentInfo depthStencilAttachmentInfo)
 		{
-			if (depthStencilAttachmentInfo.Texture == null ||
-				depthStencilAttachmentInfo.Texture.Handle == IntPtr.Zero)
+			if (depthStencilAttachmentInfo.TextureSlice.Texture == null ||
+				depthStencilAttachmentInfo.TextureSlice.Texture.Handle == IntPtr.Zero)
 			{
 				throw new System.ArgumentException("Render pass depth stencil attachment Texture cannot be null!");
 			}
 
-			if ((depthStencilAttachmentInfo.Texture.UsageFlags & TextureUsageFlags.DepthStencilTarget) == 0)
+			if ((depthStencilAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.DepthStencilTarget) == 0)
 			{
 				throw new System.ArgumentException("Render pass depth stencil attachment UsageFlags must include TextureUsageFlags.DepthStencilTarget!");
 			}

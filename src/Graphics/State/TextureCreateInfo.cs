@@ -11,6 +11,7 @@ namespace MoonWorks.Graphics
 		public uint Height;
 		public uint Depth;
 		public bool IsCube;
+		public uint LayerCount;
 		public uint LevelCount;
 		public SampleCount SampleCount;
 		public TextureFormat Format;
@@ -24,6 +25,7 @@ namespace MoonWorks.Graphics
 				height = Height,
 				depth = Depth,
 				isCube = Conversions.BoolToByte(IsCube),
+				layerCount = LayerCount,
 				levelCount = LevelCount,
 				sampleCount = (Refresh.SampleCount) SampleCount,
 				format = (Refresh.TextureFormat) Format,

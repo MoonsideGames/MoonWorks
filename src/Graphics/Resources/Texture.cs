@@ -14,6 +14,7 @@ namespace MoonWorks.Graphics
 		public uint Depth { get; }
 		public TextureFormat Format { get; internal set; }
 		public bool IsCube { get; }
+		public uint LayerCount { get; }
 		public uint LevelCount { get; }
 		public SampleCount SampleCount { get; }
 		public TextureUsageFlags UsageFlags { get; }
@@ -46,6 +47,7 @@ namespace MoonWorks.Graphics
 				Height = height,
 				Depth = 1,
 				IsCube = false,
+				LayerCount = 1,
 				LevelCount = levelCount,
 				SampleCount = sampleCount,
 				Format = format,
@@ -56,15 +58,43 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Creates a 3D texture.
+		/// Creates a 2D texture array.
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
 		/// <param name="width">The width of the texture.</param>
 		/// <param name="height">The height of the texture.</param>
-		/// <param name="depth">The depth of the texture.</param>
+		/// <param name="layerCount">The layer count of the texture.</param>
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
+		public static Texture CreateTexture2DArray(
+			GraphicsDevice device,
+			uint width,
+			uint height,
+			uint layerCount,
+			TextureFormat format,
+			TextureUsageFlags usageFlags,
+			uint levelCount = 1
+		) {
+			var textureCreateInfo = new TextureCreateInfo
+			{
+				Width = width,
+				Height = height,
+				Depth = 1,
+				IsCube = false,
+				LayerCount = layerCount,
+				LevelCount = levelCount,
+				Format = format,
+				UsageFlags = usageFlags
+			};
+
+			return new Texture(device, textureCreateInfo);
+		}
+
+		/// <summary>
+		/// Creates a 3D texture.
+		/// Note that the width, height and depth all form one slice and cannot be subdivided in a texture slice.
+		/// </summary>
 		public static Texture CreateTexture3D(
 			GraphicsDevice device,
 			uint width,
@@ -80,6 +110,7 @@ namespace MoonWorks.Graphics
 				Height = height,
 				Depth = depth,
 				IsCube = false,
+				LayerCount = 1,
 				LevelCount = levelCount,
 				Format = format,
 				UsageFlags = usageFlags
@@ -109,6 +140,7 @@ namespace MoonWorks.Graphics
 				Height = size,
 				Depth = 1,
 				IsCube = true,
+				LayerCount = 6,
 				LevelCount = levelCount,
 				Format = format,
 				UsageFlags = usageFlags
@@ -137,13 +169,12 @@ namespace MoonWorks.Graphics
 			Height = textureCreateInfo.Height;
 			Depth = textureCreateInfo.Depth;
 			IsCube = textureCreateInfo.IsCube;
+			LayerCount = textureCreateInfo.LayerCount;
 			LevelCount = textureCreateInfo.LevelCount;
 			SampleCount = textureCreateInfo.SampleCount;
 			UsageFlags = textureCreateInfo.UsageFlags;
 			Size = Width * Height * BytesPerPixel(Format) / BlockSizeSquared(Format);
 		}
-
-		public static implicit operator TextureSlice(Texture t) => new TextureSlice(t);
 
 		// Used by AcquireSwapchainTexture.
 		// Should not be tracked, because swapchain textures are managed by Vulkan.
@@ -270,5 +301,8 @@ namespace MoonWorks.Graphics
 					return 0;
 			}
 		}
+
+		public static implicit operator TextureSlice(Texture t) => new TextureSlice(t);
+		public static implicit operator TextureRegion(Texture t) => new TextureRegion(t);
 	}
 }

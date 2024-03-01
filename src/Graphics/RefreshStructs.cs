@@ -174,40 +174,33 @@ namespace MoonWorks.Graphics
 		}
 	}
 
-	[StructLayout(LayoutKind.Sequential)]
 	public struct ColorAttachmentInfo
 	{
-		public Texture Texture;
-		public uint Depth;
-		public uint Layer;
-		public uint Level;
+		public TextureSlice TextureSlice;
 		public Color ClearColor;
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
+		public bool SafeDiscard;
 
 		public ColorAttachmentInfo(
-			Texture texture,
+			TextureSlice textureSlice,
 			Color clearColor,
+			bool safeDiscard = true,
 			StoreOp storeOp = StoreOp.Store
 		) {
-			Texture = texture;
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
+			TextureSlice = textureSlice;
 			ClearColor = clearColor;
 			LoadOp = LoadOp.Clear;
 			StoreOp = storeOp;
+			SafeDiscard = safeDiscard;
 		}
 
 		public ColorAttachmentInfo(
-			Texture texture,
+			TextureSlice textureSlice,
 			LoadOp loadOp = LoadOp.DontCare,
 			StoreOp storeOp = StoreOp.Store
 		) {
-			Texture = texture;
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
+			TextureSlice = textureSlice;
 			ClearColor = Color.White;
 			LoadOp = loadOp;
 			StoreOp = storeOp;
@@ -217,10 +210,7 @@ namespace MoonWorks.Graphics
 		{
 			return new Refresh.ColorAttachmentInfo
 			{
-				texture = Texture.Handle,
-				depth = Depth,
-				layer = Layer,
-				level = Level,
+				textureSlice = TextureSlice.ToRefreshTextureSlice(),
 				clearColor = new Refresh.Vec4
 				{
 					x = ClearColor.R / 255f,
@@ -229,73 +219,47 @@ namespace MoonWorks.Graphics
 					w = ClearColor.A / 255f
 				},
 				loadOp = (Refresh.LoadOp) LoadOp,
-				storeOp = (Refresh.StoreOp) StoreOp
+				storeOp = (Refresh.StoreOp) StoreOp,
+				safeDiscard = Conversions.BoolToByte(SafeDiscard)
 			};
 		}
 	}
 
-	[StructLayout(LayoutKind.Sequential)]
 	public struct DepthStencilAttachmentInfo
 	{
-		public Texture Texture;
-		public uint Depth;
-		public uint Layer;
-		public uint Level;
+		public TextureSlice TextureSlice;
 		public DepthStencilValue DepthStencilClearValue;
 		public LoadOp LoadOp;
 		public StoreOp StoreOp;
 		public LoadOp StencilLoadOp;
 		public StoreOp StencilStoreOp;
+		public bool SafeDiscard;
 
 		public DepthStencilAttachmentInfo(
-			Texture texture,
+			TextureSlice textureSlice,
 			DepthStencilValue clearValue,
+			bool safeDiscard = true,
 			StoreOp depthStoreOp = StoreOp.Store,
 			StoreOp stencilStoreOp = StoreOp.Store
-		)
-		{
-			Texture = texture;
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
+		){
+			TextureSlice = textureSlice;
 			DepthStencilClearValue = clearValue;
 			LoadOp = LoadOp.Clear;
 			StoreOp = depthStoreOp;
 			StencilLoadOp = LoadOp.Clear;
 			StencilStoreOp = stencilStoreOp;
+			SafeDiscard = safeDiscard;
 		}
 
 		public DepthStencilAttachmentInfo(
-			Texture texture,
+			TextureSlice textureSlice,
 			LoadOp loadOp = LoadOp.DontCare,
 			StoreOp storeOp = StoreOp.Store,
 			LoadOp stencilLoadOp = LoadOp.DontCare,
 			StoreOp stencilStoreOp = StoreOp.Store
 		) {
-			Texture = texture;
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
+			TextureSlice = textureSlice;
 			DepthStencilClearValue = new DepthStencilValue();
-			LoadOp = loadOp;
-			StoreOp = storeOp;
-			StencilLoadOp = stencilLoadOp;
-			StencilStoreOp = stencilStoreOp;
-		}
-
-		public DepthStencilAttachmentInfo(
-			Texture texture,
-			DepthStencilValue depthStencilValue,
-			LoadOp loadOp,
-			StoreOp storeOp,
-			LoadOp stencilLoadOp,
-			StoreOp stencilStoreOp
-		) {
-			Texture = texture;
-			Depth = 0;
-			Layer = 0;
-			Level = 0;
-			DepthStencilClearValue = depthStencilValue;
 			LoadOp = loadOp;
 			StoreOp = storeOp;
 			StencilLoadOp = stencilLoadOp;
@@ -306,15 +270,13 @@ namespace MoonWorks.Graphics
 		{
 			return new Refresh.DepthStencilAttachmentInfo
 			{
-				texture = Texture.Handle,
-				depth = Depth,
-				layer = Layer,
-				level = Level,
+				textureSlice = TextureSlice.ToRefreshTextureSlice(),
 				depthStencilClearValue = DepthStencilClearValue.ToRefresh(),
 				loadOp = (Refresh.LoadOp) LoadOp,
 				storeOp = (Refresh.StoreOp) StoreOp,
 				stencilLoadOp = (Refresh.LoadOp) StencilLoadOp,
-				stencilStoreOp = (Refresh.StoreOp) StencilStoreOp
+				stencilStoreOp = (Refresh.StoreOp) StencilStoreOp,
+				safeDiscard = Conversions.BoolToByte(SafeDiscard)
 			};
 		}
 	}

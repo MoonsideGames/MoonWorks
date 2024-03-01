@@ -287,7 +287,7 @@ namespace MoonWorks.Video
 				commandBuffer.EndCopyPass();
 
 				commandBuffer.BeginRenderPass(
-					new ColorAttachmentInfo(RenderTexture, Color.Black)
+					new ColorAttachmentInfo(RenderTexture, Color.Black, true)
 				);
 
 				commandBuffer.BindGraphicsPipeline(Device.VideoPipeline);

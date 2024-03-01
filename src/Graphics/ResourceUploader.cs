@@ -22,7 +22,7 @@ namespace MoonWorks.Graphics
 		uint dataSize = 1024;
 
 		List<(GpuBuffer, BufferCopy, CopyOptions)> BufferUploads = new List<(GpuBuffer, BufferCopy, CopyOptions)>();
-		List<(TextureSlice, uint, CopyOptions)> TextureUploads = new List<(TextureSlice, uint, CopyOptions)>();
+		List<(TextureRegion, uint, CopyOptions)> TextureUploads = new List<(TextureRegion, uint, CopyOptions)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
@@ -142,12 +142,14 @@ namespace MoonWorks.Graphics
 					var byteSpan = new Span<byte>(byteBuffer, levelSize);
 					stream.ReadExactly(byteSpan);
 
-					var textureSlice = new TextureSlice
+					var textureRegion = new TextureRegion
 					{
-						Texture = texture,
-						MipLevel = (uint) level,
-						BaseLayer = (uint) face,
-						LayerCount = 1,
+						TextureSlice = new TextureSlice
+						{
+							Texture = texture,
+							Layer = (uint) face,
+							MipLevel = (uint) level
+						},
 						X = 0,
 						Y = 0,
 						Z = 0,
@@ -156,7 +158,7 @@ namespace MoonWorks.Graphics
 						Depth = 1
 					};
 
-					SetTextureData(textureSlice, byteSpan, CopyOptions.SafeOverwrite);
+					SetTextureData(textureRegion, byteSpan, CopyOptions.SafeOverwrite);
 
 					NativeMemory.Free(byteBuffer);
 				}
@@ -174,36 +176,36 @@ namespace MoonWorks.Graphics
 			return CreateTextureFromDDS(stream);
 		}
 
-		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Span<byte> compressedImageData)
+		public void SetTextureDataFromCompressed(TextureRegion textureRegion, Span<byte> compressedImageData)
 		{
 			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
 			var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
 
-			SetTextureData(textureSlice, pixelSpan, CopyOptions.SafeOverwrite);
+			SetTextureData(textureRegion, pixelSpan, CopyOptions.SafeOverwrite);
 
 			ImageUtils.FreePixelData(pixelData);
 		}
 
-		public void SetTextureDataFromCompressed(TextureSlice textureSlice, Stream compressedImageStream)
+		public void SetTextureDataFromCompressed(TextureRegion textureRegion, Stream compressedImageStream)
 		{
 			var length = compressedImageStream.Length;
 			var buffer = NativeMemory.Alloc((nuint) length);
 			var span = new Span<byte>(buffer, (int) length);
 			compressedImageStream.ReadExactly(span);
-			SetTextureDataFromCompressed(textureSlice, span);
+			SetTextureDataFromCompressed(textureRegion, span);
 			NativeMemory.Free(buffer);
 		}
 
-		public void SetTextureDataFromCompressed(TextureSlice textureSlice, string compressedImageFilePath)
+		public void SetTextureDataFromCompressed(TextureRegion textureRegion, string compressedImageFilePath)
 		{
 			var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-			SetTextureDataFromCompressed(textureSlice, fileStream);
+			SetTextureDataFromCompressed(textureRegion, fileStream);
 		}
 
 		/// <summary>
 		/// Prepares upload of pixel data into a TextureSlice.
 		/// </summary>
-		public void SetTextureData<T>(TextureSlice textureSlice, Span<T> data, CopyOptions option) where T : unmanaged
+		public void SetTextureData<T>(TextureRegion textureRegion, Span<T> data, CopyOptions option) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * data.Length);
@@ -211,10 +213,10 @@ namespace MoonWorks.Graphics
 			uint resourceOffset;
 			fixed (T* dataPtr = data)
 			{
-				resourceOffset = CopyDataAligned(dataPtr, dataLengthInBytes, Texture.TexelSize(textureSlice.Texture.Format));
+				resourceOffset = CopyDataAligned(dataPtr, dataLengthInBytes, Texture.TexelSize(textureRegion.TextureSlice.Texture.Format));
 			}
 
-			TextureUploads.Add((textureSlice, resourceOffset, option));
+			TextureUploads.Add((textureRegion, resourceOffset, option));
 		}
 
 		// Upload
@@ -274,11 +276,11 @@ namespace MoonWorks.Graphics
 				);
 			}
 
-			foreach (var (textureSlice, offset, option) in TextureUploads)
+			foreach (var (textureRegion, offset, option) in TextureUploads)
 			{
 				commandBuffer.UploadToTexture(
 					TransferBuffer,
-					textureSlice,
+					textureRegion,
 					new BufferImageCopy(
 						offset,
 						0,
