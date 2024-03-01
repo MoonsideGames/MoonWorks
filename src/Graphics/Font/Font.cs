@@ -63,7 +63,7 @@ namespace MoonWorks.Graphics.Font
 			commandBuffer.UploadToTexture(
 				transferBuffer,
 				texture,
-				CopyOptions.SafeOverwrite
+				WriteOptions.SafeOverwrite
 			);
 			commandBuffer.EndCopyPass();
 

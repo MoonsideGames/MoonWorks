@@ -21,8 +21,8 @@ namespace MoonWorks.Graphics
 		uint dataOffset = 0;
 		uint dataSize = 1024;
 
-		List<(GpuBuffer, BufferCopy, CopyOptions)> BufferUploads = new List<(GpuBuffer, BufferCopy, CopyOptions)>();
-		List<(TextureRegion, uint, CopyOptions)> TextureUploads = new List<(TextureRegion, uint, CopyOptions)>();
+		List<(GpuBuffer, BufferCopy, WriteOptions)> BufferUploads = new List<(GpuBuffer, BufferCopy, WriteOptions)>();
+		List<(TextureRegion, uint, WriteOptions)> TextureUploads = new List<(TextureRegion, uint, WriteOptions)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
@@ -39,7 +39,7 @@ namespace MoonWorks.Graphics
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
 			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
 
-			SetBufferData(gpuBuffer, 0, data, CopyOptions.SafeOverwrite);
+			SetBufferData(gpuBuffer, 0, data, WriteOptions.SafeOverwrite);
 
 			return gpuBuffer;
 		}
@@ -47,7 +47,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares upload of data into a GpuBuffer.
 		/// </summary>
-		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data, CopyOptions option) where T : unmanaged
+		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data, WriteOptions option) where T : unmanaged
 		{
 			uint elementSize = (uint) Marshal.SizeOf<T>();
 			uint offsetInBytes = elementSize * bufferOffsetInElements;
@@ -65,10 +65,10 @@ namespace MoonWorks.Graphics
 
 		// Textures
 
-		public Texture CreateTexture2D(Span<byte> pixelData, uint width, uint height)
+		public Texture CreateTexture2D<T>(Span<T> pixelData, uint width, uint height) where T : unmanaged
 		{
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
-			SetTextureData(texture, pixelData, CopyOptions.SafeOverwrite);
+			SetTextureData(texture, pixelData, WriteOptions.SafeOverwrite);
 			return texture;
 		}
 
@@ -158,7 +158,7 @@ namespace MoonWorks.Graphics
 						Depth = 1
 					};
 
-					SetTextureData(textureRegion, byteSpan, CopyOptions.SafeOverwrite);
+					SetTextureData(textureRegion, byteSpan, WriteOptions.SafeOverwrite);
 
 					NativeMemory.Free(byteBuffer);
 				}
@@ -181,7 +181,7 @@ namespace MoonWorks.Graphics
 			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
 			var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
 
-			SetTextureData(textureRegion, pixelSpan, CopyOptions.SafeOverwrite);
+			SetTextureData(textureRegion, pixelSpan, WriteOptions.SafeOverwrite);
 
 			ImageUtils.FreePixelData(pixelData);
 		}
@@ -205,7 +205,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares upload of pixel data into a TextureSlice.
 		/// </summary>
-		public void SetTextureData<T>(TextureRegion textureRegion, Span<T> data, CopyOptions option) where T : unmanaged
+		public void SetTextureData<T>(TextureRegion textureRegion, Span<T> data, WriteOptions option) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
 			var dataLengthInBytes = (uint) (elementSize * data.Length);

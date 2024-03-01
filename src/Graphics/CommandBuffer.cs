@@ -670,19 +670,15 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[1];
-			var offsets = stackalloc ulong[1];
-
-			bufferPtrs[0] = bufferBinding.Buffer.Handle;
-			offsets[0] = bufferBinding.Offset;
+			var bindingArray = stackalloc Refresh.BufferBinding[1];
+			bindingArray[0] = bufferBinding.ToRefresh();
 
 			Refresh.Refresh_BindVertexBuffers(
 				Device.Handle,
 				Handle,
 				firstBinding,
 				1,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
+				bindingArray
 			);
 		}
 
@@ -702,22 +698,16 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[2];
-			var offsets = stackalloc ulong[2];
-
-			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
-			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
-
-			offsets[0] = bufferBindingOne.Offset;
-			offsets[1] = bufferBindingTwo.Offset;
+			var bindingArray = stackalloc Refresh.BufferBinding[2];
+			bindingArray[0] = bufferBindingOne.ToRefresh();
+			bindingArray[1] = bufferBindingTwo.ToRefresh();
 
 			Refresh.Refresh_BindVertexBuffers(
 				Device.Handle,
 				Handle,
 				firstBinding,
 				2,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
+				bindingArray
 			);
 		}
 
@@ -739,24 +729,17 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[3];
-			var offsets = stackalloc ulong[3];
-
-			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
-			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
-			bufferPtrs[2] = bufferBindingThree.Buffer.Handle;
-
-			offsets[0] = bufferBindingOne.Offset;
-			offsets[1] = bufferBindingTwo.Offset;
-			offsets[2] = bufferBindingThree.Offset;
+			var bindingArray = stackalloc Refresh.BufferBinding[3];
+			bindingArray[0] = bufferBindingOne.ToRefresh();
+			bindingArray[1] = bufferBindingTwo.ToRefresh();
+			bindingArray[2] = bufferBindingThree.ToRefresh();
 
 			Refresh.Refresh_BindVertexBuffers(
 				Device.Handle,
 				Handle,
 				firstBinding,
 				3,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
+				bindingArray
 			);
 		}
 
@@ -780,26 +763,18 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[4];
-			var offsets = stackalloc ulong[4];
-
-			bufferPtrs[0] = bufferBindingOne.Buffer.Handle;
-			bufferPtrs[1] = bufferBindingTwo.Buffer.Handle;
-			bufferPtrs[2] = bufferBindingThree.Buffer.Handle;
-			bufferPtrs[3] = bufferBindingFour.Buffer.Handle;
-
-			offsets[0] = bufferBindingOne.Offset;
-			offsets[1] = bufferBindingTwo.Offset;
-			offsets[2] = bufferBindingThree.Offset;
-			offsets[3] = bufferBindingFour.Offset;
+			var bindingArray = stackalloc Refresh.BufferBinding[4];
+			bindingArray[0] = bufferBindingOne.ToRefresh();
+			bindingArray[1] = bufferBindingTwo.ToRefresh();
+			bindingArray[2] = bufferBindingThree.ToRefresh();
+			bindingArray[3] = bufferBindingFour.ToRefresh();
 
 			Refresh.Refresh_BindVertexBuffers(
 				Device.Handle,
 				Handle,
 				firstBinding,
 				4,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
+				bindingArray
 			);
 		}
 
@@ -817,13 +792,11 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[bufferBindings.Length];
-			var offsets = stackalloc ulong[bufferBindings.Length];
+			Refresh.BufferBinding* bufferBindingsArray = (Refresh.BufferBinding*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<Refresh.BufferBinding>() * bufferBindings.Length));
 
 			for (var i = 0; i < bufferBindings.Length; i += 1)
 			{
-				bufferPtrs[i] = bufferBindings[i].Buffer.Handle;
-				offsets[i] = bufferBindings[i].Offset;
+				bufferBindingsArray[i] = bufferBindings[i].ToRefresh();
 			}
 
 			Refresh.Refresh_BindVertexBuffers(
@@ -831,9 +804,10 @@ namespace MoonWorks.Graphics
 				Handle,
 				firstBinding,
 				(uint) bufferBindings.Length,
-				(IntPtr) bufferPtrs,
-				(IntPtr) offsets
+				bufferBindingsArray
 			);
+
+			NativeMemory.Free(bufferBindingsArray);
 		}
 
 		/// <summary>
@@ -843,9 +817,8 @@ namespace MoonWorks.Graphics
 		/// <param name="indexElementSize">The size in bytes of the index buffer elements.</param>
 		/// <param name="offset">The offset index for the buffer.</param>
 		public void BindIndexBuffer(
-			GpuBuffer indexBuffer,
-			IndexElementSize indexElementSize,
-			uint offset = 0
+			BufferBinding bufferBinding,
+			IndexElementSize indexElementSize
 		)
 		{
 #if DEBUG
@@ -855,8 +828,7 @@ namespace MoonWorks.Graphics
 			Refresh.Refresh_BindIndexBuffer(
 				Device.Handle,
 				Handle,
-				indexBuffer.Handle,
-				offset,
+				bufferBinding.ToRefresh(),
 				(Refresh.IndexElementSize) indexElementSize
 			);
 		}
@@ -876,17 +848,13 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBinding.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[1];
-			var samplerPtrs = stackalloc IntPtr[1];
-
-			texturePtrs[0] = textureSamplerBinding.Texture.Handle;
-			samplerPtrs[0] = textureSamplerBinding.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[1];
+			bindingArray[0] = textureSamplerBinding.ToRefresh();
 
 			Refresh.Refresh_BindVertexSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -909,20 +877,14 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[2];
-			var samplerPtrs = stackalloc IntPtr[2];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[2];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
 
 			Refresh.Refresh_BindVertexSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -949,22 +911,15 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[3];
-			var samplerPtrs = stackalloc IntPtr[3];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
-			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[3];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
+			bindingArray[2] = textureSamplerBindingThree.ToRefresh();
 
 			Refresh.Refresh_BindVertexSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -995,24 +950,16 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingFour.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[4];
-			var samplerPtrs = stackalloc IntPtr[4];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
-			texturePtrs[3] = textureSamplerBindingFour.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
-			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
-			samplerPtrs[3] = textureSamplerBindingFour.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[4];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
+			bindingArray[2] = textureSamplerBindingThree.ToRefresh();
+			bindingArray[3] = textureSamplerBindingFour.ToRefresh();
 
 			Refresh.Refresh_BindVertexSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -1029,8 +976,7 @@ namespace MoonWorks.Graphics
 			AssertVertexSamplerCount(textureSamplerBindings.Length);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			Refresh.TextureSamplerBinding* bindingsArray = (Refresh.TextureSamplerBinding*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<Refresh.TextureSamplerBinding>() * textureSamplerBindings.Length));
 
 			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
@@ -1039,16 +985,16 @@ namespace MoonWorks.Graphics
 				AssertTextureBindingUsageFlags(textureSamplerBindings[i].Texture);
 #endif
 
-				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
-				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
+				bindingsArray[i] = textureSamplerBindings[i].ToRefresh();
 			}
 
 			Refresh.Refresh_BindVertexSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingsArray
 			);
+
+			NativeMemory.Free(bindingsArray);
 		}
 
 		/// <summary>
@@ -1066,17 +1012,13 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBinding.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[1];
-			var samplerPtrs = stackalloc IntPtr[1];
-
-			texturePtrs[0] = textureSamplerBinding.Texture.Handle;
-			samplerPtrs[0] = textureSamplerBinding.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[1];
+			bindingArray[0] = textureSamplerBinding.ToRefresh();
 
 			Refresh.Refresh_BindFragmentSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -1099,20 +1041,14 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[2];
-			var samplerPtrs = stackalloc IntPtr[2];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[2];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
 
 			Refresh.Refresh_BindFragmentSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -1139,22 +1075,15 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[3];
-			var samplerPtrs = stackalloc IntPtr[3];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
-			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[3];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
+			bindingArray[2] = textureSamplerBindingThree.ToRefresh();
 
 			Refresh.Refresh_BindFragmentSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -1185,24 +1114,16 @@ namespace MoonWorks.Graphics
 			AssertTextureBindingUsageFlags(textureSamplerBindingFour.Texture);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[4];
-			var samplerPtrs = stackalloc IntPtr[4];
-
-			texturePtrs[0] = textureSamplerBindingOne.Texture.Handle;
-			texturePtrs[1] = textureSamplerBindingTwo.Texture.Handle;
-			texturePtrs[2] = textureSamplerBindingThree.Texture.Handle;
-			texturePtrs[3] = textureSamplerBindingFour.Texture.Handle;
-
-			samplerPtrs[0] = textureSamplerBindingOne.Sampler.Handle;
-			samplerPtrs[1] = textureSamplerBindingTwo.Sampler.Handle;
-			samplerPtrs[2] = textureSamplerBindingThree.Sampler.Handle;
-			samplerPtrs[3] = textureSamplerBindingFour.Sampler.Handle;
+			var bindingArray = stackalloc Refresh.TextureSamplerBinding[4];
+			bindingArray[0] = textureSamplerBindingOne.ToRefresh();
+			bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
+			bindingArray[2] = textureSamplerBindingThree.ToRefresh();
+			bindingArray[3] = textureSamplerBindingFour.ToRefresh();
 
 			Refresh.Refresh_BindFragmentSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
 		}
 
@@ -1219,8 +1140,7 @@ namespace MoonWorks.Graphics
 			AssertFragmentSamplerCount(textureSamplerBindings.Length);
 #endif
 
-			var texturePtrs = stackalloc IntPtr[textureSamplerBindings.Length];
-			var samplerPtrs = stackalloc IntPtr[textureSamplerBindings.Length];
+			Refresh.TextureSamplerBinding* bindingArray = (Refresh.TextureSamplerBinding*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<Refresh.TextureSamplerBinding>() * textureSamplerBindings.Length));
 
 			for (var i = 0; i < textureSamplerBindings.Length; i += 1)
 			{
@@ -1229,16 +1149,16 @@ namespace MoonWorks.Graphics
 				AssertTextureBindingUsageFlags(textureSamplerBindings[i].Texture);
 #endif
 
-				texturePtrs[i] = textureSamplerBindings[i].Texture.Handle;
-				samplerPtrs[i] = textureSamplerBindings[i].Sampler.Handle;
+				bindingArray[i] = textureSamplerBindings[i].ToRefresh();
 			}
 
 			Refresh.Refresh_BindFragmentSamplers(
 				Device.Handle,
 				Handle,
-				(IntPtr) texturePtrs,
-				(IntPtr) samplerPtrs
+				bindingArray
 			);
+
+			NativeMemory.Free(bindingArray);
 		}
 
 		/// <summary>
@@ -1466,16 +1386,20 @@ namespace MoonWorks.Graphics
 		///
 		/// This operation cannot be performed inside any pass.
 		/// </summary>
+		/// <param name="writeOption">Specifies data dependency behavior.</param>
 		public void Blit(
-			Texture source,
-			Texture destination,
-			Filter filter
+			TextureSlice source,
+			TextureSlice destination,
+			Filter filter,
+			WriteOptions writeOption
 		) {
 			var sampler = filter == Filter.Linear ? Device.LinearSampler : Device.PointSampler;
 
-			BeginRenderPass(new ColorAttachmentInfo(destination));
+			// FIXME: this will break with non-2D textures
+			// FIXME: this should take a TextureRegion
+			BeginRenderPass(new ColorAttachmentInfo(destination, writeOption));
 			BindGraphicsPipeline(Device.BlitPipeline);
-			BindFragmentSamplers(new TextureSamplerBinding(source, sampler));
+			BindFragmentSamplers(new TextureSamplerBinding(source.Texture, sampler));
 			DrawPrimitives(0, 2);
 			EndRenderPass();
 		}
@@ -1520,9 +1444,8 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Binds a buffer to be used in the compute shader.
 		/// </summary>
-		/// <param name="buffer">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			GpuBuffer buffer
+			ComputeBufferBinding binding
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1531,24 +1454,22 @@ namespace MoonWorks.Graphics
 			AssertComputeBufferCount(1);
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[1];
-			bufferPtrs[0] = buffer.Handle;
+			var bindingArray = stackalloc Refresh.ComputeBufferBinding[1];
+			bindingArray[0] = binding.ToRefresh();
 
 			Refresh.Refresh_BindComputeBuffers(
 				Device.Handle,
 				Handle,
-				(IntPtr) bufferPtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds buffers to be used in the compute shader.
 		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo
+			ComputeBufferBinding bindingOne,
+			ComputeBufferBinding bindingTwo
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1557,27 +1478,24 @@ namespace MoonWorks.Graphics
 			AssertComputeBufferCount(2);
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[2];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
+			var bindingArray = stackalloc Refresh.ComputeBufferBinding[2];
+			bindingArray[0] = bindingOne.ToRefresh();
+			bindingArray[1] = bindingTwo.ToRefresh();
 
 			Refresh.Refresh_BindComputeBuffers(
 				Device.Handle,
 				Handle,
-				(IntPtr) bufferPtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds buffers to be used in the compute shader.
 		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
-		/// <param name="bufferThree">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo,
-			GpuBuffer bufferThree
+			ComputeBufferBinding bindingOne,
+			ComputeBufferBinding bindingTwo,
+			ComputeBufferBinding bindingThree
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1586,30 +1504,26 @@ namespace MoonWorks.Graphics
 			AssertComputeBufferCount(3);
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[3];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
-			bufferPtrs[2] = bufferThree.Handle;
+			var bindingArray = stackalloc Refresh.ComputeBufferBinding[3];
+			bindingArray[0] = bindingOne.ToRefresh();
+			bindingArray[1] = bindingTwo.ToRefresh();
+			bindingArray[2] = bindingThree.ToRefresh();
 
 			Refresh.Refresh_BindComputeBuffers(
 				Device.Handle,
 				Handle,
-				(IntPtr) bufferPtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds buffers to be used in the compute shader.
 		/// </summary>
-		/// <param name="bufferOne">A buffer to bind.</param>
-		/// <param name="bufferTwo">A buffer to bind.</param>
-		/// <param name="bufferThree">A buffer to bind.</param>
-		/// <param name="bufferFour">A buffer to bind.</param>
 		public unsafe void BindComputeBuffers(
-			GpuBuffer bufferOne,
-			GpuBuffer bufferTwo,
-			GpuBuffer bufferThree,
-			GpuBuffer bufferFour
+			ComputeBufferBinding bindingOne,
+			ComputeBufferBinding bindingTwo,
+			ComputeBufferBinding bindingThree,
+			ComputeBufferBinding bindingFour
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1618,16 +1532,16 @@ namespace MoonWorks.Graphics
 			AssertComputeBufferCount(4);
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[4];
-			bufferPtrs[0] = bufferOne.Handle;
-			bufferPtrs[1] = bufferTwo.Handle;
-			bufferPtrs[2] = bufferThree.Handle;
-			bufferPtrs[3] = bufferFour.Handle;
+			var bindingArray = stackalloc Refresh.ComputeBufferBinding[4];
+			bindingArray[0] = bindingOne.ToRefresh();
+			bindingArray[1] = bindingTwo.ToRefresh();
+			bindingArray[2] = bindingThree.ToRefresh();
+			bindingArray[3] = bindingFour.ToRefresh();
 
 			Refresh.Refresh_BindComputeBuffers(
 				Device.Handle,
 				Handle,
-				(IntPtr) bufferPtrs
+				bindingArray
 			);
 		}
 
@@ -1636,35 +1550,38 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="buffers">A Span of buffers to bind.</param>
 		public unsafe void BindComputeBuffers(
-			in Span<GpuBuffer> buffers
+			in Span<ComputeBufferBinding> bindings
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
 			AssertComputePipelineBound();
-			AssertComputeBufferCount(buffers.Length);
+			AssertComputeBufferCount(bindings.Length);
 #endif
 
-			var bufferPtrs = stackalloc IntPtr[buffers.Length];
+			Refresh.ComputeBufferBinding* bindingArray = (Refresh.ComputeBufferBinding*) NativeMemory.Alloc(
+				(nuint) (Marshal.SizeOf<ComputeBufferBinding>() * bindings.Length)
+			);
 
-			for (var i = 0; i < buffers.Length; i += 1)
+			for (var i = 0; i < bindings.Length; i += 1)
 			{
-				bufferPtrs[i] = buffers[i].Handle;
+				bindingArray[i] = bindings[i].ToRefresh();
 			}
 
 			Refresh.Refresh_BindComputeBuffers(
 				Device.Handle,
 				Handle,
-				(IntPtr) bufferPtrs
+				bindingArray
 			);
+
+			NativeMemory.Free(bindingArray);
 		}
 
 		/// <summary>
-		/// Binds a texture to be used in the compute shader.
+		/// Binds a texture slice to be used in the compute shader.
 		/// </summary>
-		/// <param name="slice">A texture slice to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureSlice slice
+			ComputeTextureBinding binding
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1673,24 +1590,22 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(1);
 #endif
 
-			var textureSlicePtrs = stackalloc Refresh.TextureSlice[1];
-			textureSlicePtrs[0] = slice.ToRefreshTextureSlice();
+			var bindingArray = stackalloc Refresh.ComputeTextureBinding[1];
+			bindingArray[0] = binding.ToRefresh();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) textureSlicePtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="sliceOne">A texture-level pair to bind.</param>
-		/// <param name="sliceTwo">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureSlice sliceOne,
-			TextureSlice sliceTwo
+			ComputeTextureBinding bindingOne,
+			ComputeTextureBinding bindingTwo
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1699,27 +1614,24 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(2);
 #endif
 
-			var textureSlicePtrs = stackalloc Refresh.TextureSlice[2];
-			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
-			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
+			var bindingArray = stackalloc Refresh.ComputeTextureBinding[2];
+			bindingArray[0] = bindingOne.ToRefresh();
+			bindingArray[1] = bindingTwo.ToRefresh();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) textureSlicePtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="sliceOne">A texture-level pair to bind.</param>
-		/// <param name="sliceTwo">A texture-level pair to bind.</param>
-		/// <param name="sliceThree">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureSlice sliceOne,
-			TextureSlice sliceTwo,
-			TextureSlice sliceThree
+			ComputeTextureBinding bindingOne,
+			ComputeTextureBinding bindingTwo,
+			ComputeTextureBinding bindingThree
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1728,30 +1640,26 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(3);
 #endif
 
-			var textureSlicePtrs = stackalloc Refresh.TextureSlice[3];
-			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
-			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
-			textureSlicePtrs[2] = sliceThree.ToRefreshTextureSlice();
+			var bindingArray = stackalloc Refresh.ComputeTextureBinding[3];
+			bindingArray[0] = bindingOne.ToRefresh();
+			bindingArray[1] = bindingTwo.ToRefresh();
+			bindingArray[2] = bindingThree.ToRefresh();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) textureSlicePtrs
+				bindingArray
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="sliceOne">A texture-level pair to bind.</param>
-		/// <param name="sliceTwo">A texture-level pair to bind.</param>
-		/// <param name="sliceThree">A texture-level pair to bind.</param>
-		/// <param name="sliceFour">A texture-level pair to bind.</param>
 		public unsafe void BindComputeTextures(
-			TextureSlice sliceOne,
-			TextureSlice sliceTwo,
-			TextureSlice sliceThree,
-			TextureSlice sliceFour
+			ComputeTextureBinding bindingOne,
+			ComputeTextureBinding bindingTwo,
+			ComputeTextureBinding bindingThree,
+			ComputeTextureBinding bindingFour
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1760,49 +1668,48 @@ namespace MoonWorks.Graphics
 			AssertComputeTextureCount(4);
 #endif
 
-			var textureSlicePtrs = stackalloc Refresh.TextureSlice[4];
-			textureSlicePtrs[0] = sliceOne.ToRefreshTextureSlice();
-			textureSlicePtrs[1] = sliceTwo.ToRefreshTextureSlice();
-			textureSlicePtrs[2] = sliceThree.ToRefreshTextureSlice();
-			textureSlicePtrs[3] = sliceFour.ToRefreshTextureSlice();
+			var textureSlicePtrs = stackalloc Refresh.ComputeTextureBinding[4];
+			textureSlicePtrs[0] = bindingOne.ToRefresh();
+			textureSlicePtrs[1] = bindingTwo.ToRefresh();
+			textureSlicePtrs[2] = bindingThree.ToRefresh();
+			textureSlicePtrs[3] = bindingFour.ToRefresh();
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) textureSlicePtrs
+				textureSlicePtrs
 			);
 		}
 
 		/// <summary>
 		/// Binds textures to be used in the compute shader.
 		/// </summary>
-		/// <param name="slices">A set of texture-level pairs to bind.</param>
 		public unsafe void BindComputeTextures(
-			in Span<TextureSlice> slices
+			in Span<ComputeTextureBinding> bindings
 		) {
 #if DEBUG
 			AssertNotSubmitted();
 			AssertInComputePass("Cannot bind compute textures outside of compute pass!");
 			AssertComputePipelineBound();
-			AssertComputeTextureCount(slices.Length);
+			AssertComputeTextureCount(bindings.Length);
 #endif
 
-			Refresh.TextureSlice* textureSlicePtrs = (Refresh.TextureSlice*) NativeMemory.Alloc(
-				(nuint) (Marshal.SizeOf<Refresh.TextureSlice>() * slices.Length)
+			Refresh.ComputeTextureBinding* bindingArray = (Refresh.ComputeTextureBinding*) NativeMemory.Alloc(
+				(nuint) (Marshal.SizeOf<Refresh.TextureSlice>() * bindings.Length)
 			);
 
-			for (var i = 0; i < slices.Length; i += 1)
+			for (var i = 0; i < bindings.Length; i += 1)
 			{
-				textureSlicePtrs[i] = slices[i].ToRefreshTextureSlice();
+				bindingArray[i] = bindings[i].ToRefresh();
 			}
 
 			Refresh.Refresh_BindComputeTextures(
 				Device.Handle,
 				Handle,
-				(IntPtr) textureSlicePtrs
+				bindingArray
 			);
 
-			NativeMemory.Free(textureSlicePtrs);
+			NativeMemory.Free(bindingArray);
 		}
 
 		/// <summary>
@@ -1916,6 +1823,7 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+
 		/// <summary>
 		/// Uploads data from a TransferBuffer to a TextureSlice.
 		/// This copy occurs on the GPU timeline.
@@ -1925,11 +1833,12 @@ namespace MoonWorks.Graphics
 		///
 		/// You MAY assume that the copy has finished for subsequent commands.
 		/// </summary>
+		/// <param name="writeOption">Specifies data dependency behavior.</param>
 		public void UploadToTexture(
 			TransferBuffer transferBuffer,
 			in TextureRegion textureRegion,
 			in BufferImageCopy copyParams,
-			CopyOptions option
+			WriteOptions writeOption
 		)
 		{
 #if DEBUG
@@ -1944,7 +1853,7 @@ namespace MoonWorks.Graphics
 				transferBuffer.Handle,
 				textureRegion.ToRefreshTextureRegion(),
 				copyParams.ToRefresh(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) writeOption
 			);
 		}
 
@@ -1954,13 +1863,13 @@ namespace MoonWorks.Graphics
 		public void UploadToTexture(
 			TransferBuffer transferBuffer,
 			Texture texture,
-			CopyOptions option
+			WriteOptions writeOption
 		) {
 			UploadToTexture(
 				transferBuffer,
 				new TextureRegion(texture),
 				new BufferImageCopy(0, 0, 0),
-				option
+				writeOption
 			);
 		}
 
@@ -1977,7 +1886,7 @@ namespace MoonWorks.Graphics
 			TransferBuffer transferBuffer,
 			GpuBuffer gpuBuffer,
 			in BufferCopy copyParams,
-			CopyOptions option
+			WriteOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -1992,7 +1901,7 @@ namespace MoonWorks.Graphics
 				transferBuffer.Handle,
 				gpuBuffer.Handle,
 				copyParams.ToRefresh(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) option
 			);
 		}
 
@@ -2002,7 +1911,7 @@ namespace MoonWorks.Graphics
 		public void UploadToBuffer(
 			TransferBuffer transferBuffer,
 			GpuBuffer gpuBuffer,
-			CopyOptions option
+			WriteOptions option
 		) {
 			UploadToBuffer(
 				transferBuffer,
@@ -2021,7 +1930,7 @@ namespace MoonWorks.Graphics
 			uint sourceStartElement,
 			uint destinationStartElement,
 			uint numElements,
-			CopyOptions option
+			WriteOptions option
 		) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
@@ -2145,7 +2054,7 @@ namespace MoonWorks.Graphics
 		public void CopyTextureToTexture(
 			in TextureRegion source,
 			in TextureRegion destination,
-			CopyOptions option
+			WriteOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2158,7 +2067,7 @@ namespace MoonWorks.Graphics
 				Handle,
 				source.ToRefreshTextureRegion(),
 				destination.ToRefreshTextureRegion(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) option
 			);
 		}
 
@@ -2169,7 +2078,7 @@ namespace MoonWorks.Graphics
 		public void CopyTextureToTexture(
 			Texture source,
 			Texture destination,
-			CopyOptions option
+			WriteOptions option
 		) {
 			CopyTextureToTexture(
 				new TextureRegion(source),
@@ -2188,7 +2097,7 @@ namespace MoonWorks.Graphics
 			in TextureRegion textureRegion,
 			GpuBuffer buffer,
 			in BufferImageCopy copyParams,
-			CopyOptions option
+			WriteOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2202,7 +2111,7 @@ namespace MoonWorks.Graphics
 				textureRegion.ToRefreshTextureRegion(),
 				buffer.Handle,
 				copyParams.ToRefresh(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) option
 			);
 		}
 
@@ -2212,7 +2121,7 @@ namespace MoonWorks.Graphics
 		public void CopyTextureToBuffer(
 			Texture texture,
 			GpuBuffer buffer,
-			CopyOptions option
+			WriteOptions option
 		) {
 			CopyTextureToBuffer(
 				new TextureRegion(texture),
@@ -2232,7 +2141,7 @@ namespace MoonWorks.Graphics
 			GpuBuffer gpuBuffer,
 			in TextureRegion textureRegion,
 			in BufferImageCopy copyParams,
-			CopyOptions option
+			WriteOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2246,7 +2155,7 @@ namespace MoonWorks.Graphics
 				gpuBuffer.Handle,
 				textureRegion.ToRefreshTextureRegion(),
 				copyParams.ToRefresh(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) option
 			);
 		}
 
@@ -2256,7 +2165,7 @@ namespace MoonWorks.Graphics
 		public void CopyBufferToTexture(
 			GpuBuffer buffer,
 			Texture texture,
-			CopyOptions option
+			WriteOptions option
 		) {
 			CopyBufferToTexture(
 				buffer,
@@ -2276,7 +2185,7 @@ namespace MoonWorks.Graphics
 			GpuBuffer source,
 			GpuBuffer destination,
 			in BufferCopy copyParams,
-			CopyOptions option
+			WriteOptions option
 		) {
 #if DEBUG
 			AssertNotSubmitted();
@@ -2291,7 +2200,7 @@ namespace MoonWorks.Graphics
 				source.Handle,
 				destination.Handle,
 				copyParams.ToRefresh(),
-				(Refresh.CopyOptions) option
+				(Refresh.WriteOptions) option
 			);
 		}
 
@@ -2301,7 +2210,7 @@ namespace MoonWorks.Graphics
 		public void CopyBufferToBuffer(
 			GpuBuffer source,
 			GpuBuffer destination,
-			CopyOptions option
+			WriteOptions option
 		) {
 			CopyBufferToBuffer(
 				source,

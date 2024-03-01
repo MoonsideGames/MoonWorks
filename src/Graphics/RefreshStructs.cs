@@ -174,29 +174,78 @@ namespace MoonWorks.Graphics
 		}
 	}
 
+	/// <summary>
+	/// Determines how a color texture will be read/written in a render pass.
+	/// </summary>
 	public struct ColorAttachmentInfo
 	{
 		public TextureSlice TextureSlice;
+
+		/// <summary>
+		/// If LoadOp is set to Clear, the texture slice will be cleared to this color.
+		/// </summary>
 		public Color ClearColor;
+
+		/// <summary>
+		/// Determines what is done with the texture slice memory
+		/// at the beginning of the render pass. <br/>
+		///
+		///   Load:
+		///     Loads the data currently in the texture slice. <br/>
+		///
+		///   Clear:
+		///     Clears the texture slice to a single color. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice data.
+		///     This is a good option if you know that every single pixel will be written in the render pass.
+		/// </summary>
 		public LoadOp LoadOp;
+
+		/// <summary>
+		/// Determines what is done with the texture slice memory
+		/// at the end of the render pass. <br/>
+		///
+		///   Store:
+		///     Stores the results of the render pass in the texture slice memory. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice memory.
+		/// </summary>
 		public StoreOp StoreOp;
-		public bool SafeDiscard;
+
+		/// <summary>
+		/// Specifies data dependency behavior. This option is ignored if LoadOp is Load. <br/>
+		///
+		///   SafeDiscard:
+		///     If this texture slice has been used in commands that have not completed,
+		///     this option will prevent a dependency on those commands
+		///     at the cost of increased memory usage.
+		///     You may NOT assume that any of the previous texture (not slice!) data is retained.
+		///     If the texture slice was not in use, this is equivalent to SafeOverwrite.
+		///     This is a good option to prevent stalls when frequently reusing a texture slice in rendering. <br/>
+		///
+		///   SafeOverwrite:
+		///     Overwrites the data safely using a GPU memory barrier.
+		/// </summary>
+		public WriteOptions WriteOption;
 
 		public ColorAttachmentInfo(
 			TextureSlice textureSlice,
+			WriteOptions writeOption,
 			Color clearColor,
-			bool safeDiscard = true,
 			StoreOp storeOp = StoreOp.Store
 		) {
 			TextureSlice = textureSlice;
 			ClearColor = clearColor;
 			LoadOp = LoadOp.Clear;
 			StoreOp = storeOp;
-			SafeDiscard = safeDiscard;
+			WriteOption = writeOption;
 		}
 
 		public ColorAttachmentInfo(
 			TextureSlice textureSlice,
+			WriteOptions writeOption,
 			LoadOp loadOp = LoadOp.DontCare,
 			StoreOp storeOp = StoreOp.Store
 		) {
@@ -204,6 +253,7 @@ namespace MoonWorks.Graphics
 			ClearColor = Color.White;
 			LoadOp = loadOp;
 			StoreOp = storeOp;
+			WriteOption = writeOption;
 		}
 
 		public Refresh.ColorAttachmentInfo ToRefresh()
@@ -220,27 +270,104 @@ namespace MoonWorks.Graphics
 				},
 				loadOp = (Refresh.LoadOp) LoadOp,
 				storeOp = (Refresh.StoreOp) StoreOp,
-				safeDiscard = Conversions.BoolToByte(SafeDiscard)
+				writeOption = (Refresh.WriteOptions) WriteOption
 			};
 		}
 	}
 
+	/// <summary>
+	/// Determines how a depth/stencil texture will be read/written in a render pass.
+	/// </summary>
 	public struct DepthStencilAttachmentInfo
 	{
 		public TextureSlice TextureSlice;
+
+		/// <summary>
+		/// If LoadOp is set to Clear, the texture slice depth will be cleared to this depth value. <br/>
+		/// If StencilLoadOp is set to Clear, the texture slice stencil value will be cleared to this stencil value.
+		/// </summary>
 		public DepthStencilValue DepthStencilClearValue;
+
+		/// <summary>
+		/// Determines what is done with the texture slice depth values
+		/// at the beginning of the render pass. <br/>
+		///
+		///   Load:
+		///     Loads the data currently in the texture slice. <br/>
+		///
+		///   Clear:
+		///     Clears the texture slice to a single depth value. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice data.
+		///     This is a good option if you know that every single pixel will be written in the render pass.
+		/// </summary>
 		public LoadOp LoadOp;
+
+		/// <summary>
+		/// Determines what is done with the texture slice depth values
+		/// at the end of the render pass. <br/>
+		///
+		///   Store:
+		///     Stores the results of the render pass in the texture slice memory. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice memory.
+		///     This is usually a good option for depth textures that don't need to be reused.
+		/// </summary>
 		public StoreOp StoreOp;
+
+		/// <summary>
+		/// Determines what is done with the texture slice stencil values
+		/// at the beginning of the render pass. <br/>
+		///
+		///   Load:
+		///     Loads the data currently in the texture slice. <br/>
+		///
+		///   Clear:
+		///     Clears the texture slice to a single stencil value. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice data.
+		///     This is a good option if you know that every single pixel will be written in the render pass.
+		/// </summary>
 		public LoadOp StencilLoadOp;
+
+		/// <summary>
+		/// Determines what is done with the texture slice stencil values
+		/// at the end of the render pass. <br/>
+		///
+		///   Store:
+		///     Stores the results of the render pass in the texture slice memory. <br/>
+		///
+		///   DontCare:
+		///     The driver will do whatever it wants with the texture slice memory.
+		///     This is usually a good option for stencil textures that don't need to be reused.
+		/// </summary>
 		public StoreOp StencilStoreOp;
-		public bool SafeDiscard;
+
+		/// <summary>
+		/// Specifies data dependency behavior. This option is ignored if LoadOp or StencilLoadOp is Load. <br/>
+		///
+		///   SafeDiscard:
+		///     If this texture slice has been used in commands that have not completed,
+		///     this option will prevent a dependency on those commands
+		///     at the cost of increased memory usage.
+		///     You may NOT assume that any of the previous texture (not slice!) data is retained.
+		///     If the texture slice was not in use, this is equivalent to SafeOverwrite.
+		///     This is a good option to prevent stalls when frequently reusing a texture slice in rendering. <br/>
+		///
+		///   SafeOverwrite:
+		///     Overwrites the data safely using a GPU memory barrier.
+		/// </summary>
+		public WriteOptions WriteOption;
 
 		public DepthStencilAttachmentInfo(
 			TextureSlice textureSlice,
+			WriteOptions writeOption,
 			DepthStencilValue clearValue,
-			bool safeDiscard = true,
-			StoreOp depthStoreOp = StoreOp.Store,
-			StoreOp stencilStoreOp = StoreOp.Store
+			StoreOp depthStoreOp = StoreOp.DontCare,
+			StoreOp stencilStoreOp = StoreOp.DontCare
 		){
 			TextureSlice = textureSlice;
 			DepthStencilClearValue = clearValue;
@@ -248,15 +375,16 @@ namespace MoonWorks.Graphics
 			StoreOp = depthStoreOp;
 			StencilLoadOp = LoadOp.Clear;
 			StencilStoreOp = stencilStoreOp;
-			SafeDiscard = safeDiscard;
+			WriteOption = writeOption;
 		}
 
 		public DepthStencilAttachmentInfo(
 			TextureSlice textureSlice,
+			WriteOptions writeOption,
 			LoadOp loadOp = LoadOp.DontCare,
-			StoreOp storeOp = StoreOp.Store,
+			StoreOp storeOp = StoreOp.DontCare,
 			LoadOp stencilLoadOp = LoadOp.DontCare,
-			StoreOp stencilStoreOp = StoreOp.Store
+			StoreOp stencilStoreOp = StoreOp.DontCare
 		) {
 			TextureSlice = textureSlice;
 			DepthStencilClearValue = new DepthStencilValue();
@@ -264,6 +392,7 @@ namespace MoonWorks.Graphics
 			StoreOp = storeOp;
 			StencilLoadOp = stencilLoadOp;
 			StencilStoreOp = stencilStoreOp;
+			WriteOption = writeOption;
 		}
 
 		public Refresh.DepthStencilAttachmentInfo ToRefresh()
@@ -276,7 +405,7 @@ namespace MoonWorks.Graphics
 				storeOp = (Refresh.StoreOp) StoreOp,
 				stencilLoadOp = (Refresh.LoadOp) StencilLoadOp,
 				stencilStoreOp = (Refresh.StoreOp) StencilStoreOp,
-				safeDiscard = Conversions.BoolToByte(SafeDiscard)
+				writeOption = (Refresh.WriteOptions) WriteOption
 			};
 		}
 	}
@@ -345,23 +474,18 @@ namespace MoonWorks.Graphics
 		}
 	}
 
+	/// <summary>
+	/// Parameters for a copy between buffer and image.
+	/// </summary>
+	/// <param name="BufferOffset">The offset into the buffer.</param>
+	/// <param name="BufferStride">If 0, image data is assumed tightly packed.</param>
+	/// <param name="BufferImageHeight">If 0, image data is assumed tightly packed.</param>
 	[StructLayout(LayoutKind.Sequential)]
-	public struct BufferImageCopy
-	{
-		public uint BufferOffset;
-		public uint BufferStride; // if 0, image assumed to be tightly packed
-		public uint BufferImageHeight; // if 0, image assumed to be tightly packed
-
-		public BufferImageCopy(
-			uint bufferOffset,
-			uint bufferStride,
-			uint bufferImageHeight
-		) {
-			BufferOffset = bufferOffset;
-			BufferStride = bufferStride;
-			BufferImageHeight = bufferImageHeight;
-		}
-
+	public readonly record struct BufferImageCopy(
+		uint BufferOffset,
+		uint BufferStride,
+		uint BufferImageHeight
+	) {
 		public Refresh.BufferImageCopy ToRefresh()
 		{
 			return new Refresh.BufferImageCopy

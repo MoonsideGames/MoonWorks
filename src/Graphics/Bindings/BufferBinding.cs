@@ -1,17 +1,21 @@
-﻿namespace MoonWorks.Graphics
+﻿using RefreshCS;
+
+namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// A buffer-offset pair to be used when binding vertex buffers.
+	/// A buffer-offset pair to be used when binding vertex or index buffers.
 	/// </summary>
-	public struct BufferBinding
-	{
-		public GpuBuffer Buffer;
-		public ulong Offset;
-
-		public BufferBinding(GpuBuffer buffer, ulong offset)
+	public readonly record struct BufferBinding(
+		GpuBuffer Buffer,
+		uint Offset
+	) {
+		public Refresh.BufferBinding ToRefresh()
 		{
-			Buffer = buffer;
-			Offset = offset;
+			return new Refresh.BufferBinding
+			{
+				gpuBuffer = Buffer.Handle,
+				offset = Offset
+			};
 		}
 	}
 }

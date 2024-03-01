@@ -127,8 +127,8 @@ namespace MoonWorks.Graphics.Font
 				TransferBuffer.SetData(vertexSpan, TransferOptions.Discard);
 				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, TransferOptions.Overwrite);
 
-				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), CopyOptions.SafeDiscard);
-				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), CopyOptions.SafeDiscard);
+				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), WriteOptions.SafeDiscard);
+				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), WriteOptions.SafeDiscard);
 			}
 
 			PrimitiveCount = vertexCount / 2;

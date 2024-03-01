@@ -258,7 +258,7 @@ namespace MoonWorks.Video
 						BufferStride = CurrentStream.yStride,
 						BufferImageHeight = yTexture.Height
 					},
-					CopyOptions.SafeDiscard
+					WriteOptions.SafeDiscard
 				);
 
 				commandBuffer.UploadToTexture(
@@ -269,7 +269,7 @@ namespace MoonWorks.Video
 						BufferStride = CurrentStream.uvStride,
 						BufferImageHeight = uTexture.Height
 					},
-					CopyOptions.SafeDiscard
+					WriteOptions.SafeDiscard
 				);
 
 				commandBuffer.UploadToTexture(
@@ -281,13 +281,13 @@ namespace MoonWorks.Video
 						BufferStride = CurrentStream.uvStride,
 						BufferImageHeight = vTexture.Height
 					},
-					CopyOptions.SafeDiscard
+					WriteOptions.SafeDiscard
 				);
 
 				commandBuffer.EndCopyPass();
 
 				commandBuffer.BeginRenderPass(
-					new ColorAttachmentInfo(RenderTexture, Color.Black, true)
+					new ColorAttachmentInfo(RenderTexture, WriteOptions.SafeDiscard, Color.Black)
 				);
 
 				commandBuffer.BindGraphicsPipeline(Device.VideoPipeline);

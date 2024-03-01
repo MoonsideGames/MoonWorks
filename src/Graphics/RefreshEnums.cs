@@ -303,7 +303,7 @@ namespace MoonWorks.Graphics
 		Overwrite
 	}
 
-	public enum CopyOptions
+	public enum WriteOptions
 	{
 		SafeDiscard,
 		SafeOverwrite
