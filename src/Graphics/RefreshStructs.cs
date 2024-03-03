@@ -154,11 +154,7 @@ namespace MoonWorks.Graphics
 		public StencilOp PassOp;
 		public StencilOp DepthFailOp;
 		public CompareOp CompareOp;
-		public uint CompareMask;
-		public uint WriteMask;
-		public uint Reference;
 
-		// FIXME: can we do an explicit cast here?
 		public Refresh.StencilOpState ToRefresh()
 		{
 			return new Refresh.StencilOpState
@@ -166,10 +162,7 @@ namespace MoonWorks.Graphics
 				failOp = (Refresh.StencilOp) FailOp,
 				passOp = (Refresh.StencilOp) PassOp,
 				depthFailOp = (Refresh.StencilOp) DepthFailOp,
-				compareOp = (Refresh.CompareOp) CompareOp,
-				compareMask = CompareMask,
-				writeMask = WriteMask,
-				reference = Reference
+				compareOp = (Refresh.CompareOp) CompareOp
 			};
 		}
 	}

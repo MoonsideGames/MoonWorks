@@ -11,9 +11,29 @@
 		public bool DepthTestEnable;
 
 		/// <summary>
-		/// Describes the stencil operation.
+		/// Describes the back-face stencil operation.
 		/// </summary>
-		public StencilOpState StencilState;
+		public StencilOpState BackStencilState;
+
+		/// <summary>
+		/// Describes the front-face stencil operation.
+		/// </summary>
+		public StencilOpState FrontStencilState;
+
+		/// <summary>
+		/// The compare mask for stencil ops.
+		/// </summary>
+		public uint CompareMask;
+
+		/// <summary>
+		/// The write mask for stencil ops.
+		/// </summary>
+		public uint WriteMask;
+
+		/// <summary>
+		/// The stencil reference value.
+		/// </summary>
+		public uint Reference;
 
 		/// <summary>
 		/// The comparison operator used in the depth test.
