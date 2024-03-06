@@ -313,6 +313,7 @@ namespace MoonWorks.Graphics
 	{
 		DontCare,
 		Vulkan,
+		D3D11,
 		PS5,
 		Invalid
 	}

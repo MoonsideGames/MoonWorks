@@ -53,6 +53,7 @@ namespace MoonWorks
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			FrameLimiterSettings frameLimiterSettings,
+			Backend backend = Backend.Vulkan,
 			int targetTimestep = 60,
 			bool debugMode = false
 		)
@@ -82,7 +83,7 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
-				Backend.Vulkan,
+				backend,
 				debugMode
 			);
 
