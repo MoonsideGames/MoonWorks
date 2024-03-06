@@ -146,51 +146,6 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Decodes image data into a TransferBuffer to prepare for image upload.
-		/// </summary>
-		public static unsafe uint DecodeIntoTransferBuffer(
-			Span<byte> data,
-			TransferBuffer transferBuffer,
-			uint bufferOffsetInBytes,
-			TransferOptions option
-		) {
-			var pixelData = GetPixelDataFromBytes(data, out var w, out var h, out var sizeInBytes);
-			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
-			FreePixelData(pixelData);
-			return length;
-		}
-
-		/// <summary>
-		/// Decodes an image stream into a TransferBuffer to prepare for image upload.
-		/// </summary>
-		public static unsafe uint DecodeIntoTransferBuffer(
-			Stream stream,
-			TransferBuffer transferBuffer,
-			uint bufferOffsetInBytes,
-			TransferOptions option
-		) {
-			var pixelData = GetPixelDataFromStream(stream, out var w, out var h, out var sizeInBytes);
-			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
-			FreePixelData(pixelData);
-			return length;
-		}
-
-		/// <summary>
-		/// Decodes an image file into a TransferBuffer to prepare for image upload.
-		/// </summary>
-		public static unsafe uint DecodeIntoTransferBuffer(
-			string path,
-			TransferBuffer transferBuffer,
-			uint bufferOffsetInBytes,
-			TransferOptions option
-		) {
-			var pixelData = GetPixelDataFromFile(path, out var w, out var h, out var sizeInBytes);
-			var length = transferBuffer.SetData(new Span<byte>((void*) pixelData, (int) sizeInBytes), bufferOffsetInBytes, option);
-			FreePixelData(pixelData);
-			return length;
-		}
-
-		/// <summary>
 		/// Saves pixel data contained in a TransferBuffer to a PNG file.
 		/// </summary>
 		public static unsafe void SavePNG(
