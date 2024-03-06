@@ -467,6 +467,118 @@ namespace MoonWorks.Graphics
 			FencePool.Return(fence);
 		}
 
+		/// <summary>
+		/// ⚠️⚠️⚠️ <br/>
+		/// Downloads data from a Texture to a TransferBuffer.
+		/// This copy occurs immediately on the CPU timeline.<br/>
+		///
+		/// If you modify this texture in a command buffer and then call this function without calling
+		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
+		///
+		/// This method forces a sync point and is generally a bad thing to do.
+		/// Only use it if you have exhausted all other options.<br/>
+		///
+		/// Remember: friends don't let friends readback.<br/>
+		/// ⚠️⚠️⚠️
+		/// </summary>
+		public void DownloadFromTexture(
+			in TextureRegion textureRegion,
+			TransferBuffer transferBuffer,
+			in BufferImageCopy copyParams,
+			TransferOptions transferOption
+		) {
+			Refresh.Refresh_DownloadFromTexture(
+				Handle,
+				textureRegion.ToRefreshTextureRegion(),
+				transferBuffer.Handle,
+				copyParams.ToRefresh(),
+				(Refresh.TransferOptions) transferOption
+			);
+		}
+
+		/// <summary>
+		/// ⚠️⚠️⚠️ <br/>
+		/// Downloads all data from a 2D texture with no mips to a TransferBuffer.
+		/// This copy occurs immediately on the CPU timeline.<br/>
+		///
+		/// If you modify this texture in a command buffer and then call this function without calling
+		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
+		///
+		/// This method forces a sync point and is generally a bad thing to do.
+		/// Only use it if you have exhausted all other options.<br/>
+		///
+		/// Remember: friends don't let friends readback.<br/>
+		/// ⚠️⚠️⚠️
+		/// </summary>
+		public void DownloadFromTexture(
+			Texture texture,
+			TransferBuffer transferBuffer,
+			TransferOptions transferOption
+		) {
+			DownloadFromTexture(
+				new TextureRegion(texture),
+				transferBuffer,
+				new BufferImageCopy(0, 0, 0),
+				transferOption
+			);
+		}
+
+		/// <summary>
+		/// ⚠️⚠️⚠️ <br/>
+		/// Downloads data from a GpuBuffer to a TransferBuffer.
+		/// This copy occurs immediately on the CPU timeline.<br/>
+		///
+		/// If you modify this GpuBuffer in a command buffer and then call this function without calling
+		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
+		///
+		/// This method forces a sync point and is generally a bad thing to do.
+		/// Only use it if you have exhausted all other options.<br/>
+		///
+		/// Remember: friends don't let friends readback.<br/>
+		/// ⚠️⚠️⚠️
+		/// </summary>
+		public void DownloadFromBuffer(
+			GpuBuffer gpuBuffer,
+			TransferBuffer transferBuffer,
+			in BufferCopy copyParams,
+			TransferOptions transferOption
+		) {
+			Refresh.Refresh_DownloadFromBuffer(
+				Handle,
+				gpuBuffer.Handle,
+				transferBuffer.Handle,
+				copyParams.ToRefresh(),
+				(Refresh.TransferOptions) transferOption
+			);
+		}
+
+		/// <summary>
+		/// ⚠️⚠️⚠️ <br/>
+		/// Downloads all data in a GpuBuffer to a TransferBuffer.
+		/// This copy occurs immediately on the CPU timeline.<br/>
+		///
+		/// If you modify this GpuBuffer in a command buffer and then call this function without calling
+		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
+		///
+		/// This method forces a sync point and is generally a bad thing to do.
+		/// Only use it if you have exhausted all other options.<br/>
+		///
+		/// Remember: friends don't let friends readback.<br/>
+		/// ⚠️⚠️⚠️
+		/// </summary>
+		public void DownloadFromBuffer(
+			GpuBuffer gpuBuffer,
+			TransferBuffer transferBuffer,
+			TransferOptions option
+		) {
+			DownloadFromBuffer(
+				gpuBuffer,
+				transferBuffer,
+				new BufferCopy(0, 0, gpuBuffer.Size),
+				option
+			);
+		}
+
 		private TextureFormat GetSwapchainFormat(Window window)
 		{
 			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
