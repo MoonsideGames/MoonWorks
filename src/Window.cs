@@ -21,6 +21,15 @@ namespace MoonWorks
 		public bool Claimed { get; internal set; }
 		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }
 
+		public (int, int) Position
+		{
+			get
+			{
+				SDL.SDL_GetWindowPosition(Handle, out var x, out var y);
+				return (x, y);
+			}
+		}
+
 		private bool IsDisposed;
 
 		private static Dictionary<uint, Window> idLookup = new Dictionary<uint, Window>();
@@ -111,6 +120,14 @@ namespace MoonWorks
 			{
 				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
 			}
+		}
+
+		/// <summary>
+		/// Sets the window position.
+		/// </summary>
+		public void SetPosition(int x, int y)
+		{
+			SDL.SDL_SetWindowPosition(Handle, x, y);
 		}
 
 		internal static Window Lookup(uint windowID)
