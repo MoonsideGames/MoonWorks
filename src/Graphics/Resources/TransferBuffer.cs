@@ -144,7 +144,7 @@ namespace MoonWorks.Graphics
 		{
 			if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
 			{
-				throw new InvalidOperationException($"SetData overflow! Transfer buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
+				throw new InvalidOperationException($"Data overflow! Transfer buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
 			}
 		}
 #endif
