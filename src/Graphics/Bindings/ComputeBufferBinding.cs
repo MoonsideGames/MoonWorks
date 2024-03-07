@@ -9,12 +9,12 @@ namespace MoonWorks.Graphics
 	/// <param name="WriteOption">
 	///   Specifies data dependency behavior when this buffer is written to in the shader. <br/>
 	///
-	///   SafeDiscard:
+	///   Cycle:
 	///     If this buffer has been used in commands that have not finished,
-	///     this option will prevent a dependency on those commands
+	///     the implementation may choose to prevent a dependency on those commands
 	///     at the cost of increased memory usage.
 	///     You may NOT assume that any of the previous data is retained.
-	///     Otherwise this option is equivalent to SafeOverwrite. <br/>
+	///     This may prevent stalls when frequently updating a resource.  <br />
 	///
 	///   SafeOverwrite:
 	///     Overwrites the data safely using a GPU memory barrier.
