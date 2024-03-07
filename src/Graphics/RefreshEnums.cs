@@ -299,13 +299,13 @@ namespace MoonWorks.Graphics
 
 	public enum TransferOptions
 	{
-		Discard,
+		Cycle,
 		Overwrite
 	}
 
 	public enum WriteOptions
 	{
-		SafeDiscard,
+		Cycle,
 		SafeOverwrite
 	}
 

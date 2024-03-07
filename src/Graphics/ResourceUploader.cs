@@ -259,7 +259,7 @@ namespace MoonWorks.Graphics
 			}
 
 			var dataSpan = new Span<byte>(data, (int) dataSize);
-			TransferBuffer.SetData(dataSpan, TransferOptions.Discard);
+			TransferBuffer.SetData(dataSpan, TransferOptions.Cycle);
 		}
 
 		private void RecordUploadCommands(CommandBuffer commandBuffer)

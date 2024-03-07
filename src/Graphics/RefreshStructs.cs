@@ -210,13 +210,12 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Specifies data dependency behavior. This option is ignored if LoadOp is Load. <br/>
 		///
-		///   SafeDiscard:
+		///   Cycle:
 		///     If this texture slice has been used in commands that have not completed,
-		///     this option will prevent a dependency on those commands
+		///     the implementation may prevent a dependency on those commands
 		///     at the cost of increased memory usage.
 		///     You may NOT assume that any of the previous texture (not slice!) data is retained.
-		///     If the texture slice was not in use, this is equivalent to SafeOverwrite.
-		///     This is a good option to prevent stalls when frequently reusing a texture slice in rendering. <br/>
+		///     This may prevent stalls when frequently reusing a texture slice in rendering. <br/>
 		///
 		///   SafeOverwrite:
 		///     Overwrites the data safely using a GPU memory barrier.
@@ -342,13 +341,12 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Specifies data dependency behavior. This option is ignored if LoadOp or StencilLoadOp is Load. <br/>
 		///
-		///   SafeDiscard:
+		///   Cycle:
 		///     If this texture slice has been used in commands that have not completed,
-		///     this option will prevent a dependency on those commands
+		///     the implementation may prevent a dependency on those commands
 		///     at the cost of increased memory usage.
 		///     You may NOT assume that any of the previous texture (not slice!) data is retained.
-		///     If the texture slice was not in use, this is equivalent to SafeOverwrite.
-		///     This is a good option to prevent stalls when frequently reusing a texture slice in rendering. <br/>
+		///     This may prevent stalls when frequently reusing a texture slice in rendering. <br/>
 		///
 		///   SafeOverwrite:
 		///     Overwrites the data safely using a GPU memory barrier.
