@@ -40,11 +40,17 @@ namespace MoonWorks.Graphics
 		private FencePool FencePool;
 		private CommandBufferPool CommandBufferPool;
 
-		internal GraphicsDevice(
-			Backend preferredBackend,
+		internal unsafe GraphicsDevice(
+			Span<Backend> preferredBackends,
 			bool debugMode
 		) {
-			Backend = (Backend) Refresh.Refresh_SelectBackend((Refresh.Backend) preferredBackend, out windowFlags);
+			var backends = stackalloc Refresh.Backend[preferredBackends.Length];
+			for (var i = 0; i < preferredBackends.Length; i += 1)
+			{
+				backends[i] = (Refresh.Backend) preferredBackends[i];
+			}
+
+			Backend = (Backend) Refresh.Refresh_SelectBackend(backends, (uint) preferredBackends.Length, out windowFlags);
 
 			if (Backend == Backend.Invalid)
 			{

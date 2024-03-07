@@ -311,7 +311,6 @@ namespace MoonWorks.Graphics
 
 	public enum Backend
 	{
-		DontCare,
 		Vulkan,
 		D3D11,
 		PS5,

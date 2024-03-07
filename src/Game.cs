@@ -53,11 +53,10 @@ namespace MoonWorks
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			FrameLimiterSettings frameLimiterSettings,
-			Backend backend = Backend.Vulkan,
+			Span<Backend> preferredBackends,
 			int targetTimestep = 60,
 			bool debugMode = false
-		)
-		{
+		) {
 			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
@@ -83,7 +82,7 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
-				backend,
+				preferredBackends,
 				debugMode
 			);
 
