@@ -176,8 +176,7 @@ namespace MoonWorks.Graphics
 			Size = Width * Height * BytesPerPixel(Format) / BlockSizeSquared(Format);
 		}
 
-		// Used by AcquireSwapchainTexture.
-		// Should not be tracked, because swapchain textures are managed by Vulkan.
+		// Used by Window. Swapchain texture handles are managed by the driver backend.
 		internal Texture(
 			GraphicsDevice device,
 			TextureFormat format
