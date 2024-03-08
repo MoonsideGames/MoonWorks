@@ -22,11 +22,13 @@ namespace MoonWorks.Graphics
 		/// <returns></returns>
 		public unsafe static TransferBuffer Create<T>(
 			GraphicsDevice device,
+			TransferUsage usage,
 			uint elementCount
 		) where T : unmanaged
 		{
 			return new TransferBuffer(
 				device,
+				usage,
 				(uint) Marshal.SizeOf<T>() * elementCount
 			);
 		}
@@ -36,13 +38,16 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
 		/// <param name="sizeInBytes">The length of the buffer. Cannot be resized.</param>
+		/// <param name="usage">Whether this will be used to upload buffers or textures.</param>
 		public TransferBuffer(
 			GraphicsDevice device,
+			TransferUsage usage,
 			uint sizeInBytes
 		) : base(device)
 		{
 			Handle = Refresh.Refresh_CreateTransferBuffer(
 				device.Handle,
+				(Refresh.TransferUsage) usage,
 				sizeInBytes
 			);
 			Size = sizeInBytes;

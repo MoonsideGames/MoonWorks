@@ -15,18 +15,24 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public unsafe class ResourceUploader : GraphicsResource
 	{
-		TransferBuffer TransferBuffer;
+		TransferBuffer BufferTransferBuffer;
+		TransferBuffer TextureTransferBuffer;
 
-		byte* data;
-		uint dataOffset = 0;
-		uint dataSize = 1024;
+		byte* bufferData;
+		uint bufferDataOffset = 0;
+		uint bufferDataSize = 1024;
+
+		byte* textureData;
+		uint textureDataOffset = 0;
+		uint textureDataSize = 1024;
 
 		List<(GpuBuffer, BufferCopy, WriteOptions)> BufferUploads = new List<(GpuBuffer, BufferCopy, WriteOptions)>();
 		List<(TextureRegion, uint, WriteOptions)> TextureUploads = new List<(TextureRegion, uint, WriteOptions)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
 		{
-			data = (byte*) NativeMemory.Alloc(dataSize);
+			bufferData = (byte*) NativeMemory.Alloc(bufferDataSize);
+			textureData = (byte*) NativeMemory.Alloc(textureDataSize);
 		}
 
 		// Buffers
@@ -56,7 +62,7 @@ namespace MoonWorks.Graphics
 			uint resourceOffset;
 			fixed (void* spanPtr = data)
 			{
-				resourceOffset = CopyData(spanPtr, lengthInBytes);
+				resourceOffset = CopyBufferData(spanPtr, lengthInBytes);
 			}
 
 			var bufferCopyParams = new BufferCopy(resourceOffset, offsetInBytes, lengthInBytes);
@@ -213,7 +219,7 @@ namespace MoonWorks.Graphics
 			uint resourceOffset;
 			fixed (T* dataPtr = data)
 			{
-				resourceOffset = CopyDataAligned(dataPtr, dataLengthInBytes, Texture.TexelSize(textureRegion.TextureSlice.Texture.Format));
+				resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, Texture.TexelSize(textureRegion.TextureSlice.Texture.Format));
 			}
 
 			TextureUploads.Add((textureRegion, resourceOffset, option));
@@ -252,14 +258,30 @@ namespace MoonWorks.Graphics
 
 		private void CopyToTransferBuffer()
 		{
-			if (TransferBuffer == null || TransferBuffer.Size < dataSize)
+			if (BufferUploads.Count > 0)
 			{
-				TransferBuffer?.Dispose();
-				TransferBuffer = new TransferBuffer(Device, dataSize);
+				if (BufferTransferBuffer == null || BufferTransferBuffer.Size < bufferDataSize)
+				{
+					BufferTransferBuffer?.Dispose();
+					BufferTransferBuffer = new TransferBuffer(Device, TransferUsage.Buffer, bufferDataSize);
+				}
+
+				var dataSpan = new Span<byte>(bufferData, (int) bufferDataSize);
+				BufferTransferBuffer.SetData(dataSpan, TransferOptions.Cycle);
 			}
 
-			var dataSpan = new Span<byte>(data, (int) dataSize);
-			TransferBuffer.SetData(dataSpan, TransferOptions.Cycle);
+
+			if (TextureUploads.Count > 0)
+			{
+				if (TextureTransferBuffer == null || TextureTransferBuffer.Size < textureDataSize)
+				{
+					TextureTransferBuffer?.Dispose();
+					TextureTransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, textureDataSize);
+				}
+
+				var dataSpan = new Span<byte>(textureData, (int) textureDataSize);
+				TextureTransferBuffer.SetData(dataSpan, TransferOptions.Cycle);
+			}
 		}
 
 		private void RecordUploadCommands(CommandBuffer commandBuffer)
@@ -269,7 +291,7 @@ namespace MoonWorks.Graphics
 			foreach (var (gpuBuffer, bufferCopyParams, option) in BufferUploads)
 			{
 				commandBuffer.UploadToBuffer(
-					TransferBuffer,
+					BufferTransferBuffer,
 					gpuBuffer,
 					bufferCopyParams,
 					option
@@ -279,7 +301,7 @@ namespace MoonWorks.Graphics
 			foreach (var (textureRegion, offset, option) in TextureUploads)
 			{
 				commandBuffer.UploadToTexture(
-					TransferBuffer,
+					TextureTransferBuffer,
 					textureRegion,
 					new BufferImageCopy(
 						offset,
@@ -294,29 +316,41 @@ namespace MoonWorks.Graphics
 
 			BufferUploads.Clear();
 			TextureUploads.Clear();
-			dataOffset = 0;
+			bufferDataOffset = 0;
 		}
 
-		private uint CopyData(void* ptr, uint lengthInBytes)
+		private uint CopyBufferData(void* ptr, uint lengthInBytes)
 		{
-			if (dataOffset + lengthInBytes >= dataSize)
+			if (bufferDataOffset + lengthInBytes >= bufferDataSize)
 			{
-				dataSize = dataOffset + lengthInBytes;
-				data = (byte*) NativeMemory.Realloc(data, dataSize);
+				bufferDataSize = bufferDataOffset + lengthInBytes;
+				bufferData = (byte*) NativeMemory.Realloc(bufferData, bufferDataSize);
 			}
 
-			var resourceOffset = dataOffset;
+			var resourceOffset = bufferDataOffset;
 
-			NativeMemory.Copy(ptr, data + dataOffset, lengthInBytes);
-			dataOffset += lengthInBytes;
+			NativeMemory.Copy(ptr, bufferData + bufferDataOffset, lengthInBytes);
+			bufferDataOffset += lengthInBytes;
 
 			return resourceOffset;
 		}
 
-		private uint CopyDataAligned(void* ptr, uint lengthInBytes, uint alignment)
+		private uint CopyTextureData(void* ptr, uint lengthInBytes, uint alignment)
 		{
-			dataOffset = RoundToAlignment(dataOffset, alignment);
-			return CopyData(ptr, lengthInBytes);
+			textureDataOffset = RoundToAlignment(textureDataOffset, alignment);
+
+			if (textureDataOffset + lengthInBytes >= textureDataSize)
+			{
+				textureDataSize = textureDataOffset + lengthInBytes;
+				textureData = (byte*) NativeMemory.Realloc(textureData, textureDataSize);
+			}
+
+			var resourceOffset = textureDataOffset;
+
+			NativeMemory.Copy(ptr, textureData + textureDataOffset, lengthInBytes);
+			textureDataOffset += lengthInBytes;
+
+			return resourceOffset;
 		}
 
 		private uint RoundToAlignment(uint value, uint alignment)
@@ -335,10 +369,11 @@ namespace MoonWorks.Graphics
 			{
 				if (disposing)
 				{
-					TransferBuffer?.Dispose();
+					BufferTransferBuffer?.Dispose();
+					TextureTransferBuffer?.Dispose();
 				}
 
-				NativeMemory.Free(data);
+				NativeMemory.Free(bufferData);
 			}
 			base.Dispose(disposing);
 		}

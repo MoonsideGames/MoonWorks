@@ -35,7 +35,7 @@ namespace MoonWorks.Graphics.Font
 			VertexBuffer = GpuBuffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
 			IndexBuffer = GpuBuffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, VertexBuffer.Size + IndexBuffer.Size);
+			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferUsage.Buffer, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -119,7 +119,7 @@ namespace MoonWorks.Graphics.Font
 			if (newTransferBufferNeeded)
 			{
 				TransferBuffer.Dispose();
-				TransferBuffer = new TransferBuffer(GraphicsDevice, VertexBuffer.Size + IndexBuffer.Size);
+				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferUsage.Buffer, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)

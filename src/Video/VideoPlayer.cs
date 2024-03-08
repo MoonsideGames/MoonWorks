@@ -241,7 +241,7 @@ namespace MoonWorks.Video
 				if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 				{
 					TransferBuffer?.Dispose();
-					TransferBuffer = new TransferBuffer(Device, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
+					TransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
 				}
 				TransferBuffer.SetData(ySpan, 0, TransferOptions.Cycle);
 				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, TransferOptions.Overwrite);

@@ -297,6 +297,12 @@ namespace MoonWorks.Graphics
 		IntOpaqueWhite
 	}
 
+	public enum TransferUsage
+	{
+		Buffer,
+		Texture
+	}
+
 	public enum TransferOptions
 	{
 		Cycle,
