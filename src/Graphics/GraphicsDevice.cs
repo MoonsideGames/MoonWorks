@@ -15,6 +15,7 @@ namespace MoonWorks.Graphics
 	{
 		public IntPtr Handle { get; }
 		public Backend Backend { get; }
+		public bool DebugMode { get; }
 
 		private uint windowFlags;
 		public SDL2.SDL.SDL_WindowFlags WindowFlags => (SDL2.SDL.SDL_WindowFlags) windowFlags;
@@ -61,6 +62,7 @@ namespace MoonWorks.Graphics
 				Conversions.BoolToByte(debugMode)
 			);
 
+			DebugMode = debugMode;
 			// TODO: check for CreateDevice fail
 
 			// Check for replacement stock shaders

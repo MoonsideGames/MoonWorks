@@ -23,11 +23,15 @@ namespace MoonWorks.Graphics
 
 			set
 			{
-				Refresh.Refresh_SetGpuBufferName(
-					Device.Handle,
-					Handle,
-					value
-				);
+				if (Device.DebugMode)
+				{
+					Refresh.Refresh_SetGpuBufferName(
+						Device.Handle,
+						Handle,
+						value
+					);
+				}
+
 				name = value;
 			}
 		}

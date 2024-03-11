@@ -27,11 +27,15 @@ namespace MoonWorks.Graphics
 
 			set
 			{
-				Refresh.Refresh_SetTextureName(
-					Device.Handle,
-					Handle,
-					value
-				);
+				if (Device.DebugMode)
+				{
+					Refresh.Refresh_SetTextureName(
+						Device.Handle,
+						Handle,
+						value
+					);
+				}
+
 				name = value;
 			}
 		}
