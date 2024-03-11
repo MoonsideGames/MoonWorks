@@ -19,8 +19,8 @@ namespace MoonWorks.Video
 		private VideoAV1Stream CurrentStream = null;
 
 		private Task ReadNextFrameTask;
-		private Task ResetStreamATask;
-		private Task ResetStreamBTask;
+		private Task ResetTask;
+		private Task ResetSecondaryStreamTask;
 
 		private Texture yTexture = null;
 		private Texture uTexture = null;
@@ -165,8 +165,8 @@ namespace MoonWorks.Video
 		public void Unload()
 		{
 			Stop();
-			ResetStreamATask?.Wait();
-			ResetStreamBTask?.Wait();
+			ResetTask?.Wait();
+			ResetSecondaryStreamTask?.Wait();
 			Video = null;
 		}
 
@@ -202,17 +202,8 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				var task = Task.Run(CurrentStream.Reset);
-				task.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-
-				if (CurrentStream == Video.StreamA)
-				{
-					ResetStreamATask = task;
-				}
-				else
-				{
-					ResetStreamBTask = task;
-				}
+				ResetTask = Task.Run(CurrentStream.Reset);
+				ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 
 				if (Loop)
 				{
@@ -232,6 +223,8 @@ namespace MoonWorks.Video
 		{
 			lock (CurrentStream)
 			{
+				ResetTask?.Wait();
+
 				var commandBuffer = Device.AcquireCommandBuffer();
 
 				var ySpan = new Span<byte>((void*) CurrentStream.yDataHandle, (int) CurrentStream.yDataLength);
@@ -331,10 +324,10 @@ namespace MoonWorks.Video
 		{
 			ReadNextFrameTask?.Wait();
 
-			ResetStreamATask = Task.Run(Video.StreamA.Reset);
-			ResetStreamATask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			ResetStreamBTask = Task.Run(Video.StreamB.Reset);
-			ResetStreamBTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			ResetTask = Task.Run(Video.StreamA.Reset);
+			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			ResetSecondaryStreamTask = Task.Run(Video.StreamB.Reset);
+			ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
 
 			CurrentStream = Video.StreamA;
 			currentFrame = -1;
