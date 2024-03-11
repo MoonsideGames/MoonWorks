@@ -16,6 +16,22 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public uint Size { get; }
 
+		private string name;
+		public string Name
+		{
+			get => name;
+
+			set
+			{
+				Refresh.Refresh_SetGpuBufferName(
+					Device.Handle,
+					Handle,
+					value
+				);
+				name = value;
+			}
+		}
+
 		/// <summary>
 		/// Creates a buffer of appropriate size given a type and element count.
 		/// </summary>
@@ -55,6 +71,7 @@ namespace MoonWorks.Graphics
 				sizeInBytes
 			);
 			Size = sizeInBytes;
+			name = "";
 		}
 
 		public static implicit operator BufferBinding(GpuBuffer b)

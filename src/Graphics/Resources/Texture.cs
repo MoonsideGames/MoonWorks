@@ -20,6 +20,22 @@ namespace MoonWorks.Graphics
 		public TextureUsageFlags UsageFlags { get; }
 		public uint Size { get; }
 
+		private string name;
+		public string Name
+		{
+			get => name;
+
+			set
+			{
+				Refresh.Refresh_SetTextureName(
+					Device.Handle,
+					Handle,
+					value
+				);
+				name = value;
+			}
+		}
+
 		// FIXME: this allocates a delegate instance
 		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
 
@@ -174,6 +190,7 @@ namespace MoonWorks.Graphics
 			SampleCount = textureCreateInfo.SampleCount;
 			UsageFlags = textureCreateInfo.UsageFlags;
 			Size = Width * Height * BytesPerPixel(Format) / BlockSizeSquared(Format);
+			name = "";
 		}
 
 		// Used by Window. Swapchain texture handles are managed by the driver backend.
