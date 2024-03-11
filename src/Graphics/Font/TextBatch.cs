@@ -125,7 +125,7 @@ namespace MoonWorks.Graphics.Font
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
 				TransferBuffer.SetData(vertexSpan, TransferOptions.Cycle);
-				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, TransferOptions.Overwrite);
+				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, TransferOptions.Unsafe);
 
 				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), WriteOptions.Cycle);
 				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), WriteOptions.Cycle);

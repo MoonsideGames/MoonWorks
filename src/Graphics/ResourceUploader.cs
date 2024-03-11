@@ -45,7 +45,7 @@ namespace MoonWorks.Graphics
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
 			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
 
-			SetBufferData(gpuBuffer, 0, data, WriteOptions.SafeOverwrite);
+			SetBufferData(gpuBuffer, 0, data, WriteOptions.Unsafe);
 
 			return gpuBuffer;
 		}
@@ -74,7 +74,7 @@ namespace MoonWorks.Graphics
 		public Texture CreateTexture2D<T>(Span<T> pixelData, uint width, uint height) where T : unmanaged
 		{
 			var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
-			SetTextureData(texture, pixelData, WriteOptions.SafeOverwrite);
+			SetTextureData(texture, pixelData, WriteOptions.Unsafe);
 			return texture;
 		}
 
@@ -164,7 +164,7 @@ namespace MoonWorks.Graphics
 						Depth = 1
 					};
 
-					SetTextureData(textureRegion, byteSpan, WriteOptions.SafeOverwrite);
+					SetTextureData(textureRegion, byteSpan, WriteOptions.Unsafe);
 
 					NativeMemory.Free(byteBuffer);
 				}
@@ -187,7 +187,7 @@ namespace MoonWorks.Graphics
 			var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
 			var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
 
-			SetTextureData(textureRegion, pixelSpan, WriteOptions.SafeOverwrite);
+			SetTextureData(textureRegion, pixelSpan, WriteOptions.Unsafe);
 
 			ImageUtils.FreePixelData(pixelData);
 		}
