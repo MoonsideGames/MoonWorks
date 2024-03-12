@@ -164,9 +164,18 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Unload()
 		{
-			Stop();
+			ReadNextFrameTask?.Wait();
 			ResetTask?.Wait();
 			ResetSecondaryStreamTask?.Wait();
+
+			Stop();
+
+			Video.StreamA.Unload();
+			Video.StreamB.Unload();
+
+			ReadNextFrameTask = null;
+			ResetTask = null;
+			ResetSecondaryStreamTask = null;
 			Video = null;
 		}
 
@@ -224,6 +233,7 @@ namespace MoonWorks.Video
 			lock (CurrentStream)
 			{
 				ResetTask?.Wait();
+				ResetTask = null;
 
 				var commandBuffer = Device.AcquireCommandBuffer();
 
@@ -322,7 +332,11 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
+			Video.StreamA.Load();
+			Video.StreamB.Load();
+
 			ReadNextFrameTask?.Wait();
+			ReadNextFrameTask = null;
 
 			ResetTask = Task.Run(Video.StreamA.Reset);
 			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
