@@ -16,11 +16,7 @@ namespace MoonWorks.Video
 		public float PlaybackSpeed { get; set; } = 1;
 
 		private VideoAV1 Video = null;
-		private VideoAV1Stream CurrentStream = null;
-
-		// "double buffering" so we can loop without a stutter
-		private VideoAV1Stream StreamA { get; }
-		private VideoAV1Stream StreamB { get; }
+		private VideoAV1Stream Stream { get; }
 
 		private Texture yTexture = null;
 		private Texture uTexture = null;
@@ -37,8 +33,7 @@ namespace MoonWorks.Video
 
 		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
-			StreamA = new VideoAV1Stream(device);
-			StreamB = new VideoAV1Stream(device);
+			Stream = new VideoAV1Stream(device);
 
 			LinearSampler = new Sampler(device, SamplerCreateInfo.LinearClamp);
 
@@ -180,8 +175,7 @@ namespace MoonWorks.Video
 
 			State = VideoState.Stopped;
 
-			StreamA.Unload();
-			StreamB.Unload();
+			Stream.Unload();
 
 			Video = null;
 		}
@@ -202,27 +196,26 @@ namespace MoonWorks.Video
 			int thisFrame = ((int) (timeElapsed / (1000.0 / Video.FramesPerSecond)));
 			if (thisFrame > currentFrame)
 			{
-				if (CurrentStream.FrameDataUpdated)
+				if (Stream.FrameDataUpdated)
 				{
 					UpdateRenderTexture();
-					CurrentStream.FrameDataUpdated = false;
+					Stream.FrameDataUpdated = false;
 				}
 
 				currentFrame = thisFrame;
-				CurrentStream.ReadNextFrame();
+				Stream.ReadNextFrame();
 			}
 
-			if (CurrentStream.Ended)
+			if (Stream.Ended)
 			{
 				timer.Stop();
 				timer.Reset();
 
-				CurrentStream.Reset();
+				Stream.Reset();
 
 				if (Loop)
 				{
-					// Start over on the next stream!
-					CurrentStream = (CurrentStream == StreamA) ? StreamB : StreamA;
+					// Start over!
 					currentFrame = -1;
 					timer.Start();
 				}
@@ -237,12 +230,14 @@ namespace MoonWorks.Video
 		{
 			uint uOffset;
 			uint vOffset;
+			uint yStride;
+			uint uvStride;
 
-			lock (CurrentStream)
+			lock (Stream)
 			{
-				var ySpan = new Span<byte>((void*) CurrentStream.yDataHandle, (int) CurrentStream.yDataLength);
-				var uSpan = new Span<byte>((void*) CurrentStream.uDataHandle, (int) CurrentStream.uvDataLength);
-				var vSpan = new Span<byte>((void*) CurrentStream.vDataHandle, (int) CurrentStream.uvDataLength);
+				var ySpan = new Span<byte>((void*) Stream.yDataHandle, (int) Stream.yDataLength);
+				var uSpan = new Span<byte>((void*) Stream.uDataHandle, (int) Stream.uvDataLength);
+				var vSpan = new Span<byte>((void*) Stream.vDataHandle, (int) Stream.uvDataLength);
 
 				if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 				{
@@ -255,6 +250,9 @@ namespace MoonWorks.Video
 
 				uOffset = (uint) ySpan.Length;
 				vOffset = (uint) (ySpan.Length + vSpan.Length);
+
+				yStride = Stream.yStride;
+				uvStride = Stream.uvStride;
 			}
 
 			var commandBuffer = Device.AcquireCommandBuffer();
@@ -267,7 +265,7 @@ namespace MoonWorks.Video
 				new BufferImageCopy
 				{
 					BufferOffset = 0,
-					BufferStride = CurrentStream.yStride,
+					BufferStride = yStride,
 					BufferImageHeight = yTexture.Height
 				},
 				WriteOptions.Cycle
@@ -278,7 +276,7 @@ namespace MoonWorks.Video
 				uTexture,
 				new BufferImageCopy{
 					BufferOffset = uOffset,
-					BufferStride = CurrentStream.uvStride,
+					BufferStride = uvStride,
 					BufferImageHeight = uTexture.Height
 				},
 				WriteOptions.Cycle
@@ -290,7 +288,7 @@ namespace MoonWorks.Video
 				new BufferImageCopy
 				{
 					BufferOffset = vOffset,
-					BufferStride = CurrentStream.uvStride,
+					BufferStride = uvStride,
 					BufferImageHeight = vTexture.Height
 				},
 				WriteOptions.Cycle
@@ -340,28 +338,14 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			StreamA.Load(Video.Filename);
-			StreamB.Load(Video.Filename);
-
-			CurrentStream = StreamA;
+			Stream.Load(Video.Filename);
 			currentFrame = -1;
 		}
 
 		private void ResetDav1dStreams()
 		{
-			StreamA.Reset();
-			StreamB.Reset();
-
-			CurrentStream = StreamA;
+			Stream.Reset();
 			currentFrame = -1;
-		}
-
-		private static void HandleTaskException(Task task)
-		{
-			if (task.Exception.InnerException is not TaskCanceledException)
-			{
-				throw task.Exception;
-			}
 		}
 
 		protected override void Dispose(bool disposing)
