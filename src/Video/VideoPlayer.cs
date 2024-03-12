@@ -18,9 +18,9 @@ namespace MoonWorks.Video
 		private VideoAV1 Video = null;
 		private VideoAV1Stream CurrentStream = null;
 
-		private Task ReadNextFrameTask;
-		private Task ResetTask;
-		private Task ResetSecondaryStreamTask;
+		// "double buffering" so we can loop without a stutter
+		private VideoAV1Stream StreamA { get; }
+		private VideoAV1Stream StreamB { get; }
 
 		private Texture yTexture = null;
 		private Texture uTexture = null;
@@ -37,6 +37,9 @@ namespace MoonWorks.Video
 
 		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
+			StreamA = new VideoAV1Stream(device);
+			StreamB = new VideoAV1Stream(device);
+
 			LinearSampler = new Sampler(device, SamplerCreateInfo.LinearClamp);
 
 			timer = new Stopwatch();
@@ -50,7 +53,7 @@ namespace MoonWorks.Video
 		{
 			if (Video != video)
 			{
-				Stop();
+				Unload();
 
 				if (RenderTexture == null)
 				{
@@ -154,7 +157,7 @@ namespace MoonWorks.Video
 			lastTimestamp = 0;
 			timeElapsed = 0;
 
-			ResetDav1dStream();
+			ResetDav1dStreams();
 
 			State = VideoState.Stopped;
 		}
@@ -164,9 +167,10 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Unload()
 		{
-			ReadNextFrameTask?.Wait();
-			ResetTask?.Wait();
-			ResetSecondaryStreamTask?.Wait();
+			if (Video == null)
+			{
+				return;
+			}
 
 			timer.Stop();
 			timer.Reset();
@@ -176,12 +180,9 @@ namespace MoonWorks.Video
 
 			State = VideoState.Stopped;
 
-			Video.StreamA.Unload();
-			Video.StreamB.Unload();
+			StreamA.Unload();
+			StreamB.Unload();
 
-			ReadNextFrameTask = null;
-			ResetTask = null;
-			ResetSecondaryStreamTask = null;
 			Video = null;
 		}
 
@@ -208,8 +209,7 @@ namespace MoonWorks.Video
 				}
 
 				currentFrame = thisFrame;
-				ReadNextFrameTask = Task.Run(CurrentStream.ReadNextFrame);
-				ReadNextFrameTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				CurrentStream.ReadNextFrame();
 			}
 
 			if (CurrentStream.Ended)
@@ -217,13 +217,12 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				ResetSecondaryStreamTask = Task.Run(CurrentStream.Reset);
-				ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				CurrentStream.Reset();
 
 				if (Loop)
 				{
 					// Start over on the next stream!
-					CurrentStream = (CurrentStream == Video.StreamA) ? Video.StreamB : Video.StreamA;
+					CurrentStream = (CurrentStream == StreamA) ? StreamB : StreamA;
 					currentFrame = -1;
 					timer.Start();
 				}
@@ -236,13 +235,11 @@ namespace MoonWorks.Video
 
 		private void UpdateRenderTexture()
 		{
+			uint uOffset;
+			uint vOffset;
+
 			lock (CurrentStream)
 			{
-				ResetTask?.Wait();
-				ResetTask = null;
-
-				var commandBuffer = Device.AcquireCommandBuffer();
-
 				var ySpan = new Span<byte>((void*) CurrentStream.yDataHandle, (int) CurrentStream.yDataLength);
 				var uSpan = new Span<byte>((void*) CurrentStream.uDataHandle, (int) CurrentStream.uvDataLength);
 				var vSpan = new Span<byte>((void*) CurrentStream.vDataHandle, (int) CurrentStream.uvDataLength);
@@ -256,62 +253,67 @@ namespace MoonWorks.Video
 				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, TransferOptions.Unsafe);
 				TransferBuffer.SetData(vSpan, (uint) (ySpan.Length + uSpan.Length), TransferOptions.Unsafe);
 
-				commandBuffer.BeginCopyPass();
-
-				commandBuffer.UploadToTexture(
-					TransferBuffer,
-					yTexture,
-					new BufferImageCopy
-					{
-						BufferOffset = 0,
-						BufferStride = CurrentStream.yStride,
-						BufferImageHeight = yTexture.Height
-					},
-					WriteOptions.Cycle
-				);
-
-				commandBuffer.UploadToTexture(
-					TransferBuffer,
-					uTexture,
-					new BufferImageCopy{
-						BufferOffset = (uint) ySpan.Length,
-						BufferStride = CurrentStream.uvStride,
-						BufferImageHeight = uTexture.Height
-					},
-					WriteOptions.Cycle
-				);
-
-				commandBuffer.UploadToTexture(
-					TransferBuffer,
-					vTexture,
-					new BufferImageCopy
-					{
-						BufferOffset = (uint) (ySpan.Length + uSpan.Length),
-						BufferStride = CurrentStream.uvStride,
-						BufferImageHeight = vTexture.Height
-					},
-					WriteOptions.Cycle
-				);
-
-				commandBuffer.EndCopyPass();
-
-				commandBuffer.BeginRenderPass(
-					new ColorAttachmentInfo(RenderTexture, WriteOptions.Cycle, Color.Black)
-				);
-
-				commandBuffer.BindGraphicsPipeline(Device.VideoPipeline);
-				commandBuffer.BindFragmentSamplers(
-					new TextureSamplerBinding(yTexture, LinearSampler),
-					new TextureSamplerBinding(uTexture, LinearSampler),
-					new TextureSamplerBinding(vTexture, LinearSampler)
-				);
-
-				commandBuffer.DrawPrimitives(0, 1);
-
-				commandBuffer.EndRenderPass();
-
-				Device.Submit(commandBuffer);
+				uOffset = (uint) ySpan.Length;
+				vOffset = (uint) (ySpan.Length + vSpan.Length);
 			}
+
+			var commandBuffer = Device.AcquireCommandBuffer();
+
+			commandBuffer.BeginCopyPass();
+
+			commandBuffer.UploadToTexture(
+				TransferBuffer,
+				yTexture,
+				new BufferImageCopy
+				{
+					BufferOffset = 0,
+					BufferStride = CurrentStream.yStride,
+					BufferImageHeight = yTexture.Height
+				},
+				WriteOptions.Cycle
+			);
+
+			commandBuffer.UploadToTexture(
+				TransferBuffer,
+				uTexture,
+				new BufferImageCopy{
+					BufferOffset = uOffset,
+					BufferStride = CurrentStream.uvStride,
+					BufferImageHeight = uTexture.Height
+				},
+				WriteOptions.Cycle
+			);
+
+			commandBuffer.UploadToTexture(
+				TransferBuffer,
+				vTexture,
+				new BufferImageCopy
+				{
+					BufferOffset = vOffset,
+					BufferStride = CurrentStream.uvStride,
+					BufferImageHeight = vTexture.Height
+				},
+				WriteOptions.Cycle
+			);
+
+			commandBuffer.EndCopyPass();
+
+			commandBuffer.BeginRenderPass(
+				new ColorAttachmentInfo(RenderTexture, WriteOptions.Cycle, Color.Black)
+			);
+
+			commandBuffer.BindGraphicsPipeline(Device.VideoPipeline);
+			commandBuffer.BindFragmentSamplers(
+				new TextureSamplerBinding(yTexture, LinearSampler),
+				new TextureSamplerBinding(uTexture, LinearSampler),
+				new TextureSamplerBinding(vTexture, LinearSampler)
+			);
+
+			commandBuffer.DrawPrimitives(0, 1);
+
+			commandBuffer.EndRenderPass();
+
+			Device.Submit(commandBuffer);
 		}
 
 		private static Texture CreateRenderTexture(GraphicsDevice graphicsDevice, int width, int height)
@@ -338,35 +340,19 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			ReadNextFrameTask?.Wait();
-			ReadNextFrameTask = null;
+			StreamA.Load(Video.Filename);
+			StreamB.Load(Video.Filename);
 
-			ResetTask?.Wait();
-			ResetTask = null;
-
-			ResetSecondaryStreamTask?.Wait();
-			ResetSecondaryStreamTask = null;
-
-			ResetTask = Task.Run(Video.StreamA.Load);
-			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			ResetSecondaryStreamTask = Task.Run(Video.StreamB.Load);
-			ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-
-			CurrentStream = Video.StreamA;
+			CurrentStream = StreamA;
 			currentFrame = -1;
 		}
 
-		private void ResetDav1dStream()
+		private void ResetDav1dStreams()
 		{
-			ReadNextFrameTask?.Wait();
-			ReadNextFrameTask = null;
+			StreamA.Reset();
+			StreamB.Reset();
 
-			ResetTask = Task.Run(Video.StreamA.Reset);
-			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			ResetSecondaryStreamTask = Task.Run(Video.StreamB.Reset);
-			ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-
-			CurrentStream = Video.StreamA;
+			CurrentStream = StreamA;
 			currentFrame = -1;
 		}
 

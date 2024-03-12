@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
 {
+	// Note that all public methods are async.
 	internal class VideoAV1Stream : GraphicsResource
 	{
 		public IntPtr Handle => handle;
@@ -21,20 +24,65 @@ namespace MoonWorks.Video
 
 		public bool FrameDataUpdated { get; set; }
 
-		private VideoAV1 Parent;
+		private BlockingCollection<Action> Actions = new BlockingCollection<Action>();
 
-		public VideoAV1Stream(GraphicsDevice device, VideoAV1 video) : base(device)
+		private bool Running = false;
+
+		Thread Thread;
+
+		public VideoAV1Stream(GraphicsDevice device) : base(device)
 		{
 			handle = IntPtr.Zero;
-			Parent = video;
+
+			Running = true;
+
+			Thread = new Thread(ThreadMain);
+			Thread.Start();
 		}
 
-		public void Load()
+		private void ThreadMain()
+		{
+			while (Running)
+			{
+				// block until we can take an action, then run it
+				var action = Actions.Take();
+				action.Invoke();
+			}
+
+			// shutting down...
+			while (Actions.TryTake(out var action))
+			{
+				action.Invoke();
+			}
+		}
+
+		public void Load(string filename)
+		{
+			Actions.Add(() => LoadHelper(filename));
+		}
+
+		public void Reset()
+		{
+			Actions.Add(ResetHelper);
+		}
+
+		public void ReadNextFrame()
+		{
+			Actions.Add(ReadNextFrameHelper);
+		}
+
+		public void Unload()
+		{
+			Actions.Add(UnloadHelper);
+		}
+
+		private void LoadHelper(string filename)
 		{
 			if (!Loaded)
 			{
-				if (Dav1dfile.df_fopen(Parent.Filename, out handle) == 0)
+				if (Dav1dfile.df_fopen(filename, out handle) == 0)
 				{
+					Logger.LogError("Failed to load video file: " + filename);
 					throw new Exception("Failed to load video file!");
 				}
 
@@ -42,29 +90,20 @@ namespace MoonWorks.Video
 			}
 		}
 
-		public void Unload()
+		private void ResetHelper()
 		{
 			if (Loaded)
-			{
-				Dav1dfile.df_close(handle);
-				handle = IntPtr.Zero;
-			}
-		}
-
-		public void Reset()
-		{
-			lock (this)
 			{
 				Dav1dfile.df_reset(handle);
 				ReadNextFrame();
 			}
 		}
 
-		public void ReadNextFrame()
+		private void ReadNextFrameHelper()
 		{
-			lock (this)
+			if (Loaded && !Ended)
 			{
-				if (!Ended)
+				lock (this)
 				{
 					if (Dav1dfile.df_readvideo(
 						handle,
@@ -91,11 +130,26 @@ namespace MoonWorks.Video
 			}
 		}
 
+		private void UnloadHelper()
+		{
+			if (Loaded)
+			{
+				Dav1dfile.df_close(handle);
+				handle = IntPtr.Zero;
+			}
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
 				Unload();
+				Running = false;
+
+				if (disposing)
+				{
+					Thread.Join();
+				}
 			}
 			base.Dispose(disposing);
 		}

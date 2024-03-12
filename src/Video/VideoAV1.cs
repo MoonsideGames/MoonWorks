@@ -11,10 +11,6 @@ namespace MoonWorks.Video
 	{
 		public string Filename { get; }
 
-		// "double buffering" so we can loop without a stutter
-		internal VideoAV1Stream StreamA { get; }
-		internal VideoAV1Stream StreamB { get; }
-
 		public int Width => width;
 		public int Height => height;
 		public double FramesPerSecond { get; set; }
@@ -67,23 +63,6 @@ namespace MoonWorks.Video
 			FramesPerSecond = framesPerSecond;
 
 			Filename = filename;
-
-			StreamA = new VideoAV1Stream(device, this);
-			StreamB = new VideoAV1Stream(device, this);
-		}
-
-		// NOTE: if you call this while a VideoPlayer is playing the stream, your program will explode
-		protected override void Dispose(bool disposing)
-		{
-			if (!IsDisposed)
-			{
-				if (disposing)
-				{
-					StreamA.Dispose();
-					StreamB.Dispose();
-				}
-			}
-			base.Dispose(disposing);
 		}
 	}
 }
