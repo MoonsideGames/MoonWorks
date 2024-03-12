@@ -8,6 +8,7 @@ namespace MoonWorks.Video
 		public IntPtr Handle => handle;
 		IntPtr handle;
 
+		public bool Loaded => handle != IntPtr.Zero;
 		public bool Ended => Dav1dfile.df_eos(Handle) == 1;
 
 		public IntPtr yDataHandle;
@@ -20,21 +21,41 @@ namespace MoonWorks.Video
 
 		public bool FrameDataUpdated { get; set; }
 
+		private VideoAV1 Parent;
+
 		public VideoAV1Stream(GraphicsDevice device, VideoAV1 video) : base(device)
 		{
-			if (Dav1dfile.df_fopen(video.Filename, out handle) == 0)
-			{
-				throw new Exception("Failed to open video file!");
-			}
+			handle = IntPtr.Zero;
+			Parent = video;
+		}
 
-			Reset();
+		public void Load()
+		{
+			if (!Loaded)
+			{
+				if (Dav1dfile.df_fopen(Parent.Filename, out handle) == 0)
+				{
+					throw new Exception("Failed to load video file!");
+				}
+
+				Reset();
+			}
+		}
+
+		public void Unload()
+		{
+			if (Loaded)
+			{
+				Dav1dfile.df_close(handle);
+				handle = IntPtr.Zero;
+			}
 		}
 
 		public void Reset()
 		{
 			lock (this)
 			{
-				Dav1dfile.df_reset(Handle);
+				Dav1dfile.df_reset(handle);
 				ReadNextFrame();
 			}
 		}
@@ -46,7 +67,7 @@ namespace MoonWorks.Video
 				if (!Ended)
 				{
 					if (Dav1dfile.df_readvideo(
-						Handle,
+						handle,
 						1,
 						out var yDataHandle,
 						out var uDataHandle,
@@ -74,7 +95,7 @@ namespace MoonWorks.Video
 		{
 			if (!IsDisposed)
 			{
-				Dav1dfile.df_close(Handle);
+				Unload();
 			}
 			base.Dispose(disposing);
 		}
