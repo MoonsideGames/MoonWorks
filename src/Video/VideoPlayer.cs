@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using MoonWorks.Graphics;
 
 namespace MoonWorks.Video
@@ -17,10 +16,6 @@ namespace MoonWorks.Video
 
 		private VideoAV1 Video = null;
 		private VideoAV1Stream CurrentStream = null;
-
-		private Task ReadNextFrameTask;
-		private Task ResetTask;
-		private Task ResetSecondaryStreamTask;
 
 		private Texture yTexture = null;
 		private Texture uTexture = null;
@@ -164,10 +159,6 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Unload()
 		{
-			ReadNextFrameTask?.Wait();
-			ResetTask?.Wait();
-			ResetSecondaryStreamTask?.Wait();
-
 			timer.Stop();
 			timer.Reset();
 
@@ -179,9 +170,6 @@ namespace MoonWorks.Video
 			Video.StreamA.Unload();
 			Video.StreamB.Unload();
 
-			ReadNextFrameTask = null;
-			ResetTask = null;
-			ResetSecondaryStreamTask = null;
 			Video = null;
 		}
 
@@ -208,8 +196,7 @@ namespace MoonWorks.Video
 				}
 
 				currentFrame = thisFrame;
-				ReadNextFrameTask = Task.Run(CurrentStream.ReadNextFrame);
-				ReadNextFrameTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				CurrentStream.ReadNextFrame();
 			}
 
 			if (CurrentStream.Ended)
@@ -217,8 +204,7 @@ namespace MoonWorks.Video
 				timer.Stop();
 				timer.Reset();
 
-				ResetSecondaryStreamTask = Task.Run(CurrentStream.Reset);
-				ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+				CurrentStream.Reset();
 
 				if (Loop)
 				{
@@ -238,9 +224,6 @@ namespace MoonWorks.Video
 		{
 			lock (CurrentStream)
 			{
-				ResetTask?.Wait();
-				ResetTask = null;
-
 				var commandBuffer = Device.AcquireCommandBuffer();
 
 				var ySpan = new Span<byte>((void*) CurrentStream.yDataHandle, (int) CurrentStream.yDataLength);
@@ -338,19 +321,8 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			ReadNextFrameTask?.Wait();
-			ReadNextFrameTask = null;
-
-			ResetTask?.Wait();
-			ResetTask = null;
-
-			ResetSecondaryStreamTask?.Wait();
-			ResetSecondaryStreamTask = null;
-
-			ResetTask = Task.Run(Video.StreamA.Load);
-			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			ResetSecondaryStreamTask = Task.Run(Video.StreamB.Load);
-			ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			Video.StreamA.Load();
+			Video.StreamB.Load();
 
 			CurrentStream = Video.StreamA;
 			currentFrame = -1;
@@ -358,24 +330,11 @@ namespace MoonWorks.Video
 
 		private void ResetDav1dStream()
 		{
-			ReadNextFrameTask?.Wait();
-			ReadNextFrameTask = null;
-
-			ResetTask = Task.Run(Video.StreamA.Reset);
-			ResetTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
-			ResetSecondaryStreamTask = Task.Run(Video.StreamB.Reset);
-			ResetSecondaryStreamTask.ContinueWith(HandleTaskException, TaskContinuationOptions.OnlyOnFaulted);
+			Video.StreamA.Reset();
+			Video.StreamB.Reset();
 
 			CurrentStream = Video.StreamA;
 			currentFrame = -1;
-		}
-
-		private static void HandleTaskException(Task task)
-		{
-			if (task.Exception.InnerException is not TaskCanceledException)
-			{
-				throw task.Exception;
-			}
 		}
 
 		protected override void Dispose(bool disposing)
