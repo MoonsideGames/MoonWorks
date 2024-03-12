@@ -386,6 +386,24 @@ namespace MoonWorks.Graphics
 			WriteOption = writeOption;
 		}
 
+		public DepthStencilAttachmentInfo(
+			TextureSlice textureSlice,
+			WriteOptions writeOption,
+			DepthStencilValue clearValue,
+			LoadOp loadOp,
+			StoreOp storeOp,
+			LoadOp stencilLoadOp,
+			StoreOp stencilStoreOp
+		) {
+			TextureSlice = textureSlice;
+			DepthStencilClearValue = clearValue;
+			LoadOp = loadOp;
+			StoreOp = storeOp;
+			StencilLoadOp = stencilLoadOp;
+			StencilStoreOp = stencilStoreOp;
+			WriteOption = writeOption;
+		}
+
 		public Refresh.DepthStencilAttachmentInfo ToRefresh()
 		{
 			return new Refresh.DepthStencilAttachmentInfo

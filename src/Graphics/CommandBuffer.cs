@@ -1388,18 +1388,19 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="writeOption">Specifies data dependency behavior.</param>
 		public void Blit(
-			TextureSlice source,
-			TextureSlice destination,
+			TextureRegion source,
+			TextureRegion destination,
 			Filter filter,
 			WriteOptions writeOption
 		) {
 			var sampler = filter == Filter.Linear ? Device.LinearSampler : Device.PointSampler;
 
 			// FIXME: this will break with non-2D textures
-			// FIXME: this should take a TextureRegion
-			BeginRenderPass(new ColorAttachmentInfo(destination, writeOption));
+			// FIXME: the source texture region does nothing right now
+			BeginRenderPass(new ColorAttachmentInfo(destination.TextureSlice, writeOption));
+			SetViewport(new Viewport(destination.X, destination.Y, destination.Width, destination.Height));
 			BindGraphicsPipeline(Device.BlitPipeline);
-			BindFragmentSamplers(new TextureSamplerBinding(source.Texture, sampler));
+			BindFragmentSamplers(new TextureSamplerBinding(source.TextureSlice.Texture, sampler));
 			DrawPrimitives(0, 2);
 			EndRenderPass();
 		}

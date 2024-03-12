@@ -219,7 +219,7 @@ namespace MoonWorks.Graphics
 			uint resourceOffset;
 			fixed (T* dataPtr = data)
 			{
-				resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, Texture.TexelSize(textureRegion.TextureSlice.Texture.Format));
+				resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, Texture.BytesPerPixel(textureRegion.TextureSlice.Texture.Format));
 			}
 
 			TextureUploads.Add((textureRegion, resourceOffset, option));
