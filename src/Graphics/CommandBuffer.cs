@@ -1297,12 +1297,13 @@ namespace MoonWorks.Graphics
 			AssertGraphicsPipelineBound();
 #endif
 
-			Refresh.Refresh_DrawIndexedPrimitives(
+			Refresh.Refresh_DrawInstancedPrimitives(
 				Device.Handle,
 				Handle,
 				baseVertex,
 				startIndex,
-				primitiveCount
+				primitiveCount,
+				1
 			);
 		}
 
