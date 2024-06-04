@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using SDL2;
 using SDL2_gpuCS;
 
 namespace MoonWorks.Graphics;
@@ -16,21 +17,10 @@ public class CommandBuffer
 #if DEBUG
 	bool swapchainTextureAcquired;
 
-	GraphicsPipeline currentGraphicsPipeline;
 	ComputePipeline currentComputePipeline;
+
 	bool renderPassActive;
-	SampleCount colorAttachmentSampleCount;
-	uint colorAttachmentCount;
-	TextureFormat colorFormatOne;
-	TextureFormat colorFormatTwo;
-	TextureFormat colorFormatThree;
-	TextureFormat colorFormatFour;
-	bool hasDepthStencilAttachment;
-	SampleCount depthStencilAttachmentSampleCount;
-	TextureFormat depthStencilFormat;
-
 	bool copyPassActive;
-
 	bool computePassActive;
 
 	internal bool Submitted;
@@ -57,18 +47,9 @@ public class CommandBuffer
 	{
 		swapchainTextureAcquired = false;
 
-		currentGraphicsPipeline = null;
 		currentComputePipeline = null;
-		renderPassActive = false;
-		colorAttachmentSampleCount = SampleCount.One;
-		depthStencilAttachmentSampleCount = SampleCount.One;
-		colorAttachmentCount = 0;
-		colorFormatOne = TextureFormat.R8G8B8A8;
-		colorFormatTwo = TextureFormat.R8G8B8A8;
-		colorFormatThree = TextureFormat.R8G8B8A8;
-		colorFormatFour = TextureFormat.R8G8B8A8;
-		depthStencilFormat = TextureFormat.D16;
 
+		renderPassActive = false;
 		copyPassActive = false;
 		computePassActive = false;
 
@@ -132,7 +113,7 @@ public class CommandBuffer
 	/// It is an error to call this during any kind of pass.
 	/// </summary>
 	/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in ColorAttachmentInfo colorAttachmentInfo
 	) {
 #if DEBUG
@@ -142,23 +123,28 @@ public class CommandBuffer
 		AssertColorTarget(colorAttachmentInfo);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[1];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[1];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToSDL();
 
-		SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			(IntPtr) refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			1,
-			IntPtr.Zero
+			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = false;
-		colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 1;
-		colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentCount = 1;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = false;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -168,12 +154,14 @@ public class CommandBuffer
 	/// </summary>
 	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
+		AssertNotInPass("Cannot begin a render pass inside another pass!");
+
 		AssertTextureNotNull(colorAttachmentInfoOne);
 		AssertColorTarget(colorAttachmentInfoOne);
 
@@ -183,26 +171,30 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[2];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			(IntPtr) refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			2,
-			IntPtr.Zero
+			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = false;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 2;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentCount = 2;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = false;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -213,13 +205,14 @@ public class CommandBuffer
 	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo,
 		in ColorAttachmentInfo colorAttachmentInfoThree
 	) {
 #if DEBUG
 		AssertNotSubmitted();
+		AssertNotInPass("Cannot begin a render pass inside another pass!");
 
 		AssertTextureNotNull(colorAttachmentInfoOne);
 		AssertColorTarget(colorAttachmentInfoOne);
@@ -234,28 +227,32 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[3];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			(IntPtr) refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			3,
-			IntPtr.Zero
+			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = false;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 3;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentCount = 3;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = false;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -267,7 +264,7 @@ public class CommandBuffer
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo,
 		in ColorAttachmentInfo colorAttachmentInfoThree,
@@ -293,30 +290,34 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[4];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
+		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			(IntPtr) refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			4,
-			IntPtr.Zero
+			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = false;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 4;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentCount = 3;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = false;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -325,7 +326,7 @@ public class CommandBuffer
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
 	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilAttachmentInfo depthStencilAttachmentInfo
 	) {
 #if DEBUG
@@ -333,22 +334,26 @@ public class CommandBuffer
 		AssertValidDepthAttachment(depthStencilAttachmentInfo);
 #endif
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			(Refresh.ColorAttachmentInfo*) IntPtr.Zero,
+			(SDL_Gpu.ColorAttachmentInfo*) nint.Zero,
 			0,
-			&refreshDepthStencilAttachmentInfo
+			&sdlDepthStencilAttachmentInfo
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = true;
-		depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = true;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -358,7 +363,7 @@ public class CommandBuffer
 	/// </summary>
 	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
 		in ColorAttachmentInfo colorAttachmentInfo
 	) {
@@ -371,28 +376,32 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfo.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[1];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToSDL();
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			1,
-			&refreshDepthStencilAttachmentInfo
+			&sdlDepthStencilAttachmentInfo
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = true;
-		colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 1;
-		depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
-		depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = true;
+		renderPass.colorAttachmentCount = 1;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -403,7 +412,7 @@ public class CommandBuffer
 	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo
@@ -422,29 +431,34 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[2];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			2,
-			&refreshDepthStencilAttachmentInfo
+			&sdlDepthStencilAttachmentInfo
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = true;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 2;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = true;
+		renderPass.colorAttachmentCount = 2;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -456,7 +470,7 @@ public class CommandBuffer
 	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo,
@@ -476,35 +490,40 @@ public class CommandBuffer
 		AssertColorTarget(colorAttachmentInfoThree);
 
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[3];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			3,
-			&refreshDepthStencilAttachmentInfo
+			&sdlDepthStencilAttachmentInfo
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = true;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 3;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.hasDepthStencilAttachment = true;
+		renderPass.colorAttachmentCount = 3;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
+
+		return renderPass;
 	}
 
 	/// <summary>
@@ -517,7 +536,7 @@ public class CommandBuffer
 	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
 	/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
-	public unsafe void BeginRenderPass(
+	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
 		in ColorAttachmentInfo colorAttachmentInfoOne,
 		in ColorAttachmentInfo colorAttachmentInfoTwo,
@@ -546,418 +565,59 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[4];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
+		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToSDL();
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
 
-		Refresh.Refresh_BeginRenderPass(
-			Device.Handle,
+		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			sdlColorAttachmentInfos,
 			4,
-			&refreshDepthStencilAttachmentInfo
+			&sdlDepthStencilAttachmentInfo
 		);
+
+		var renderPass = Device.RenderPassPool.Obtain();
+		renderPass.SetHandle(renderPassHandle);
 
 #if DEBUG
 		renderPassActive = true;
-		hasDepthStencilAttachment = true;
-		colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		colorAttachmentCount = 4;
-		colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
-		depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
-#endif
-	}
-
-	/// <summary>
-	/// Binds samplers to be used by the fragment shader.
-	/// </summary>
-	/// <param name="textureSamplerBinding">The texture-sampler to bind.</param>
-	public unsafe void BindFragmentSamplers(
-		in TextureSamplerBinding textureSamplerBinding
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-		AssertFragmentSamplerCount(1);
-		AssertTextureSamplerBindingNonNull(textureSamplerBinding);
-		AssertTextureBindingUsageFlags(textureSamplerBinding.Texture);
+		renderPass.hasDepthStencilAttachment = true;
+		renderPass.colorAttachmentCount = 4;
+		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
+		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
+		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
 #endif
 
-		var bindingArray = stackalloc Refresh.TextureSamplerBinding[1];
-		bindingArray[0] = textureSamplerBinding.ToRefresh();
-
-		Refresh.Refresh_BindFragmentSamplers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds samplers to be used by the fragment shader.
-	/// </summary>
-	/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
-	public unsafe void BindFragmentSamplers(
-		in TextureSamplerBinding textureSamplerBindingOne,
-		in TextureSamplerBinding textureSamplerBindingTwo
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-		AssertFragmentSamplerCount(2);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
-		AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
-#endif
-
-		var bindingArray = stackalloc Refresh.TextureSamplerBinding[2];
-		bindingArray[0] = textureSamplerBindingOne.ToRefresh();
-		bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
-
-		Refresh.Refresh_BindFragmentSamplers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds samplers to be used by the fragment shader.
-	/// </summary>
-	/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
-	public unsafe void BindFragmentSamplers(
-		in TextureSamplerBinding textureSamplerBindingOne,
-		in TextureSamplerBinding textureSamplerBindingTwo,
-		in TextureSamplerBinding textureSamplerBindingThree
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-		AssertFragmentSamplerCount(3);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
-		AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
-#endif
-
-		var bindingArray = stackalloc Refresh.TextureSamplerBinding[3];
-		bindingArray[0] = textureSamplerBindingOne.ToRefresh();
-		bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
-		bindingArray[2] = textureSamplerBindingThree.ToRefresh();
-
-		Refresh.Refresh_BindFragmentSamplers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds samplers to be used by the fragment shader.
-	/// </summary>
-	/// <param name="textureSamplerBindingOne">The first texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingTwo">The second texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingThree">The third texture-sampler to bind.</param>
-	/// <param name="textureSamplerBindingFour">The fourth texture-sampler to bind.</param>
-	public unsafe void BindFragmentSamplers(
-		in TextureSamplerBinding textureSamplerBindingOne,
-		in TextureSamplerBinding textureSamplerBindingTwo,
-		in TextureSamplerBinding textureSamplerBindingThree,
-		in TextureSamplerBinding textureSamplerBindingFour
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-		AssertFragmentSamplerCount(4);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingOne);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingTwo);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingThree);
-		AssertTextureSamplerBindingNonNull(textureSamplerBindingFour);
-		AssertTextureBindingUsageFlags(textureSamplerBindingOne.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingTwo.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingThree.Texture);
-		AssertTextureBindingUsageFlags(textureSamplerBindingFour.Texture);
-#endif
-
-		var bindingArray = stackalloc Refresh.TextureSamplerBinding[4];
-		bindingArray[0] = textureSamplerBindingOne.ToRefresh();
-		bindingArray[1] = textureSamplerBindingTwo.ToRefresh();
-		bindingArray[2] = textureSamplerBindingThree.ToRefresh();
-		bindingArray[3] = textureSamplerBindingFour.ToRefresh();
-
-		Refresh.Refresh_BindFragmentSamplers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds samplers to be used by the fragment shader.
-	/// </summary>
-	/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
-	public unsafe void BindFragmentSamplers(
-		in Span<TextureSamplerBinding> textureSamplerBindings
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-		AssertFragmentSamplerCount(textureSamplerBindings.Length);
-#endif
-
-		Refresh.TextureSamplerBinding* bindingArray = (Refresh.TextureSamplerBinding*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<Refresh.TextureSamplerBinding>() * textureSamplerBindings.Length));
-
-		for (var i = 0; i < textureSamplerBindings.Length; i += 1)
-		{
-#if DEBUG
-			AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
-			AssertTextureBindingUsageFlags(textureSamplerBindings[i].Texture);
-#endif
-
-			bindingArray[i] = textureSamplerBindings[i].ToRefresh();
-		}
-
-		Refresh.Refresh_BindFragmentSamplers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-
-		NativeMemory.Free(bindingArray);
-	}
-
-	/// <summary>
-	/// Pushes vertex shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset value to be used with draw calls.</returns>
-	public unsafe void PushVertexShaderUniforms(
-		void* uniformsPtr,
-		uint size
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-
-		if (currentGraphicsPipeline.VertexShaderInfo.UniformBufferSize == 0)
-		{
-			throw new InvalidOperationException("The current vertex shader does not take a uniform buffer!");
-		}
-
-		if (currentGraphicsPipeline.VertexShaderInfo.UniformBufferSize != size)
-		{
-			throw new InvalidOperationException("Vertex uniform data size mismatch!");
-		}
-#endif
-
-		Refresh.Refresh_PushVertexShaderUniforms(
-			Device.Handle,
-			Handle,
-			(IntPtr) uniformsPtr,
-			size
-		);
-	}
-
-	/// <summary>
-	/// Pushes vertex shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset value to be used with draw calls.</returns>
-	public unsafe void PushVertexShaderUniforms<T>(
-		in T uniforms
-	) where T : unmanaged
-	{
-		fixed (T* uniformsPtr = &uniforms)
-		{
-			PushVertexShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
-		}
-	}
-
-	/// <summary>
-	/// Pushes fragment shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset to be used with draw calls.</returns>
-	public unsafe void PushFragmentShaderUniforms(
-		void* uniformsPtr,
-		uint size
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-
-		if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize == 0)
-		{
-			throw new InvalidOperationException("The current fragment shader does not take a uniform buffer!");
-		}
-
-		if (currentGraphicsPipeline.FragmentShaderInfo.UniformBufferSize != size)
-		{
-			throw new InvalidOperationException("Fragment uniform data size mismatch!");
-		}
-#endif
-
-		Refresh.Refresh_PushFragmentShaderUniforms(
-			Device.Handle,
-			Handle,
-			(IntPtr) uniformsPtr,
-			size
-		);
-	}
-
-	/// <summary>
-	/// Pushes fragment shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset to be used with draw calls.</returns>
-	public unsafe void PushFragmentShaderUniforms<T>(
-		in T uniforms
-	) where T : unmanaged
-	{
-		fixed (T* uniformsPtr = &uniforms)
-		{
-			PushFragmentShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
-		}
-	}
-
-	/// <summary>
-	/// Draws using instanced rendering.
-	/// </summary>
-	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
-	/// <param name="startIndex">The starting index offset for the index buffer.</param>
-	/// <param name="primitiveCount">The number of primitives to draw.</param>
-	/// <param name="instanceCount">The number of instances to draw.</param>
-	public void DrawInstancedPrimitives(
-		uint baseVertex,
-		uint startIndex,
-		uint primitiveCount,
-		uint instanceCount
-	)
-	{
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-#endif
-
-		Refresh.Refresh_DrawInstancedPrimitives(
-			Device.Handle,
-			Handle,
-			baseVertex,
-			startIndex,
-			primitiveCount,
-			instanceCount
-		);
-	}
-
-	/// <summary>
-	/// Draws using a vertex buffer and an index buffer.
-	/// </summary>
-	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
-	/// <param name="startIndex">The starting index offset for the index buffer.</param>
-	/// <param name="primitiveCount">The number of primitives to draw.</param>
-	public void DrawIndexedPrimitives(
-		uint baseVertex,
-		uint startIndex,
-		uint primitiveCount
-	)
-	{
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-#endif
-
-		Refresh.Refresh_DrawInstancedPrimitives(
-			Device.Handle,
-			Handle,
-			baseVertex,
-			startIndex,
-			primitiveCount,
-			1
-		);
-	}
-
-	/// <summary>
-	/// Draws using a vertex buffer.
-	/// </summary>
-	/// <param name="vertexStart"></param>
-	/// <param name="primitiveCount"></param>
-	public void DrawPrimitives(
-		uint vertexStart,
-		uint primitiveCount
-	)
-	{
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-#endif
-
-		Refresh.Refresh_DrawPrimitives(
-			Device.Handle,
-			Handle,
-			vertexStart,
-			primitiveCount
-		);
-	}
-
-	/// <summary>
-	/// Similar to DrawPrimitives, but parameters are set from a buffer.
-	/// </summary>
-	/// <param name="buffer">The draw parameters buffer.</param>
-	/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
-	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
-	/// <param name="stride">The byte stride between sets of draw parameters.</param>
-	/// <param name="vertexParamOffset">An offset value obtained from PushVertexShaderUniforms. If no uniforms are required then use 0.</param>
-	/// <param name="fragmentParamOffset">An offset value obtained from PushFragmentShaderUniforms. If no uniforms are required the use 0.</param>
-	public void DrawPrimitivesIndirect(
-		GpuBuffer buffer,
-		uint offsetInBytes,
-		uint drawCount,
-		uint stride
-	)
-	{
-#if DEBUG
-		AssertNotSubmitted();
-		AssertGraphicsPipelineBound();
-#endif
-
-		Refresh.Refresh_DrawPrimitivesIndirect(
-			Device.Handle,
-			Handle,
-			buffer.Handle,
-			offsetInBytes,
-			drawCount,
-			stride
-		);
+		return renderPass;
 	}
 
 	/// <summary>
 	/// Ends the current render pass.
 	/// This must be called before beginning another render pass or submitting the command buffer.
 	/// </summary>
-	public void EndRenderPass()
+	public void EndRenderPass(RenderPass renderPass)
 	{
 #if DEBUG
 		AssertNotSubmitted();
+		AssertRenderPassActive();
+
+		renderPassActive = false;
+		renderPass.active = false;
 #endif
 
-		Refresh.Refresh_EndRenderPass(
-			Device.Handle,
-			Handle
+		SDL_Gpu.SDL_GpuEndRenderPass(
+			renderPass.Handle
 		);
 
-#if DEBUG
-		currentGraphicsPipeline = null;
-		renderPassActive = false;
-#endif
+		Device.RenderPassPool.Return(renderPass);
 	}
 
 	/// <summary>
@@ -965,23 +625,20 @@ public class CommandBuffer
 	///
 	/// This operation cannot be performed inside any pass.
 	/// </summary>
-	/// <param name="writeOption">Specifies data dependency behavior.</param>
+	/// <param name="cycle">If true, the destination texture will cycle if bound.</param>
 	public void Blit(
-		TextureRegion source,
-		TextureRegion destination,
+		in TextureRegion source,
+		in TextureRegion destination,
 		Filter filter,
-		WriteOptions writeOption
+		bool cycle
 	) {
-		var sampler = filter == Filter.Linear ? Device.LinearSampler : Device.PointSampler;
-
-		// FIXME: this will break with non-2D textures
-		// FIXME: the source texture region does nothing right now
-		BeginRenderPass(new ColorAttachmentInfo(destination.TextureSlice, writeOption));
-		SetViewport(new Viewport(destination.X, destination.Y, destination.Width, destination.Height));
-		BindGraphicsPipeline(Device.BlitPipeline);
-		BindFragmentSamplers(new TextureSamplerBinding(source.TextureSlice.Texture, sampler));
-		DrawPrimitives(0, 2);
-		EndRenderPass();
+		SDL_Gpu.SDL_GpuBlit(
+			Handle,
+			source.ToSDL(),
+			destination.ToSDL(),
+			(SDL_Gpu.Filter) filter,
+			Conversions.BoolToInt(cycle)
+		);
 	}
 
 	public void BeginComputePass()
@@ -1641,38 +1298,6 @@ public class CommandBuffer
 		}
 	}
 
-	private void AssertRenderPassInactive(string message = "Render pass is active!")
-	{
-		if (renderPassActive)
-		{
-			throw new System.InvalidCastException(message);
-		}
-	}
-
-	private void AssertGraphicsPipelineBound(string message = "No graphics pipeline is bound!")
-	{
-		if (currentGraphicsPipeline == null)
-		{
-			throw new System.InvalidOperationException(message);
-		}
-	}
-
-	private void AssertVertexSamplerCount(int count)
-	{
-		if (currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount != count)
-		{
-			throw new System.InvalidOperationException($"Vertex sampler expected {currentGraphicsPipeline.VertexShaderInfo.SamplerBindingCount} samplers, but received {count}");
-		}
-	}
-
-	private void AssertFragmentSamplerCount(int count)
-	{
-		if (currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount != count)
-		{
-			throw new System.InvalidOperationException($"Fragment sampler expected {currentGraphicsPipeline.FragmentShaderInfo.SamplerBindingCount} samplers, but received {count}");
-		}
-	}
-
 	private void AssertComputePipelineBound(string message = "No compute pipeline is bound!")
 	{
 		if (currentComputePipeline == null)
@@ -1735,27 +1360,6 @@ public class CommandBuffer
 		}
 	}
 
-	private void AssertTextureSamplerBindingNonNull(in TextureSamplerBinding binding)
-	{
-		if (binding.Texture == null || binding.Texture.Handle == IntPtr.Zero)
-		{
-			throw new NullReferenceException("Texture binding must not be null!");
-		}
-
-		if (binding.Sampler == null || binding.Sampler.Handle == IntPtr.Zero)
-		{
-			throw new NullReferenceException("Sampler binding must not be null!");
-		}
-	}
-
-	private void AssertTextureBindingUsageFlags(Texture texture)
-	{
-		if ((texture.UsageFlags & TextureUsageFlags.Sampler) == 0)
-		{
-			throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.Sampler!");
-		}
-	}
-
 	private void AssertNonEmptyCopy(uint dataLengthInBytes)
 	{
 		if (dataLengthInBytes == 0)
@@ -1783,14 +1387,6 @@ public class CommandBuffer
 	private void AssertNotInPass(string message)
 	{
 		if (renderPassActive || copyPassActive || computePassActive)
-		{
-			throw new System.InvalidOperationException(message);
-		}
-	}
-
-	private void AssertInRenderPass(string message)
-	{
-		if (!renderPassActive)
 		{
 			throw new System.InvalidOperationException(message);
 		}

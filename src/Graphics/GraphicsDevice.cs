@@ -38,8 +38,9 @@ namespace MoonWorks.Graphics
 		public bool IsDisposed { get; private set; }
 
 		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
-		private FencePool FencePool;
 		private CommandBufferPool CommandBufferPool;
+		internal RenderPassPool RenderPassPool;
+		private FencePool FencePool;
 
 		internal unsafe GraphicsDevice(
 			Span<Backend> preferredBackends,
@@ -149,12 +150,12 @@ namespace MoonWorks.Graphics
 						)
 					),
 					DepthStencilState = DepthStencilState.Disable,
-					VertexShaderInfo = GraphicsShaderInfo.Create(
+					VertexShaderResourceInfo = GraphicsShaderInfo.Create(
 						fullscreenVertShader,
 						"main",
 						0
 					),
-					FragmentShaderInfo = GraphicsShaderInfo.Create(
+					FragmentShaderResourceInfo = GraphicsShaderInfo.Create(
 						videoFragShader,
 						"main",
 						3
@@ -177,12 +178,12 @@ namespace MoonWorks.Graphics
 						)
 					),
 					DepthStencilState = DepthStencilState.Disable,
-					VertexShaderInfo = GraphicsShaderInfo.Create(
+					VertexShaderResourceInfo = GraphicsShaderInfo.Create(
 						fullscreenVertShader,
 						"main",
 						0
 					),
-					FragmentShaderInfo = GraphicsShaderInfo.Create(
+					FragmentShaderResourceInfo = GraphicsShaderInfo.Create(
 						blitFragShader,
 						"main",
 						1

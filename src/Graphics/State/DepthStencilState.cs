@@ -1,4 +1,6 @@
-﻿namespace MoonWorks.Graphics
+﻿using SDL2_gpuCS;
+
+namespace MoonWorks.Graphics
 {
 	/// <summary>
 	/// Determines how data is written to and read from the depth/stencil buffer.
@@ -90,5 +92,24 @@
 			DepthBoundsTestEnable = false,
 			StencilTestEnable = false
 		};
+
+		public SDL_Gpu.DepthStencilState ToSDL()
+		{
+			return new SDL_Gpu.DepthStencilState
+			{
+				DepthTestEnable = Conversions.BoolToInt(DepthTestEnable),
+				BackStencilState = BackStencilState.ToSDL(),
+				FrontStencilState = FrontStencilState.ToSDL(),
+				CompareMask = CompareMask,
+				WriteMask = WriteMask,
+				Reference = Reference,
+				CompareOp = (SDL_Gpu.CompareOp) CompareOp,
+				DepthBoundsTestEnable = Conversions.BoolToInt(DepthBoundsTestEnable),
+				DepthWriteEnable = Conversions.BoolToInt(DepthWriteEnable),
+				MinDepthBounds = MinDepthBounds,
+				MaxDepthBounds = MaxDepthBounds,
+				StencilTestEnable = Conversions.BoolToInt(StencilTestEnable)
+			};
+		}
 	}
 }

@@ -8,7 +8,7 @@ public readonly record struct BufferBinding(
 	GpuBuffer Buffer,
 	uint Offset
 ) {
-	public SDL_Gpu.BufferBinding ToRefresh()
+	public SDL_Gpu.BufferBinding ToSDL()
 	{
 		return new SDL_Gpu.BufferBinding
 		{

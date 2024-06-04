@@ -36,52 +36,52 @@ public enum IndexElementSize
 
 public enum TextureFormat
 {
-/* Unsigned Normalized Float Color Formats */
-R8G8B8A8,
-B8G8R8A8,
-R5G6B5,
-A1R5G5B5,
-B4G4R4A4,
-A2R10G10B10,
-A2B10G10R10,
-R16G16,
-R16G16B16A16,
-R8,
-A8,
-/* Compressed Unsigned Normalized Float Color Formats */
-BC1,
-BC2,
-BC3,
-BC7,
-/* Signed Normalized Float Color Formats  */
-R8G8_SNORM,
-R8G8B8A8_SNORM,
-/* Signed Float Color Formats */
-R16_SFLOAT,
-R16G16_SFLOAT,
-R16G16B16A16_SFLOAT,
-R32_SFLOAT,
-R32G32_SFLOAT,
-R32G32B32A32_SFLOAT,
-/* Unsigned Integer Color Formats */
-R8_UINT,
-R8G8_UINT,
-R8G8B8A8_UINT,
-R16_UINT,
-R16G16_UINT,
-R16G16B16A16_UINT,
-/* SRGB Color Formats */
-R8G8B8A8_SRGB,
-B8G8R8A8_SRGB,
-/* Compressed SRGB Color Formats */
-BC3_SRGB,
-BC7_SRGB,
-/* Depth Formats */
-D16_UNORM,
-D24_UNORM,
-D32_SFLOAT,
-D24_UNORM_S8_UINT,
-D32_SFLOAT_S8_UINT
+	/* Unsigned Normalized Float Color Formats */
+	R8G8B8A8,
+	B8G8R8A8,
+	R5G6B5,
+	A1R5G5B5,
+	B4G4R4A4,
+	A2R10G10B10,
+	A2B10G10R10,
+	R16G16,
+	R16G16B16A16,
+	R8,
+	A8,
+	/* Compressed Unsigned Normalized Float Color Formats */
+	BC1,
+	BC2,
+	BC3,
+	BC7,
+	/* Signed Normalized Float Color Formats  */
+	R8G8_SNORM,
+	R8G8B8A8_SNORM,
+	/* Signed Float Color Formats */
+	R16_SFLOAT,
+	R16G16_SFLOAT,
+	R16G16B16A16_SFLOAT,
+	R32_SFLOAT,
+	R32G32_SFLOAT,
+	R32G32B32A32_SFLOAT,
+	/* Unsigned Integer Color Formats */
+	R8_UINT,
+	R8G8_UINT,
+	R8G8B8A8_UINT,
+	R16_UINT,
+	R16G16_UINT,
+	R16G16B16A16_UINT,
+	/* SRGB Color Formats */
+	R8G8B8A8_SRGB,
+	B8G8R8A8_SRGB,
+	/* Compressed SRGB Color Formats */
+	BC3_SRGB,
+	BC7_SRGB,
+	/* Depth Formats */
+	D16_UNORM,
+	D24_UNORM,
+	D32_SFLOAT,
+	D24_UNORM_S8_UINT,
+	D32_SFLOAT_S8_UINT
 }
 
 [Flags]
@@ -251,10 +251,13 @@ public enum BlendFactor
 [Flags]
 public enum ColorComponentFlags
 {
+	None = 0x0,
 	R = 0x1,
 	G = 0x2,
 	B = 0x4,
-	A = 0x8
+	A = 0x8,
+	RGB = R | G | B,
+	RGBA = R | G| B | A
 }
 
 public enum Filter
@@ -366,7 +369,7 @@ public struct Rect
 	}
 
 	// FIXME: can we do an unsafe cast somehow?
-	public SDL_Gpu.Rect ToRefresh()
+	public SDL_Gpu.Rect ToSDL()
 	{
 		return new SDL_Gpu.Rect
 		{
@@ -448,6 +451,16 @@ public struct VertexBinding
 			Stride = (uint) Marshal.SizeOf<T>()
 		};
 	}
+
+	public SDL_Gpu.VertexBinding ToSDL()
+	{
+		return new SDL_Gpu.VertexBinding
+		{
+			Binding = Binding,
+			Stride = Stride,
+			InputRate = (SDL_Gpu.VertexInputRate) InputRate
+		};
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -457,6 +470,17 @@ public struct VertexAttribute
 	public uint Binding;
 	public VertexElementFormat Format;
 	public uint Offset;
+
+	public SDL_Gpu.VertexAttribute ToSDL()
+	{
+		return new SDL_Gpu.VertexAttribute
+		{
+			Location = Location,
+			Binding = Binding,
+			Format = (SDL_Gpu.VertexElementFormat) Format,
+			Offset = Offset
+		};
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -796,4 +820,40 @@ public readonly record struct BufferImageCopy(
 			BufferImageHeight = BufferImageHeight
 		};
 	}
+}
+
+public readonly record struct GraphicsPipelineResourceInfo(
+	uint SamplerCount,
+	uint StorageBufferCount,
+	uint StorageTextureCount,
+	uint UniformBufferCount
+) {
+	public SDL_Gpu.GraphicsPipelineResourceInfo ToSDL()
+	{
+		return new SDL_Gpu.GraphicsPipelineResourceInfo
+		{
+			SamplerCount = SamplerCount,
+			StorageBufferCount = StorageBufferCount,
+			StorageTextureCount = StorageTextureCount,
+			UniformBufferCount = UniformBufferCount
+		};
+	}
+}
+
+/// <summary>
+/// All of the information that is used to create a GraphicsPipeline.
+/// </summary>
+public struct GraphicsPipelineCreateInfo
+{
+	public Shader VertexShader;
+	public Shader FragmentShader;
+	public VertexInputState VertexInputState;
+	public PrimitiveType PrimitiveType;
+	public RasterizerState RasterizerState;
+	public MultisampleState MultisampleState;
+	public DepthStencilState DepthStencilState;
+	public GraphicsPipelineAttachmentInfo AttachmentInfo;
+	public GraphicsPipelineResourceInfo VertexShaderResourceInfo;
+	public GraphicsPipelineResourceInfo FragmentShaderResourceInfo;
+	public BlendConstants BlendConstants;
 }

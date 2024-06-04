@@ -13,16 +13,17 @@ public class RenderPass
 
 #if DEBUG
 	internal bool active;
+	internal uint colorAttachmentCount;
+	internal SampleCount colorAttachmentSampleCount;
+	internal TextureFormat colorFormatOne;
+	internal TextureFormat colorFormatTwo;
+	internal TextureFormat colorFormatThree;
+	internal TextureFormat colorFormatFour;
+	internal bool hasDepthStencilAttachment;
+	internal SampleCount depthStencilAttachmentSampleCount;
+	internal TextureFormat depthStencilFormat;
+
 	GraphicsPipeline currentGraphicsPipeline;
-	uint colorAttachmentCount;
-	SampleCount colorAttachmentSampleCount;
-	TextureFormat colorFormatOne;
-	TextureFormat colorFormatTwo;
-	TextureFormat colorFormatThree;
-	TextureFormat colorFormatFour;
-	bool hasDepthStencilAttachment;
-	SampleCount depthStencilAttachmentSampleCount;
-	TextureFormat depthStencilFormat;
 #endif
 
 	internal void SetHandle(nint handle)
@@ -79,7 +80,7 @@ public class RenderPass
 
 		SDL_Gpu.SDL_GpuSetViewport(
 			Handle,
-			viewport.ToRefresh()
+			viewport.ToSDL()
 		);
 	}
 
@@ -99,7 +100,7 @@ public class RenderPass
 
 		SDL_Gpu.SDL_GpuSetScissor(
 			Handle,
-			scissor.ToRefresh()
+			scissor.ToSDL()
 		);
 	}
 
@@ -108,7 +109,7 @@ public class RenderPass
 	/// </summary>
 	/// <param name="bufferBinding">Buffer to bind and associated offset.</param>
 	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffers(
+	public unsafe void BindVertexBuffer(
 		in BufferBinding bufferBinding,
 		uint firstBinding = 0
 	) {
@@ -116,135 +117,14 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		var bindingArray = stackalloc SDL_Gpu.BufferBinding[1];
-		bindingArray[0] = bufferBinding.ToRefresh();
+		var sdlBufferBinding = bufferBinding.ToSDL();
 
 		SDL_Gpu.SDL_GpuBindVertexBuffers(
 			Handle,
 			firstBinding,
-			bindingArray,
+			&sdlBufferBinding,
 			1
 		);
-	}
-
-	/// <summary>
-	/// Binds vertex buffers to be used by subsequent draw calls.
-	/// </summary>
-	/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
-	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffers(
-		in BufferBinding bufferBindingOne,
-		in BufferBinding bufferBindingTwo,
-		uint firstBinding = 0
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		var bindingArray = stackalloc SDL_Gpu.BufferBinding[2];
-		bindingArray[0] = bufferBindingOne.ToRefresh();
-		bindingArray[1] = bufferBindingTwo.ToRefresh();
-
-		SDL_Gpu.SDL_GpuBindVertexBuffers(
-			Handle,
-			firstBinding,
-			bindingArray,
-			2
-		);
-	}
-
-	/// <summary>
-	/// Binds vertex buffers to be used by subsequent draw calls.
-	/// </summary>
-	/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingThree">Buffer to bind and associated offset.</param>
-	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffers(
-		in BufferBinding bufferBindingOne,
-		in BufferBinding bufferBindingTwo,
-		in BufferBinding bufferBindingThree,
-		uint firstBinding = 0
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		var bindingArray = stackalloc SDL_Gpu.BufferBinding[3];
-		bindingArray[0] = bufferBindingOne.ToRefresh();
-		bindingArray[1] = bufferBindingTwo.ToRefresh();
-		bindingArray[2] = bufferBindingThree.ToRefresh();
-
-		SDL_Gpu.SDL_GpuBindVertexBuffers(
-			Handle,
-			firstBinding,
-			bindingArray,
-			3
-		);
-	}
-
-	/// <summary>
-	/// Binds vertex buffers to be used by subsequent draw calls.
-	/// </summary>
-	/// <param name="bufferBindingOne">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingTwo">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingThree">Buffer to bind and associated offset.</param>
-	/// <param name="bufferBindingFour">Buffer to bind and associated offset.</param>
-	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffers(
-		in BufferBinding bufferBindingOne,
-		in BufferBinding bufferBindingTwo,
-		in BufferBinding bufferBindingThree,
-		in BufferBinding bufferBindingFour,
-		uint firstBinding = 0
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		var bindingArray = stackalloc SDL_Gpu.BufferBinding[4];
-		bindingArray[0] = bufferBindingOne.ToRefresh();
-		bindingArray[1] = bufferBindingTwo.ToRefresh();
-		bindingArray[2] = bufferBindingThree.ToRefresh();
-		bindingArray[3] = bufferBindingFour.ToRefresh();
-
-		SDL_Gpu.SDL_GpuBindVertexBuffers(
-			Handle,
-			firstBinding,
-			bindingArray,
-			4
-		);
-	}
-
-	/// <summary>
-	/// Binds vertex buffers to be used by subsequent draw calls.
-	/// </summary>
-	/// <param name="bufferBindings">Spawn of buffers to bind and their associated offsets.</param>
-	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffers(
-		in Span<BufferBinding> bufferBindings,
-		uint firstBinding = 0
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL_Gpu.BufferBinding* bufferBindingsArray = (SDL_Gpu.BufferBinding*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_Gpu.BufferBinding>() * bufferBindings.Length));
-
-		for (var i = 0; i < bufferBindings.Length; i += 1)
-		{
-			bufferBindingsArray[i] = bufferBindings[i].ToRefresh();
-		}
-
-		SDL_Gpu.SDL_GpuBindVertexBuffers(
-			Handle,
-			firstBinding,
-			bufferBindingsArray,
-			(uint) bufferBindings.Length
-		);
-
-		NativeMemory.Free(bufferBindingsArray);
 	}
 
 	/// <summary>
@@ -264,7 +144,7 @@ public class RenderPass
 
 		SDL_Gpu.SDL_GpuBindIndexBuffer(
 			Handle,
-			bufferBinding.ToRefresh(),
+			bufferBinding.ToSDL(),
 			(SDL_Gpu.IndexElementSize) indexElementSize
 		);
 	}
@@ -283,104 +163,280 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var bindingArray = stackalloc SDL_Gpu.TextureSamplerBinding[1];
-		bindingArray[0] = textureSamplerBinding.ToSDL();
+		var sdlTextureSamplerBinding = textureSamplerBinding.ToSDL();
 
 		SDL_Gpu.SDL_GpuBindVertexSamplers(
 			Handle,
 			slot,
-			bindingArray,
+			&sdlTextureSamplerBinding,
 			1
 		);
 	}
 
-	public unsafe void BindVertexSamplers(
-		in Span<TextureSamplerBinding> textureSamplerBindings,
-		uint firstSlot = 0
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-
-		for (var i = 0; i < textureSamplerBindings.Length; i += 1)
-		{
-			AssertTextureSamplerBindingNonNull(textureSamplerBindings[i]);
-			AssertTextureHasSamplerFlag(textureSamplerBindings[i].Texture);
-		}
-#endif
-
-		SDL_Gpu.TextureSamplerBinding* samplerBindingsArray =
-			(SDL_Gpu.TextureSamplerBinding*) NativeMemory.Alloc(
-				(nuint) (Marshal.SizeOf<SDL_Gpu.TextureSamplerBinding>() * textureSamplerBindings.Length)
-			);
-
-		for (var i = 0; i < textureSamplerBindings.Length; i += 1)
-		{
-			samplerBindingsArray[i] = textureSamplerBindings[i].ToSDL();
-		}
-
-		SDL_Gpu.SDL_GpuBindVertexSamplers(
-			Handle,
-			firstSlot,
-			samplerBindingsArray,
-			(uint) textureSamplerBindings.Length
-		);
-
-		NativeMemory.Free(samplerBindingsArray);
-	}
-
 	public unsafe void BindVertexStorageTexture(
-		in TextureSlice storageTextureSlice,
+		in TextureSlice textureSlice,
 		uint slot = 0
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
-		AssertTextureNonNull(storageTextureSlice.Texture);
-		AssertTextureHasGraphicsStorageFlag(storageTextureSlice.Texture);
+		AssertTextureNonNull(textureSlice.Texture);
+		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
 #endif
 
-		var sliceArray = stackalloc SDL_Gpu.TextureSlice[1];
-		sliceArray[0] = storageTextureSlice.ToSDL();
+		var sdlTextureSlice = textureSlice.ToSDL();
 
 		SDL_Gpu.SDL_GpuBindVertexStorageTextures(
 			Handle,
 			slot,
-			sliceArray,
+			&sdlTextureSlice,
 			1
 		);
 	}
 
-	public unsafe void BindVertexStorageTextures(
-		in Span<TextureSlice> storageTextureSlices,
-		uint firstSlot = 0
+	public unsafe void BindVertexStorageBuffer(
+		GpuBuffer buffer,
+		uint slot = 0
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+		AssertBufferNonNull(buffer);
+		AssertBufferHasGraphicsStorageFlag(buffer);
+#endif
+
+		var bufferHandle = buffer.Handle;
+
+		SDL_Gpu.SDL_GpuBindVertexStorageBuffers(
+			Handle,
+			slot,
+			&bufferHandle,
+			1
+		);
+	}
+
+	public unsafe void BindFragmentSamplers(
+		in TextureSamplerBinding textureSamplerBinding,
+		uint slot = 0
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+		AssertTextureSamplerBindingNonNull(textureSamplerBinding);
+		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
+#endif
+
+		var sdlTextureSamplerBinding = textureSamplerBinding.ToSDL();
+
+		SDL_Gpu.SDL_GpuBindFragmentSamplers(
+			Handle,
+			slot,
+			&sdlTextureSamplerBinding,
+			1
+		);
+	}
+
+	public unsafe void BindFragmentStorageTexture(
+		in TextureSlice textureSlice,
+		uint slot = 0
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+		AssertTextureNonNull(textureSlice.Texture);
+		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
+#endif
+
+		var sdlTextureSlice = textureSlice.ToSDL();
+
+		SDL_Gpu.SDL_GpuBindFragmentStorageTextures(
+			Handle,
+			slot,
+			&sdlTextureSlice,
+			1
+		);
+	}
+
+	public unsafe void BindFragmentStorageBuffer(
+		GpuBuffer buffer,
+		uint slot = 0
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+		AssertBufferNonNull(buffer);
+		AssertBufferHasGraphicsStorageFlag(buffer);
+#endif
+
+		var bufferHandle = buffer.Handle;
+
+		SDL_Gpu.SDL_GpuBindFragmentStorageBuffers(
+			Handle,
+			slot,
+			&bufferHandle,
+			1
+		);
+	}
+
+	public unsafe void PushVertexUniformData(
+		void* uniformsPtr,
+		uint size,
+		uint slot = 0
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
 
-		for (var i = 0; i < storageTextureSlices.Length; i += 1)
+		if (slot >= currentGraphicsPipeline.VertexShaderResourceInfo.UniformBufferCount)
 		{
-			AssertTextureNonNull(storageTextureSlices[i].Texture);
-			AssertTextureHasGraphicsStorageFlag(storageTextureSlices[i].Texture);
+			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.VertexShaderResourceInfo.UniformBufferCount} uniform buffers are used on the shader!");
 		}
 #endif
 
-		SDL_Gpu.TextureSlice* sliceArray =
-			(SDL_Gpu.TextureSlice*) NativeMemory.Alloc(
-				(nuint) (Marshal.SizeOf<SDL_Gpu.TextureSlice>() * storageTextureSlices.Length)
-			);
-
-		for (var i = 0; i < storageTextureSlices.Length; i += 1)
-		{
-			sliceArray[i] = storageTextureSlices[i].ToSDL();
-		}
-
-		SDL_Gpu.SDL_GpuBindVertexStorageTextures(
+		SDL_Gpu.SDL_GpuPushVertexUniformData(
 			Handle,
-			firstSlot,
-			sliceArray,
-			(uint) storageTextureSlices.Length
+			slot,
+			(nint) uniformsPtr,
+			size
 		);
+	}
 
-		NativeMemory.Free(sliceArray);
+	public unsafe void PushVertexUniformData<T>(
+		in T uniforms
+	) where T : unmanaged
+	{
+		fixed (T* uniformsPtr = &uniforms)
+		{
+			PushVertexUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>());
+		}
+	}
+
+	public unsafe void PushFragmentUniformData(
+		void* uniformsPtr,
+		uint size,
+		uint slot = 0
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+
+		if (slot >= currentGraphicsPipeline.FragmentShaderResourceInfo.UniformBufferCount)
+		{
+			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.FragmentShaderResourceInfo.UniformBufferCount} uniform buffers are used on the shader!");
+		}
+#endif
+
+		SDL_Gpu.SDL_GpuPushFragmentUniformData(
+			Handle,
+			slot,
+			(nint) uniformsPtr,
+			size
+		);
+	}
+
+	public unsafe void PushFragmentUniformData<T>(
+		in T uniforms
+	) where T : unmanaged
+	{
+		fixed (T* uniformsPtr = &uniforms)
+		{
+			PushFragmentUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>());
+		}
+	}
+
+	/// <summary>
+	/// Draws using a vertex buffer and an index buffer, and an optional instance count.
+	/// </summary>
+	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
+	/// <param name="startIndex">The starting index offset for the index buffer.</param>
+	/// <param name="primitiveCount">The number of primitives to draw.</param>
+	/// <param name="instanceCount">The number of instances to draw.</param>
+	public void DrawIndexedPrimitives(
+		uint baseVertex,
+		uint startIndex,
+		uint primitiveCount,
+		uint instanceCount = 1
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+#endif
+
+		SDL_Gpu.SDL_GpuDrawIndexedPrimitives(
+			Handle,
+			baseVertex,
+			startIndex,
+			primitiveCount,
+			instanceCount
+		);
+	}
+
+	/// <summary>
+	/// Draws using a vertex buffer and an index buffer.
+	/// </summary>
+	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
+	/// <param name="startIndex">The starting index offset for the index buffer.</param>
+	/// <param name="primitiveCount">The number of primitives to draw.</param>
+	public void DrawPrimitives(
+		uint vertexStart,
+		uint primitiveCount
+	)
+	{
+#if DEBUG
+		AssertGraphicsPipelineBound();
+#endif
+
+		SDL_Gpu.SDL_GpuDrawPrimitives(
+			Handle,
+			vertexStart,
+			primitiveCount
+		);
+	}
+
+	/// <summary>
+	/// Similar to DrawPrimitives, but parameters are set from a buffer.
+	/// The buffer must have the Indirect usage flag set.
+	/// </summary>
+	/// <param name="buffer">The draw parameters buffer.</param>
+	/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
+	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
+	/// <param name="stride">The byte stride between sets of draw parameters.</param>
+	public void DrawPrimitivesIndirect(
+		GpuBuffer buffer,
+		uint offsetInBytes,
+		uint drawCount,
+		uint stride
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+#endif
+
+		SDL_Gpu.SDL_GpuDrawPrimitivesIndirect(
+			Handle,
+			buffer.Handle,
+			offsetInBytes,
+			drawCount,
+			stride
+		);
+	}
+
+	/// <summary>
+	/// Similar to DrawIndexedPrimitives, but parameters are set from a buffer.
+	/// The buffer must have the Indirect usage flag set.
+	/// </summary>
+	/// <param name="buffer">The draw parameters buffer.</param>
+	/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
+	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
+	/// <param name="stride">The byte stride between sets of draw parameters.</param>
+	public void DrawIndexedPrimitivesIndirect(
+		GpuBuffer buffer,
+		uint offsetInBytes,
+		uint drawCount,
+		uint stride
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+#endif
+
+		SDL_Gpu.SDL_GpuDrawIndexedPrimitivesIndirect(
+			Handle,
+			buffer.Handle,
+			offsetInBytes,
+			drawCount,
+			stride
+		);
 	}
 
 #if DEBUG
@@ -479,6 +535,22 @@ public class RenderPass
 		if ((texture.UsageFlags & TextureUsageFlags.GraphicsStorage) == 0)
 		{
 			throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.GraphicsStorage!");
+		}
+	}
+
+	private void AssertBufferNonNull(GpuBuffer buffer)
+	{
+		if (buffer == null || buffer.Handle == IntPtr.Zero)
+		{
+			throw new System.NullReferenceException("Buffer must not be null!");
+		}
+	}
+
+	private void AssertBufferHasGraphicsStorageFlag(GpuBuffer buffer)
+	{
+		if ((buffer.UsageFlags & BufferUsageFlags.GraphicsStorage) == 0)
+		{
+			throw new System.ArgumentException("The bound Buffer's UsageFlags must include BufferUsageFlag.GraphicsStorage!");
 		}
 	}
 #endif

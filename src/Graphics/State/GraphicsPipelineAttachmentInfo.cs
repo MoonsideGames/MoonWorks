@@ -14,7 +14,7 @@ namespace MoonWorks.Graphics
 		) {
 			ColorAttachmentDescriptions = colorAttachmentDescriptions;
 			HasDepthStencilAttachment = false;
-			DepthStencilFormat = TextureFormat.D16;
+			DepthStencilFormat = TextureFormat.D16_UNORM;
 		}
 
 		public GraphicsPipelineAttachmentInfo(

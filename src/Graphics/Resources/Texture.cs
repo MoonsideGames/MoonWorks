@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using RefreshCS;
+using SDL2_gpuCS;
 
 namespace MoonWorks.Graphics
 {
@@ -29,7 +29,7 @@ namespace MoonWorks.Graphics
 			{
 				if (Device.DebugMode)
 				{
-					Refresh.Refresh_SetTextureName(
+					SDL_Gpu.SDL_GpuSetTextureName(
 						Device.Handle,
 						Handle,
 						value
@@ -41,7 +41,7 @@ namespace MoonWorks.Graphics
 		}
 
 		// FIXME: this allocates a delegate instance
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyTexture;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseTexture;
 
 		/// <summary>
 		/// Creates a 2D texture.
@@ -179,9 +179,9 @@ namespace MoonWorks.Graphics
 			in TextureCreateInfo textureCreateInfo
 		) : base(device)
 		{
-			Handle = Refresh.Refresh_CreateTexture(
+			Handle = SDL_Gpu.SDL_GpuCreateTexture(
 				device.Handle,
-				textureCreateInfo.ToRefreshTextureCreateInfo()
+				textureCreateInfo.ToSDL()
 			);
 
 			Format = textureCreateInfo.Format;

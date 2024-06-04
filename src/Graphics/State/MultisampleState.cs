@@ -1,4 +1,6 @@
-﻿namespace MoonWorks.Graphics
+﻿using SDL2_gpuCS;
+
+namespace MoonWorks.Graphics
 {
 	/// <summary>
 	/// Specifies how many samples should be used in rasterization.
@@ -20,6 +22,15 @@
 		) {
 			MultisampleCount = sampleCount;
 			SampleMask = sampleMask;
+		}
+
+		public SDL_Gpu.MultisampleState ToSDL()
+		{
+			return new SDL_Gpu.MultisampleState
+			{
+				MultisampleCount = (SDL_Gpu.SampleCount) MultisampleCount,
+				SampleMask = SampleMask
+			};
 		}
 	}
 }
