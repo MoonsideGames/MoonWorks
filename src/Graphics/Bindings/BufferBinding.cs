@@ -1,21 +1,19 @@
-﻿using RefreshCS;
+﻿using SDL2_gpuCS;
+namespace MoonWorks.Graphics;
 
-namespace MoonWorks.Graphics
-{
-	/// <summary>
-	/// A buffer-offset pair to be used when binding vertex or index buffers.
-	/// </summary>
-	public readonly record struct BufferBinding(
-		GpuBuffer Buffer,
-		uint Offset
-	) {
-		public Refresh.BufferBinding ToRefresh()
+/// <summary>
+/// A buffer-offset pair to be used when binding buffers.
+/// </summary>
+public readonly record struct BufferBinding(
+	GpuBuffer Buffer,
+	uint Offset
+) {
+	public SDL_Gpu.BufferBinding ToRefresh()
+	{
+		return new SDL_Gpu.BufferBinding
 		{
-			return new Refresh.BufferBinding
-			{
-				gpuBuffer = Buffer.Handle,
-				offset = Offset
-			};
-		}
+			Buffer = Buffer.Handle,
+			Offset = Offset
+		};
 	}
 }

@@ -4,12 +4,12 @@
 [submodule "lib/FAudio"]
 	path = lib/FAudio
 	url = https://github.com/FNA-XNA/FAudio.git
-[submodule "lib/RefreshCS"]
-	path = lib/RefreshCS
-	url = https://gitea.moonside.games/MoonsideGames/RefreshCS.git
 [submodule "lib/WellspringCS"]
 	path = lib/WellspringCS
 	url = https://gitea.moonside.games/MoonsideGames/WellspringCS.git
 [submodule "lib/dav1dfile"]
 	path = lib/dav1dfile
 	url = https://github.com/MoonsideGames/dav1dfile.git
+[submodule "SDL2_gpuCS"]
+	path = lib/SDL2_gpuCS
+	url = https://github.com/MoonsideGames/SDL2_gpuCS.git

@@ -1,4 +1,4 @@
-﻿using RefreshCS;
+﻿using SDL2_gpuCS;
 
 namespace MoonWorks.Graphics
 {
@@ -9,12 +9,12 @@ namespace MoonWorks.Graphics
 		Texture Texture,
 		Sampler Sampler
 	) {
-		public Refresh.TextureSamplerBinding ToRefresh()
+		public SDL_Gpu.TextureSamplerBinding ToSDL()
 		{
-			return new Refresh.TextureSamplerBinding
+			return new SDL_Gpu.TextureSamplerBinding
 			{
-				texture = Texture.Handle,
-				sampler = Sampler.Handle
+				Texture = Texture.Handle,
+				Sampler = Sampler.Handle
 			};
 		}
 	}

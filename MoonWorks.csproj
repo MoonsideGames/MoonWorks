@@ -11,7 +11,7 @@
 
 	<ItemGroup>
 		<Compile Include="lib\FAudio\csharp\FAudio.cs" />
-		<Compile Include="lib\RefreshCS\src\Refresh.cs" />
+		<Compile Include="lib\SDL2_gpuCS\SDL2_gpuCS.cs" />
 		<Compile Include="lib\SDL2-CS\src\SDL2.cs" />
 		<Compile Include="lib\WellspringCS\WellspringCS.cs" />
 		<Compile Include="lib\dav1dfile\csharp\dav1dfile.cs" />
