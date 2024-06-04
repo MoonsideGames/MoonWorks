@@ -4,9 +4,9 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
-	public unsafe class TransferBuffer : RefreshResource
+	public unsafe class TransferBuffer : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTransferBuffer;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyTransferBuffer;
 
 		/// <summary>
 		/// Size in bytes.

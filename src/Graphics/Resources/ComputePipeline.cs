@@ -6,9 +6,9 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// Compute pipelines perform arbitrary parallel processing on input data.
 	/// </summary>
-	public class ComputePipeline : RefreshResource
+	public class ComputePipeline : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyComputePipeline;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyComputePipeline;
 
 		public ComputeShaderInfo ComputeShaderInfo { get; }
 

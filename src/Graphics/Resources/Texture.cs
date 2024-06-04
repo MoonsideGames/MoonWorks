@@ -7,7 +7,7 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// A container for pixel data.
 	/// </summary>
-	public class Texture : RefreshResource
+	public class Texture : SDL_GpuResource
 	{
 		public uint Width { get; internal set; }
 		public uint Height { get; internal set; }
@@ -41,7 +41,7 @@ namespace MoonWorks.Graphics
 		}
 
 		// FIXME: this allocates a delegate instance
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyTexture;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyTexture;
 
 		/// <summary>
 		/// Creates a 2D texture.

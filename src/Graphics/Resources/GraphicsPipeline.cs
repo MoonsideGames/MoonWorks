@@ -8,9 +8,9 @@ namespace MoonWorks.Graphics
 	/// Graphics pipelines encapsulate all of the render state in a single object. <br/>
 	/// These pipelines are bound before draw calls are issued.
 	/// </summary>
-	public class GraphicsPipeline : RefreshResource
+	public class GraphicsPipeline : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyGraphicsPipeline;
 
 		public GraphicsShaderInfo VertexShaderInfo { get; }
 		public GraphicsShaderInfo FragmentShaderInfo { get; }

@@ -7,9 +7,9 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// GpuBuffers are generic data containers that can be used by the GPU.
 	/// </summary>
-	public class GpuBuffer : RefreshResource
+	public class GpuBuffer : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroyGpuBuffer;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyGpuBuffer;
 
 		/// <summary>
 		/// Size in bytes.

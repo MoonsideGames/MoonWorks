@@ -21,7 +21,7 @@ namespace MoonWorks
 			{ VertexElementFormat.NormalizedShort4, (uint) Marshal.SizeOf<NormalizedShort4>() },
 			{ VertexElementFormat.Short2, (uint) Marshal.SizeOf<Short2>() },
 			{ VertexElementFormat.Short4, (uint) Marshal.SizeOf<Short4>() },
-			{ VertexElementFormat.UInt, (uint) Marshal.SizeOf<uint>() },
+			{ VertexElementFormat.Uint, (uint) Marshal.SizeOf<uint>() },
 			{ VertexElementFormat.Vector2, (uint) Marshal.SizeOf<Math.Float.Vector2>() },
 			{ VertexElementFormat.Vector3, (uint) Marshal.SizeOf<Math.Float.Vector3>() },
 			{ VertexElementFormat.Vector4, (uint) Marshal.SizeOf<Math.Float.Vector4>() }
@@ -33,6 +33,16 @@ namespace MoonWorks
 		}
 
 		public static bool ByteToBool(byte b)
+		{
+			return b != 0;
+		}
+
+		public static int BoolToInt(bool b)
+		{
+			return b ? 1 : 0;
+		}
+
+		public static bool IntToBool(int b)
 		{
 			return b != 0;
 		}

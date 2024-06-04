@@ -6,9 +6,9 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// A sampler specifies how a texture will be sampled in a shader.
 	/// </summary>
-	public class Sampler : RefreshResource
+	public class Sampler : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> QueueDestroyFunction => Refresh.Refresh_QueueDestroySampler;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroySampler;
 
 		public Sampler(
 			GraphicsDevice device,
