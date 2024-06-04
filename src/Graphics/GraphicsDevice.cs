@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
-using RefreshCS;
-using WellspringCS;
+using SDL2;
+using SDL2_gpuCS;
 
 namespace MoonWorks.Graphics
 {
@@ -14,7 +14,7 @@ namespace MoonWorks.Graphics
 	public class GraphicsDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
-		public Backend Backend { get; }
+		public BackendFlags Backend { get; }
 		public bool DebugMode { get; }
 
 		private uint windowFlags;
@@ -23,12 +23,11 @@ namespace MoonWorks.Graphics
 		// Built-in video pipeline
 		internal GraphicsPipeline VideoPipeline { get; }
 
-		// Built-in blit pipeline
-		internal GraphicsPipeline BlitPipeline { get; }
-
 		// Built-in text shader info
-		public GraphicsShaderInfo TextVertexShaderInfo { get; }
-		public GraphicsShaderInfo TextFragmentShaderInfo { get; }
+		public Shader TextVertexShader;
+		public Shader TextFragmentShader;
+		public GraphicsPipelineResourceInfo TextVertexShaderInfo { get; }
+		public GraphicsPipelineResourceInfo TextFragmentShaderInfo { get; }
 		public VertexInputState TextVertexInputState { get; }
 
 		// Built-in samplers
@@ -43,28 +42,23 @@ namespace MoonWorks.Graphics
 		private FencePool FencePool;
 
 		internal unsafe GraphicsDevice(
-			Span<Backend> preferredBackends,
+			BackendFlags preferredBackends,
 			bool debugMode
 		) {
-			var backends = stackalloc Refresh.Backend[preferredBackends.Length];
-			for (var i = 0; i < preferredBackends.Length; i += 1)
-			{
-				backends[i] = (Refresh.Backend) preferredBackends[i];
-			}
-
-			Backend = (Backend) Refresh.Refresh_SelectBackend(backends, (uint) preferredBackends.Length, out windowFlags);
-
-			if (Backend == Backend.Invalid)
+			if (preferredBackends == BackendFlags.Invalid)
 			{
 				throw new System.Exception("Could not set graphics backend!");
 			}
 
-			Handle = Refresh.Refresh_CreateDevice(
+			Handle = SDL_Gpu.SDL_GpuCreateDevice(
+				(SDL_Gpu.BackendFlags) preferredBackends,
 				Conversions.BoolToByte(debugMode)
 			);
 
 			DebugMode = debugMode;
 			// TODO: check for CreateDevice fail
+
+			Backend = (BackendFlags) SDL_Gpu.SDL_GpuGetBackend(Handle);
 
 			// Check for replacement stock shaders
 			string basePath = System.AppContext.BaseDirectory;
@@ -77,42 +71,79 @@ namespace MoonWorks.Graphics
 			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
 			string blitFragPath = Path.Combine(basePath, "blit.frag.refresh");
 
-			ShaderModule fullscreenVertShader;
+			Shader fullscreenVertShader;
 
-			ShaderModule textVertShader;
-			ShaderModule textFragShader;
+			Shader textVertShader;
+			Shader textFragShader;
 
-			ShaderModule videoFragShader;
-			ShaderModule blitFragShader;
+			Shader videoFragShader;
+			Shader blitFragShader;
 
 			if (File.Exists(fullscreenVertPath))
 			{
-				fullscreenVertShader = new ShaderModule(this, fullscreenVertPath);
+				fullscreenVertShader = new Shader(
+					this,
+					fullscreenVertPath,
+					"main",
+					ShaderStage.Vertex,
+					ShaderFormat.SECRET
+				);
 			}
 			else
 			{
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
 				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.refresh");
-				fullscreenVertShader = new ShaderModule(this, vertStream);
+				fullscreenVertShader = new Shader(
+					this,
+					vertStream,
+					"main",
+					ShaderStage.Vertex,
+					ShaderFormat.SPIRV
+				);
 			}
 
 			if (File.Exists(videoFragPath))
 			{
-				videoFragShader = new ShaderModule(this, videoFragPath);
+				videoFragShader = new Shader(
+					this,
+					videoFragPath,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SECRET
+				);
 			}
 			else
 			{
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
 				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh");
-				videoFragShader = new ShaderModule(this, fragStream);
+				videoFragShader = new Shader(
+					this,
+					fragStream,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SPIRV
+				);
 			}
 
 			if (File.Exists(textVertPath) && File.Exists(textFragPath))
 			{
-				textVertShader = new ShaderModule(this, textVertPath);
-				textFragShader = new ShaderModule(this, textFragPath);
+				textVertShader = new Shader(
+					this,
+					textVertPath,
+					"main",
+					ShaderStage.Vertex,
+					ShaderFormat.SECRET
+				);
+
+				textFragShader = new Shader(
+					this,
+					textFragPath,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SECRET
+				);
 			}
 			else
 			{
@@ -122,13 +153,32 @@ namespace MoonWorks.Graphics
 				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.refresh");
 				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh");
 
-				textVertShader = new ShaderModule(this, vertStream);
-				textFragShader = new ShaderModule(this, fragStream);
+				textVertShader = new Shader(
+					this,
+					vertStream,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SPIRV
+				);
+
+				textFragShader = new Shader(
+					this,
+					fragStream,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SPIRV
+				);
 			}
 
 			if (File.Exists(blitFragPath))
 			{
-				blitFragShader = new ShaderModule(this, blitFragPath);
+				blitFragShader = new Shader(
+					this,
+					blitFragPath,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SECRET
+				);
 			}
 			else
 			{
@@ -136,7 +186,13 @@ namespace MoonWorks.Graphics
 				var assembly = typeof(GraphicsDevice).Assembly;
 
 				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Blit.frag.refresh");
-				blitFragShader = new ShaderModule(this, fragStream);
+				blitFragShader = new Shader(
+					this,
+					fragStream,
+					"main",
+					ShaderStage.Fragment,
+					ShaderFormat.SPIRV
+				);
 			}
 
 			VideoPipeline = new GraphicsPipeline(
@@ -150,16 +206,12 @@ namespace MoonWorks.Graphics
 						)
 					),
 					DepthStencilState = DepthStencilState.Disable,
-					VertexShaderResourceInfo = GraphicsShaderInfo.Create(
-						fullscreenVertShader,
-						"main",
-						0
-					),
-					FragmentShaderResourceInfo = GraphicsShaderInfo.Create(
-						videoFragShader,
-						"main",
-						3
-					),
+					VertexShader = fullscreenVertShader,
+					FragmentShader = videoFragShader,
+					FragmentShaderResourceInfo = new GraphicsPipelineResourceInfo
+					{
+						SamplerCount = 3
+					},
 					VertexInputState = VertexInputState.Empty,
 					RasterizerState = RasterizerState.CCW_CullNone,
 					PrimitiveType = PrimitiveType.TriangleList,
@@ -167,36 +219,15 @@ namespace MoonWorks.Graphics
 				}
 			);
 
-			BlitPipeline = new GraphicsPipeline(
-				this,
-				new GraphicsPipelineCreateInfo
-				{
-					AttachmentInfo = new GraphicsPipelineAttachmentInfo(
-						new ColorAttachmentDescription(
-							TextureFormat.R8G8B8A8,
-							ColorAttachmentBlendState.None
-						)
-					),
-					DepthStencilState = DepthStencilState.Disable,
-					VertexShaderResourceInfo = GraphicsShaderInfo.Create(
-						fullscreenVertShader,
-						"main",
-						0
-					),
-					FragmentShaderResourceInfo = GraphicsShaderInfo.Create(
-						blitFragShader,
-						"main",
-						1
-					),
-					VertexInputState = VertexInputState.Empty,
-					RasterizerState = RasterizerState.CCW_CullNone,
-					PrimitiveType = PrimitiveType.TriangleList,
-					MultisampleState = MultisampleState.None
-				}
-			);
+			TextVertexShader = textVertShader;
+			TextVertexShaderInfo = new GraphicsPipelineResourceInfo();
 
-			TextVertexShaderInfo = GraphicsShaderInfo.Create<Math.Float.Matrix4x4>(textVertShader, "main", 0);
-			TextFragmentShaderInfo = GraphicsShaderInfo.Create<float>(textFragShader, "main", 1);
+			TextFragmentShader = textFragShader;
+			TextFragmentShaderInfo = new GraphicsPipelineResourceInfo
+			{
+				SamplerCount = 1
+			};
+
 			TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>();
 
 			PointSampler = new Sampler(this, SamplerCreateInfo.PointClamp);
@@ -209,28 +240,35 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Prepares a window so that frames can be presented to it.
 		/// </summary>
+		/// <param name="swapchainComposition">The desired composition of the swapchain. Ignore this unless you are using HDR or tonemapping.</param>
 		/// <param name="presentMode">The desired presentation mode for the window. Roughly equivalent to V-Sync.</param>
 		/// <returns>True if successfully claimed.</returns>
-		public bool ClaimWindow(Window window, PresentMode presentMode)
-		{
+		public bool ClaimWindow(
+			Window window,
+			SwapchainComposition swapchainComposition,
+			PresentMode presentMode
+		) {
 			if (window.Claimed)
 			{
 				Logger.LogError("Window already claimed!");
 				return false;
 			}
 
-			var success = Conversions.ByteToBool(
-				Refresh.Refresh_ClaimWindow(
+			var success = Conversions.IntToBool(
+				SDL_Gpu.SDL_GpuClaimWindow(
 					Handle,
 					window.Handle,
-					(Refresh.PresentMode) presentMode
+					(SDL_Gpu.SwapchainComposition) swapchainComposition,
+					(SDL_Gpu.PresentMode) presentMode
 				)
 			);
 
 			if (success)
 			{
 				window.Claimed = true;
+				window.SwapchainComposition = swapchainComposition;
 				window.SwapchainFormat = GetSwapchainFormat(window);
+
 				if (window.SwapchainTexture == null)
 				{
 					window.SwapchainTexture = new Texture(this, window.SwapchainFormat);
@@ -247,7 +285,7 @@ namespace MoonWorks.Graphics
 		{
 			if (window.Claimed)
 			{
-				Refresh.Refresh_UnclaimWindow(
+				SDL_Gpu.SDL_GpuUnclaimWindow(
 					Handle,
 					window.Handle
 				);
@@ -265,18 +303,22 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="window"></param>
 		/// <param name="presentMode"></param>
-		public void SetPresentMode(Window window, PresentMode presentMode)
-		{
+		public void SetSwapchainParameters(
+			Window window,
+			SwapchainComposition swapchainComposition,
+			PresentMode presentMode
+		) {
 			if (!window.Claimed)
 			{
 				Logger.LogError("Cannot set present mode on unclaimed window!");
 				return;
 			}
 
-			Refresh.Refresh_SetSwapchainPresentMode(
+			SDL_Gpu.SDL_GpuSetSwapchainParameters(
 				Handle,
 				window.Handle,
-				(Refresh.PresentMode) presentMode
+				(SDL_Gpu.SwapchainComposition) swapchainComposition,
+				(SDL_Gpu.PresentMode) presentMode
 			);
 		}
 
@@ -288,7 +330,7 @@ namespace MoonWorks.Graphics
 		public CommandBuffer AcquireCommandBuffer()
 		{
 			var commandBuffer = CommandBufferPool.Obtain();
-			commandBuffer.SetHandle(Refresh.Refresh_AcquireCommandBuffer(Handle));
+			commandBuffer.SetHandle(SDL_Gpu.SDL_GpuAcquireCommandBuffer(Handle));
 #if DEBUG
 			commandBuffer.ResetStateTracking();
 #endif
@@ -307,8 +349,7 @@ namespace MoonWorks.Graphics
 			}
 #endif
 
-			Refresh.Refresh_Submit(
-				Handle,
+			SDL_Gpu.SDL_GpuSubmit(
 				commandBuffer.Handle
 			);
 
@@ -325,8 +366,7 @@ namespace MoonWorks.Graphics
 		/// <returns></returns>
 		public Fence SubmitAndAcquireFence(CommandBuffer commandBuffer)
 		{
-			var fenceHandle = Refresh.Refresh_SubmitAndAcquireFence(
-				Handle,
+			var fenceHandle = SDL_Gpu.SDL_GpuSubmitAndAcquireFence(
 				commandBuffer.Handle
 			);
 
@@ -341,7 +381,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void Wait()
 		{
-			Refresh.Refresh_Wait(Handle);
+			SDL_Gpu.SDL_GpuWait(Handle);
 		}
 
 		/// <summary>
@@ -349,14 +389,13 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public unsafe void WaitForFences(Fence fence)
 		{
-			var handlePtr = stackalloc nint[1];
-			handlePtr[0] = fence.Handle;
+			var fenceHandle = fence.Handle;
 
-			Refresh.Refresh_WaitForFences(
+			SDL_Gpu.SDL_GpuWaitForFences(
 				Handle,
 				1,
 				1,
-				(nint) handlePtr
+				&fenceHandle
 			);
 		}
 
@@ -373,11 +412,11 @@ namespace MoonWorks.Graphics
 			handlePtr[0] = fenceOne.Handle;
 			handlePtr[1] = fenceTwo.Handle;
 
-			Refresh.Refresh_WaitForFences(
+			SDL_Gpu.SDL_GpuWaitForFences(
 				Handle,
-				Conversions.BoolToByte(waitAll),
+				Conversions.BoolToInt(waitAll),
 				2,
-				(nint) handlePtr
+				handlePtr
 			);
 		}
 
@@ -396,11 +435,11 @@ namespace MoonWorks.Graphics
 			handlePtr[1] = fenceTwo.Handle;
 			handlePtr[2] = fenceThree.Handle;
 
-			Refresh.Refresh_WaitForFences(
+			SDL_Gpu.SDL_GpuWaitForFences(
 				Handle,
-				Conversions.BoolToByte(waitAll),
+				Conversions.BoolToInt(waitAll),
 				3,
-				(nint) handlePtr
+				handlePtr
 			);
 		}
 
@@ -421,11 +460,11 @@ namespace MoonWorks.Graphics
 			handlePtr[2] = fenceThree.Handle;
 			handlePtr[3] = fenceFour.Handle;
 
-			Refresh.Refresh_WaitForFences(
+			SDL_Gpu.SDL_GpuWaitForFences(
 				Handle,
-				Conversions.BoolToByte(waitAll),
+				Conversions.BoolToInt(waitAll),
 				4,
-				(nint) handlePtr
+				handlePtr
 			);
 		}
 
@@ -433,7 +472,7 @@ namespace MoonWorks.Graphics
 		/// Wait for one or more fences to become signaled.
 		/// </summary>
 		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
-		public unsafe void WaitForFences(Fence[] fences, bool waitAll)
+		public unsafe void WaitForFences(Span<Fence> fences, bool waitAll)
 		{
 			var handlePtr = stackalloc nint[fences.Length];
 
@@ -442,11 +481,11 @@ namespace MoonWorks.Graphics
 				handlePtr[i] = fences[i].Handle;
 			}
 
-			Refresh.Refresh_WaitForFences(
+			SDL_Gpu.SDL_GpuWaitForFences(
 				Handle,
-				Conversions.BoolToByte(waitAll),
+				Conversions.BoolToInt(waitAll),
 				4,
-				(nint) handlePtr
+				handlePtr
 			);
 		}
 
@@ -456,7 +495,7 @@ namespace MoonWorks.Graphics
 		/// <exception cref="InvalidOperationException">Throws if the fence query indicates that the graphics device has been lost.</exception>
 		public bool QueryFence(Fence fence)
 		{
-			var result = Refresh.Refresh_QueryFence(Handle, fence.Handle);
+			var result = SDL_Gpu.SDL_GpuQueryFence(Handle, fence.Handle);
 
 			if (result < 0)
 			{
@@ -471,126 +510,19 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void ReleaseFence(Fence fence)
 		{
-			Refresh.Refresh_ReleaseFence(Handle, fence.Handle);
+			SDL_Gpu.SDL_GpuReleaseFence(Handle, fence.Handle);
 			fence.Handle = IntPtr.Zero;
 			FencePool.Return(fence);
 		}
 
-		/// <summary>
-		/// ⚠️⚠️⚠️ <br/>
-		/// Downloads data from a Texture to a TransferBuffer.
-		/// This copy occurs immediately on the CPU timeline.<br/>
-		///
-		/// If you modify this texture in a command buffer and then call this function without calling
-		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
-		///
-		/// This method forces a sync point and is generally a bad thing to do.
-		/// Only use it if you have exhausted all other options.<br/>
-		///
-		/// Remember: friends don't let friends readback.<br/>
-		/// ⚠️⚠️⚠️
-		/// </summary>
-		public void DownloadFromTexture(
-			in TextureRegion textureRegion,
-			TransferBuffer transferBuffer,
-			in BufferImageCopy copyParams,
-			TransferOptions transferOption
-		) {
-			Refresh.Refresh_DownloadFromTexture(
-				Handle,
-				textureRegion.ToRefreshTextureRegion(),
-				transferBuffer.Handle,
-				copyParams.ToRefresh(),
-				(Refresh.TransferOptions) transferOption
-			);
-		}
-
-		/// <summary>
-		/// ⚠️⚠️⚠️ <br/>
-		/// Downloads all data from a 2D texture with no mips to a TransferBuffer.
-		/// This copy occurs immediately on the CPU timeline.<br/>
-		///
-		/// If you modify this texture in a command buffer and then call this function without calling
-		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
-		///
-		/// This method forces a sync point and is generally a bad thing to do.
-		/// Only use it if you have exhausted all other options.<br/>
-		///
-		/// Remember: friends don't let friends readback.<br/>
-		/// ⚠️⚠️⚠️
-		/// </summary>
-		public void DownloadFromTexture(
-			Texture texture,
-			TransferBuffer transferBuffer,
-			TransferOptions transferOption
-		) {
-			DownloadFromTexture(
-				new TextureRegion(texture),
-				transferBuffer,
-				new BufferImageCopy(0, 0, 0),
-				transferOption
-			);
-		}
-
-		/// <summary>
-		/// ⚠️⚠️⚠️ <br/>
-		/// Downloads data from a GpuBuffer to a TransferBuffer.
-		/// This copy occurs immediately on the CPU timeline.<br/>
-		///
-		/// If you modify this GpuBuffer in a command buffer and then call this function without calling
-		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
-		///
-		/// This method forces a sync point and is generally a bad thing to do.
-		/// Only use it if you have exhausted all other options.<br/>
-		///
-		/// Remember: friends don't let friends readback.<br/>
-		/// ⚠️⚠️⚠️
-		/// </summary>
-		public void DownloadFromBuffer(
-			GpuBuffer gpuBuffer,
-			TransferBuffer transferBuffer,
-			in BufferCopy copyParams,
-			TransferOptions transferOption
-		) {
-			Refresh.Refresh_DownloadFromBuffer(
-				Handle,
-				gpuBuffer.Handle,
-				transferBuffer.Handle,
-				copyParams.ToRefresh(),
-				(Refresh.TransferOptions) transferOption
-			);
-		}
-
-		/// <summary>
-		/// ⚠️⚠️⚠️ <br/>
-		/// Downloads all data in a GpuBuffer to a TransferBuffer.
-		/// This copy occurs immediately on the CPU timeline.<br/>
-		///
-		/// If you modify this GpuBuffer in a command buffer and then call this function without calling
-		/// SubmitAndAcquireFence and WaitForFences first, the results will not be what you expect.<br/>
-		///
-		/// This method forces a sync point and is generally a bad thing to do.
-		/// Only use it if you have exhausted all other options.<br/>
-		///
-		/// Remember: friends don't let friends readback.<br/>
-		/// ⚠️⚠️⚠️
-		/// </summary>
-		public void DownloadFromBuffer(
-			GpuBuffer gpuBuffer,
-			TransferBuffer transferBuffer,
-			TransferOptions option
-		) {
-			DownloadFromBuffer(
-				gpuBuffer,
-				transferBuffer,
-				new BufferCopy(0, 0, gpuBuffer.Size),
-				option
-			);
-		}
-
 		private TextureFormat GetSwapchainFormat(Window window)
 		{
-			return (TextureFormat) Refresh.Refresh_GetSwapchainFormat(Handle, window.Handle);
+			if (!window.Claimed)
+			{
+				throw new System.ArgumentException("Cannot get swapchain format of unclaimed window!");
+			}
+
+			return (TextureFormat) SDL_Gpu.SDL_GpuGetSwapchainTextureFormat(Handle, window.Handle);
 		}
 
 		internal void AddResourceReference(GCHandle resourceReference)
@@ -638,7 +570,7 @@ namespace MoonWorks.Graphics
 					}
 				}
 
-				Refresh.Refresh_DestroyDevice(Handle);
+				SDL_Gpu.SDL_GpuDestroyDevice(Handle);
 
 				IsDisposed = true;
 			}
