@@ -56,12 +56,12 @@ public class ComputePass
 		AssertTextureHasComputeStorageReadFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToRefresh();
+		var refreshTextureSlice = textureSlice.ToRefresh();
 
 		Refresh.Refresh_BindComputeStorageTextures(
 			Handle,
 			slot,
-			&sdlTextureSlice,
+			&refreshTextureSlice,
 			1
 		);
 	}

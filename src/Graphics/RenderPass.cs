@@ -117,12 +117,12 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		var sdlBufferBinding = bufferBinding.ToRefresh();
+		var refreshBufferBinding = bufferBinding.ToRefresh();
 
 		Refresh.Refresh_BindVertexBuffers(
 			Handle,
 			firstBinding,
-			&sdlBufferBinding,
+			&refreshBufferBinding,
 			1
 		);
 	}
@@ -163,12 +163,12 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var sdlTextureSamplerBinding = textureSamplerBinding.ToRefresh();
+		var refreshTextureSamplerBinding = textureSamplerBinding.ToRefresh();
 
 		Refresh.Refresh_BindVertexSamplers(
 			Handle,
 			slot,
-			&sdlTextureSamplerBinding,
+			&refreshTextureSamplerBinding,
 			1
 		);
 	}
@@ -183,12 +183,12 @@ public class RenderPass
 		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToRefresh();
+		var refreshTextureSlice = textureSlice.ToRefresh();
 
 		Refresh.Refresh_BindVertexStorageTextures(
 			Handle,
 			slot,
-			&sdlTextureSlice,
+			&refreshTextureSlice,
 			1
 		);
 	}
@@ -223,12 +223,12 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var sdlTextureSamplerBinding = textureSamplerBinding.ToRefresh();
+		var refreshTextureSamplerBinding = textureSamplerBinding.ToRefresh();
 
 		Refresh.Refresh_BindFragmentSamplers(
 			Handle,
 			slot,
-			&sdlTextureSamplerBinding,
+			&refreshTextureSamplerBinding,
 			1
 		);
 	}
@@ -243,12 +243,12 @@ public class RenderPass
 		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToRefresh();
+		var refreshTextureSlice = textureSlice.ToRefresh();
 
 		Refresh.Refresh_BindFragmentStorageTextures(
 			Handle,
 			slot,
-			&sdlTextureSlice,
+			&refreshTextureSlice,
 			1
 		);
 	}

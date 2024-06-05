@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using RefreshCS;
-using SDL2;
 
 namespace MoonWorks.Graphics
 {

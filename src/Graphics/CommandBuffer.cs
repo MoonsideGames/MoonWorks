@@ -122,12 +122,12 @@ public class CommandBuffer
 		AssertColorTarget(colorAttachmentInfo);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			1,
 			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
@@ -170,13 +170,13 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			2,
 			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
@@ -226,14 +226,14 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			3,
 			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
@@ -289,15 +289,15 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			4,
 			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
@@ -333,13 +333,13 @@ public class CommandBuffer
 		AssertValidDepthAttachment(depthStencilAttachmentInfo);
 #endif
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			(Refresh.ColorAttachmentInfo*) nint.Zero,
 			0,
-			&sdlDepthStencilAttachmentInfo
+			&refreshDepthStencilAttachmentInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -375,16 +375,16 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfo.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			1,
-			&sdlDepthStencilAttachmentInfo
+			&refreshDepthStencilAttachmentInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -430,17 +430,17 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			2,
-			&sdlDepthStencilAttachmentInfo
+			&refreshDepthStencilAttachmentInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -493,18 +493,18 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			3,
-			&sdlDepthStencilAttachmentInfo
+			&refreshDepthStencilAttachmentInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -564,19 +564,19 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
+		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
+		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
 		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			sdlColorAttachmentInfos,
+			refreshColorAttachmentInfos,
 			4,
-			&sdlDepthStencilAttachmentInfo
+			&refreshDepthStencilAttachmentInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -650,11 +650,11 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlTextureBinding = readWriteTextureBinding.ToRefresh();
+		var refreshTextureBinding = readWriteTextureBinding.ToRefresh();
 
 		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
-			&sdlTextureBinding,
+			&refreshTextureBinding,
 			1,
 			(Refresh.StorageBufferReadWriteBinding*) nint.Size,
 			0
@@ -679,13 +679,13 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlBufferBinding = readWriteBufferBinding.ToRefresh();
+		var refreshBufferBinding = readWriteBufferBinding.ToRefresh();
 
 		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
 			(Refresh.StorageTextureReadWriteBinding*) nint.Zero,
 			0,
-			&sdlBufferBinding,
+			&refreshBufferBinding,
 			1
 		);
 
@@ -709,14 +709,14 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlTextureBinding = readWriteTextureBinding.ToRefresh();
-		var sdlBufferBinding = readWriteBufferBinding.ToRefresh();
+		var refreshTextureBinding = readWriteTextureBinding.ToRefresh();
+		var refreshBufferBinding = readWriteBufferBinding.ToRefresh();
 
 		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
-			&sdlTextureBinding,
+			&refreshTextureBinding,
 			1,
-			&sdlBufferBinding,
+			&refreshBufferBinding,
 			1
 		);
 
@@ -740,19 +740,19 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlTextureBindings = NativeMemory.Alloc(
+		var refreshTextureBindings = NativeMemory.Alloc(
 			(nuint) (readWriteTextureBindings.Length * Marshal.SizeOf<StorageTextureReadWriteBinding>())
 		);
 
-		var sdlBufferBindings = NativeMemory.Alloc(
+		var refreshBufferBindings = NativeMemory.Alloc(
 			(nuint) (readWriteBufferBindings.Length * Marshal.SizeOf<StorageBufferReadWriteBinding>())
 		);
 
 		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
-			(Refresh.StorageTextureReadWriteBinding*) sdlTextureBindings,
+			(Refresh.StorageTextureReadWriteBinding*) refreshTextureBindings,
 			(uint) readWriteTextureBindings.Length,
-			(Refresh.StorageBufferReadWriteBinding*) sdlBufferBindings,
+			(Refresh.StorageBufferReadWriteBinding*) refreshBufferBindings,
 			(uint) readWriteBufferBindings.Length
 		);
 
@@ -763,8 +763,8 @@ public class CommandBuffer
 		computePass.active = true;
 #endif
 
-		NativeMemory.Free(sdlTextureBindings);
-		NativeMemory.Free(sdlBufferBindings);
+		NativeMemory.Free(refreshTextureBindings);
+		NativeMemory.Free(refreshBufferBindings);
 
 		return computePass;
 	}

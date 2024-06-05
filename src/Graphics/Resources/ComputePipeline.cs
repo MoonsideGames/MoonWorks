@@ -18,7 +18,7 @@ namespace MoonWorks.Graphics
 			ComputePipelineResourceInfo resourceInfo
 		) : base(device)
 		{
-			var sdlComputePipelineCreateInfo = new Refresh.ComputePipelineCreateInfo
+			var refreshComputePipelineCreateInfo = new Refresh.ComputePipelineCreateInfo
 			{
 				ComputeShader = computeShader.Handle,
 				PipelineResourceInfo = resourceInfo.ToRefresh()
@@ -26,7 +26,7 @@ namespace MoonWorks.Graphics
 
 			Handle = Refresh.Refresh_CreateComputePipeline(
 				device.Handle,
-				sdlComputePipelineCreateInfo
+				refreshComputePipelineCreateInfo
 			);
 
 			if (Handle == IntPtr.Zero)
