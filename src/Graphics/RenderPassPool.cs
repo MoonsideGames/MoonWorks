@@ -1,26 +1,25 @@
 using System.Collections.Concurrent;
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics;
+
+internal class RenderPassPool
 {
-	internal class RenderPassPool
+	private ConcurrentQueue<RenderPass> RenderPasses = new ConcurrentQueue<RenderPass>();
+
+	public RenderPass Obtain()
 	{
-		private ConcurrentQueue<RenderPass> RenderPasses = new ConcurrentQueue<RenderPass>();
-
-		public RenderPass Obtain()
+		if (RenderPasses.TryDequeue(out var renderPass))
 		{
-			if (RenderPasses.TryDequeue(out var renderPass))
-			{
-				return renderPass;
-			}
-			else
-			{
-				return new RenderPass();
-			}
+			return renderPass;
 		}
-
-		public void Return(RenderPass renderPass)
+		else
 		{
-			RenderPasses.Enqueue(renderPass);
+			return new RenderPass();
 		}
+	}
+
+	public void Return(RenderPass renderPass)
+	{
+		RenderPasses.Enqueue(renderPass);
 	}
 }

@@ -840,6 +840,88 @@ public readonly record struct GraphicsPipelineResourceInfo(
 	}
 }
 
+public readonly record struct ComputePipelineResourceInfo(
+	uint ReadOnlyStorageTextureCount,
+	uint ReadOnlyStorageBufferCount,
+	uint ReadWriteStorageTextureCount,
+	uint ReadWriteStorageBufferCount,
+	uint UniformBufferCount
+) {
+	public SDL_Gpu.ComputePipelineResourceInfo ToSDL()
+	{
+		return new SDL_Gpu.ComputePipelineResourceInfo
+		{
+			ReadOnlyStorageTextureCount = ReadOnlyStorageTextureCount,
+			ReadOnlyStorageBufferCount = ReadOnlyStorageBufferCount,
+			ReadWriteStorageTextureCount = ReadWriteStorageTextureCount,
+			ReadWriteStorageBufferCount = ReadWriteStorageBufferCount,
+			UniformBufferCount = UniformBufferCount
+		};
+	}
+}
+
+/// <summary>
+/// A buffer-offset pair to be used when binding buffers.
+/// </summary>
+public readonly record struct BufferBinding(
+	GpuBuffer Buffer,
+	uint Offset
+) {
+	public SDL_Gpu.BufferBinding ToSDL()
+	{
+		return new SDL_Gpu.BufferBinding
+		{
+			Buffer = Buffer.Handle,
+			Offset = Offset
+		};
+	}
+}
+
+/// <summary>
+/// A texture-sampler pair to be used when binding samplers.
+/// </summary>
+public readonly record struct TextureSamplerBinding(
+	Texture Texture,
+	Sampler Sampler
+) {
+	public SDL_Gpu.TextureSamplerBinding ToSDL()
+	{
+		return new SDL_Gpu.TextureSamplerBinding
+		{
+			Texture = Texture.Handle,
+			Sampler = Sampler.Handle
+		};
+	}
+}
+
+public readonly record struct StorageBufferReadWriteBinding(
+	GpuBuffer Buffer,
+	bool cycle
+) {
+	public SDL_Gpu.StorageBufferReadWriteBinding ToSDL()
+	{
+		return new SDL_Gpu.StorageBufferReadWriteBinding
+		{
+			Buffer = Buffer.Handle,
+			Cycle = Conversions.BoolToInt(cycle)
+		};
+	}
+}
+
+public readonly record struct StorageTextureReadWriteBinding(
+	in TextureSlice TextureSlice,
+	bool cycle
+) {
+	public SDL_Gpu.StorageTextureReadWriteBinding ToSDL()
+	{
+		return new SDL_Gpu.StorageTextureReadWriteBinding
+		{
+			TextureSlice = TextureSlice.ToSDL(),
+			Cycle = Conversions.BoolToInt(cycle)
+		};
+	}
+}
+
 /// <summary>
 /// All of the information that is used to create a GraphicsPipeline.
 /// </summary>

@@ -641,401 +641,106 @@ public class CommandBuffer
 		);
 	}
 
-	public void BeginComputePass()
-	{
+	public unsafe ComputePass BeginComputePass(
+		in StorageTextureReadWriteBinding readWriteTextureBinding
+	) {
 #if DEBUG
 		AssertNotSubmitted();
 		AssertNotInPass("Cannot begin compute pass while in another pass!");
 		computePassActive = true;
 #endif
 
-		Refresh.Refresh_BeginComputePass(
-			Device.Handle,
-			Handle
+		var sdlTextureBinding = readWriteTextureBinding.ToSDL();
+
+		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+			Handle,
+			&sdlTextureBinding,
+			1,
+			(SDL_Gpu.StorageBufferReadWriteBinding*) nint.Size,
+			0
 		);
+
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
+#if DEBUG
+		computePass.active = true;
+#endif
+
+		return computePass;
 	}
 
-	/// <summary>
-	/// Binds a compute pipeline so that compute work may be dispatched.
-	/// </summary>
-	/// <param name="computePipeline">The compute pipeline to bind.</param>
-	public void BindComputePipeline(
-		ComputePipeline computePipeline
+	public unsafe ComputePass BeginComputePass(
+		in StorageBufferReadWriteBinding readWriteBufferBinding
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute pipeline outside of compute pass!");
+		AssertNotInPass("Cannot begin compute pass while in another pass!");
+		computePassActive = true;
 #endif
 
-		Refresh.Refresh_BindComputePipeline(
-			Device.Handle,
+		var sdlBufferBinding = readWriteBufferBinding.ToSDL();
+
+		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
 			Handle,
-			computePipeline.Handle
+			(SDL_Gpu.StorageTextureReadWriteBinding*) nint.Zero,
+			0,
+			&sdlBufferBinding,
+			1
 		);
 
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
 #if DEBUG
-		currentComputePipeline = computePipeline;
+		computePass.active = true;
 #endif
+
+		return computePass;
 	}
 
-	/// <summary>
-	/// Binds a buffer to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeBuffers(
-		ComputeBufferBinding binding
+	public unsafe ComputePass BeginComputePass(
+		in StorageTextureReadWriteBinding readWriteTextureBinding,
+		in StorageBufferReadWriteBinding readWriteBufferBinding
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeBufferCount(1);
+		AssertNotInPass("Cannot begin compute pass while in another pass!");
+		computePassActive = true;
 #endif
 
-		var bindingArray = stackalloc Refresh.ComputeBufferBinding[1];
-		bindingArray[0] = binding.ToRefresh();
+		var sdlTextureBinding = readWriteTextureBinding.ToSDL();
+		var sdlBufferBinding = readWriteBufferBinding.ToSDL();
 
-		Refresh.Refresh_BindComputeBuffers(
-			Device.Handle,
+		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
 			Handle,
-			bindingArray
+			&sdlTextureBinding,
+			1,
+			&sdlBufferBinding,
+			1
 		);
-	}
 
-	/// <summary>
-	/// Binds buffers to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeBuffers(
-		ComputeBufferBinding bindingOne,
-		ComputeBufferBinding bindingTwo
-	) {
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
 #if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeBufferCount(2);
+		computePass.active = true;
 #endif
 
-		var bindingArray = stackalloc Refresh.ComputeBufferBinding[2];
-		bindingArray[0] = bindingOne.ToRefresh();
-		bindingArray[1] = bindingTwo.ToRefresh();
-
-		Refresh.Refresh_BindComputeBuffers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
+		return computePass;
 	}
 
-	/// <summary>
-	/// Binds buffers to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeBuffers(
-		ComputeBufferBinding bindingOne,
-		ComputeBufferBinding bindingTwo,
-		ComputeBufferBinding bindingThree
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeBufferCount(3);
-#endif
-
-		var bindingArray = stackalloc Refresh.ComputeBufferBinding[3];
-		bindingArray[0] = bindingOne.ToRefresh();
-		bindingArray[1] = bindingTwo.ToRefresh();
-		bindingArray[2] = bindingThree.ToRefresh();
-
-		Refresh.Refresh_BindComputeBuffers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds buffers to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeBuffers(
-		ComputeBufferBinding bindingOne,
-		ComputeBufferBinding bindingTwo,
-		ComputeBufferBinding bindingThree,
-		ComputeBufferBinding bindingFour
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeBufferCount(4);
-#endif
-
-		var bindingArray = stackalloc Refresh.ComputeBufferBinding[4];
-		bindingArray[0] = bindingOne.ToRefresh();
-		bindingArray[1] = bindingTwo.ToRefresh();
-		bindingArray[2] = bindingThree.ToRefresh();
-		bindingArray[3] = bindingFour.ToRefresh();
-
-		Refresh.Refresh_BindComputeBuffers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds buffers to be used in the compute shader.
-	/// </summary>
-	/// <param name="buffers">A Span of buffers to bind.</param>
-	public unsafe void BindComputeBuffers(
-		in Span<ComputeBufferBinding> bindings
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute buffers outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeBufferCount(bindings.Length);
-#endif
-
-		Refresh.ComputeBufferBinding* bindingArray = (Refresh.ComputeBufferBinding*) NativeMemory.Alloc(
-			(nuint) (Marshal.SizeOf<ComputeBufferBinding>() * bindings.Length)
-		);
-
-		for (var i = 0; i < bindings.Length; i += 1)
-		{
-			bindingArray[i] = bindings[i].ToRefresh();
-		}
-
-		Refresh.Refresh_BindComputeBuffers(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-
-		NativeMemory.Free(bindingArray);
-	}
-
-	/// <summary>
-	/// Binds a texture slice to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeTextures(
-		ComputeTextureBinding binding
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeTextureCount(1);
-#endif
-
-		var bindingArray = stackalloc Refresh.ComputeTextureBinding[1];
-		bindingArray[0] = binding.ToRefresh();
-
-		Refresh.Refresh_BindComputeTextures(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds textures to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeTextures(
-		ComputeTextureBinding bindingOne,
-		ComputeTextureBinding bindingTwo
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeTextureCount(2);
-#endif
-
-		var bindingArray = stackalloc Refresh.ComputeTextureBinding[2];
-		bindingArray[0] = bindingOne.ToRefresh();
-		bindingArray[1] = bindingTwo.ToRefresh();
-
-		Refresh.Refresh_BindComputeTextures(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds textures to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeTextures(
-		ComputeTextureBinding bindingOne,
-		ComputeTextureBinding bindingTwo,
-		ComputeTextureBinding bindingThree
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeTextureCount(3);
-#endif
-
-		var bindingArray = stackalloc Refresh.ComputeTextureBinding[3];
-		bindingArray[0] = bindingOne.ToRefresh();
-		bindingArray[1] = bindingTwo.ToRefresh();
-		bindingArray[2] = bindingThree.ToRefresh();
-
-		Refresh.Refresh_BindComputeTextures(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-	}
-
-	/// <summary>
-	/// Binds textures to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeTextures(
-		ComputeTextureBinding bindingOne,
-		ComputeTextureBinding bindingTwo,
-		ComputeTextureBinding bindingThree,
-		ComputeTextureBinding bindingFour
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeTextureCount(4);
-#endif
-
-		var textureSlicePtrs = stackalloc Refresh.ComputeTextureBinding[4];
-		textureSlicePtrs[0] = bindingOne.ToRefresh();
-		textureSlicePtrs[1] = bindingTwo.ToRefresh();
-		textureSlicePtrs[2] = bindingThree.ToRefresh();
-		textureSlicePtrs[3] = bindingFour.ToRefresh();
-
-		Refresh.Refresh_BindComputeTextures(
-			Device.Handle,
-			Handle,
-			textureSlicePtrs
-		);
-	}
-
-	/// <summary>
-	/// Binds textures to be used in the compute shader.
-	/// </summary>
-	public unsafe void BindComputeTextures(
-		in Span<ComputeTextureBinding> bindings
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot bind compute textures outside of compute pass!");
-		AssertComputePipelineBound();
-		AssertComputeTextureCount(bindings.Length);
-#endif
-
-		Refresh.ComputeTextureBinding* bindingArray = (Refresh.ComputeTextureBinding*) NativeMemory.Alloc(
-			(nuint) (Marshal.SizeOf<Refresh.TextureSlice>() * bindings.Length)
-		);
-
-		for (var i = 0; i < bindings.Length; i += 1)
-		{
-			bindingArray[i] = bindings[i].ToRefresh();
-		}
-
-		Refresh.Refresh_BindComputeTextures(
-			Device.Handle,
-			Handle,
-			bindingArray
-		);
-
-		NativeMemory.Free(bindingArray);
-	}
-
-	/// <summary>
-	/// Pushes compute shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset to be used with dispatch calls.</returns>
-	public unsafe void PushComputeShaderUniforms(
-		void* uniformsPtr,
-		uint size
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertComputePipelineBound();
-
-		if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize == 0)
-		{
-			throw new System.InvalidOperationException("The current compute shader does not take a uniform buffer!");
-		}
-
-		if (currentComputePipeline.ComputeShaderInfo.UniformBufferSize != size)
-		{
-			throw new InvalidOperationException("Compute uniform data size mismatch!");
-		}
-#endif
-
-		Refresh.Refresh_PushComputeShaderUniforms(
-			Device.Handle,
-			Handle,
-			(IntPtr) uniformsPtr,
-			size
-		);
-	}
-
-	/// <summary>
-	/// Pushes compute shader uniforms to the device.
-	/// </summary>
-	/// <returns>A starting offset to be used with dispatch calls.</returns>
-	public unsafe void PushComputeShaderUniforms<T>(
-		in T uniforms
-	) where T : unmanaged
-	{
-		fixed (T* uniformsPtr = &uniforms)
-		{
-			PushComputeShaderUniforms(uniformsPtr, (uint) Marshal.SizeOf<T>());
-		}
-	}
-
-	/// <summary>
-	/// Dispatches compute work.
-	/// </summary>
-	/// <param name="groupCountX"></param>
-	/// <param name="groupCountY"></param>
-	/// <param name="groupCountZ"></param>
-	/// <param name="computeParamOffset"></param>
-	public void DispatchCompute(
-		uint groupCountX,
-		uint groupCountY,
-		uint groupCountZ
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInComputePass("Cannot dispatch compute outside of compute pass!");
-		AssertComputePipelineBound();
-
-		if (groupCountX < 1 || groupCountY < 1 || groupCountZ < 1)
-		{
-			throw new ArgumentException("All dimensions for the compute work group must be >= 1!");
-		}
-#endif
-
-		Refresh.Refresh_DispatchCompute(
-			Device.Handle,
-			Handle,
-			groupCountX,
-			groupCountY,
-			groupCountZ
-		);
-	}
-
-	public void EndComputePass()
+	public void EndComputePass(ComputePass computePass)
 	{
 #if DEBUG
+		AssertNotSubmitted();
 		AssertInComputePass("Cannot end compute pass while not in a compute pass!");
 		computePassActive = false;
+		computePass.active = false;
 #endif
 
-		Refresh.Refresh_EndComputePass(
-			Device.Handle,
-			Handle
+		SDL_Gpu.SDL_GpuEndComputePass(
+			computePass.Handle
 		);
 	}
 

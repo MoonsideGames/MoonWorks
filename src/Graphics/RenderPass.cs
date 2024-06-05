@@ -9,7 +9,7 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class RenderPass
 {
-	public nint Handle { get; internal set; }
+	public nint Handle { get; private set; }
 
 #if DEBUG
 	internal bool active;
@@ -296,12 +296,13 @@ public class RenderPass
 	}
 
 	public unsafe void PushVertexUniformData<T>(
-		in T uniforms
+		in T uniforms,
+		uint slot = 0
 	) where T : unmanaged
 	{
 		fixed (T* uniformsPtr = &uniforms)
 		{
-			PushVertexUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>());
+			PushVertexUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
 		}
 	}
 
@@ -328,12 +329,13 @@ public class RenderPass
 	}
 
 	public unsafe void PushFragmentUniformData<T>(
-		in T uniforms
+		in T uniforms,
+		uint slot = 0
 	) where T : unmanaged
 	{
 		fixed (T* uniformsPtr = &uniforms)
 		{
-			PushFragmentUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>());
+			PushFragmentUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
 		}
 	}
 

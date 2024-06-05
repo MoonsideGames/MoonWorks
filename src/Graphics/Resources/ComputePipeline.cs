@@ -1,4 +1,4 @@
-﻿using RefreshCS;
+﻿using SDL2_gpuCS;
 using System;
 
 namespace MoonWorks.Graphics
@@ -8,34 +8,33 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class ComputePipeline : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyComputePipeline;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseComputePipeline;
 
-		public ComputeShaderInfo ComputeShaderInfo { get; }
+		public ComputePipelineResourceInfo ResourceInfo { get; }
 
 		public unsafe ComputePipeline(
 			GraphicsDevice device,
-			ComputeShaderInfo computeShaderInfo
+			Shader computeShader,
+			ComputePipelineResourceInfo resourceInfo
 		) : base(device)
 		{
-			var refreshComputeShaderInfo = new Refresh.ComputeShaderInfo
+			var sdlComputePipelineCreateInfo = new SDL_Gpu.ComputePipelineCreateInfo
 			{
-				entryPointName = computeShaderInfo.EntryPointName,
-				shaderModule = computeShaderInfo.ShaderModule.Handle,
-				uniformBufferSize = computeShaderInfo.UniformBufferSize,
-				bufferBindingCount = computeShaderInfo.BufferBindingCount,
-				imageBindingCount = computeShaderInfo.ImageBindingCount
+				ComputeShader = computeShader.Handle,
+				PipelineResourceInfo = resourceInfo.ToSDL()
 			};
 
-			Handle = Refresh.Refresh_CreateComputePipeline(
+			Handle = SDL_Gpu.SDL_GpuCreateComputePipeline(
 				device.Handle,
-				refreshComputeShaderInfo
+				sdlComputePipelineCreateInfo
 			);
+
 			if (Handle == IntPtr.Zero)
 			{
 				throw new Exception("Could not create compute pipeline!");
 			}
 
-			ComputeShaderInfo = computeShaderInfo;
+			ResourceInfo = resourceInfo;
 		}
 	}
 }

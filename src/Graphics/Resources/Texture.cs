@@ -230,10 +230,8 @@ namespace MoonWorks.Graphics
 				case TextureFormat.R8G8_SNORM:
 				case TextureFormat.R8G8_UINT:
 				case TextureFormat.R16_UINT:
-				case TextureFormat.D16:
+				case TextureFormat.D16_UNORM:
 					return 2;
-				case TextureFormat.D16S8:
-					return 3;
 				case TextureFormat.R8G8B8A8:
 				case TextureFormat.B8G8R8A8:
 				case TextureFormat.R32_SFLOAT:
@@ -243,9 +241,10 @@ namespace MoonWorks.Graphics
 				case TextureFormat.A2R10G10B10:
 				case TextureFormat.R8G8B8A8_UINT:
 				case TextureFormat.R16G16_UINT:
-				case TextureFormat.D32:
+				case TextureFormat.D24_UNORM_S8_UINT:
+				case TextureFormat.D32_SFLOAT:
 					return 4;
-				case TextureFormat.D32S8:
+				case TextureFormat.D32_SFLOAT_S8_UINT:
 					return 5;
 				case TextureFormat.R16G16B16A16_SFLOAT:
 				case TextureFormat.R16G16B16A16:
@@ -311,10 +310,11 @@ namespace MoonWorks.Graphics
 				case TextureFormat.R16_UINT:
 				case TextureFormat.R16G16_UINT:
 				case TextureFormat.R16G16B16A16_UINT:
-				case TextureFormat.D16:
-				case TextureFormat.D32:
-				case TextureFormat.D16S8:
-				case TextureFormat.D32S8:
+				case TextureFormat.D16_UNORM:
+				case TextureFormat.D24_UNORM:
+				case TextureFormat.D24_UNORM_S8_UINT:
+				case TextureFormat.D32_SFLOAT:
+				case TextureFormat.D32_SFLOAT_S8_UINT:
 					return 1;
 				default:
 					Logger.LogError("Texture format not recognized!");

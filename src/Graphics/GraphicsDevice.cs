@@ -38,8 +38,9 @@ namespace MoonWorks.Graphics
 
 		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
 		private CommandBufferPool CommandBufferPool;
-		internal RenderPassPool RenderPassPool;
 		private FencePool FencePool;
+		internal RenderPassPool RenderPassPool;
+		internal ComputePassPool ComputePassPool;
 
 		internal unsafe GraphicsDevice(
 			BackendFlags preferredBackends,
