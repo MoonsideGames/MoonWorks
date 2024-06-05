@@ -896,28 +896,28 @@ public readonly record struct TextureSamplerBinding(
 
 public readonly record struct StorageBufferReadWriteBinding(
 	GpuBuffer Buffer,
-	bool cycle
+	bool Cycle
 ) {
 	public Refresh.StorageBufferReadWriteBinding ToRefresh()
 	{
 		return new Refresh.StorageBufferReadWriteBinding
 		{
 			Buffer = Buffer.Handle,
-			Cycle = Conversions.BoolToInt(cycle)
+			Cycle = Conversions.BoolToInt(Cycle)
 		};
 	}
 }
 
 public readonly record struct StorageTextureReadWriteBinding(
 	in TextureSlice TextureSlice,
-	bool cycle
+	bool Cycle
 ) {
 	public Refresh.StorageTextureReadWriteBinding ToRefresh()
 	{
 		return new Refresh.StorageTextureReadWriteBinding
 		{
 			TextureSlice = TextureSlice.ToRefresh(),
-			Cycle = Conversions.BoolToInt(cycle)
+			Cycle = Conversions.BoolToInt(Cycle)
 		};
 	}
 }

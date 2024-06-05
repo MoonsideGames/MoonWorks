@@ -213,7 +213,7 @@ public class RenderPass
 		);
 	}
 
-	public unsafe void BindFragmentSamplers(
+	public unsafe void BindFragmentSampler(
 		in TextureSamplerBinding textureSamplerBinding,
 		uint slot = 0
 	) {

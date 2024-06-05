@@ -301,9 +301,9 @@ namespace MoonWorks.Video
 			);
 
 			renderPass.BindGraphicsPipeline(Device.VideoPipeline);
-			renderPass.BindFragmentSamplers(new TextureSamplerBinding(yTexture, LinearSampler), 0);
-			renderPass.BindFragmentSamplers(new TextureSamplerBinding(uTexture, LinearSampler), 1);
-			renderPass.BindFragmentSamplers(new TextureSamplerBinding(vTexture, LinearSampler), 2);
+			renderPass.BindFragmentSampler(new TextureSamplerBinding(yTexture, LinearSampler), 0);
+			renderPass.BindFragmentSampler(new TextureSamplerBinding(uTexture, LinearSampler), 1);
+			renderPass.BindFragmentSampler(new TextureSamplerBinding(vTexture, LinearSampler), 2);
 			renderPass.DrawPrimitives(0, 1);
 
 			commandBuffer.EndRenderPass(renderPass);

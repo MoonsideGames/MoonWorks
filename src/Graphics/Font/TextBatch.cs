@@ -139,7 +139,7 @@ namespace MoonWorks.Graphics.Font
 		// Call this AFTER binding your text pipeline!
 		public void Render(RenderPass renderPass, Math.Float.Matrix4x4 transformMatrix)
 		{
-			renderPass.BindFragmentSamplers(new TextureSamplerBinding(
+			renderPass.BindFragmentSampler(new TextureSamplerBinding(
 				CurrentFont.Texture,
 				GraphicsDevice.LinearSampler
 			));

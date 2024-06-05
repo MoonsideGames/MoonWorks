@@ -43,6 +43,7 @@
 			uint windowWidth,
 			uint windowHeight,
 			ScreenMode screenMode,
+			Graphics.SwapchainComposition swapchainComposition,
 			Graphics.PresentMode presentMode,
 			bool systemResizable = false,
 			bool startMaximized = false
@@ -51,6 +52,7 @@
 			WindowWidth = windowWidth;
 			WindowHeight = windowHeight;
 			ScreenMode = screenMode;
+			SwapchainComposition = swapchainComposition;
 			PresentMode = presentMode;
 			SystemResizable = systemResizable;
 			StartMaximized = startMaximized;

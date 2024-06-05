@@ -183,6 +183,41 @@ public class CopyPass
 		);
 	}
 
+	public void DownloadFromBuffer(
+		GpuBuffer buffer,
+		TransferBuffer transferBuffer,
+		in BufferCopy copyParams
+	) {
+#if DEBUG
+		AssertBufferBoundsCheck(buffer.Size, copyParams.SrcOffset, copyParams.Size);
+		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.DstOffset, copyParams.Size);
+#endif
+
+		Refresh.Refresh_DownloadFromBuffer(
+			Handle,
+			buffer.Handle,
+			transferBuffer.Handle,
+			copyParams.ToRefresh()
+		);
+	}
+
+	public void DownloadFromTexture(
+		in TextureRegion textureRegion,
+		TransferBuffer transferBuffer,
+		in BufferImageCopy copyParams
+	) {
+#if DEBUG
+		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
+#endif
+
+		Refresh.Refresh_DownloadFromTexture(
+			Handle,
+			textureRegion.ToRefresh(),
+			transferBuffer.Handle,
+			copyParams.ToRefresh()
+		);
+	}
+
 #if DEBUG
 	private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
 	{
