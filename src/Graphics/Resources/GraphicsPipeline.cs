@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -8,9 +8,9 @@ namespace MoonWorks.Graphics
 	/// Graphics pipelines encapsulate all of the render state in a single object. <br/>
 	/// These pipelines are bound before draw calls are issued.
 	/// </summary>
-	public class GraphicsPipeline : SDL_GpuResource
+	public class GraphicsPipeline : RefreshResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseGraphicsPipeline;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseGraphicsPipeline;
 
 		public GraphicsPipelineResourceInfo VertexShaderResourceInfo { get; }
 		public GraphicsPipelineResourceInfo FragmentShaderResourceInfo { get; }
@@ -25,34 +25,34 @@ namespace MoonWorks.Graphics
 			in GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
 		) : base(device)
 		{
-			SDL_Gpu.GraphicsPipelineCreateInfo sdlGraphicsPipelineCreateInfo;
+			Refresh.GraphicsPipelineCreateInfo sdlGraphicsPipelineCreateInfo;
 
-			var vertexAttributes = (SDL_Gpu.VertexAttribute*) NativeMemory.Alloc(
-				(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length * Marshal.SizeOf<SDL_Gpu.VertexAttribute>())
+			var vertexAttributes = (Refresh.VertexAttribute*) NativeMemory.Alloc(
+				(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length * Marshal.SizeOf<Refresh.VertexAttribute>())
 			);
 
 			for (var i = 0; i < graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length; i += 1)
 			{
-				vertexAttributes[i] = graphicsPipelineCreateInfo.VertexInputState.VertexAttributes[i].ToSDL();
+				vertexAttributes[i] = graphicsPipelineCreateInfo.VertexInputState.VertexAttributes[i].ToRefresh();
 			}
 
-			var vertexBindings = (SDL_Gpu.VertexBinding*) NativeMemory.Alloc(
-				(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length * Marshal.SizeOf<SDL_Gpu.VertexBinding>())
+			var vertexBindings = (Refresh.VertexBinding*) NativeMemory.Alloc(
+				(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length * Marshal.SizeOf<Refresh.VertexBinding>())
 			);
 
 			for (var i = 0; i < graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length; i += 1)
 			{
-				vertexBindings[i] = graphicsPipelineCreateInfo.VertexInputState.VertexBindings[i].ToSDL();
+				vertexBindings[i] = graphicsPipelineCreateInfo.VertexInputState.VertexBindings[i].ToRefresh();
 			}
 
-			var colorAttachmentDescriptions = stackalloc SDL_Gpu.ColorAttachmentDescription[
+			var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
 				graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length
 			];
 
 			for (var i = 0; i < graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
 			{
-				colorAttachmentDescriptions[i].Format = (SDL_Gpu.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].Format;
-				colorAttachmentDescriptions[i].BlendState = graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].BlendState.ToSDL();
+				colorAttachmentDescriptions[i].Format = (Refresh.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].Format;
+				colorAttachmentDescriptions[i].BlendState = graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].BlendState.ToRefresh();
 			}
 
 			sdlGraphicsPipelineCreateInfo.VertexShader = graphicsPipelineCreateInfo.VertexShader.Handle;
@@ -63,26 +63,26 @@ namespace MoonWorks.Graphics
 			sdlGraphicsPipelineCreateInfo.VertexInputState.VertexBindings = vertexBindings;
 			sdlGraphicsPipelineCreateInfo.VertexInputState.VertexBindingCount = (uint) graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length;
 
-			sdlGraphicsPipelineCreateInfo.PrimitiveType = (SDL_Gpu.PrimitiveType) graphicsPipelineCreateInfo.PrimitiveType;
+			sdlGraphicsPipelineCreateInfo.PrimitiveType = (Refresh.PrimitiveType) graphicsPipelineCreateInfo.PrimitiveType;
 
-			sdlGraphicsPipelineCreateInfo.RasterizerState = graphicsPipelineCreateInfo.RasterizerState.ToSDL();
-			sdlGraphicsPipelineCreateInfo.MultisampleState = graphicsPipelineCreateInfo.MultisampleState.ToSDL();
-			sdlGraphicsPipelineCreateInfo.DepthStencilState = graphicsPipelineCreateInfo.DepthStencilState.ToSDL();
+			sdlGraphicsPipelineCreateInfo.RasterizerState = graphicsPipelineCreateInfo.RasterizerState.ToRefresh();
+			sdlGraphicsPipelineCreateInfo.MultisampleState = graphicsPipelineCreateInfo.MultisampleState.ToRefresh();
+			sdlGraphicsPipelineCreateInfo.DepthStencilState = graphicsPipelineCreateInfo.DepthStencilState.ToRefresh();
 
 			sdlGraphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentCount = (uint) graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length;
 			sdlGraphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions = colorAttachmentDescriptions;
-			sdlGraphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat = (SDL_Gpu.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat;
+			sdlGraphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat = (Refresh.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat;
 			sdlGraphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment = Conversions.BoolToInt(graphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment);
 
-			sdlGraphicsPipelineCreateInfo.VertexResourceInfo = graphicsPipelineCreateInfo.VertexShaderResourceInfo.ToSDL();
-			sdlGraphicsPipelineCreateInfo.FragmentResourceInfo = graphicsPipelineCreateInfo.FragmentShaderResourceInfo.ToSDL();
+			sdlGraphicsPipelineCreateInfo.VertexResourceInfo = graphicsPipelineCreateInfo.VertexShaderResourceInfo.ToRefresh();
+			sdlGraphicsPipelineCreateInfo.FragmentResourceInfo = graphicsPipelineCreateInfo.FragmentShaderResourceInfo.ToRefresh();
 
 			sdlGraphicsPipelineCreateInfo.BlendConstants[0] = graphicsPipelineCreateInfo.BlendConstants.R;
 			sdlGraphicsPipelineCreateInfo.BlendConstants[1] = graphicsPipelineCreateInfo.BlendConstants.G;
 			sdlGraphicsPipelineCreateInfo.BlendConstants[2] = graphicsPipelineCreateInfo.BlendConstants.B;
 			sdlGraphicsPipelineCreateInfo.BlendConstants[3] = graphicsPipelineCreateInfo.BlendConstants.A;
 
-			Handle = SDL_Gpu.SDL_GpuCreateGraphicsPipeline(device.Handle, sdlGraphicsPipelineCreateInfo);
+			Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, sdlGraphicsPipelineCreateInfo);
 			if (Handle == IntPtr.Zero)
 			{
 				throw new Exception("Could not create graphics pipeline!");

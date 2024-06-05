@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -106,18 +106,18 @@ namespace MoonWorks.Graphics
 			ColorWriteMask = ColorComponentFlags.None
 		};
 
-		public SDL_Gpu.ColorAttachmentBlendState ToSDL()
+		public Refresh.ColorAttachmentBlendState ToRefresh()
 		{
-			return new SDL_Gpu.ColorAttachmentBlendState
+			return new Refresh.ColorAttachmentBlendState
 			{
 				BlendEnable = Conversions.BoolToInt(BlendEnable),
-				AlphaBlendOp = (SDL_Gpu.BlendOp) AlphaBlendOp,
-				ColorBlendOp = (SDL_Gpu.BlendOp) ColorBlendOp,
-				ColorWriteMask = (SDL_Gpu.ColorComponentFlags) ColorWriteMask,
-				DestinationAlphaBlendFactor = (SDL_Gpu.BlendFactor) DestinationAlphaBlendFactor,
-				DestinationColorBlendFactor = (SDL_Gpu.BlendFactor) DestinationColorBlendFactor,
-				SourceAlphaBlendFactor = (SDL_Gpu.BlendFactor) SourceAlphaBlendFactor,
-				SourceColorBlendFactor = (SDL_Gpu.BlendFactor) SourceColorBlendFactor
+				AlphaBlendOp = (Refresh.BlendOp) AlphaBlendOp,
+				ColorBlendOp = (Refresh.BlendOp) ColorBlendOp,
+				ColorWriteMask = (Refresh.ColorComponentFlags) ColorWriteMask,
+				DestinationAlphaBlendFactor = (Refresh.BlendFactor) DestinationAlphaBlendFactor,
+				DestinationColorBlendFactor = (Refresh.BlendFactor) DestinationColorBlendFactor,
+				SourceAlphaBlendFactor = (Refresh.BlendFactor) SourceAlphaBlendFactor,
+				SourceColorBlendFactor = (Refresh.BlendFactor) SourceColorBlendFactor
 			};
 		}
 	}

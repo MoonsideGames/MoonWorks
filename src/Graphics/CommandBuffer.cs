@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using SDL2;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -82,7 +81,7 @@ public class CommandBuffer
 		}
 #endif
 
-		var texturePtr = SDL_Gpu.SDL_GpuAcquireSwapchainTexture(
+		var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
 			Handle,
 			window.Handle,
 			out var width,
@@ -123,14 +122,14 @@ public class CommandBuffer
 		AssertColorTarget(colorAttachmentInfo);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[1];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			1,
-			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
+			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -171,15 +170,15 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[2];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			2,
-			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
+			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -227,16 +226,16 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[3];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			3,
-			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
+			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -290,17 +289,17 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[4];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
-		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			4,
-			(SDL_Gpu.DepthStencilAttachmentInfo*) nint.Zero
+			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -334,11 +333,11 @@ public class CommandBuffer
 		AssertValidDepthAttachment(depthStencilAttachmentInfo);
 #endif
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
-			(SDL_Gpu.ColorAttachmentInfo*) nint.Zero,
+			(Refresh.ColorAttachmentInfo*) nint.Zero,
 			0,
 			&sdlDepthStencilAttachmentInfo
 		);
@@ -376,12 +375,12 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfo.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[1];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			1,
@@ -431,13 +430,13 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[2];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			2,
@@ -494,14 +493,14 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[3];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			3,
@@ -565,15 +564,15 @@ public class CommandBuffer
 		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
 #endif
 
-		var sdlColorAttachmentInfos = stackalloc SDL_Gpu.ColorAttachmentInfo[4];
-		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToSDL();
-		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToSDL();
-		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToSDL();
-		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToSDL();
+		var sdlColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
+		sdlColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
+		sdlColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
+		sdlColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
+		sdlColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
 
-		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToSDL();
+		var sdlDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
 
-		var renderPassHandle = SDL_Gpu.SDL_GpuBeginRenderPass(
+		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
 			Handle,
 			sdlColorAttachmentInfos,
 			4,
@@ -613,7 +612,7 @@ public class CommandBuffer
 		renderPass.active = false;
 #endif
 
-		SDL_Gpu.SDL_GpuEndRenderPass(
+		Refresh.Refresh_EndRenderPass(
 			renderPass.Handle
 		);
 
@@ -633,11 +632,11 @@ public class CommandBuffer
 		Filter filter,
 		bool cycle
 	) {
-		SDL_Gpu.SDL_GpuBlit(
+		Refresh.Refresh_Blit(
 			Handle,
-			source.ToSDL(),
-			destination.ToSDL(),
-			(SDL_Gpu.Filter) filter,
+			source.ToRefresh(),
+			destination.ToRefresh(),
+			(Refresh.Filter) filter,
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -651,13 +650,13 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlTextureBinding = readWriteTextureBinding.ToSDL();
+		var sdlTextureBinding = readWriteTextureBinding.ToRefresh();
 
-		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
 			&sdlTextureBinding,
 			1,
-			(SDL_Gpu.StorageBufferReadWriteBinding*) nint.Size,
+			(Refresh.StorageBufferReadWriteBinding*) nint.Size,
 			0
 		);
 
@@ -680,11 +679,11 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlBufferBinding = readWriteBufferBinding.ToSDL();
+		var sdlBufferBinding = readWriteBufferBinding.ToRefresh();
 
-		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
-			(SDL_Gpu.StorageTextureReadWriteBinding*) nint.Zero,
+			(Refresh.StorageTextureReadWriteBinding*) nint.Zero,
 			0,
 			&sdlBufferBinding,
 			1
@@ -710,10 +709,10 @@ public class CommandBuffer
 		computePassActive = true;
 #endif
 
-		var sdlTextureBinding = readWriteTextureBinding.ToSDL();
-		var sdlBufferBinding = readWriteBufferBinding.ToSDL();
+		var sdlTextureBinding = readWriteTextureBinding.ToRefresh();
+		var sdlBufferBinding = readWriteBufferBinding.ToRefresh();
 
-		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
 			&sdlTextureBinding,
 			1,
@@ -749,11 +748,11 @@ public class CommandBuffer
 			(nuint) (readWriteBufferBindings.Length * Marshal.SizeOf<StorageBufferReadWriteBinding>())
 		);
 
-		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+		var computePassHandle = Refresh.Refresh_BeginComputePass(
 			Handle,
-			(SDL_Gpu.StorageTextureReadWriteBinding*) sdlTextureBindings,
+			(Refresh.StorageTextureReadWriteBinding*) sdlTextureBindings,
 			(uint) readWriteTextureBindings.Length,
-			(SDL_Gpu.StorageBufferReadWriteBinding*) sdlBufferBindings,
+			(Refresh.StorageBufferReadWriteBinding*) sdlBufferBindings,
 			(uint) readWriteBufferBindings.Length
 		);
 
@@ -779,7 +778,7 @@ public class CommandBuffer
 		computePass.active = false;
 #endif
 
-		SDL_Gpu.SDL_GpuEndComputePass(
+		Refresh.Refresh_EndComputePass(
 			computePass.Handle
 		);
 
@@ -802,7 +801,7 @@ public class CommandBuffer
 		copyPassActive = true;
 #endif
 
-		var copyPassHandle = SDL_Gpu.SDL_GpuBeginCopyPass(Handle);
+		var copyPassHandle = Refresh.Refresh_BeginCopyPass(Handle);
 
 		var copyPass = Device.CopyPassPool.Obtain();
 		copyPass.SetHandle(copyPassHandle);
@@ -818,7 +817,7 @@ public class CommandBuffer
 		copyPassActive = false;
 #endif
 
-		SDL_Gpu.SDL_GpuEndCopyPass(
+		Refresh.Refresh_EndCopyPass(
 			copyPass.Handle
 		);
 

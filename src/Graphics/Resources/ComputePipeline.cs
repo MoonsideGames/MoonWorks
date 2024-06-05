@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 using System;
 
 namespace MoonWorks.Graphics
@@ -6,9 +6,9 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// Compute pipelines perform arbitrary parallel processing on input data.
 	/// </summary>
-	public class ComputePipeline : SDL_GpuResource
+	public class ComputePipeline : RefreshResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseComputePipeline;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseComputePipeline;
 
 		public ComputePipelineResourceInfo ResourceInfo { get; }
 
@@ -18,13 +18,13 @@ namespace MoonWorks.Graphics
 			ComputePipelineResourceInfo resourceInfo
 		) : base(device)
 		{
-			var sdlComputePipelineCreateInfo = new SDL_Gpu.ComputePipelineCreateInfo
+			var sdlComputePipelineCreateInfo = new Refresh.ComputePipelineCreateInfo
 			{
 				ComputeShader = computeShader.Handle,
-				PipelineResourceInfo = resourceInfo.ToSDL()
+				PipelineResourceInfo = resourceInfo.ToRefresh()
 			};
 
-			Handle = SDL_Gpu.SDL_GpuCreateComputePipeline(
+			Handle = Refresh.Refresh_CreateComputePipeline(
 				device.Handle,
 				sdlComputePipelineCreateInfo
 			);

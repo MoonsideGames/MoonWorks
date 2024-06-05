@@ -35,7 +35,7 @@ namespace MoonWorks.Graphics.Font
 			VertexBuffer = GpuBuffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
 			IndexBuffer = GpuBuffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferUsage.Buffer, VertexBuffer.Size + IndexBuffer.Size);
+			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferUsage.Buffer, TransferBufferMapFlags.Write, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -119,35 +119,35 @@ namespace MoonWorks.Graphics.Font
 			if (newTransferBufferNeeded)
 			{
 				TransferBuffer.Dispose();
-				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferUsage.Buffer, VertexBuffer.Size + IndexBuffer.Size);
+				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferUsage.Buffer, TransferBufferMapFlags.Write, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				TransferBuffer.SetData(vertexSpan, TransferOptions.Cycle);
-				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, TransferOptions.Unsafe);
+				TransferBuffer.SetData(vertexSpan, true);
+				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, false);
 
-				commandBuffer.BeginCopyPass();
-				commandBuffer.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), WriteOptions.Cycle);
-				commandBuffer.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), WriteOptions.Cycle);
-				commandBuffer.EndCopyPass();
+				var copyPass = commandBuffer.BeginCopyPass();
+				copyPass.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), true);
+				copyPass.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), true);
+				commandBuffer.EndCopyPass(copyPass);
 			}
 
 			PrimitiveCount = vertexCount / 2;
 		}
 
 		// Call this AFTER binding your text pipeline!
-		public void Render(CommandBuffer commandBuffer, Math.Float.Matrix4x4 transformMatrix)
+		public void Render(RenderPass renderPass, Math.Float.Matrix4x4 transformMatrix)
 		{
-			commandBuffer.BindFragmentSamplers(new TextureSamplerBinding(
+			renderPass.BindFragmentSamplers(new TextureSamplerBinding(
 				CurrentFont.Texture,
 				GraphicsDevice.LinearSampler
 			));
-			commandBuffer.BindVertexBuffers(VertexBuffer);
-			commandBuffer.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
-			commandBuffer.PushVertexShaderUniforms(transformMatrix);
-			commandBuffer.PushFragmentShaderUniforms(CurrentFont.DistanceRange);
-			commandBuffer.DrawIndexedPrimitives(
+			renderPass.BindVertexBuffer(VertexBuffer);
+			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
+			renderPass.PushVertexUniformData(transformMatrix);
+			renderPass.PushFragmentUniformData(CurrentFont.DistanceRange);
+			renderPass.DrawIndexedPrimitives(
 				0,
 				0,
 				PrimitiveCount

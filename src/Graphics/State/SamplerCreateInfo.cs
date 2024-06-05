@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -150,24 +150,24 @@ public struct SamplerCreateInfo
 		MaxLod = 1000
 	};
 
-	public SDL_Gpu.SamplerCreateInfo ToSDL()
+	public Refresh.SamplerCreateInfo ToRefresh()
 	{
-		return new SDL_Gpu.SamplerCreateInfo
+		return new Refresh.SamplerCreateInfo
 		{
-			MinFilter = (SDL_Gpu.Filter) MinFilter,
-			MagFilter = (SDL_Gpu.Filter) MagFilter,
-			MipmapMode = (SDL_Gpu.SamplerMipmapMode) MipmapMode,
-			AddressModeU = (SDL_Gpu.SamplerAddressMode) AddressModeU,
-			AddressModeV = (SDL_Gpu.SamplerAddressMode) AddressModeV,
-			AddressModeW = (SDL_Gpu.SamplerAddressMode) AddressModeW,
+			MinFilter = (Refresh.Filter) MinFilter,
+			MagFilter = (Refresh.Filter) MagFilter,
+			MipmapMode = (Refresh.SamplerMipmapMode) MipmapMode,
+			AddressModeU = (Refresh.SamplerAddressMode) AddressModeU,
+			AddressModeV = (Refresh.SamplerAddressMode) AddressModeV,
+			AddressModeW = (Refresh.SamplerAddressMode) AddressModeW,
 			MipLodBias = MipLodBias,
-			AnisotropyEnable = Conversions.BoolToByte(AnisotropyEnable),
+			AnisotropyEnable = Conversions.BoolToInt(AnisotropyEnable),
 			MaxAnisotropy = MaxAnisotropy,
-			CompareEnable = Conversions.BoolToByte(CompareEnable),
-			CompareOp = (SDL_Gpu.CompareOp) CompareOp,
+			CompareEnable = Conversions.BoolToInt(CompareEnable),
+			CompareOp = (Refresh.CompareOp) CompareOp,
 			MinLod = MinLod,
 			MaxLod = MaxLod,
-			BorderColor = (SDL_Gpu.BorderColor) BorderColor
+			BorderColor = (Refresh.BorderColor) BorderColor
 		};
 	}
 }

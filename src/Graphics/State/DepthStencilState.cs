@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -93,17 +93,17 @@ namespace MoonWorks.Graphics
 			StencilTestEnable = false
 		};
 
-		public SDL_Gpu.DepthStencilState ToSDL()
+		public Refresh.DepthStencilState ToRefresh()
 		{
-			return new SDL_Gpu.DepthStencilState
+			return new Refresh.DepthStencilState
 			{
 				DepthTestEnable = Conversions.BoolToInt(DepthTestEnable),
-				BackStencilState = BackStencilState.ToSDL(),
-				FrontStencilState = FrontStencilState.ToSDL(),
+				BackStencilState = BackStencilState.ToRefresh(),
+				FrontStencilState = FrontStencilState.ToRefresh(),
 				CompareMask = CompareMask,
 				WriteMask = WriteMask,
 				Reference = Reference,
-				CompareOp = (SDL_Gpu.CompareOp) CompareOp,
+				CompareOp = (Refresh.CompareOp) CompareOp,
 				DepthBoundsTestEnable = Conversions.BoolToInt(DepthBoundsTestEnable),
 				DepthWriteEnable = Conversions.BoolToInt(DepthWriteEnable),
 				MinDepthBounds = MinDepthBounds,

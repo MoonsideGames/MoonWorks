@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
 /// <summary>
 /// GpuBuffers are generic data containers that can be used by the GPU.
 /// </summary>
-public class GpuBuffer : SDL_GpuResource
+public class GpuBuffer : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseBuffer;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseBuffer;
 
 	public BufferUsageFlags UsageFlags { get; }
 
@@ -27,7 +27,7 @@ public class GpuBuffer : SDL_GpuResource
 		{
 			if (Device.DebugMode)
 			{
-				SDL_Gpu.SDL_GpuSetBufferName(
+				Refresh.Refresh_SetBufferName(
 					Device.Handle,
 					Handle,
 					value
@@ -71,9 +71,9 @@ public class GpuBuffer : SDL_GpuResource
 		uint sizeInBytes
 	) : base(device)
 	{
-		Handle = SDL_Gpu.SDL_GpuCreateBuffer(
+		Handle = Refresh.Refresh_CreateBuffer(
 			device.Handle,
-			(SDL_Gpu.BufferUsageFlags) usageFlags,
+			(Refresh.BufferUsageFlags) usageFlags,
 			sizeInBytes
 		);
 		UsageFlags = usageFlags;

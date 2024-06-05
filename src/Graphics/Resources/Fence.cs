@@ -1,5 +1,5 @@
 using System;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -10,9 +10,9 @@ namespace MoonWorks.Graphics;
 /// The Fence object itself is basically just a wrapper for the Refresh_Fence. <br/>
 /// The internal handle is replaced so that we can pool Fence objects to manage garbage.
 /// </summary>
-public class Fence : SDL_GpuResource
+public class Fence : RefreshResource
 {
-	protected override Action<nint, nint> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseFence;
+	protected override Action<nint, nint> ReleaseFunction => Refresh.Refresh_ReleaseFence;
 
 	internal Fence(GraphicsDevice device) : base(device)
 	{

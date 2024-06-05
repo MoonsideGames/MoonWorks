@@ -23,7 +23,7 @@ namespace MoonWorks.Graphics
 			{
 				var pixelData =
 					Refresh.Refresh_Image_Load(
-					(nint) ptr,
+					ptr,
 					data.Length,
 					out var w,
 					out var h,
@@ -34,7 +34,7 @@ namespace MoonWorks.Graphics
 				height = (uint) h;
 				sizeInBytes = (uint) len;
 
-				return pixelData;
+				return (nint) pixelData;
 			}
 		}
 
@@ -89,7 +89,7 @@ namespace MoonWorks.Graphics
 			{
 				var result =
 					Refresh.Refresh_Image_Info(
-					(nint) ptr,
+					ptr,
 					data.Length,
 					out var w,
 					out var h,
@@ -100,7 +100,7 @@ namespace MoonWorks.Graphics
 				height = (uint) h;
 				sizeInBytes = (uint) len;
 
-				return Conversions.ByteToBool(result);
+				return Conversions.IntToBool(result);
 			}
 		}
 
@@ -141,9 +141,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Frees pixel data obtained from GetPixelData methods.
 		/// </summary>
-		public static void FreePixelData(IntPtr pixels)
+		public unsafe static void FreePixelData(IntPtr pixels)
 		{
-			Refresh.Refresh_Image_Free(pixels);
+			Refresh.Refresh_Image_Free((byte*) pixels);
 		}
 
 		/// <summary>
@@ -159,7 +159,7 @@ namespace MoonWorks.Graphics
 		) {
 			var sizeInBytes = width * height * 4;
 
-			var pixelsPtr = NativeMemory.Alloc((nuint) sizeInBytes);
+			var pixelsPtr = (byte*) NativeMemory.Alloc((nuint) sizeInBytes);
 			var pixelsSpan = new Span<byte>(pixelsPtr, sizeInBytes);
 
 			transferBuffer.GetData(pixelsSpan, bufferOffsetInBytes);
@@ -167,7 +167,7 @@ namespace MoonWorks.Graphics
 			if (bgra)
 			{
 				// if data is bgra, we have to swap the R and B channels
-				var rgbaPtr = NativeMemory.Alloc((nuint) sizeInBytes);
+				var rgbaPtr = (byte*) NativeMemory.Alloc((nuint) sizeInBytes);
 				var rgbaSpan = new Span<byte>(rgbaPtr, sizeInBytes);
 
 				for (var i = 0; i < sizeInBytes; i += 4)
@@ -182,7 +182,7 @@ namespace MoonWorks.Graphics
 				pixelsPtr = rgbaPtr;
 			}
 
-			Refresh.Refresh_Image_SavePNG(path, (nint) pixelsPtr, width, height);
+			Refresh.Refresh_Image_SavePNG(path, pixelsPtr, width, height);
 			NativeMemory.Free(pixelsPtr);
 		}
 

@@ -242,11 +242,11 @@ namespace MoonWorks.Video
 				if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 				{
 					TransferBuffer?.Dispose();
-					TransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
+					TransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, TransferBufferMapFlags.Write, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
 				}
-				TransferBuffer.SetData(ySpan, 0, TransferOptions.Cycle);
-				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, TransferOptions.Unsafe);
-				TransferBuffer.SetData(vSpan, (uint) (ySpan.Length + uSpan.Length), TransferOptions.Unsafe);
+				TransferBuffer.SetData(ySpan, 0, true);
+				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, false);
+				TransferBuffer.SetData(vSpan, (uint) (ySpan.Length + uSpan.Length), false);
 
 				uOffset = (uint) ySpan.Length;
 				vOffset = (uint) (ySpan.Length + vSpan.Length);
@@ -257,9 +257,9 @@ namespace MoonWorks.Video
 
 			var commandBuffer = Device.AcquireCommandBuffer();
 
-			commandBuffer.BeginCopyPass();
+			var copyPass = commandBuffer.BeginCopyPass();
 
-			commandBuffer.UploadToTexture(
+			copyPass.UploadToTexture(
 				TransferBuffer,
 				yTexture,
 				new BufferImageCopy
@@ -268,10 +268,10 @@ namespace MoonWorks.Video
 					BufferStride = yStride,
 					BufferImageHeight = yTexture.Height
 				},
-				WriteOptions.Cycle
+				true
 			);
 
-			commandBuffer.UploadToTexture(
+			copyPass.UploadToTexture(
 				TransferBuffer,
 				uTexture,
 				new BufferImageCopy{
@@ -279,10 +279,10 @@ namespace MoonWorks.Video
 					BufferStride = uvStride,
 					BufferImageHeight = uTexture.Height
 				},
-				WriteOptions.Cycle
+				true
 			);
 
-			commandBuffer.UploadToTexture(
+			copyPass.UploadToTexture(
 				TransferBuffer,
 				vTexture,
 				new BufferImageCopy
@@ -291,25 +291,22 @@ namespace MoonWorks.Video
 					BufferStride = uvStride,
 					BufferImageHeight = vTexture.Height
 				},
-				WriteOptions.Cycle
+				true
 			);
 
-			commandBuffer.EndCopyPass();
+			commandBuffer.EndCopyPass(copyPass);
 
-			commandBuffer.BeginRenderPass(
-				new ColorAttachmentInfo(RenderTexture, WriteOptions.Cycle, Color.Black)
+			var renderPass = commandBuffer.BeginRenderPass(
+				new ColorAttachmentInfo(RenderTexture, true, Color.Black)
 			);
 
-			commandBuffer.BindGraphicsPipeline(Device.VideoPipeline);
-			commandBuffer.BindFragmentSamplers(
-				new TextureSamplerBinding(yTexture, LinearSampler),
-				new TextureSamplerBinding(uTexture, LinearSampler),
-				new TextureSamplerBinding(vTexture, LinearSampler)
-			);
+			renderPass.BindGraphicsPipeline(Device.VideoPipeline);
+			renderPass.BindFragmentSamplers(new TextureSamplerBinding(yTexture, LinearSampler), 0);
+			renderPass.BindFragmentSamplers(new TextureSamplerBinding(uTexture, LinearSampler), 1);
+			renderPass.BindFragmentSamplers(new TextureSamplerBinding(vTexture, LinearSampler), 2);
+			renderPass.DrawPrimitives(0, 1);
 
-			commandBuffer.DrawPrimitives(0, 1);
-
-			commandBuffer.EndRenderPass();
+			commandBuffer.EndRenderPass(renderPass);
 
 			Device.Submit(commandBuffer);
 		}

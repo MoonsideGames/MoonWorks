@@ -1,12 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
-	public unsafe class TransferBuffer : SDL_GpuResource
+	public unsafe class TransferBuffer : RefreshResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseTransferBuffer;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseTransferBuffer;
 
 		/// <summary>
 		/// Size in bytes.
@@ -48,10 +48,10 @@ namespace MoonWorks.Graphics
 			uint sizeInBytes
 		) : base(device)
 		{
-			Handle = SDL_Gpu.SDL_GpuCreateTransferBuffer(
+			Handle = Refresh.Refresh_CreateTransferBuffer(
 				device.Handle,
-				(SDL_Gpu.TransferUsage) usage,
-				(SDL_Gpu.TransferBufferMapFlags) mapFlags,
+				(Refresh.TransferUsage) usage,
+				(Refresh.TransferBufferMapFlags) mapFlags,
 				sizeInBytes
 			);
 			Size = sizeInBytes;
@@ -82,11 +82,11 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				SDL_Gpu.SDL_GpuSetTransferData(
+				Refresh.Refresh_SetTransferData(
 					Device.Handle,
 					(nint) dataPtr,
 					Handle,
-					new SDL_Gpu.BufferCopy
+					new Refresh.BufferCopy
 					{
 						SourceOffset = 0,
 						DestinationOffset = bufferOffsetInBytes,
@@ -134,11 +134,11 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				SDL_Gpu.SDL_GpuGetTransferData(
+				Refresh.Refresh_GetTransferData(
 					Device.Handle,
 					Handle,
 					(nint) dataPtr,
-					new SDL_Gpu.BufferCopy
+					new Refresh.BufferCopy
 					{
 						SourceOffset = bufferOffsetInBytes,
 						DestinationOffset = 0,

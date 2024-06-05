@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
-using SDL2;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -32,7 +31,7 @@ public class ComputePass
 		// TODO: validate formats?
 #endif
 
-		SDL_Gpu.SDL_GpuBindComputePipeline(
+		Refresh.Refresh_BindComputePipeline(
 			Handle,
 			computePipeline.Handle
 		);
@@ -57,9 +56,9 @@ public class ComputePass
 		AssertTextureHasComputeStorageReadFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToSDL();
+		var sdlTextureSlice = textureSlice.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindComputeStorageTextures(
+		Refresh.Refresh_BindComputeStorageTextures(
 			Handle,
 			slot,
 			&sdlTextureSlice,
@@ -84,7 +83,7 @@ public class ComputePass
 
 		var bufferHandle = buffer.Handle;
 
-		SDL_Gpu.SDL_GpuBindComputeStorageBuffers(
+		Refresh.Refresh_BindComputeStorageBuffers(
 			Handle,
 			slot,
 			&bufferHandle,
@@ -111,7 +110,7 @@ public class ComputePass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuPushComputeUniformData(
+		Refresh.Refresh_PushComputeUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -153,7 +152,7 @@ public class ComputePass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuDispatchCompute(
+		Refresh.Refresh_DispatchCompute(
 			Handle,
 			groupCountX,
 			groupCountY,

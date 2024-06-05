@@ -3,14 +3,14 @@ using System.Threading;
 
 namespace MoonWorks.Graphics;
 
-public abstract class SDL_GpuResource : GraphicsResource
+public abstract class RefreshResource : GraphicsResource
 {
 	public IntPtr Handle { get => handle; internal set => handle = value; }
 	private IntPtr handle;
 
 	protected abstract Action<IntPtr, IntPtr> ReleaseFunction { get; }
 
-	protected SDL_GpuResource(GraphicsDevice device) : base(device)
+	protected RefreshResource(GraphicsDevice device) : base(device)
 	{
 	}
 

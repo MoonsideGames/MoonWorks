@@ -1,4 +1,4 @@
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -29,11 +29,11 @@ namespace MoonWorks.Graphics
 			Depth = texture.Depth;
 		}
 
-		public SDL_Gpu.TextureRegion ToSDL()
+		public Refresh.TextureRegion ToRefresh()
 		{
-			return new SDL_Gpu.TextureRegion
+			return new Refresh.TextureRegion
 			{
-				TextureSlice = TextureSlice.ToSDL(),
+				TextureSlice = TextureSlice.ToRefresh(),
 				X = X,
 				Y = Y,
 				Z = Z,

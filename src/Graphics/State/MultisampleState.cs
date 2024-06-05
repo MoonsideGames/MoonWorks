@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -24,11 +24,11 @@ namespace MoonWorks.Graphics
 			SampleMask = sampleMask;
 		}
 
-		public SDL_Gpu.MultisampleState ToSDL()
+		public Refresh.MultisampleState ToRefresh()
 		{
-			return new SDL_Gpu.MultisampleState
+			return new Refresh.MultisampleState
 			{
-				MultisampleCount = (SDL_Gpu.SampleCount) MultisampleCount,
+				MultisampleCount = (Refresh.SampleCount) MultisampleCount,
 				SampleMask = SampleMask
 			};
 		}

@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -17,9 +17,9 @@ namespace MoonWorks.Graphics
 		public TextureFormat Format;
 		public TextureUsageFlags UsageFlags;
 
-		public SDL_Gpu.TextureCreateInfo ToSDL()
+		public Refresh.TextureCreateInfo ToRefresh()
 		{
-			return new SDL_Gpu.TextureCreateInfo
+			return new Refresh.TextureCreateInfo
 			{
 				Width = Width,
 				Height = Height,
@@ -27,9 +27,9 @@ namespace MoonWorks.Graphics
 				IsCube = Conversions.BoolToInt(IsCube),
 				LayerCount = LayerCount,
 				LevelCount = LevelCount,
-				SampleCount = (SDL_Gpu.SampleCount) SampleCount,
-				Format = (SDL_Gpu.TextureFormat) Format,
-				UsageFlags = (SDL_Gpu.TextureUsageFlags) UsageFlags
+				SampleCount = (Refresh.SampleCount) SampleCount,
+				Format = (Refresh.TextureFormat) Format,
+				UsageFlags = (Refresh.TextureUsageFlags) UsageFlags
 			};
 		}
 	}

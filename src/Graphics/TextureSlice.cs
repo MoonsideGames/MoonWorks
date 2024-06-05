@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -19,9 +19,9 @@ public struct TextureSlice
 		Layer = 0;
 	}
 
-	public SDL_Gpu.TextureSlice ToSDL()
+	public Refresh.TextureSlice ToRefresh()
 	{
-		return new SDL_Gpu.TextureSlice
+		return new Refresh.TextureSlice
 		{
 			Texture = Texture.Handle,
 			MipLevel = MipLevel,

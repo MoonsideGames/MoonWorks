@@ -85,8 +85,14 @@ namespace MoonWorks
 				debugMode
 			);
 
+			SDL.SDL_WindowFlags windowFlags = 0;
+			if ((preferredBackends & BackendFlags.Vulkan) != 0)
+			{
+				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
+			}
+
 			Logger.LogInfo("Initializing main window...");
-			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
+			MainWindow = new Window(windowCreateInfo, windowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
 			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.SwapchainComposition, windowCreateInfo.PresentMode))
 			{

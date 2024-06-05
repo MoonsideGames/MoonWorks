@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -32,11 +32,11 @@ public class CopyPass
 		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
 #endif
 
-		SDL_Gpu.SDL_GpuUploadToTexture(
+		Refresh.Refresh_UploadToTexture(
 			Handle,
 			transferBuffer.Handle,
-			textureRegion.ToSDL(),
-			copyParams.ToSDL(),
+			textureRegion.ToRefresh(),
+			copyParams.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -78,11 +78,11 @@ public class CopyPass
 		AssertBufferBoundsCheck(buffer.Size, copyParams.DstOffset, copyParams.Size);
 #endif
 
-		SDL_Gpu.SDL_GpuUploadToBuffer(
+		Refresh.Refresh_UploadToBuffer(
 			Handle,
 			transferBuffer.Handle,
 			buffer.Handle,
-			copyParams.ToSDL(),
+			copyParams.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -149,10 +149,10 @@ public class CopyPass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuCopyTextureToTexture(
+		Refresh.Refresh_CopyTextureToTexture(
 			Handle,
-			source.ToSDL(),
-			destination.ToSDL(),
+			source.ToRefresh(),
+			destination.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -174,11 +174,11 @@ public class CopyPass
 		AssertBufferBoundsCheck(destination.Size, copyParams.DstOffset, copyParams.Size);
 #endif
 
-		SDL_Gpu.SDL_GpuCopyBufferToBuffer(
+		Refresh.Refresh_CopyBufferToBuffer(
 			Handle,
 			source.Handle,
 			destination.Handle,
-			copyParams.ToSDL(),
+			copyParams.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}

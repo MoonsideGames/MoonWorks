@@ -1,10 +1,10 @@
 using System;
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
-// Recreate certain types in here so we can hide the SDL_GpuCS namespace
+// Recreate certain types in here so we can hide the Refresh namespace
 
 public enum PrimitiveType
 {
@@ -334,9 +334,9 @@ public struct DepthStencilValue
 	}
 
 	// FIXME: can we do an unsafe cast somehow?
-	public SDL_Gpu.DepthStencilValue ToSDL()
+	public Refresh.DepthStencilValue ToRefresh()
 	{
-		return new SDL_Gpu.DepthStencilValue
+		return new Refresh.DepthStencilValue
 		{
 			Depth = Depth,
 			Stencil = Stencil
@@ -369,9 +369,9 @@ public struct Rect
 	}
 
 	// FIXME: can we do an unsafe cast somehow?
-	public SDL_Gpu.Rect ToSDL()
+	public Refresh.Rect ToRefresh()
 	{
-		return new SDL_Gpu.Rect
+		return new Refresh.Rect
 		{
 			X = X,
 			Y = Y,
@@ -421,9 +421,9 @@ public struct Viewport
 		MaxDepth = maxDepth;
 	}
 
-	public SDL_Gpu.Viewport ToSDL()
+	public Refresh.Viewport ToRefresh()
 	{
-		return new SDL_Gpu.Viewport
+		return new Refresh.Viewport
 		{
 			X = X,
 			Y = Y,
@@ -452,13 +452,13 @@ public struct VertexBinding
 		};
 	}
 
-	public SDL_Gpu.VertexBinding ToSDL()
+	public Refresh.VertexBinding ToRefresh()
 	{
-		return new SDL_Gpu.VertexBinding
+		return new Refresh.VertexBinding
 		{
 			Binding = Binding,
 			Stride = Stride,
-			InputRate = (SDL_Gpu.VertexInputRate) InputRate
+			InputRate = (Refresh.VertexInputRate) InputRate
 		};
 	}
 }
@@ -471,13 +471,13 @@ public struct VertexAttribute
 	public VertexElementFormat Format;
 	public uint Offset;
 
-	public SDL_Gpu.VertexAttribute ToSDL()
+	public Refresh.VertexAttribute ToRefresh()
 	{
-		return new SDL_Gpu.VertexAttribute
+		return new Refresh.VertexAttribute
 		{
 			Location = Location,
 			Binding = Binding,
-			Format = (SDL_Gpu.VertexElementFormat) Format,
+			Format = (Refresh.VertexElementFormat) Format,
 			Offset = Offset
 		};
 	}
@@ -491,14 +491,14 @@ public struct StencilOpState
 	public StencilOp DepthFailOp;
 	public CompareOp CompareOp;
 
-	public SDL_Gpu.StencilOpState ToSDL()
+	public Refresh.StencilOpState ToRefresh()
 	{
-		return new SDL_Gpu.StencilOpState
+		return new Refresh.StencilOpState
 		{
-			FailOp = (SDL_Gpu.StencilOp) FailOp,
-			PassOp = (SDL_Gpu.StencilOp) PassOp,
-			DepthFailOp = (SDL_Gpu.StencilOp) DepthFailOp,
-			CompareOp = (SDL_Gpu.CompareOp) CompareOp
+			FailOp = (Refresh.StencilOp) FailOp,
+			PassOp = (Refresh.StencilOp) PassOp,
+			DepthFailOp = (Refresh.StencilOp) DepthFailOp,
+			CompareOp = (Refresh.CompareOp) CompareOp
 		};
 	}
 }
@@ -574,20 +574,20 @@ public struct ColorAttachmentInfo
 		Cycle = cycle;
 	}
 
-	public SDL_Gpu.ColorAttachmentInfo ToSDL()
+	public Refresh.ColorAttachmentInfo ToRefresh()
 	{
-		return new SDL_Gpu.ColorAttachmentInfo
+		return new Refresh.ColorAttachmentInfo
 		{
-			TextureSlice = TextureSlice.ToSDL(),
-			ClearColor = new SDL_Gpu.Color
+			TextureSlice = TextureSlice.ToRefresh(),
+			ClearColor = new Refresh.Color
 			{
 				R = ClearColor.R / 255f,
 				G = ClearColor.G / 255f,
 				B = ClearColor.B / 255f,
 				A = ClearColor.A / 255f
 			},
-			LoadOp = (SDL_Gpu.LoadOp) LoadOp,
-			StoreOp = (SDL_Gpu.StoreOp) StoreOp,
+			LoadOp = (Refresh.LoadOp) LoadOp,
+			StoreOp = (Refresh.StoreOp) StoreOp,
 			Cycle = Conversions.BoolToInt(Cycle)
 		};
 	}
@@ -720,16 +720,16 @@ public struct DepthStencilAttachmentInfo
 		Cycle = cycle;
 	}
 
-	public SDL_Gpu.DepthStencilAttachmentInfo ToSDL()
+	public Refresh.DepthStencilAttachmentInfo ToRefresh()
 	{
-		return new SDL_Gpu.DepthStencilAttachmentInfo
+		return new Refresh.DepthStencilAttachmentInfo
 		{
-			TextureSlice = TextureSlice.ToSDL(),
-			DepthStencilClearValue = DepthStencilClearValue.ToSDL(),
-			LoadOp = (SDL_Gpu.LoadOp) LoadOp,
-			StoreOp = (SDL_Gpu.StoreOp) StoreOp,
-			StencilLoadOp = (SDL_Gpu.LoadOp) StencilLoadOp,
-			StencilStoreOp = (SDL_Gpu.StoreOp) StencilStoreOp,
+			TextureSlice = TextureSlice.ToRefresh(),
+			DepthStencilClearValue = DepthStencilClearValue.ToRefresh(),
+			LoadOp = (Refresh.LoadOp) LoadOp,
+			StoreOp = (Refresh.StoreOp) StoreOp,
+			StencilLoadOp = (Refresh.LoadOp) StencilLoadOp,
+			StencilStoreOp = (Refresh.StoreOp) StencilStoreOp,
 			Cycle = Conversions.BoolToInt(Cycle)
 		};
 	}
@@ -788,9 +788,9 @@ public struct BufferCopy
 		Size = size;
 	}
 
-	public SDL_Gpu.BufferCopy ToSDL()
+	public Refresh.BufferCopy ToRefresh()
 	{
-		return new SDL_Gpu.BufferCopy
+		return new Refresh.BufferCopy
 		{
 			SourceOffset = SrcOffset,
 			DestinationOffset = DstOffset,
@@ -811,9 +811,9 @@ public readonly record struct BufferImageCopy(
 	uint BufferStride,
 	uint BufferImageHeight
 ) {
-	public SDL_Gpu.BufferImageCopy ToSDL()
+	public Refresh.BufferImageCopy ToRefresh()
 	{
-		return new SDL_Gpu.BufferImageCopy
+		return new Refresh.BufferImageCopy
 		{
 			BufferOffset = BufferOffset,
 			BufferStride = BufferStride,
@@ -828,9 +828,9 @@ public readonly record struct GraphicsPipelineResourceInfo(
 	uint StorageTextureCount,
 	uint UniformBufferCount
 ) {
-	public SDL_Gpu.GraphicsPipelineResourceInfo ToSDL()
+	public Refresh.GraphicsPipelineResourceInfo ToRefresh()
 	{
-		return new SDL_Gpu.GraphicsPipelineResourceInfo
+		return new Refresh.GraphicsPipelineResourceInfo
 		{
 			SamplerCount = SamplerCount,
 			StorageBufferCount = StorageBufferCount,
@@ -847,9 +847,9 @@ public readonly record struct ComputePipelineResourceInfo(
 	uint ReadWriteStorageBufferCount,
 	uint UniformBufferCount
 ) {
-	public SDL_Gpu.ComputePipelineResourceInfo ToSDL()
+	public Refresh.ComputePipelineResourceInfo ToRefresh()
 	{
-		return new SDL_Gpu.ComputePipelineResourceInfo
+		return new Refresh.ComputePipelineResourceInfo
 		{
 			ReadOnlyStorageTextureCount = ReadOnlyStorageTextureCount,
 			ReadOnlyStorageBufferCount = ReadOnlyStorageBufferCount,
@@ -867,9 +867,9 @@ public readonly record struct BufferBinding(
 	GpuBuffer Buffer,
 	uint Offset
 ) {
-	public SDL_Gpu.BufferBinding ToSDL()
+	public Refresh.BufferBinding ToRefresh()
 	{
-		return new SDL_Gpu.BufferBinding
+		return new Refresh.BufferBinding
 		{
 			Buffer = Buffer.Handle,
 			Offset = Offset
@@ -884,9 +884,9 @@ public readonly record struct TextureSamplerBinding(
 	Texture Texture,
 	Sampler Sampler
 ) {
-	public SDL_Gpu.TextureSamplerBinding ToSDL()
+	public Refresh.TextureSamplerBinding ToRefresh()
 	{
-		return new SDL_Gpu.TextureSamplerBinding
+		return new Refresh.TextureSamplerBinding
 		{
 			Texture = Texture.Handle,
 			Sampler = Sampler.Handle
@@ -898,9 +898,9 @@ public readonly record struct StorageBufferReadWriteBinding(
 	GpuBuffer Buffer,
 	bool cycle
 ) {
-	public SDL_Gpu.StorageBufferReadWriteBinding ToSDL()
+	public Refresh.StorageBufferReadWriteBinding ToRefresh()
 	{
-		return new SDL_Gpu.StorageBufferReadWriteBinding
+		return new Refresh.StorageBufferReadWriteBinding
 		{
 			Buffer = Buffer.Handle,
 			Cycle = Conversions.BoolToInt(cycle)
@@ -912,11 +912,11 @@ public readonly record struct StorageTextureReadWriteBinding(
 	in TextureSlice TextureSlice,
 	bool cycle
 ) {
-	public SDL_Gpu.StorageTextureReadWriteBinding ToSDL()
+	public Refresh.StorageTextureReadWriteBinding ToRefresh()
 	{
-		return new SDL_Gpu.StorageTextureReadWriteBinding
+		return new Refresh.StorageTextureReadWriteBinding
 		{
-			TextureSlice = TextureSlice.ToSDL(),
+			TextureSlice = TextureSlice.ToRefresh(),
 			Cycle = Conversions.BoolToInt(cycle)
 		};
 	}

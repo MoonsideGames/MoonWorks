@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
-using SDL2;
-using SDL2_gpuCS;
+using RefreshCS;
 
 namespace MoonWorks.Graphics
 {
@@ -16,9 +15,6 @@ namespace MoonWorks.Graphics
 		public IntPtr Handle { get; }
 		public BackendFlags Backend { get; }
 		public bool DebugMode { get; }
-
-		private uint windowFlags;
-		public SDL2.SDL.SDL_WindowFlags WindowFlags => (SDL2.SDL.SDL_WindowFlags) windowFlags;
 
 		// Built-in video pipeline
 		internal GraphicsPipeline VideoPipeline { get; }
@@ -39,9 +35,9 @@ namespace MoonWorks.Graphics
 		private readonly HashSet<GCHandle> resources = new HashSet<GCHandle>();
 		private CommandBufferPool CommandBufferPool;
 		private FencePool FencePool;
-		internal RenderPassPool RenderPassPool;
-		internal ComputePassPool ComputePassPool;
-		internal CopyPassPool CopyPassPool;
+		internal RenderPassPool RenderPassPool = new RenderPassPool();
+		internal ComputePassPool ComputePassPool = new ComputePassPool();
+		internal CopyPassPool CopyPassPool = new CopyPassPool();
 
 		internal unsafe GraphicsDevice(
 			BackendFlags preferredBackends,
@@ -52,15 +48,15 @@ namespace MoonWorks.Graphics
 				throw new System.Exception("Could not set graphics backend!");
 			}
 
-			Handle = SDL_Gpu.SDL_GpuCreateDevice(
-				(SDL_Gpu.BackendFlags) preferredBackends,
+			Handle = Refresh.Refresh_CreateDevice(
+				(Refresh.BackendFlags) preferredBackends,
 				Conversions.BoolToByte(debugMode)
 			);
 
 			DebugMode = debugMode;
 			// TODO: check for CreateDevice fail
 
-			Backend = (BackendFlags) SDL_Gpu.SDL_GpuGetBackend(Handle);
+			Backend = (BackendFlags) Refresh.Refresh_GetBackend(Handle);
 
 			// Check for replacement stock shaders
 			string basePath = System.AppContext.BaseDirectory;
@@ -257,11 +253,11 @@ namespace MoonWorks.Graphics
 			}
 
 			var success = Conversions.IntToBool(
-				SDL_Gpu.SDL_GpuClaimWindow(
+				Refresh.Refresh_ClaimWindow(
 					Handle,
 					window.Handle,
-					(SDL_Gpu.SwapchainComposition) swapchainComposition,
-					(SDL_Gpu.PresentMode) presentMode
+					(Refresh.SwapchainComposition) swapchainComposition,
+					(Refresh.PresentMode) presentMode
 				)
 			);
 
@@ -287,7 +283,7 @@ namespace MoonWorks.Graphics
 		{
 			if (window.Claimed)
 			{
-				SDL_Gpu.SDL_GpuUnclaimWindow(
+				Refresh.Refresh_UnclaimWindow(
 					Handle,
 					window.Handle
 				);
@@ -316,11 +312,11 @@ namespace MoonWorks.Graphics
 				return;
 			}
 
-			SDL_Gpu.SDL_GpuSetSwapchainParameters(
+			Refresh.Refresh_SetSwapchainParameters(
 				Handle,
 				window.Handle,
-				(SDL_Gpu.SwapchainComposition) swapchainComposition,
-				(SDL_Gpu.PresentMode) presentMode
+				(Refresh.SwapchainComposition) swapchainComposition,
+				(Refresh.PresentMode) presentMode
 			);
 		}
 
@@ -332,7 +328,7 @@ namespace MoonWorks.Graphics
 		public CommandBuffer AcquireCommandBuffer()
 		{
 			var commandBuffer = CommandBufferPool.Obtain();
-			commandBuffer.SetHandle(SDL_Gpu.SDL_GpuAcquireCommandBuffer(Handle));
+			commandBuffer.SetHandle(Refresh.Refresh_AcquireCommandBuffer(Handle));
 #if DEBUG
 			commandBuffer.ResetStateTracking();
 #endif
@@ -351,7 +347,7 @@ namespace MoonWorks.Graphics
 			}
 #endif
 
-			SDL_Gpu.SDL_GpuSubmit(
+			Refresh.Refresh_Submit(
 				commandBuffer.Handle
 			);
 
@@ -368,7 +364,7 @@ namespace MoonWorks.Graphics
 		/// <returns></returns>
 		public Fence SubmitAndAcquireFence(CommandBuffer commandBuffer)
 		{
-			var fenceHandle = SDL_Gpu.SDL_GpuSubmitAndAcquireFence(
+			var fenceHandle = Refresh.Refresh_SubmitAndAcquireFence(
 				commandBuffer.Handle
 			);
 
@@ -383,7 +379,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void Wait()
 		{
-			SDL_Gpu.SDL_GpuWait(Handle);
+			Refresh.Refresh_Wait(Handle);
 		}
 
 		/// <summary>
@@ -393,7 +389,7 @@ namespace MoonWorks.Graphics
 		{
 			var fenceHandle = fence.Handle;
 
-			SDL_Gpu.SDL_GpuWaitForFences(
+			Refresh.Refresh_WaitForFences(
 				Handle,
 				1,
 				1,
@@ -414,7 +410,7 @@ namespace MoonWorks.Graphics
 			handlePtr[0] = fenceOne.Handle;
 			handlePtr[1] = fenceTwo.Handle;
 
-			SDL_Gpu.SDL_GpuWaitForFences(
+			Refresh.Refresh_WaitForFences(
 				Handle,
 				Conversions.BoolToInt(waitAll),
 				2,
@@ -437,7 +433,7 @@ namespace MoonWorks.Graphics
 			handlePtr[1] = fenceTwo.Handle;
 			handlePtr[2] = fenceThree.Handle;
 
-			SDL_Gpu.SDL_GpuWaitForFences(
+			Refresh.Refresh_WaitForFences(
 				Handle,
 				Conversions.BoolToInt(waitAll),
 				3,
@@ -462,7 +458,7 @@ namespace MoonWorks.Graphics
 			handlePtr[2] = fenceThree.Handle;
 			handlePtr[3] = fenceFour.Handle;
 
-			SDL_Gpu.SDL_GpuWaitForFences(
+			Refresh.Refresh_WaitForFences(
 				Handle,
 				Conversions.BoolToInt(waitAll),
 				4,
@@ -483,7 +479,7 @@ namespace MoonWorks.Graphics
 				handlePtr[i] = fences[i].Handle;
 			}
 
-			SDL_Gpu.SDL_GpuWaitForFences(
+			Refresh.Refresh_WaitForFences(
 				Handle,
 				Conversions.BoolToInt(waitAll),
 				4,
@@ -497,7 +493,7 @@ namespace MoonWorks.Graphics
 		/// <exception cref="InvalidOperationException">Throws if the fence query indicates that the graphics device has been lost.</exception>
 		public bool QueryFence(Fence fence)
 		{
-			var result = SDL_Gpu.SDL_GpuQueryFence(Handle, fence.Handle);
+			var result = Refresh.Refresh_QueryFence(Handle, fence.Handle);
 
 			if (result < 0)
 			{
@@ -512,7 +508,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public void ReleaseFence(Fence fence)
 		{
-			SDL_Gpu.SDL_GpuReleaseFence(Handle, fence.Handle);
+			Refresh.Refresh_ReleaseFence(Handle, fence.Handle);
 			fence.Handle = IntPtr.Zero;
 			FencePool.Return(fence);
 		}
@@ -524,7 +520,7 @@ namespace MoonWorks.Graphics
 				throw new System.ArgumentException("Cannot get swapchain format of unclaimed window!");
 			}
 
-			return (TextureFormat) SDL_Gpu.SDL_GpuGetSwapchainTextureFormat(Handle, window.Handle);
+			return (TextureFormat) Refresh.Refresh_GetSwapchainTextureFormat(Handle, window.Handle);
 		}
 
 		internal void AddResourceReference(GCHandle resourceReference)
@@ -572,7 +568,7 @@ namespace MoonWorks.Graphics
 					}
 				}
 
-				SDL_Gpu.SDL_GpuDestroyDevice(Handle);
+				Refresh.Refresh_DestroyDevice(Handle);
 
 				IsDisposed = true;
 			}

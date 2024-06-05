@@ -10,6 +10,6 @@
 [submodule "lib/dav1dfile"]
 	path = lib/dav1dfile
 	url = https://github.com/MoonsideGames/dav1dfile.git
-[submodule "SDL2_gpuCS"]
-	path = lib/SDL2_gpuCS
-	url = https://github.com/MoonsideGames/SDL2_gpuCS.git
+[submodule "lib/RefreshCS"]
+	path = lib/RefreshCS
+	url = https://github.com/MoonsideGames/RefreshCS.git

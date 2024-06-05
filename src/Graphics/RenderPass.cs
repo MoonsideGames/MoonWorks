@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using SDL2_gpuCS;
+using RefreshCS;
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -59,7 +59,7 @@ public class RenderPass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuBindGraphicsPipeline(
+		Refresh.Refresh_BindGraphicsPipeline(
 			Handle,
 			graphicsPipeline.Handle
 		);
@@ -78,9 +78,9 @@ public class RenderPass
 		AssertRenderPassActive();
 #endif
 
-		SDL_Gpu.SDL_GpuSetViewport(
+		Refresh.Refresh_SetViewport(
 			Handle,
-			viewport.ToSDL()
+			viewport.ToRefresh()
 		);
 	}
 
@@ -98,9 +98,9 @@ public class RenderPass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuSetScissor(
+		Refresh.Refresh_SetScissor(
 			Handle,
-			scissor.ToSDL()
+			scissor.ToRefresh()
 		);
 	}
 
@@ -117,9 +117,9 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		var sdlBufferBinding = bufferBinding.ToSDL();
+		var sdlBufferBinding = bufferBinding.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindVertexBuffers(
+		Refresh.Refresh_BindVertexBuffers(
 			Handle,
 			firstBinding,
 			&sdlBufferBinding,
@@ -142,10 +142,10 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		SDL_Gpu.SDL_GpuBindIndexBuffer(
+		Refresh.Refresh_BindIndexBuffer(
 			Handle,
-			bufferBinding.ToSDL(),
-			(SDL_Gpu.IndexElementSize) indexElementSize
+			bufferBinding.ToRefresh(),
+			(Refresh.IndexElementSize) indexElementSize
 		);
 	}
 
@@ -163,9 +163,9 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var sdlTextureSamplerBinding = textureSamplerBinding.ToSDL();
+		var sdlTextureSamplerBinding = textureSamplerBinding.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindVertexSamplers(
+		Refresh.Refresh_BindVertexSamplers(
 			Handle,
 			slot,
 			&sdlTextureSamplerBinding,
@@ -183,9 +183,9 @@ public class RenderPass
 		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToSDL();
+		var sdlTextureSlice = textureSlice.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindVertexStorageTextures(
+		Refresh.Refresh_BindVertexStorageTextures(
 			Handle,
 			slot,
 			&sdlTextureSlice,
@@ -205,7 +205,7 @@ public class RenderPass
 
 		var bufferHandle = buffer.Handle;
 
-		SDL_Gpu.SDL_GpuBindVertexStorageBuffers(
+		Refresh.Refresh_BindVertexStorageBuffers(
 			Handle,
 			slot,
 			&bufferHandle,
@@ -223,9 +223,9 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var sdlTextureSamplerBinding = textureSamplerBinding.ToSDL();
+		var sdlTextureSamplerBinding = textureSamplerBinding.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindFragmentSamplers(
+		Refresh.Refresh_BindFragmentSamplers(
 			Handle,
 			slot,
 			&sdlTextureSamplerBinding,
@@ -243,9 +243,9 @@ public class RenderPass
 		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
 #endif
 
-		var sdlTextureSlice = textureSlice.ToSDL();
+		var sdlTextureSlice = textureSlice.ToRefresh();
 
-		SDL_Gpu.SDL_GpuBindFragmentStorageTextures(
+		Refresh.Refresh_BindFragmentStorageTextures(
 			Handle,
 			slot,
 			&sdlTextureSlice,
@@ -265,7 +265,7 @@ public class RenderPass
 
 		var bufferHandle = buffer.Handle;
 
-		SDL_Gpu.SDL_GpuBindFragmentStorageBuffers(
+		Refresh.Refresh_BindFragmentStorageBuffers(
 			Handle,
 			slot,
 			&bufferHandle,
@@ -287,7 +287,7 @@ public class RenderPass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuPushVertexUniformData(
+		Refresh.Refresh_PushVertexUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -320,7 +320,7 @@ public class RenderPass
 		}
 #endif
 
-		SDL_Gpu.SDL_GpuPushFragmentUniformData(
+		Refresh.Refresh_PushFragmentUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -356,7 +356,7 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		SDL_Gpu.SDL_GpuDrawIndexedPrimitives(
+		Refresh.Refresh_DrawIndexedPrimitives(
 			Handle,
 			baseVertex,
 			startIndex,
@@ -380,7 +380,7 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		SDL_Gpu.SDL_GpuDrawPrimitives(
+		Refresh.Refresh_DrawPrimitives(
 			Handle,
 			vertexStart,
 			primitiveCount
@@ -405,7 +405,7 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		SDL_Gpu.SDL_GpuDrawPrimitivesIndirect(
+		Refresh.Refresh_DrawPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,
@@ -432,7 +432,7 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		SDL_Gpu.SDL_GpuDrawIndexedPrimitivesIndirect(
+		Refresh.Refresh_DrawIndexedPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,

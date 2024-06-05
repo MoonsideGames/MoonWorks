@@ -1,4 +1,4 @@
-﻿using SDL2_gpuCS;
+﻿using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -106,17 +106,17 @@ public struct RasterizerState
 		DepthBiasEnable = false
 	};
 
-	public SDL_Gpu.RasterizerState ToSDL()
+	public Refresh.RasterizerState ToRefresh()
 	{
-		return new SDL_Gpu.RasterizerState
+		return new Refresh.RasterizerState
 		{
-			CullMode = (SDL_Gpu.CullMode) CullMode,
+			CullMode = (Refresh.CullMode) CullMode,
 			DepthBiasClamp = DepthBiasClamp,
 			DepthBiasConstantFactor = DepthBiasConstantFactor,
 			DepthBiasEnable = Conversions.BoolToInt(DepthBiasEnable),
 			DepthBiasSlopeFactor = DepthBiasSlopeFactor,
-			FillMode = (SDL_Gpu.FillMode) FillMode,
-			FrontFace = (SDL_Gpu.FrontFace) FrontFace
+			FillMode = (Refresh.FillMode) FillMode,
+			FrontFace = (Refresh.FrontFace) FrontFace
 		};
 	}
 }
