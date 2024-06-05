@@ -1,12 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL2_gpuCS;
 
 namespace MoonWorks.Graphics
 {
 	public unsafe class TransferBuffer : SDL_GpuResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroyTransferBuffer;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseTransferBuffer;
 
 		/// <summary>
 		/// Size in bytes.
@@ -23,12 +23,14 @@ namespace MoonWorks.Graphics
 		public unsafe static TransferBuffer Create<T>(
 			GraphicsDevice device,
 			TransferUsage usage,
+			TransferBufferMapFlags mapFlags,
 			uint elementCount
 		) where T : unmanaged
 		{
 			return new TransferBuffer(
 				device,
 				usage,
+				mapFlags,
 				(uint) Marshal.SizeOf<T>() * elementCount
 			);
 		}
@@ -42,12 +44,14 @@ namespace MoonWorks.Graphics
 		public TransferBuffer(
 			GraphicsDevice device,
 			TransferUsage usage,
+			TransferBufferMapFlags mapFlags,
 			uint sizeInBytes
 		) : base(device)
 		{
-			Handle = Refresh.Refresh_CreateTransferBuffer(
+			Handle = SDL_Gpu.SDL_GpuCreateTransferBuffer(
 				device.Handle,
-				(Refresh.TransferUsage) usage,
+				(SDL_Gpu.TransferUsage) usage,
+				(SDL_Gpu.TransferBufferMapFlags) mapFlags,
 				sizeInBytes
 			);
 			Size = sizeInBytes;
@@ -57,16 +61,16 @@ namespace MoonWorks.Graphics
 		/// Immediately copies data from a Span to the TransferBuffer.
 		/// Returns the length of the copy in bytes.
 		///
-		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
-		/// that command will still use the correct data at the cost of increased memory usage.
+		/// If cycle is set to true and this TransferBuffer was used in an Upload command,
+		/// that command will still use the corret data at the cost of increased memory usage.
 		///
-		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
-		/// the data will be overwritten immediately, which could cause a data race.
+		/// If cycle is set to false, the data will be overwritten immediately,
+		/// which could cause a data race.
 		/// </summary>
 		public unsafe uint SetData<T>(
 			Span<T> data,
 			uint bufferOffsetInBytes,
-			TransferOptions setDataOption
+			bool cycle
 		) where T : unmanaged
 		{
 			var elementSize = Marshal.SizeOf<T>();
@@ -78,17 +82,17 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				Refresh.Refresh_SetTransferData(
+				SDL_Gpu.SDL_GpuSetTransferData(
 					Device.Handle,
 					(nint) dataPtr,
 					Handle,
-					new Refresh.BufferCopy
+					new SDL_Gpu.BufferCopy
 					{
-						srcOffset = 0,
-						dstOffset = bufferOffsetInBytes,
-						size = dataLengthInBytes
+						SourceOffset = 0,
+						DestinationOffset = bufferOffsetInBytes,
+						Size = dataLengthInBytes
 					},
-					(Refresh.TransferOptions) setDataOption
+					Conversions.BoolToInt(cycle)
 				);
 			}
 
@@ -99,18 +103,18 @@ namespace MoonWorks.Graphics
 		/// Immediately copies data from a Span to the TransferBuffer.
 		/// Returns the length of the copy in bytes.
 		///
-		/// If setDataOption is DISCARD and this TransferBuffer was used in an Upload command,
-		/// that command will still use the correct data at the cost of increased memory usage.
+		/// If cycle is set to true and this TransferBuffer was used in an Upload command,
+		/// that command will still use the corret data at the cost of increased memory usage.
 		///
-		/// If setDataOption is OVERWRITE and this TransferBuffer was used in an Upload command,
-		/// the data will be overwritten immediately, which could cause a data race.
+		/// If cycle is set to false, the data will be overwritten immediately,
+		/// which could cause a data race.
 		/// </summary>
 		public unsafe uint SetData<T>(
 			Span<T> data,
-			TransferOptions setDataOption
+			bool cycle
 		) where T : unmanaged
 		{
-			return SetData(data, 0, setDataOption);
+			return SetData(data, 0, cycle);
 		}
 
 		/// <summary>
@@ -130,15 +134,15 @@ namespace MoonWorks.Graphics
 
 			fixed (T* dataPtr = data)
 			{
-				Refresh.Refresh_GetTransferData(
+				SDL_Gpu.SDL_GpuGetTransferData(
 					Device.Handle,
 					Handle,
 					(nint) dataPtr,
-					new Refresh.BufferCopy
+					new SDL_Gpu.BufferCopy
 					{
-						srcOffset = bufferOffsetInBytes,
-						dstOffset = 0,
-						size = dataLengthInBytes
+						SourceOffset = bufferOffsetInBytes,
+						DestinationOffset = 0,
+						Size = dataLengthInBytes
 					}
 				);
 			}

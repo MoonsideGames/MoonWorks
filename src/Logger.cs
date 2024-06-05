@@ -1,5 +1,4 @@
 ﻿using System;
-using RefreshCS;
 
 namespace MoonWorks
 {
@@ -8,19 +7,6 @@ namespace MoonWorks
 		public static Action<string> LogInfo = LogInfoDefault;
 		public static Action<string> LogWarn = LogWarnDefault;
 		public static Action<string> LogError = LogErrorDefault;
-
-		private static RefreshCS.Refresh.Refresh_LogFunc LogInfoFunc = RefreshLogInfo;
-		private static RefreshCS.Refresh.Refresh_LogFunc LogWarnFunc = RefreshLogWarn;
-		private static RefreshCS.Refresh.Refresh_LogFunc LogErrorFunc = RefreshLogError;
-
-		internal static void Initialize()
-		{
-			Refresh.Refresh_HookLogFunctions(
-				LogInfoFunc,
-				LogWarnFunc,
-				LogErrorFunc
-			);
-		}
 
 		private static void LogInfoDefault(string str)
 		{

@@ -617,6 +617,7 @@ public class CommandBuffer
 			renderPass.Handle
 		);
 
+		renderPass.SetHandle(nint.Zero);
 		Device.RenderPassPool.Return(renderPass);
 	}
 
@@ -730,6 +731,45 @@ public class CommandBuffer
 		return computePass;
 	}
 
+	public unsafe ComputePass BeginComputePass(
+		Span<StorageTextureReadWriteBinding> readWriteTextureBindings,
+		Span<StorageBufferReadWriteBinding> readWriteBufferBindings
+	) {
+#if DEBUG
+		AssertNotSubmitted();
+		AssertNotInPass("Cannot begin compute pass while in another pass!");
+		computePassActive = true;
+#endif
+
+		var sdlTextureBindings = NativeMemory.Alloc(
+			(nuint) (readWriteTextureBindings.Length * Marshal.SizeOf<StorageTextureReadWriteBinding>())
+		);
+
+		var sdlBufferBindings = NativeMemory.Alloc(
+			(nuint) (readWriteBufferBindings.Length * Marshal.SizeOf<StorageBufferReadWriteBinding>())
+		);
+
+		var computePassHandle = SDL_Gpu.SDL_GpuBeginComputePass(
+			Handle,
+			(SDL_Gpu.StorageTextureReadWriteBinding*) sdlTextureBindings,
+			(uint) readWriteTextureBindings.Length,
+			(SDL_Gpu.StorageBufferReadWriteBinding*) sdlBufferBindings,
+			(uint) readWriteBufferBindings.Length
+		);
+
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
+#if DEBUG
+		computePass.active = true;
+#endif
+
+		NativeMemory.Free(sdlTextureBindings);
+		NativeMemory.Free(sdlBufferBindings);
+
+		return computePass;
+	}
+
 	public void EndComputePass(ComputePass computePass)
 	{
 #if DEBUG
@@ -742,6 +782,9 @@ public class CommandBuffer
 		SDL_Gpu.SDL_GpuEndComputePass(
 			computePass.Handle
 		);
+
+		computePass.SetHandle(nint.Zero);
+		Device.ComputePassPool.Return(computePass);
 	}
 
 	// Copy Pass
@@ -751,7 +794,7 @@ public class CommandBuffer
 	/// All copy commands must be made within a copy pass.
 	/// It is an error to call this during any kind of pass.
 	/// </summary>
-	public void BeginCopyPass()
+	public CopyPass BeginCopyPass()
 	{
 #if DEBUG
 		AssertNotSubmitted();
@@ -759,228 +802,15 @@ public class CommandBuffer
 		copyPassActive = true;
 #endif
 
-		Refresh.Refresh_BeginCopyPass(
-			Device.Handle,
-			Handle
-		);
+		var copyPassHandle = SDL_Gpu.SDL_GpuBeginCopyPass(Handle);
+
+		var copyPass = Device.CopyPassPool.Obtain();
+		copyPass.SetHandle(copyPassHandle);
+
+		return copyPass;
 	}
 
-
-	/// <summary>
-	/// Uploads data from a TransferBuffer to a TextureSlice.
-	/// This copy occurs on the GPU timeline.
-	///
-	/// Overwriting the contents of the TransferBuffer before the command buffer
-	/// has finished execution will cause undefined behavior.
-	///
-	/// You MAY assume that the copy has finished for subsequent commands.
-	/// </summary>
-	/// <param name="writeOption">Specifies data dependency behavior.</param>
-	public void UploadToTexture(
-		TransferBuffer transferBuffer,
-		in TextureRegion textureRegion,
-		in BufferImageCopy copyParams,
-		WriteOptions writeOption
-	)
-	{
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInCopyPass("Cannot upload to texture outside of copy pass!");
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
-#endif
-
-		Refresh.Refresh_UploadToTexture(
-			Device.Handle,
-			Handle,
-			transferBuffer.Handle,
-			textureRegion.ToRefreshTextureRegion(),
-			copyParams.ToRefresh(),
-			(Refresh.WriteOptions) writeOption
-		);
-	}
-
-	/// <summary>
-	/// Uploads the contents of an entire buffer to a texture with no mips.
-	/// </summary>
-	public void UploadToTexture(
-		TransferBuffer transferBuffer,
-		Texture texture,
-		WriteOptions writeOption
-	) {
-		UploadToTexture(
-			transferBuffer,
-			new TextureRegion(texture),
-			new BufferImageCopy(0, 0, 0),
-			writeOption
-		);
-	}
-
-	/// <summary>
-	/// Uploads data from a TransferBuffer to a GpuBuffer.
-	/// This copy occurs on the GPU timeline.
-	///
-	/// Overwriting the contents of the TransferBuffer before the command buffer
-	/// has finished execution will cause undefined behavior.
-	///
-	/// You MAY assume that the copy has finished for subsequent commands.
-	/// </summary>
-	public void UploadToBuffer(
-		TransferBuffer transferBuffer,
-		GpuBuffer gpuBuffer,
-		in BufferCopy copyParams,
-		WriteOptions option
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInCopyPass("Cannot upload to texture outside of copy pass!");
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.SrcOffset, copyParams.Size);
-		AssertBufferBoundsCheck(gpuBuffer.Size, copyParams.DstOffset, copyParams.Size);
-#endif
-
-		Refresh.Refresh_UploadToBuffer(
-			Device.Handle,
-			Handle,
-			transferBuffer.Handle,
-			gpuBuffer.Handle,
-			copyParams.ToRefresh(),
-			(Refresh.WriteOptions) option
-		);
-	}
-
-	/// <summary>
-	/// Copies the entire contents of a TransferBuffer to a GpuBuffer.
-	/// </summary>
-	public void UploadToBuffer(
-		TransferBuffer transferBuffer,
-		GpuBuffer gpuBuffer,
-		WriteOptions option
-	) {
-		UploadToBuffer(
-			transferBuffer,
-			gpuBuffer,
-			new BufferCopy(0, 0, transferBuffer.Size),
-			option
-		);
-	}
-
-	/// <summary>
-	/// Copies data element-wise into from a TransferBuffer to a GpuBuffer.
-	/// </summary>
-	public void UploadToBuffer<T>(
-		TransferBuffer transferBuffer,
-		GpuBuffer gpuBuffer,
-		uint sourceStartElement,
-		uint destinationStartElement,
-		uint numElements,
-		WriteOptions option
-	) where T : unmanaged
-	{
-		var elementSize = Marshal.SizeOf<T>();
-		var dataLengthInBytes = (uint) (elementSize * numElements);
-		var srcOffsetInBytes = (uint) (elementSize * sourceStartElement);
-		var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);
-
-		UploadToBuffer(
-			transferBuffer,
-			gpuBuffer,
-			new BufferCopy(
-				srcOffsetInBytes,
-				dstOffsetInBytes,
-				dataLengthInBytes
-			),
-			option
-		);
-	}
-
-	/// <summary>
-	/// Copies the contents of a TextureSlice to another TextureSlice.
-	/// The slices must have the same dimensions.
-	/// This copy occurs on the GPU timeline.
-	///
-	/// You MAY assume that the copy has finished in subsequent commands.
-	/// </summary>
-	public void CopyTextureToTexture(
-		in TextureRegion source,
-		in TextureRegion destination,
-		WriteOptions option
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInCopyPass("Cannot download from texture outside of copy pass!");
-		AssertTextureBoundsCheck(destination.Size, source.Size);
-#endif
-
-		Refresh.Refresh_CopyTextureToTexture(
-			Device.Handle,
-			Handle,
-			source.ToRefreshTextureRegion(),
-			destination.ToRefreshTextureRegion(),
-			(Refresh.WriteOptions) option
-		);
-	}
-
-	/// <summary>
-	/// Copies the contents of an entire Texture with no mips to another Texture with no mips.
-	/// The textures must have the same dimensions.
-	/// </summary>
-	public void CopyTextureToTexture(
-		Texture source,
-		Texture destination,
-		WriteOptions option
-	) {
-		CopyTextureToTexture(
-			new TextureRegion(source),
-			new TextureRegion(destination),
-			option
-		);
-	}
-
-	/// <summary>
-	/// Copies data from a GpuBuffer to another GpuBuffer.
-	/// This copy occurs on the GPU timeline.
-	///
-	/// You MAY assume that the copy has finished in subsequent commands.
-	/// </summary>
-	public void CopyBufferToBuffer(
-		GpuBuffer source,
-		GpuBuffer destination,
-		in BufferCopy copyParams,
-		WriteOptions option
-	) {
-#if DEBUG
-		AssertNotSubmitted();
-		AssertInCopyPass("Cannot download from texture outside of copy pass!");
-		AssertBufferBoundsCheck(source.Size, copyParams.SrcOffset, copyParams.Size);
-		AssertBufferBoundsCheck(destination.Size, copyParams.DstOffset, copyParams.Size);
-#endif
-
-		Refresh.Refresh_CopyBufferToBuffer(
-			Device.Handle,
-			Handle,
-			source.Handle,
-			destination.Handle,
-			copyParams.ToRefresh(),
-			(Refresh.WriteOptions) option
-		);
-	}
-
-	/// <summary>
-	/// Copies the entire contents of a GpuBuffer to another GpuBuffer.
-	/// </summary>
-	public void CopyBufferToBuffer(
-		GpuBuffer source,
-		GpuBuffer destination,
-		WriteOptions option
-	) {
-		CopyBufferToBuffer(
-			source,
-			destination,
-			new BufferCopy(0, 0, source.Size),
-			option
-		);
-	}
-
-	public void EndCopyPass()
+	public void EndCopyPass(CopyPass copyPass)
 	{
 #if DEBUG
 		AssertNotSubmitted();
@@ -988,10 +818,12 @@ public class CommandBuffer
 		copyPassActive = false;
 #endif
 
-		Refresh.Refresh_EndCopyPass(
-			Device.Handle,
-			Handle
+		SDL_Gpu.SDL_GpuEndCopyPass(
+			copyPass.Handle
 		);
+
+		copyPass.SetHandle(nint.Zero);
+		Device.CopyPassPool.Return(copyPass);
 	}
 
 #if DEBUG
@@ -1008,22 +840,6 @@ public class CommandBuffer
 		if (currentComputePipeline == null)
 		{
 			throw new System.InvalidOperationException(message);
-		}
-	}
-
-	private void AssertComputeBufferCount(int count)
-	{
-		if (currentComputePipeline.ComputeShaderInfo.BufferBindingCount != count)
-		{
-			throw new System.InvalidOperationException($"Compute pipeline expects {currentComputePipeline.ComputeShaderInfo.BufferBindingCount} buffers, but received {count}");
-		}
-	}
-
-	private void AssertComputeTextureCount(int count)
-	{
-		if (currentComputePipeline.ComputeShaderInfo.ImageBindingCount != count)
-		{
-			throw new System.InvalidOperationException($"Compute pipeline expects {currentComputePipeline.ComputeShaderInfo.ImageBindingCount} textures, but received {count}");
 		}
 	}
 
@@ -1059,7 +875,7 @@ public class CommandBuffer
 			throw new System.ArgumentException("Render pass depth stencil attachment Texture cannot be null!");
 		}
 
-		if ((depthStencilAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.DepthStencilTarget) == 0)
+		if ((depthStencilAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.DepthStencil) == 0)
 		{
 			throw new System.ArgumentException("Render pass depth stencil attachment UsageFlags must include TextureUsageFlags.DepthStencilTarget!");
 		}

@@ -41,6 +41,7 @@ namespace MoonWorks.Graphics
 		private FencePool FencePool;
 		internal RenderPassPool RenderPassPool;
 		internal ComputePassPool ComputePassPool;
+		internal CopyPassPool CopyPassPool;
 
 		internal unsafe GraphicsDevice(
 			BackendFlags preferredBackends,

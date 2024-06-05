@@ -788,7 +788,7 @@ public struct BufferCopy
 		Size = size;
 	}
 
-	public SDL_Gpu.BufferCopy ToRefresh()
+	public SDL_Gpu.BufferCopy ToSDL()
 	{
 		return new SDL_Gpu.BufferCopy
 		{
@@ -811,7 +811,7 @@ public readonly record struct BufferImageCopy(
 	uint BufferStride,
 	uint BufferImageHeight
 ) {
-	public SDL_Gpu.BufferImageCopy ToRefresh()
+	public SDL_Gpu.BufferImageCopy ToSDL()
 	{
 		return new SDL_Gpu.BufferImageCopy
 		{

@@ -1,24 +1,23 @@
 ﻿using System;
-using RefreshCS;
+using SDL2_gpuCS;
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics;
+
+/// <summary>
+/// A sampler specifies how a texture will be sampled in a shader.
+/// </summary>
+public class Sampler : SDL_GpuResource
 {
-	/// <summary>
-	/// A sampler specifies how a texture will be sampled in a shader.
-	/// </summary>
-	public class Sampler : SDL_GpuResource
-	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_QueueDestroySampler;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL_Gpu.SDL_GpuReleaseSampler;
 
-		public Sampler(
-			GraphicsDevice device,
-			in SamplerCreateInfo samplerCreateInfo
-		) : base(device)
-		{
-			Handle = Refresh.Refresh_CreateSampler(
-				device.Handle,
-				samplerCreateInfo.ToRefreshSamplerStateCreateInfo()
-			);
-		}
+	public Sampler(
+		GraphicsDevice device,
+		in SamplerCreateInfo samplerCreateInfo
+	) : base(device)
+	{
+		Handle = SDL_Gpu.SDL_GpuCreateSampler(
+			device.Handle,
+			samplerCreateInfo.ToSDL()
+		);
 	}
 }

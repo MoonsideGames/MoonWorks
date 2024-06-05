@@ -48,12 +48,13 @@ namespace MoonWorks
 		/// </summary>
 		/// <param name="windowCreateInfo">The parameters that will be used to create the MainWindow.</param>
 		/// <param name="frameLimiterSettings">The frame limiter settings.</param>
+		/// <param name="preferredBackends">Bitflags of which GPU backends to attempt to initialize.</param>
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			FrameLimiterSettings frameLimiterSettings,
-			Span<Backend> preferredBackends,
+			BackendFlags preferredBackends,
 			int targetTimestep = 60,
 			bool debugMode = false
 		) {
@@ -75,8 +76,6 @@ namespace MoonWorks
 				return;
 			}
 
-			Logger.Initialize();
-
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
@@ -89,7 +88,7 @@ namespace MoonWorks
 			Logger.LogInfo("Initializing main window...");
 			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
-			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.PresentMode))
+			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.SwapchainComposition, windowCreateInfo.PresentMode))
 			{
 				throw new System.SystemException("Could not claim window!");
 			}
