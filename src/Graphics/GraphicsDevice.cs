@@ -358,84 +358,15 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Waits for the given fence to become signaled.
 		/// </summary>
-		public unsafe void WaitForFences(Fence fence)
+		public unsafe void WaitForFence(Fence fence)
 		{
 			var fenceHandle = fence.Handle;
 
 			Refresh.Refresh_WaitForFences(
 				Handle,
 				1,
-				1,
-				&fenceHandle
-			);
-		}
-
-		/// <summary>
-		/// Wait for one or more fences to become signaled.
-		/// </summary>
-		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
-		public unsafe void WaitForFences(
-			Fence fenceOne,
-			Fence fenceTwo,
-			bool waitAll
-		) {
-			var handlePtr = stackalloc nint[2];
-			handlePtr[0] = fenceOne.Handle;
-			handlePtr[1] = fenceTwo.Handle;
-
-			Refresh.Refresh_WaitForFences(
-				Handle,
-				Conversions.BoolToInt(waitAll),
-				2,
-				handlePtr
-			);
-		}
-
-		/// <summary>
-		/// Wait for one or more fences to become signaled.
-		/// </summary>
-		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
-		public unsafe void WaitForFences(
-			Fence fenceOne,
-			Fence fenceTwo,
-			Fence fenceThree,
-			bool waitAll
-		) {
-			var handlePtr = stackalloc nint[3];
-			handlePtr[0] = fenceOne.Handle;
-			handlePtr[1] = fenceTwo.Handle;
-			handlePtr[2] = fenceThree.Handle;
-
-			Refresh.Refresh_WaitForFences(
-				Handle,
-				Conversions.BoolToInt(waitAll),
-				3,
-				handlePtr
-			);
-		}
-
-		/// <summary>
-		/// Wait for one or more fences to become signaled.
-		/// </summary>
-		/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
-		public unsafe void WaitForFences(
-			Fence fenceOne,
-			Fence fenceTwo,
-			Fence fenceThree,
-			Fence fenceFour,
-			bool waitAll
-		) {
-			var handlePtr = stackalloc nint[4];
-			handlePtr[0] = fenceOne.Handle;
-			handlePtr[1] = fenceTwo.Handle;
-			handlePtr[2] = fenceThree.Handle;
-			handlePtr[3] = fenceFour.Handle;
-
-			Refresh.Refresh_WaitForFences(
-				Handle,
-				Conversions.BoolToInt(waitAll),
-				4,
-				handlePtr
+				&fenceHandle,
+				1
 			);
 		}
 
@@ -455,8 +386,8 @@ namespace MoonWorks.Graphics
 			Refresh.Refresh_WaitForFences(
 				Handle,
 				Conversions.BoolToInt(waitAll),
-				4,
-				handlePtr
+				handlePtr,
+				(uint) fences.Length
 			);
 		}
 

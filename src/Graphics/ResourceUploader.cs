@@ -250,7 +250,7 @@ namespace MoonWorks.Graphics
 			var commandBuffer = Device.AcquireCommandBuffer();
 			RecordUploadCommands(commandBuffer);
 			var fence = Device.SubmitAndAcquireFence(commandBuffer);
-			Device.WaitForFences(fence);
+			Device.WaitForFence(fence);
 			Device.ReleaseFence(fence);
 		}
 
