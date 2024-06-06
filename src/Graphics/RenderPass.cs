@@ -12,7 +12,6 @@ public class RenderPass
 	public nint Handle { get; private set; }
 
 #if DEBUG
-	internal bool active;
 	internal uint colorAttachmentCount;
 	internal SampleCount colorAttachmentSampleCount;
 	internal TextureFormat colorFormatOne;
@@ -39,7 +38,6 @@ public class RenderPass
 		GraphicsPipeline graphicsPipeline
 	) {
 #if DEBUG
-		AssertRenderPassActive();
 		AssertRenderPassPipelineFormatMatch(graphicsPipeline);
 
 		if (colorAttachmentCount > 0)
@@ -74,10 +72,6 @@ public class RenderPass
 	/// </summary>
 	public void SetViewport(in Viewport viewport)
 	{
-#if DEBUG
-		AssertRenderPassActive();
-#endif
-
 		Refresh.Refresh_SetViewport(
 			Handle,
 			viewport.ToRefresh()
@@ -90,8 +84,6 @@ public class RenderPass
 	public void SetScissor(in Rect scissor)
 	{
 #if DEBUG
-		AssertRenderPassActive();
-
 		if (scissor.X < 0 || scissor.Y < 0 || scissor.W <= 0 || scissor.H <= 0)
 		{
 			throw new System.ArgumentOutOfRangeException("Scissor position cannot be negative and dimensions must be positive!");
@@ -442,14 +434,6 @@ public class RenderPass
 	}
 
 #if DEBUG
-	private void AssertRenderPassActive(string message = "Render pass is not active!")
-	{
-		if (!active)
-		{
-			throw new System.InvalidOperationException(message);
-		}
-	}
-
 	private void AssertRenderPassPipelineFormatMatch(GraphicsPipeline graphicsPipeline)
 	{
 		for (var i = 0; i < graphicsPipeline.AttachmentInfo.ColorAttachmentDescriptions.Length; i += 1)

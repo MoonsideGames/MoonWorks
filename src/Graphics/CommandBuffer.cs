@@ -609,7 +609,6 @@ public class CommandBuffer
 		AssertRenderPassActive();
 
 		renderPassActive = false;
-		renderPass.active = false;
 #endif
 
 		Refresh.Refresh_EndRenderPass(
