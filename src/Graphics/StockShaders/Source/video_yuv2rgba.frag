@@ -9,9 +9,9 @@ layout(location = 0) in vec2 TexCoord;
 
 layout(location = 0) out vec4 FragColor;
 
-layout(binding = 0, set = 1) uniform sampler2D YSampler;
-layout(binding = 1, set = 1) uniform sampler2D USampler;
-layout(binding = 2, set = 1) uniform sampler2D VSampler;
+layout(set = 2, binding = 0) uniform sampler2D YSampler;
+layout(set = 2, binding = 1) uniform sampler2D USampler;
+layout(set = 2, binding = 2) uniform sampler2D VSampler;
 
 /* More info about colorspace conversion:
  * http://www.equasys.de/colorconversion.html

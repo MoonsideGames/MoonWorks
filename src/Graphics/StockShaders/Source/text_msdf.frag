@@ -1,13 +1,13 @@
 #version 450
 
-layout(set = 1, binding = 0) uniform sampler2D msdf;
-
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 1) in vec4 inColor;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0, set = 3) uniform UBO
+layout(set = 2, binding = 0) uniform sampler2D msdf;
+
+layout(set = 3, binding = 0) uniform UBO
 {
 	float pxRange;
 } ubo;

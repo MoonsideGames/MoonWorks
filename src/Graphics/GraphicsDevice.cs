@@ -67,7 +67,6 @@ namespace MoonWorks.Graphics
 			string textFragPath = Path.Combine(basePath, "text_msdf.frag.refresh");
 
 			string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
-			string blitFragPath = Path.Combine(basePath, "blit.frag.refresh");
 
 			Shader fullscreenVertShader;
 
@@ -75,7 +74,6 @@ namespace MoonWorks.Graphics
 			Shader textFragShader;
 
 			Shader videoFragShader;
-			Shader blitFragShader;
 
 			if (File.Exists(fullscreenVertPath))
 			{
@@ -91,7 +89,7 @@ namespace MoonWorks.Graphics
 			{
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
-				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.refresh");
+				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv");
 				fullscreenVertShader = new Shader(
 					this,
 					vertStream,
@@ -115,7 +113,7 @@ namespace MoonWorks.Graphics
 			{
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
-				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh");
+				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.spv");
 				videoFragShader = new Shader(
 					this,
 					fragStream,
@@ -148,8 +146,8 @@ namespace MoonWorks.Graphics
 				// use defaults
 				var assembly = typeof(GraphicsDevice).Assembly;
 
-				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.refresh");
-				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh");
+				using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.spv");
+				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv");
 
 				textVertShader = new Shader(
 					this,
@@ -160,31 +158,6 @@ namespace MoonWorks.Graphics
 				);
 
 				textFragShader = new Shader(
-					this,
-					fragStream,
-					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SPIRV
-				);
-			}
-
-			if (File.Exists(blitFragPath))
-			{
-				blitFragShader = new Shader(
-					this,
-					blitFragPath,
-					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SECRET
-				);
-			}
-			else
-			{
-				// use defaults
-				var assembly = typeof(GraphicsDevice).Assembly;
-
-				using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Blit.frag.refresh");
-				blitFragShader = new Shader(
 					this,
 					fragStream,
 					"main",
