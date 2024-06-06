@@ -12,7 +12,7 @@ namespace MoonWorks.Graphics
 		///
 		/// The returned pointer must be freed by calling FreePixelData.
 		/// </summary>
-		public static unsafe IntPtr GetPixelDataFromBytes(
+		public static unsafe byte* GetPixelDataFromBytes(
 			Span<byte> data,
 			out uint width,
 			out uint height,
@@ -33,7 +33,7 @@ namespace MoonWorks.Graphics
 				height = (uint) h;
 				sizeInBytes = (uint) len;
 
-				return (nint) pixelData;
+				return pixelData;
 			}
 		}
 
@@ -42,7 +42,7 @@ namespace MoonWorks.Graphics
 		///
 		/// The returned pointer must be freed by calling FreePixelData.
 		/// </summary>
-		public static unsafe IntPtr GetPixelDataFromStream(
+		public static unsafe byte* GetPixelDataFromStream(
 			Stream stream,
 			out uint width,
 			out uint height,
@@ -65,7 +65,7 @@ namespace MoonWorks.Graphics
 		///
 		/// The returned pointer must be freed by calling FreePixelData.
 		/// </summary>
-		public static IntPtr GetPixelDataFromFile(
+		public static unsafe byte* GetPixelDataFromFile(
 			string path,
 			out uint width,
 			out uint height,
@@ -140,9 +140,9 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Frees pixel data obtained from GetPixelData methods.
 		/// </summary>
-		public unsafe static void FreePixelData(IntPtr pixels)
+		public unsafe static void FreePixelData(byte* pixels)
 		{
-			Refresh.Refresh_Image_Free((byte*) pixels);
+			Refresh.Refresh_Image_Free(pixels);
 		}
 
 		/// <summary>
