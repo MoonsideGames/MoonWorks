@@ -1054,7 +1054,7 @@ namespace MoonWorks.Math.Float
 			result.M13 = 0.0f;
 			result.M14 = 0.0f;
 			result.M21 = 0.0f;
-			result.M22 = (float) (2.0 / ((double) bottom - (double) top));
+			result.M22 = (float) (2.0 / ((double) top - (double) bottom));
 			result.M23 = 0.0f;
 			result.M24 = 0.0f;
 			result.M31 = 0.0f;
@@ -1062,11 +1062,11 @@ namespace MoonWorks.Math.Float
 			result.M33 = (float) (1.0 / ((double) zNearPlane - (double) zFarPlane));
 			result.M34 = 0.0f;
 			result.M41 = (float) (
-				-((double) left + (double) right) /
-				((double) right - (double) left)
+				((double) left + (double) right) /
+				((double) left - (double) right)
 			);
 			result.M42 = (float) (
-				-((double) top + (double) bottom) /
+				((double) top + (double) bottom) /
 				((double) bottom - (double) top)
 			);
 			result.M43 = (float) (
@@ -1126,7 +1126,7 @@ namespace MoonWorks.Math.Float
 			}
 			result.M11 = (2f * nearPlaneDistance) / width;
 			result.M12 = result.M13 = result.M14 = 0f;
-			result.M22 = -(2f * nearPlaneDistance) / height;
+			result.M22 = (2f * nearPlaneDistance) / height;
 			result.M21 = result.M23 = result.M24 = 0f;
 			result.M33 = farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
 			result.M31 = result.M32 = 0f;
@@ -1199,7 +1199,7 @@ namespace MoonWorks.Math.Float
 			float num = 1f / ((float) System.Math.Tan((double) (fieldOfView * 0.5f)));
 			result.M11 = num / aspectRatio;
 			result.M12 = result.M13 = result.M14 = 0;
-			result.M22 = -num;
+			result.M22 = num;
 			result.M21 = result.M23 = result.M24 = 0;
 			result.M31 = result.M32 = 0f;
 			result.M33 = farPlaneDistance / (nearPlaneDistance - farPlaneDistance);
@@ -1277,7 +1277,7 @@ namespace MoonWorks.Math.Float
 			}
 			result.M11 = (2f * nearPlaneDistance) / (right - left);
 			result.M12 = result.M13 = result.M14 = 0;
-			result.M22 = -(2f * nearPlaneDistance) / (top - bottom);
+			result.M22 = (2f * nearPlaneDistance) / (top - bottom);
 			result.M21 = result.M23 = result.M24 = 0;
 			result.M31 = (left + right) / (right - left);
 			result.M32 = (top + bottom) / (top - bottom);
