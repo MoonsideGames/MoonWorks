@@ -441,14 +441,20 @@ public struct VertexBinding
 	public uint Binding;
 	public uint Stride;
 	public VertexInputRate InputRate;
+	public uint StepRate;
 
-	public static VertexBinding Create<T>(uint binding = 0, VertexInputRate inputRate = VertexInputRate.Vertex) where T : unmanaged
+	public static VertexBinding Create<T>(
+		uint binding = 0,
+		VertexInputRate inputRate = VertexInputRate.Vertex,
+		uint stepRate = 1
+	) where T : unmanaged
 	{
 		return new VertexBinding
 		{
 			Binding = binding,
 			InputRate = inputRate,
-			Stride = (uint) Marshal.SizeOf<T>()
+			Stride = (uint) Marshal.SizeOf<T>(),
+			StepRate = stepRate
 		};
 	}
 
@@ -458,7 +464,8 @@ public struct VertexBinding
 		{
 			Binding = Binding,
 			Stride = Stride,
-			InputRate = (Refresh.VertexInputRate) InputRate
+			InputRate = (Refresh.VertexInputRate) InputRate,
+			StepRate = StepRate
 		};
 	}
 }
