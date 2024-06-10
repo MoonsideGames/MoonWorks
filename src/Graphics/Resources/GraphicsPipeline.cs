@@ -12,8 +12,8 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseGraphicsPipeline;
 
-		public GraphicsPipelineResourceInfo VertexShaderResourceInfo { get; }
-		public GraphicsPipelineResourceInfo FragmentShaderResourceInfo { get; }
+		public Shader VertexShader;
+		public Shader FragmentShader;
 		public SampleCount SampleCount { get; }
 
 #if DEBUG
@@ -74,9 +74,6 @@ namespace MoonWorks.Graphics
 			refreshGraphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat = (Refresh.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat;
 			refreshGraphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment = Conversions.BoolToInt(graphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment);
 
-			refreshGraphicsPipelineCreateInfo.VertexResourceInfo = graphicsPipelineCreateInfo.VertexShaderResourceInfo.ToRefresh();
-			refreshGraphicsPipelineCreateInfo.FragmentResourceInfo = graphicsPipelineCreateInfo.FragmentShaderResourceInfo.ToRefresh();
-
 			refreshGraphicsPipelineCreateInfo.BlendConstants[0] = graphicsPipelineCreateInfo.BlendConstants.R;
 			refreshGraphicsPipelineCreateInfo.BlendConstants[1] = graphicsPipelineCreateInfo.BlendConstants.G;
 			refreshGraphicsPipelineCreateInfo.BlendConstants[2] = graphicsPipelineCreateInfo.BlendConstants.B;
@@ -91,8 +88,8 @@ namespace MoonWorks.Graphics
 			NativeMemory.Free(vertexAttributes);
 			NativeMemory.Free(vertexBindings);
 
-			VertexShaderResourceInfo = graphicsPipelineCreateInfo.VertexShaderResourceInfo;
-			FragmentShaderResourceInfo = graphicsPipelineCreateInfo.FragmentShaderResourceInfo;
+			VertexShader = graphicsPipelineCreateInfo.VertexShader;
+			FragmentShader = graphicsPipelineCreateInfo.FragmentShader;
 			SampleCount = graphicsPipelineCreateInfo.MultisampleState.MultisampleCount;
 
 #if DEBUG

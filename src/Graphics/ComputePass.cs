@@ -104,9 +104,9 @@ public class ComputePass
 		AssertComputePassActive();
 		AssertComputePipelineBound();
 
-		if (slot >= currentComputePipeline.ResourceInfo.UniformBufferCount)
+		if (slot >= currentComputePipeline.UniformBufferCount)
 		{
-			throw new System.ArgumentException($"Slot {slot} given, but {currentComputePipeline.ResourceInfo.UniformBufferCount} uniform buffers are used on the shader!");
+			throw new System.ArgumentException($"Slot {slot} given, but {currentComputePipeline.UniformBufferCount} uniform buffers are used on the shader!");
 		}
 #endif
 

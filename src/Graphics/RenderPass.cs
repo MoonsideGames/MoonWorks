@@ -273,9 +273,9 @@ public class RenderPass
 #if DEBUG
 		AssertGraphicsPipelineBound();
 
-		if (slot >= currentGraphicsPipeline.VertexShaderResourceInfo.UniformBufferCount)
+		if (slot >= currentGraphicsPipeline.VertexShader.UniformBufferCount)
 		{
-			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.VertexShaderResourceInfo.UniformBufferCount} uniform buffers are used on the shader!");
+			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.VertexShader.UniformBufferCount} uniform buffers are used on the shader!");
 		}
 #endif
 
@@ -306,9 +306,9 @@ public class RenderPass
 #if DEBUG
 		AssertGraphicsPipelineBound();
 
-		if (slot >= currentGraphicsPipeline.FragmentShaderResourceInfo.UniformBufferCount)
+		if (slot >= currentGraphicsPipeline.FragmentShader.UniformBufferCount)
 		{
-			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.FragmentShaderResourceInfo.UniformBufferCount} uniform buffers are used on the shader!");
+			throw new System.ArgumentException($"Slot {slot} given, but {currentGraphicsPipeline.FragmentShader.UniformBufferCount} uniform buffers are used on the shader!");
 		}
 #endif
 

@@ -141,14 +141,14 @@ public enum TransferBufferMapFlags
 public enum ShaderStage
 {
 	Vertex,
-	Fragment,
-	Compute
+	Fragment
 }
 
 public enum ShaderFormat
 {
 	Invalid,
 	SPIRV,
+	HLSL,
 	DXBC,
 	DXIL,
 	MSL,
@@ -829,44 +829,6 @@ public readonly record struct BufferImageCopy(
 	}
 }
 
-public readonly record struct GraphicsPipelineResourceInfo(
-	uint SamplerCount,
-	uint StorageBufferCount,
-	uint StorageTextureCount,
-	uint UniformBufferCount
-) {
-	public Refresh.GraphicsPipelineResourceInfo ToRefresh()
-	{
-		return new Refresh.GraphicsPipelineResourceInfo
-		{
-			SamplerCount = SamplerCount,
-			StorageBufferCount = StorageBufferCount,
-			StorageTextureCount = StorageTextureCount,
-			UniformBufferCount = UniformBufferCount
-		};
-	}
-}
-
-public readonly record struct ComputePipelineResourceInfo(
-	uint ReadOnlyStorageTextureCount,
-	uint ReadOnlyStorageBufferCount,
-	uint ReadWriteStorageTextureCount,
-	uint ReadWriteStorageBufferCount,
-	uint UniformBufferCount
-) {
-	public Refresh.ComputePipelineResourceInfo ToRefresh()
-	{
-		return new Refresh.ComputePipelineResourceInfo
-		{
-			ReadOnlyStorageTextureCount = ReadOnlyStorageTextureCount,
-			ReadOnlyStorageBufferCount = ReadOnlyStorageBufferCount,
-			ReadWriteStorageTextureCount = ReadWriteStorageTextureCount,
-			ReadWriteStorageBufferCount = ReadWriteStorageBufferCount,
-			UniformBufferCount = UniformBufferCount
-		};
-	}
-}
-
 /// <summary>
 /// A buffer-offset pair to be used when binding buffers.
 /// </summary>
@@ -942,7 +904,28 @@ public struct GraphicsPipelineCreateInfo
 	public MultisampleState MultisampleState;
 	public DepthStencilState DepthStencilState;
 	public GraphicsPipelineAttachmentInfo AttachmentInfo;
-	public GraphicsPipelineResourceInfo VertexShaderResourceInfo;
-	public GraphicsPipelineResourceInfo FragmentShaderResourceInfo;
 	public BlendConstants BlendConstants;
+}
+
+public struct ComputePipelineCreateInfo
+{
+	public ShaderFormat ShaderFormat;
+	public uint ReadOnlyStorageTextureCount;
+	public uint ReadOnlyStorageBufferCount;
+	public uint ReadWriteStorageTextureCount;
+	public uint ReadWriteStorageBufferCount;
+	public uint UniformBufferCount;
+	public uint ThreadCountX;
+	public uint ThreadCountY;
+	public uint ThreadCountZ;
+}
+
+public struct ShaderCreateInfo
+{
+	public ShaderStage ShaderStage;
+	public ShaderFormat ShaderFormat;
+	public uint SamplerCount;
+	public uint StorageTextureCount;
+	public uint StorageBufferCount;
+	public uint UniformBufferCount;
 }

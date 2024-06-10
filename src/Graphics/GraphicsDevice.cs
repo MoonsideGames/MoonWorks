@@ -22,8 +22,6 @@ namespace MoonWorks.Graphics
 		// Built-in text shader info
 		public Shader TextVertexShader;
 		public Shader TextFragmentShader;
-		public GraphicsPipelineResourceInfo TextVertexShaderInfo { get; }
-		public GraphicsPipelineResourceInfo TextFragmentShaderInfo { get; }
 		public VertexInputState TextVertexInputState { get; }
 
 		// Built-in samplers
@@ -81,8 +79,11 @@ namespace MoonWorks.Graphics
 					this,
 					fullscreenVertPath,
 					"main",
-					ShaderStage.Vertex,
-					ShaderFormat.SECRET
+					new ShaderCreateInfo
+					{
+						ShaderStage = ShaderStage.Vertex,
+						ShaderFormat = ShaderFormat.SECRET,
+					}
 				);
 			}
 			else
@@ -94,8 +95,11 @@ namespace MoonWorks.Graphics
 					this,
 					vertStream,
 					"main",
-					ShaderStage.Vertex,
-					ShaderFormat.SPIRV
+					new ShaderCreateInfo
+					{
+						ShaderStage =ShaderStage.Vertex,
+						ShaderFormat = ShaderFormat.SPIRV
+					}
 				);
 			}
 
@@ -105,8 +109,12 @@ namespace MoonWorks.Graphics
 					this,
 					videoFragPath,
 					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SECRET
+					new ShaderCreateInfo
+					{
+						ShaderStage =ShaderStage.Fragment,
+						ShaderFormat = ShaderFormat.SECRET,
+						SamplerCount = 3
+					}
 				);
 			}
 			else
@@ -118,8 +126,12 @@ namespace MoonWorks.Graphics
 					this,
 					fragStream,
 					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SPIRV
+					new ShaderCreateInfo
+					{
+						ShaderStage =ShaderStage.Fragment,
+						ShaderFormat = ShaderFormat.SPIRV,
+						SamplerCount = 3
+					}
 				);
 			}
 
@@ -129,16 +141,25 @@ namespace MoonWorks.Graphics
 					this,
 					textVertPath,
 					"main",
-					ShaderStage.Vertex,
-					ShaderFormat.SECRET
+					new ShaderCreateInfo
+					{
+						ShaderStage = ShaderStage.Vertex,
+						ShaderFormat = ShaderFormat.SECRET,
+						UniformBufferCount = 1
+					}
 				);
 
 				textFragShader = new Shader(
 					this,
 					textFragPath,
 					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SECRET
+					new ShaderCreateInfo
+					{
+						ShaderStage = ShaderStage.Fragment,
+						ShaderFormat = ShaderFormat.SECRET,
+						SamplerCount = 1,
+						UniformBufferCount = 1
+					}
 				);
 			}
 			else
@@ -153,16 +174,25 @@ namespace MoonWorks.Graphics
 					this,
 					vertStream,
 					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SPIRV
+					new ShaderCreateInfo
+					{
+						ShaderStage = ShaderStage.Vertex,
+						ShaderFormat = ShaderFormat.SPIRV,
+						UniformBufferCount = 1
+					}
 				);
 
 				textFragShader = new Shader(
 					this,
 					fragStream,
 					"main",
-					ShaderStage.Fragment,
-					ShaderFormat.SPIRV
+					new ShaderCreateInfo
+					{
+						ShaderStage = ShaderStage.Fragment,
+						ShaderFormat = ShaderFormat.SPIRV,
+						SamplerCount = 1,
+						UniformBufferCount = 1
+					}
 				);
 			}
 
@@ -179,10 +209,6 @@ namespace MoonWorks.Graphics
 					DepthStencilState = DepthStencilState.Disable,
 					VertexShader = fullscreenVertShader,
 					FragmentShader = videoFragShader,
-					FragmentShaderResourceInfo = new GraphicsPipelineResourceInfo
-					{
-						SamplerCount = 3
-					},
 					VertexInputState = VertexInputState.Empty,
 					RasterizerState = RasterizerState.CCW_CullNone,
 					PrimitiveType = PrimitiveType.TriangleList,
@@ -191,13 +217,7 @@ namespace MoonWorks.Graphics
 			);
 
 			TextVertexShader = textVertShader;
-			TextVertexShaderInfo = new GraphicsPipelineResourceInfo();
-
 			TextFragmentShader = textFragShader;
-			TextFragmentShaderInfo = new GraphicsPipelineResourceInfo
-			{
-				SamplerCount = 1
-			};
 
 			TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>();
 
