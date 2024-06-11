@@ -53,6 +53,8 @@ namespace MoonWorks
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
+			SwapchainComposition swapchainComposition,
+			PresentMode presentMode,
 			FrameLimiterSettings frameLimiterSettings,
 			BackendFlags preferredBackends,
 			int targetTimestep = 60,
@@ -94,7 +96,7 @@ namespace MoonWorks
 			Logger.LogInfo("Initializing main window...");
 			MainWindow = new Window(windowCreateInfo, windowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
-			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.SwapchainComposition, windowCreateInfo.PresentMode))
+			if (!GraphicsDevice.ClaimWindow(MainWindow, swapchainComposition, presentMode))
 			{
 				throw new System.SystemException("Could not claim window!");
 			}

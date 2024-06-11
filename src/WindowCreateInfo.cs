@@ -22,14 +22,6 @@
 		/// </summary>
 		public ScreenMode ScreenMode;
 		/// <summary>
-		/// Specifies the swapchain composition. Use SDR unless you know what you're doing.
-		/// </summary>
-		public Graphics.SwapchainComposition SwapchainComposition;
-		/// <summary>
-		/// Specifies the presentation mode for the window. Roughly equivalent to V-Sync.
-		/// </summary>
-		public Graphics.PresentMode PresentMode;
-		/// <summary>
 		/// Whether the window can be resized using the operating system's window dragging feature.
 		/// </summary>
 		public bool SystemResizable;
@@ -43,8 +35,6 @@
 			uint windowWidth,
 			uint windowHeight,
 			ScreenMode screenMode,
-			Graphics.SwapchainComposition swapchainComposition,
-			Graphics.PresentMode presentMode,
 			bool systemResizable = false,
 			bool startMaximized = false
 		) {
@@ -52,8 +42,6 @@
 			WindowWidth = windowWidth;
 			WindowHeight = windowHeight;
 			ScreenMode = screenMode;
-			SwapchainComposition = swapchainComposition;
-			PresentMode = presentMode;
 			SystemResizable = systemResizable;
 			StartMaximized = startMaximized;
 		}
