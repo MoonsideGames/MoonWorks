@@ -26,7 +26,7 @@ namespace MoonWorks.Graphics
 		uint textureDataOffset = 0;
 		uint textureDataSize = 1024;
 
-		List<(GpuBuffer, BufferCopy, bool)> BufferUploads = new List<(GpuBuffer, BufferCopy, bool)>();
+		List<(Buffer, BufferCopy, bool)> BufferUploads = new List<(Buffer, BufferCopy, bool)>();
 		List<(TextureRegion, uint, bool)> TextureUploads = new List<(TextureRegion, uint, bool)>();
 
 		public ResourceUploader(GraphicsDevice device) : base(device)
@@ -38,22 +38,22 @@ namespace MoonWorks.Graphics
 		// Buffers
 
 		/// <summary>
-		/// Creates a GpuBuffer with data to be uploaded.
+		/// Creates a Buffer with data to be uploaded.
 		/// </summary>
-		public GpuBuffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
+		public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
 		{
 			var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
-			var gpuBuffer = new GpuBuffer(Device, usageFlags, lengthInBytes);
+			var buffer = new Buffer(Device, usageFlags, lengthInBytes);
 
-			SetBufferData(gpuBuffer, 0, data, false);
+			SetBufferData(buffer, 0, data, false);
 
-			return gpuBuffer;
+			return buffer;
 		}
 
 		/// <summary>
-		/// Prepares upload of data into a GpuBuffer.
+		/// Prepares upload of data into a Buffer.
 		/// </summary>
-		public void SetBufferData<T>(GpuBuffer buffer, uint bufferOffsetInElements, Span<T> data, bool cycle) where T : unmanaged
+		public void SetBufferData<T>(Buffer buffer, uint bufferOffsetInElements, Span<T> data, bool cycle) where T : unmanaged
 		{
 			uint elementSize = (uint) Marshal.SizeOf<T>();
 			uint offsetInBytes = elementSize * bufferOffsetInElements;
@@ -288,11 +288,11 @@ namespace MoonWorks.Graphics
 		{
 			var copyPass = commandBuffer.BeginCopyPass();
 
-			foreach (var (gpuBuffer, bufferCopyParams, option) in BufferUploads)
+			foreach (var (buffer, bufferCopyParams, option) in BufferUploads)
 			{
 				copyPass.UploadToBuffer(
 					BufferTransferBuffer,
-					gpuBuffer,
+					buffer,
 					bufferCopyParams,
 					option
 				);

@@ -953,7 +953,7 @@ public readonly record struct BufferImageCopy(
 /// A buffer-offset pair to be used when binding buffers.
 /// </summary>
 public readonly record struct BufferBinding(
-	GpuBuffer Buffer,
+	Buffer Buffer,
 	uint Offset
 ) {
 	public Refresh.BufferBinding ToRefresh()
@@ -984,7 +984,7 @@ public readonly record struct TextureSamplerBinding(
 }
 
 public readonly record struct StorageBufferReadWriteBinding(
-	GpuBuffer Buffer,
+	Buffer Buffer,
 	bool Cycle
 ) {
 	public Refresh.StorageBufferReadWriteBinding ToRefresh()

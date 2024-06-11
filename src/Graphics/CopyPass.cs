@@ -59,7 +59,7 @@ public class CopyPass
 	}
 
 	/// <summary>
-	/// Uploads data from a TransferBuffer to a GpuBuffer.
+	/// Uploads data from a TransferBuffer to a Buffer.
 	/// This copy occurs on the GPU timeline.
 	///
 	/// Overwriting the contents of the TransferBuffer before the command buffer
@@ -70,7 +70,7 @@ public class CopyPass
 	/// <param name="cycle">If true, cycles the buffer if it is bound.</param>
 	public void UploadToBuffer(
 		TransferBuffer transferBuffer,
-		GpuBuffer buffer,
+		Buffer buffer,
 		in BufferCopy copyParams,
 		bool cycle
 	) {
@@ -90,11 +90,11 @@ public class CopyPass
 	}
 
 	/// <summary>
-	/// Copies the entire contents of a TransferBuffer to a GpuBuffer.
+	/// Copies the entire contents of a TransferBuffer to a Buffer.
 	/// </summary>
 	public void UploadToBuffer(
 		TransferBuffer transferBuffer,
-		GpuBuffer buffer,
+		Buffer buffer,
 		bool cycle
 	) {
 		UploadToBuffer(
@@ -106,11 +106,11 @@ public class CopyPass
 	}
 
 	/// <summary>
-	/// Copies data element-wise into from a TransferBuffer to a GpuBuffer.
+	/// Copies data element-wise into from a TransferBuffer to a Buffer.
 	/// </summary>
 	public void UploadToBuffer<T>(
 		TransferBuffer transferBuffer,
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint sourceStartElement,
 		uint destinationStartElement,
 		uint numElements,
@@ -160,14 +160,14 @@ public class CopyPass
 	}
 
 	/// <summary>
-	/// Copies data from a GpuBuffer to another GpuBuffer.
+	/// Copies data from a Buffer to another Buffer.
 	/// This copy occurs on the GPU timeline.
 	///
 	/// You MAY assume that the copy has finished in subsequent commands.
 	/// </summary>
 	public void CopyBufferToBuffer(
-		GpuBuffer source,
-		GpuBuffer destination,
+		Buffer source,
+		Buffer destination,
 		in BufferCopy copyParams,
 		bool cycle
 	) {
@@ -186,7 +186,7 @@ public class CopyPass
 	}
 
 	public void DownloadFromBuffer(
-		GpuBuffer buffer,
+		Buffer buffer,
 		TransferBuffer transferBuffer,
 		in BufferCopy copyParams
 	) {

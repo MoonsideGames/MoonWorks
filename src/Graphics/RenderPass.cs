@@ -186,7 +186,7 @@ public class RenderPass
 	}
 
 	public unsafe void BindVertexStorageBuffer(
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint slot = 0
 	) {
 #if DEBUG
@@ -246,7 +246,7 @@ public class RenderPass
 	}
 
 	public unsafe void BindFragmentStorageBuffer(
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint slot = 0
 	) {
 #if DEBUG
@@ -388,7 +388,7 @@ public class RenderPass
 	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
 	/// <param name="stride">The byte stride between sets of draw parameters.</param>
 	public void DrawPrimitivesIndirect(
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint offsetInBytes,
 		uint drawCount,
 		uint stride
@@ -415,7 +415,7 @@ public class RenderPass
 	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
 	/// <param name="stride">The byte stride between sets of draw parameters.</param>
 	public void DrawIndexedPrimitivesIndirect(
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint offsetInBytes,
 		uint drawCount,
 		uint stride
@@ -524,7 +524,7 @@ public class RenderPass
 		}
 	}
 
-	private void AssertBufferNonNull(GpuBuffer buffer)
+	private void AssertBufferNonNull(Buffer buffer)
 	{
 		if (buffer == null || buffer.Handle == IntPtr.Zero)
 		{
@@ -532,7 +532,7 @@ public class RenderPass
 		}
 	}
 
-	private void AssertBufferHasGraphicsStorageFlag(GpuBuffer buffer)
+	private void AssertBufferHasGraphicsStorageFlag(Buffer buffer)
 	{
 		if ((buffer.UsageFlags & BufferUsageFlags.GraphicsStorage) == 0)
 		{

@@ -13,8 +13,8 @@ namespace MoonWorks.Graphics.Font
 		private GraphicsDevice GraphicsDevice { get; }
 		public IntPtr Handle { get; }
 
-		public GpuBuffer VertexBuffer { get; protected set; } = null;
-		public GpuBuffer IndexBuffer { get; protected set; } = null;
+		public Buffer VertexBuffer { get; protected set; } = null;
+		public Buffer IndexBuffer { get; protected set; } = null;
 		public uint PrimitiveCount { get; protected set; }
 
 		private TransferBuffer TransferBuffer;
@@ -32,8 +32,8 @@ namespace MoonWorks.Graphics.Font
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
 
-			VertexBuffer = GpuBuffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
-			IndexBuffer = GpuBuffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
+			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 
 			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferUsage.Buffer, TransferBufferMapFlags.Write, VertexBuffer.Size + IndexBuffer.Size);
 		}
@@ -105,14 +105,14 @@ namespace MoonWorks.Graphics.Font
 			if (VertexBuffer.Size < vertexDataLengthInBytes)
 			{
 				VertexBuffer.Dispose();
-				VertexBuffer = new GpuBuffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
 				newTransferBufferNeeded = true;
 			}
 
 			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new GpuBuffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
 				newTransferBufferNeeded = true;
 			}
 

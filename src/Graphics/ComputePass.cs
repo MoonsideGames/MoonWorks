@@ -71,7 +71,7 @@ public class ComputePass
 	/// This buffer must have been created with the ComputeShaderRead usage flag.
 	/// </summary>
 	public unsafe void BindStorageBuffer(
-		GpuBuffer buffer,
+		Buffer buffer,
 		uint slot = 0
 	) {
 #if DEBUG
@@ -193,7 +193,7 @@ public class ComputePass
 		}
 	}
 
-	private void AssertBufferNonNull(GpuBuffer buffer)
+	private void AssertBufferNonNull(Buffer buffer)
 	{
 		if (buffer == null || buffer.Handle == nint.Zero)
 		{
@@ -201,7 +201,7 @@ public class ComputePass
 		}
 	}
 
-	private void AssertBufferHasComputeStorageReadFlag(GpuBuffer buffer)
+	private void AssertBufferHasComputeStorageReadFlag(Buffer buffer)
 	{
 		if ((buffer.UsageFlags & BufferUsageFlags.ComputeStorageRead) == 0)
 		{

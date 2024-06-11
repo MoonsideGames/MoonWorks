@@ -5,9 +5,9 @@ using RefreshCS;
 namespace MoonWorks.Graphics;
 
 /// <summary>
-/// GpuBuffers are generic data containers that can be used by the GPU.
+/// A data container that can be efficiently used by the GPU.
 /// </summary>
-public class GpuBuffer : RefreshResource
+public class Buffer : RefreshResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseBuffer;
 
@@ -46,13 +46,13 @@ public class GpuBuffer : RefreshResource
 	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
 	/// <returns></returns>
-	public unsafe static GpuBuffer Create<T>(
+	public unsafe static Buffer Create<T>(
 		GraphicsDevice device,
 		BufferUsageFlags usageFlags,
 		uint elementCount
 	) where T : unmanaged
 	{
-		return new GpuBuffer(
+		return new Buffer(
 			device,
 			usageFlags,
 			(uint) Marshal.SizeOf<T>() * elementCount
@@ -65,7 +65,7 @@ public class GpuBuffer : RefreshResource
 	/// <param name="device">An initialized GraphicsDevice.</param>
 	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 	/// <param name="sizeInBytes">The length of the array. Cannot be resized.</param>
-	public GpuBuffer(
+	public Buffer(
 		GraphicsDevice device,
 		BufferUsageFlags usageFlags,
 		uint sizeInBytes
@@ -81,7 +81,7 @@ public class GpuBuffer : RefreshResource
 		name = "";
 	}
 
-	public static implicit operator BufferBinding(GpuBuffer b)
+	public static implicit operator BufferBinding(Buffer b)
 	{
 		return new BufferBinding(b, 0);
 	}
