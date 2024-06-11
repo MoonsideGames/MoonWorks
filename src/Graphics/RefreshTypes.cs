@@ -4,7 +4,7 @@ using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
-// Recreate certain types in here so we can hide the Refresh namespace
+// Recreate certain types in here so we can csharp-ify them and hide the Refresh namespace
 
 public enum PrimitiveType
 {
@@ -742,6 +742,126 @@ public struct DepthStencilAttachmentInfo
 	}
 }
 
+/// <summary>
+/// Defines how color blending will be performed in a GraphicsPipeline.
+/// </summary>
+public struct ColorAttachmentBlendState
+{
+	/// <summary>
+	/// If disabled, no blending will occur.
+	/// </summary>
+	public bool BlendEnable;
+
+	/// <summary>
+	/// Selects which blend operation to use with alpha values.
+	/// </summary>
+	public BlendOp AlphaBlendOp;
+	/// <summary>
+	/// Selects which blend operation to use with color values.
+	/// </summary>
+	public BlendOp ColorBlendOp;
+
+	/// <summary>
+	/// Specifies which of the RGBA components are enabled for writing.
+	/// </summary>
+	public ColorComponentFlags ColorWriteMask;
+
+	/// <summary>
+	/// Selects which blend factor is used to determine the alpha destination factor.
+	/// </summary>
+	public BlendFactor DestinationAlphaBlendFactor;
+
+	/// <summary>
+	/// Selects which blend factor is used to determine the color destination factor.
+	/// </summary>
+	public BlendFactor DestinationColorBlendFactor;
+
+	/// <summary>
+	/// Selects which blend factor is used to determine the alpha source factor.
+	/// </summary>
+	public BlendFactor SourceAlphaBlendFactor;
+
+	/// <summary>
+	/// Selects which blend factor is used to determine the color source factor.
+	/// </summary>
+	public BlendFactor SourceColorBlendFactor;
+
+	public static readonly ColorAttachmentBlendState Additive = new ColorAttachmentBlendState
+	{
+		BlendEnable = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		ColorWriteMask = ColorComponentFlags.RGBA,
+		SourceColorBlendFactor = BlendFactor.SourceAlpha,
+		SourceAlphaBlendFactor = BlendFactor.SourceAlpha,
+		DestinationColorBlendFactor = BlendFactor.One,
+		DestinationAlphaBlendFactor = BlendFactor.One
+	};
+
+	public static readonly ColorAttachmentBlendState AlphaBlend = new ColorAttachmentBlendState
+	{
+		BlendEnable = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		ColorWriteMask = ColorComponentFlags.RGBA,
+		SourceColorBlendFactor = BlendFactor.One,
+		SourceAlphaBlendFactor = BlendFactor.One,
+		DestinationColorBlendFactor = BlendFactor.OneMinusSourceAlpha,
+		DestinationAlphaBlendFactor = BlendFactor.OneMinusSourceAlpha
+	};
+
+	public static readonly ColorAttachmentBlendState NonPremultiplied = new ColorAttachmentBlendState
+	{
+		BlendEnable = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		ColorWriteMask = ColorComponentFlags.RGBA,
+		SourceColorBlendFactor = BlendFactor.SourceAlpha,
+		SourceAlphaBlendFactor = BlendFactor.SourceAlpha,
+		DestinationColorBlendFactor = BlendFactor.OneMinusSourceAlpha,
+		DestinationAlphaBlendFactor = BlendFactor.OneMinusSourceAlpha
+	};
+
+	public static readonly ColorAttachmentBlendState Opaque = new ColorAttachmentBlendState
+	{
+		BlendEnable = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		ColorWriteMask = ColorComponentFlags.RGBA,
+		SourceColorBlendFactor = BlendFactor.One,
+		SourceAlphaBlendFactor = BlendFactor.One,
+		DestinationColorBlendFactor = BlendFactor.Zero,
+		DestinationAlphaBlendFactor = BlendFactor.Zero
+	};
+
+	public static readonly ColorAttachmentBlendState None = new ColorAttachmentBlendState
+	{
+		BlendEnable = false,
+		ColorWriteMask = ColorComponentFlags.RGBA
+	};
+
+	public static readonly ColorAttachmentBlendState Disable = new ColorAttachmentBlendState
+	{
+		BlendEnable = false,
+		ColorWriteMask = ColorComponentFlags.None
+	};
+
+	public Refresh.ColorAttachmentBlendState ToRefresh()
+	{
+		return new Refresh.ColorAttachmentBlendState
+		{
+			BlendEnable = Conversions.BoolToInt(BlendEnable),
+			AlphaBlendOp = (Refresh.BlendOp) AlphaBlendOp,
+			ColorBlendOp = (Refresh.BlendOp) ColorBlendOp,
+			ColorWriteMask = (Refresh.ColorComponentFlags) ColorWriteMask,
+			DestinationAlphaBlendFactor = (Refresh.BlendFactor) DestinationAlphaBlendFactor,
+			DestinationColorBlendFactor = (Refresh.BlendFactor) DestinationColorBlendFactor,
+			SourceAlphaBlendFactor = (Refresh.BlendFactor) SourceAlphaBlendFactor,
+			SourceColorBlendFactor = (Refresh.BlendFactor) SourceColorBlendFactor
+		};
+	}
+}
+
 [StructLayout(LayoutKind.Sequential)]
 public struct ColorAttachmentDescription
 {
@@ -892,6 +1012,372 @@ public readonly record struct StorageTextureReadWriteBinding(
 }
 
 /// <summary>
+/// Specifies how the vertex shader will interpet vertex data in a buffer.
+/// </summary>
+public struct VertexInputState
+{
+	public VertexBinding[] VertexBindings;
+	public VertexAttribute[] VertexAttributes;
+
+	public static readonly VertexInputState Empty = new VertexInputState
+	{
+		VertexBindings = System.Array.Empty<VertexBinding>(),
+		VertexAttributes = System.Array.Empty<VertexAttribute>()
+	};
+
+	public VertexInputState(
+		VertexBinding vertexBinding,
+		VertexAttribute[] vertexAttributes
+	) {
+		VertexBindings = new VertexBinding[] { vertexBinding };
+		VertexAttributes = vertexAttributes;
+	}
+
+	public VertexInputState(
+		VertexBinding[] vertexBindings,
+		VertexAttribute[] vertexAttributes
+	) {
+		VertexBindings = vertexBindings;
+		VertexAttributes = vertexAttributes;
+	}
+
+	public VertexInputState(
+		VertexBindingAndAttributes bindingAndAttributes
+	) {
+		VertexBindings = new VertexBinding[] { bindingAndAttributes.VertexBinding };
+		VertexAttributes = bindingAndAttributes.VertexAttributes;
+	}
+
+	public VertexInputState(
+		VertexBindingAndAttributes[] bindingAndAttributesArray
+	) {
+		VertexBindings = new VertexBinding[bindingAndAttributesArray.Length];
+		var attributesLength = 0;
+
+		for (var i = 0; i < bindingAndAttributesArray.Length; i += 1)
+		{
+			VertexBindings[i] = bindingAndAttributesArray[i].VertexBinding;
+			attributesLength += bindingAndAttributesArray[i].VertexAttributes.Length;
+		}
+
+		VertexAttributes = new VertexAttribute[attributesLength];
+
+		var attributeIndex = 0;
+		for (var i = 0; i < bindingAndAttributesArray.Length; i += 1)
+		{
+			for (var j = 0; j < bindingAndAttributesArray[i].VertexAttributes.Length; j += 1)
+			{
+				VertexAttributes[attributeIndex] = bindingAndAttributesArray[i].VertexAttributes[j];
+				attributeIndex += 1;
+			}
+		}
+	}
+
+	public static VertexInputState CreateSingleBinding<T>() where T : unmanaged, IVertexType
+	{
+		return new VertexInputState(VertexBindingAndAttributes.Create<T>(0));
+	}
+}
+
+
+/// <summary>
+/// Specifies how the rasterizer should be configured for a graphics pipeline.
+/// </summary>
+public struct RasterizerState
+{
+	/// <summary>
+	/// Specifies whether front faces, back faces, none, or both should be culled.
+	/// </summary>
+	public CullMode CullMode;
+
+	/// <summary>
+	/// Specifies maximum depth bias of a fragment. Only applies if depth biasing is enabled.
+	/// </summary>
+	public float DepthBiasClamp;
+
+	/// <summary>
+	/// The constant depth value added to each fragment. Only applies if depth biasing is enabled.
+	/// </summary>
+	public float DepthBiasConstantFactor;
+
+	/// <summary>
+	/// Specifies whether depth biasing is enabled. Only applies if depth biasing is enabled.
+	/// </summary>
+	public bool DepthBiasEnable;
+
+	/// <summary>
+	/// Factor applied to a fragment's slope in depth bias calculations. Only applies if depth biasing is enabled.
+	/// </summary>
+	public float DepthBiasSlopeFactor;
+
+	/// <summary>
+	/// Specifies how triangles should be drawn.
+	/// </summary>
+	public FillMode FillMode;
+
+	/// <summary>
+	/// Specifies which triangle winding order is designated as front-facing.
+	/// </summary>
+	public FrontFace FrontFace;
+
+	public static readonly RasterizerState CW_CullFront = new RasterizerState
+	{
+		CullMode = CullMode.Front,
+		FrontFace = FrontFace.Clockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CW_CullBack = new RasterizerState
+	{
+		CullMode = CullMode.Back,
+		FrontFace = FrontFace.Clockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CW_CullNone = new RasterizerState
+	{
+		CullMode = CullMode.None,
+		FrontFace = FrontFace.Clockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CW_Wireframe = new RasterizerState
+	{
+		CullMode = CullMode.None,
+		FrontFace = FrontFace.Clockwise,
+		FillMode = FillMode.Line,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CCW_CullFront = new RasterizerState
+	{
+		CullMode = CullMode.Front,
+		FrontFace = FrontFace.CounterClockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CCW_CullBack = new RasterizerState
+	{
+		CullMode = CullMode.Back,
+		FrontFace = FrontFace.CounterClockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CCW_CullNone = new RasterizerState
+	{
+		CullMode = CullMode.None,
+		FrontFace = FrontFace.CounterClockwise,
+		FillMode = FillMode.Fill,
+		DepthBiasEnable = false
+	};
+
+	public static readonly RasterizerState CCW_Wireframe = new RasterizerState
+	{
+		CullMode = CullMode.None,
+		FrontFace = FrontFace.CounterClockwise,
+		FillMode = FillMode.Line,
+		DepthBiasEnable = false
+	};
+
+	public Refresh.RasterizerState ToRefresh()
+	{
+		return new Refresh.RasterizerState
+		{
+			CullMode = (Refresh.CullMode) CullMode,
+			DepthBiasClamp = DepthBiasClamp,
+			DepthBiasConstantFactor = DepthBiasConstantFactor,
+			DepthBiasEnable = Conversions.BoolToInt(DepthBiasEnable),
+			DepthBiasSlopeFactor = DepthBiasSlopeFactor,
+			FillMode = (Refresh.FillMode) FillMode,
+			FrontFace = (Refresh.FrontFace) FrontFace
+		};
+	}
+}
+
+/// <summary>
+/// Specifies how many samples should be used in rasterization.
+/// </summary>
+public struct MultisampleState
+{
+	public SampleCount MultisampleCount;
+	public uint SampleMask;
+
+	public static readonly MultisampleState None = new MultisampleState
+	{
+		MultisampleCount = SampleCount.One,
+		SampleMask = uint.MaxValue
+	};
+
+	public MultisampleState(
+		SampleCount sampleCount,
+		uint sampleMask = uint.MaxValue
+	) {
+		MultisampleCount = sampleCount;
+		SampleMask = sampleMask;
+	}
+
+	public Refresh.MultisampleState ToRefresh()
+	{
+		return new Refresh.MultisampleState
+		{
+			MultisampleCount = (Refresh.SampleCount) MultisampleCount,
+			SampleMask = SampleMask
+		};
+	}
+}
+
+/// <summary>
+/// Determines how data is written to and read from the depth/stencil buffer.
+/// </summary>
+public struct DepthStencilState
+{
+	/// <summary>
+	/// If disabled, no depth culling will occur.
+	/// </summary>
+	public bool DepthTestEnable;
+
+	/// <summary>
+	/// Describes the back-face stencil operation.
+	/// </summary>
+	public StencilOpState BackStencilState;
+
+	/// <summary>
+	/// Describes the front-face stencil operation.
+	/// </summary>
+	public StencilOpState FrontStencilState;
+
+	/// <summary>
+	/// The compare mask for stencil ops.
+	/// </summary>
+	public uint CompareMask;
+
+	/// <summary>
+	/// The write mask for stencil ops.
+	/// </summary>
+	public uint WriteMask;
+
+	/// <summary>
+	/// The stencil reference value.
+	/// </summary>
+	public uint Reference;
+
+	/// <summary>
+	/// The comparison operator used in the depth test.
+	/// </summary>
+	public CompareOp CompareOp;
+
+	/// <summary>
+	/// If depth lies outside of these bounds the pixel will be culled.
+	/// </summary>
+	public bool DepthBoundsTestEnable;
+
+	/// <summary>
+	/// Specifies whether depth values will be written to the buffer during rendering.
+	/// </summary>
+	public bool DepthWriteEnable;
+
+	/// <summary>
+	/// The minimum depth value in the depth bounds test.
+	/// </summary>
+	public float MinDepthBounds;
+
+	/// <summary>
+	/// The maximum depth value in the depth bounds test.
+	/// </summary>
+	public float MaxDepthBounds;
+
+	/// <summary>
+	/// If disabled, no stencil culling will occur.
+	/// </summary>
+	public bool StencilTestEnable;
+
+	public static readonly DepthStencilState DepthReadWrite = new DepthStencilState
+	{
+		DepthTestEnable = true,
+		DepthWriteEnable = true,
+		DepthBoundsTestEnable = false,
+		StencilTestEnable = false,
+		CompareOp = CompareOp.LessOrEqual
+	};
+
+	public static readonly DepthStencilState DepthRead = new DepthStencilState
+	{
+		DepthTestEnable = true,
+		DepthWriteEnable = false,
+		DepthBoundsTestEnable = false,
+		StencilTestEnable = false,
+		CompareOp = CompareOp.LessOrEqual
+	};
+
+	public static readonly DepthStencilState Disable = new DepthStencilState
+	{
+		DepthTestEnable = false,
+		DepthWriteEnable = false,
+		DepthBoundsTestEnable = false,
+		StencilTestEnable = false
+	};
+
+	public Refresh.DepthStencilState ToRefresh()
+	{
+		return new Refresh.DepthStencilState
+		{
+			DepthTestEnable = Conversions.BoolToInt(DepthTestEnable),
+			BackStencilState = BackStencilState.ToRefresh(),
+			FrontStencilState = FrontStencilState.ToRefresh(),
+			CompareMask = CompareMask,
+			WriteMask = WriteMask,
+			Reference = Reference,
+			CompareOp = (Refresh.CompareOp) CompareOp,
+			DepthBoundsTestEnable = Conversions.BoolToInt(DepthBoundsTestEnable),
+			DepthWriteEnable = Conversions.BoolToInt(DepthWriteEnable),
+			MinDepthBounds = MinDepthBounds,
+			MaxDepthBounds = MaxDepthBounds,
+			StencilTestEnable = Conversions.BoolToInt(StencilTestEnable)
+		};
+	}
+}
+
+/// <summary>
+/// Describes the kind of attachments that will be used with this pipeline.
+/// </summary>
+public struct GraphicsPipelineAttachmentInfo
+{
+	public ColorAttachmentDescription[] ColorAttachmentDescriptions;
+	public bool HasDepthStencilAttachment;
+	public TextureFormat DepthStencilFormat;
+
+	public GraphicsPipelineAttachmentInfo(
+		params ColorAttachmentDescription[] colorAttachmentDescriptions
+	) {
+		ColorAttachmentDescriptions = colorAttachmentDescriptions;
+		HasDepthStencilAttachment = false;
+		DepthStencilFormat = TextureFormat.D16_UNORM;
+	}
+
+	public GraphicsPipelineAttachmentInfo(
+		TextureFormat depthStencilFormat,
+		params ColorAttachmentDescription[] colorAttachmentDescriptions
+	) {
+		ColorAttachmentDescriptions = colorAttachmentDescriptions;
+		HasDepthStencilAttachment = true;
+		DepthStencilFormat = depthStencilFormat;
+	}
+}
+
+public struct BlendConstants
+{
+	public float R;
+	public float G;
+	public float B;
+	public float A;
+}
+
+/// <summary>
 /// All of the information that is used to create a GraphicsPipeline.
 /// </summary>
 public struct GraphicsPipelineCreateInfo
@@ -928,4 +1414,207 @@ public struct ShaderCreateInfo
 	public uint StorageTextureCount;
 	public uint StorageBufferCount;
 	public uint UniformBufferCount;
+}
+
+/// <summary>
+/// All of the information that is used to create a texture.
+/// </summary>
+public struct TextureCreateInfo
+{
+	public uint Width;
+	public uint Height;
+	public uint Depth;
+	public bool IsCube;
+	public uint LayerCount;
+	public uint LevelCount;
+	public SampleCount SampleCount;
+	public TextureFormat Format;
+	public TextureUsageFlags UsageFlags;
+
+	public Refresh.TextureCreateInfo ToRefresh()
+	{
+		return new Refresh.TextureCreateInfo
+		{
+			Width = Width,
+			Height = Height,
+			Depth = Depth,
+			IsCube = Conversions.BoolToInt(IsCube),
+			LayerCount = LayerCount,
+			LevelCount = LevelCount,
+			SampleCount = (Refresh.SampleCount) SampleCount,
+			Format = (Refresh.TextureFormat) Format,
+			UsageFlags = (Refresh.TextureUsageFlags) UsageFlags
+		};
+	}
+}
+
+
+/// <summary>
+/// All of the information that is used to create a sampler.
+/// </summary>
+public struct SamplerCreateInfo
+{
+	/// <summary>
+	/// Minification filter mode. Used when the image is downscaled.
+	/// </summary>
+	public Filter MinFilter;
+	/// <summary>
+	/// Magnification filter mode. Used when the image is upscaled.
+	/// </summary>
+	public Filter MagFilter;
+	/// <summary>
+	/// Filter mode applied to mipmap lookups.
+	/// </summary>
+	public SamplerMipmapMode MipmapMode;
+	/// <summary>
+	/// Horizontal addressing mode.
+	/// </summary>
+	public SamplerAddressMode AddressModeU;
+	/// <summary>
+	/// Vertical addressing mode.
+	/// </summary>
+	public SamplerAddressMode AddressModeV;
+	/// <summary>
+	/// Depth addressing mode.
+	/// </summary>
+	public SamplerAddressMode AddressModeW;
+	/// <summary>
+	/// Bias value added to mipmap level of detail calculation.
+	/// </summary>
+	public float MipLodBias;
+	/// <summary>
+	/// Enables anisotropic filtering.
+	/// </summary>
+	public bool AnisotropyEnable;
+	/// <summary>
+	/// Maximum anisotropy value.
+	/// </summary>
+	public float MaxAnisotropy;
+	public bool CompareEnable;
+	public CompareOp CompareOp;
+	/// <summary>
+	/// Clamps the LOD value to a specified minimum.
+	/// </summary>
+	public float MinLod;
+	/// <summary>
+	/// Clamps the LOD value to a specified maximum.
+	/// </summary>
+	public float MaxLod;
+	/// <summary>
+	/// If an address mode is set to ClampToBorder, will replace color with this color when samples are outside the [0, 1) range.
+	/// </summary>
+	public BorderColor BorderColor;
+
+	public static readonly SamplerCreateInfo AnisotropicClamp = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Linear,
+		MagFilter = Filter.Linear,
+		MipmapMode = SamplerMipmapMode.Linear,
+		AddressModeU = SamplerAddressMode.ClampToEdge,
+		AddressModeV = SamplerAddressMode.ClampToEdge,
+		AddressModeW = SamplerAddressMode.ClampToEdge,
+		CompareEnable = false,
+		AnisotropyEnable = true,
+		MaxAnisotropy = 4,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000 /* VK_LOD_CLAMP_NONE */
+	};
+
+	public static readonly SamplerCreateInfo AnisotropicWrap = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Linear,
+		MagFilter = Filter.Linear,
+		MipmapMode = SamplerMipmapMode.Linear,
+		AddressModeU = SamplerAddressMode.Repeat,
+		AddressModeV = SamplerAddressMode.Repeat,
+		AddressModeW = SamplerAddressMode.Repeat,
+		CompareEnable = false,
+		AnisotropyEnable = true,
+		MaxAnisotropy = 4,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000 /* VK_LOD_CLAMP_NONE */
+	};
+
+	public static readonly SamplerCreateInfo LinearClamp = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Linear,
+		MagFilter = Filter.Linear,
+		MipmapMode = SamplerMipmapMode.Linear,
+		AddressModeU = SamplerAddressMode.ClampToEdge,
+		AddressModeV = SamplerAddressMode.ClampToEdge,
+		AddressModeW = SamplerAddressMode.ClampToEdge,
+		CompareEnable = false,
+		AnisotropyEnable = false,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000
+	};
+
+	public static readonly SamplerCreateInfo LinearWrap = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Linear,
+		MagFilter = Filter.Linear,
+		MipmapMode = SamplerMipmapMode.Linear,
+		AddressModeU = SamplerAddressMode.Repeat,
+		AddressModeV = SamplerAddressMode.Repeat,
+		AddressModeW = SamplerAddressMode.Repeat,
+		CompareEnable = false,
+		AnisotropyEnable = false,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000
+	};
+
+	public static readonly SamplerCreateInfo PointClamp = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Nearest,
+		MagFilter = Filter.Nearest,
+		MipmapMode = SamplerMipmapMode.Nearest,
+		AddressModeU = SamplerAddressMode.ClampToEdge,
+		AddressModeV = SamplerAddressMode.ClampToEdge,
+		AddressModeW = SamplerAddressMode.ClampToEdge,
+		CompareEnable = false,
+		AnisotropyEnable = false,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000
+	};
+
+	public static readonly SamplerCreateInfo PointWrap = new SamplerCreateInfo
+	{
+		MinFilter = Filter.Nearest,
+		MagFilter = Filter.Nearest,
+		MipmapMode = SamplerMipmapMode.Nearest,
+		AddressModeU = SamplerAddressMode.Repeat,
+		AddressModeV = SamplerAddressMode.Repeat,
+		AddressModeW = SamplerAddressMode.Repeat,
+		CompareEnable = false,
+		AnisotropyEnable = false,
+		MipLodBias = 0f,
+		MinLod = 0,
+		MaxLod = 1000
+	};
+
+	public Refresh.SamplerCreateInfo ToRefresh()
+	{
+		return new Refresh.SamplerCreateInfo
+		{
+			MinFilter = (Refresh.Filter) MinFilter,
+			MagFilter = (Refresh.Filter) MagFilter,
+			MipmapMode = (Refresh.SamplerMipmapMode) MipmapMode,
+			AddressModeU = (Refresh.SamplerAddressMode) AddressModeU,
+			AddressModeV = (Refresh.SamplerAddressMode) AddressModeV,
+			AddressModeW = (Refresh.SamplerAddressMode) AddressModeW,
+			MipLodBias = MipLodBias,
+			AnisotropyEnable = Conversions.BoolToInt(AnisotropyEnable),
+			MaxAnisotropy = MaxAnisotropy,
+			CompareEnable = Conversions.BoolToInt(CompareEnable),
+			CompareOp = (Refresh.CompareOp) CompareOp,
+			MinLod = MinLod,
+			MaxLod = MaxLod,
+			BorderColor = (Refresh.BorderColor) BorderColor
+		};
+	}
 }
