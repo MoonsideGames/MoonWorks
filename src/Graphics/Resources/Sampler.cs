@@ -4,7 +4,7 @@ using RefreshCS;
 namespace MoonWorks.Graphics;
 
 /// <summary>
-/// A sampler specifies how a texture will be sampled in a shader.
+/// Specifies how a texture will be sampled in a shader.
 /// </summary>
 public class Sampler : RefreshResource
 {

@@ -1,12 +1,14 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
 /// <summary>
-/// Command buffers are used to apply render state and issue draw calls.
-/// NOTE: it is not recommended to hold references to command buffers long term.
+/// A structure that buffers commands to be submitted to the GPU.
+/// These commands include operations like copying data, draw calls, and compute dispatches.
+/// Commands only begin executing once the command buffer is submitted.
+/// If you need to know when the command buffer is done, use GraphicsDevice.SubmitAndAcquireFence
 /// </summary>
 public class CommandBuffer
 {

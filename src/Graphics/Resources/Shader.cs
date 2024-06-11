@@ -5,6 +5,10 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics
 {
+	/// <summary>
+	/// Shaders are used to create graphics pipelines.
+	/// Graphics pipelines take a vertex shader and a fragment shader.
+	/// </summary>
 	public class Shader : RefreshResource
 	{
 		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseShader;

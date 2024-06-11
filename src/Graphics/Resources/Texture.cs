@@ -4,7 +4,7 @@ using RefreshCS;
 namespace MoonWorks.Graphics
 {
 	/// <summary>
-	/// A container for pixel data.
+	/// A multi-dimensional data container that can be efficiently used by the GPU.
 	/// </summary>
 	public class Texture : RefreshResource
 	{
