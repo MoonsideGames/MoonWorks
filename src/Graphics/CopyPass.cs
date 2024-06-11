@@ -30,6 +30,7 @@ public class CopyPass
 	) {
 #if DEBUG
 		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
+		AssertTransferBufferNotMapped(transferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToTexture(
@@ -76,6 +77,7 @@ public class CopyPass
 #if DEBUG
 		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.SrcOffset, copyParams.Size);
 		AssertBufferBoundsCheck(buffer.Size, copyParams.DstOffset, copyParams.Size);
+		AssertTransferBufferNotMapped(transferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToBuffer(
@@ -191,6 +193,7 @@ public class CopyPass
 #if DEBUG
 		AssertBufferBoundsCheck(buffer.Size, copyParams.SrcOffset, copyParams.Size);
 		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.DstOffset, copyParams.Size);
+		AssertTransferBufferNotMapped(transferBuffer);
 #endif
 
 		Refresh.Refresh_DownloadFromBuffer(
@@ -208,6 +211,7 @@ public class CopyPass
 	) {
 #if DEBUG
 		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
+		AssertTransferBufferNotMapped(transferBuffer);
 #endif
 
 		Refresh.Refresh_DownloadFromTexture(
@@ -232,6 +236,14 @@ public class CopyPass
 		if (dataLengthInBytes > textureSizeInBytes)
 		{
 			throw new System.InvalidOperationException($"SetTextureData overflow! texture size {textureSizeInBytes}, data size {dataLengthInBytes}");
+		}
+	}
+
+	private void AssertTransferBufferNotMapped(TransferBuffer transferBuffer)
+	{
+		if (transferBuffer.Mapped)
+		{
+			throw new System.InvalidOperationException("Transfer buffer must not be mapped!");
 		}
 	}
 #endif

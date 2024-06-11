@@ -13,6 +13,10 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		public uint Size { get; }
 
+#if DEBUG
+		public bool Mapped { get; private set; }
+#endif
+
 		/// <summary>
 		/// Creates a buffer of requested size given a type and element count.
 		/// </summary>
@@ -62,7 +66,7 @@ namespace MoonWorks.Graphics
 		/// Returns the length of the copy in bytes.
 		///
 		/// If cycle is set to true and this TransferBuffer was used in an Upload command,
-		/// that command will still use the corret data at the cost of increased memory usage.
+		/// that command will still use the correct data at the cost of increased memory usage.
 		///
 		/// If cycle is set to false, the data will be overwritten immediately,
 		/// which could cause a data race.
@@ -78,6 +82,7 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
+			AssertNotMapped();
 #endif
 
 			fixed (T* dataPtr = data)
@@ -130,6 +135,7 @@ namespace MoonWorks.Graphics
 
 #if DEBUG
 			AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
+			AssertNotMapped();
 #endif
 
 			fixed (T* dataPtr = data)
@@ -148,12 +154,58 @@ namespace MoonWorks.Graphics
 			}
 		}
 
+		/// <summary>
+		/// Maps the transfer buffer into application address space.
+		/// You must call Unmap before encoding transfer commands.
+		/// </summary>
+		public unsafe void Map(bool cycle, out byte* data)
+		{
+#if DEBUG
+			AssertNotMapped();
+#endif
+
+			Refresh.Refresh_MapTransferBuffer(
+				Device.Handle,
+				Handle,
+				Conversions.BoolToInt(cycle),
+				out data
+			);
+
+#if DEBUG
+			Mapped = true;
+#endif
+		}
+
+		/// <summary>
+		/// Unmaps the transfer buffer.
+		/// The pointer given by Map is no longer valid.
+		/// </summary>
+		public void Unmap()
+		{
+			Refresh.Refresh_UnmapTransferBuffer(
+				Device.Handle,
+				Handle
+			);
+
+#if DEBUG
+			Mapped = false;
+#endif
+		}
+
 #if DEBUG
 		private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
 		{
 			if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
 			{
 				throw new InvalidOperationException($"Data overflow! Transfer buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
+			}
+		}
+
+		private void AssertNotMapped()
+		{
+			if (Mapped)
+			{
+				throw new InvalidOperationException("Transfer buffer must not be mapped!");
 			}
 		}
 #endif

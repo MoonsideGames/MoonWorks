@@ -48,7 +48,7 @@ namespace MoonWorks.Graphics
 
 			Handle = Refresh.Refresh_CreateDevice(
 				(Refresh.BackendFlags) preferredBackends,
-				Conversions.BoolToByte(debugMode)
+				Conversions.BoolToInt(debugMode)
 			);
 
 			DebugMode = debugMode;
