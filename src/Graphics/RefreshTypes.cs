@@ -1657,3 +1657,74 @@ public struct SamplerCreateInfo
 		};
 	}
 }
+
+/// <summary>
+/// A texture slice specifies a subresource of a texture.
+/// </summary>
+public struct TextureSlice
+{
+	public Texture Texture;
+	public uint MipLevel;
+	public uint Layer;
+
+	public uint Size => (Texture.Width * Texture.Height * Texture.Depth * Texture.BytesPerPixel(Texture.Format) / Texture.BlockSizeSquared(Texture.Format)) >> (int) MipLevel;
+
+	public TextureSlice(Texture texture)
+	{
+		Texture = texture;
+		MipLevel = 0;
+		Layer = 0;
+	}
+
+	public Refresh.TextureSlice ToRefresh()
+	{
+		return new Refresh.TextureSlice
+		{
+			Texture = Texture.Handle,
+			MipLevel = MipLevel,
+			Layer = Layer
+		};
+	}
+}
+
+/// <summary>
+/// A texture region specifies a subregion of a texture.
+/// These are used by copy commands.
+/// </summary>
+public struct TextureRegion
+{
+	public TextureSlice TextureSlice;
+	public uint X;
+	public uint Y;
+	public uint Z;
+	public uint Width;
+	public uint Height;
+	public uint Depth;
+
+	public uint Size => (Width * Height * Depth * Texture.BytesPerPixel(TextureSlice.Texture.Format) / Texture.BlockSizeSquared(TextureSlice.Texture.Format)) >> (int) TextureSlice.MipLevel;
+
+	public TextureRegion(Texture texture)
+	{
+		TextureSlice = new TextureSlice(texture);
+		X = 0;
+		Y = 0;
+		Z = 0;
+		Width = texture.Width;
+		Height = texture.Height;
+		Depth = texture.Depth;
+	}
+
+	public Refresh.TextureRegion ToRefresh()
+	{
+		return new Refresh.TextureRegion
+		{
+			TextureSlice = TextureSlice.ToRefresh(),
+			X = X,
+			Y = Y,
+			Z = Z,
+			W = Width,
+			H = Height,
+			D = Depth
+		};
+	}
+}
