@@ -9,4 +9,9 @@ public interface IVertexType
 	/// An ordered list of the types in your vertex struct.
 	/// </summary>
 	static abstract VertexElementFormat[] Formats { get; }
+
+	/// <summary>
+	/// An ordered list of the offsets in your vertex struct.
+	/// </summary>
+	static abstract uint[] Offsets { get; }
 }

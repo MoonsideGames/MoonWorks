@@ -1029,11 +1029,11 @@ public struct VertexBindingAndAttributes
 	{
 		VertexBinding binding = VertexBinding.Create<T>(bindingIndex, inputRate);
 		VertexAttribute[] attributes = new VertexAttribute[T.Formats.Length];
-		uint offset = 0;
 
 		for (uint i = 0; i < T.Formats.Length; i += 1)
 		{
 			var format = T.Formats[i];
+			var offset = T.Offsets[i];
 
 			attributes[i] = new VertexAttribute
 			{
@@ -1042,8 +1042,6 @@ public struct VertexBindingAndAttributes
 				Format = format,
 				Offset = offset
 			};
-
-			offset += Conversions.VertexElementFormatSize(format);
 		}
 
 		return new VertexBindingAndAttributes(binding, attributes);
