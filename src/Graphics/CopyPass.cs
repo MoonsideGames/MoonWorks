@@ -23,18 +23,18 @@ public class CopyPass
 	/// </summary>
 	/// <param name="cycle">If true, cycles the texture if the given slice is bound.</param>
 	public void UploadToTexture(
-		in TextureTransferInfo transferInfo,
-		in TextureRegion textureRegion,
+		in TextureTransferInfo source,
+		in TextureRegion destination,
 		bool cycle
 	) {
 #if DEBUG
-		AssertTransferBufferNotMapped(transferInfo.TransferBuffer);
+		AssertTransferBufferNotMapped(source.TransferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToTexture(
 			Handle,
-			transferInfo.ToRefresh(),
-			textureRegion.ToRefresh(),
+			source.ToRefresh(),
+			destination.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -43,13 +43,13 @@ public class CopyPass
 	/// Uploads the contents of an entire buffer to a 2D texture with no mips.
 	/// </summary>
 	public void UploadToTexture(
-		TransferBuffer transferBuffer,
-		Texture texture,
+		TransferBuffer source,
+		Texture destination,
 		bool cycle
 	) {
 		UploadToTexture(
-			new TextureTransferInfo(transferBuffer),
-			new TextureRegion(texture),
+			new TextureTransferInfo(source),
+			new TextureRegion(destination),
 			cycle
 		);
 	}
@@ -65,20 +65,20 @@ public class CopyPass
 	/// </summary>
 	/// <param name="cycle">If true, cycles the buffer if it is bound.</param>
 	public void UploadToBuffer(
-		in TransferBufferLocation transferBufferLocation,
-		in BufferRegion bufferRegion,
+		in TransferBufferLocation source,
+		in BufferRegion destination,
 		bool cycle
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(transferBufferLocation.TransferBuffer.Size, transferBufferLocation.Offset, bufferRegion.Size);
-		AssertBufferBoundsCheck(bufferRegion.Buffer.Size, bufferRegion.Offset, bufferRegion.Size);
-		AssertTransferBufferNotMapped(transferBufferLocation.TransferBuffer);
+		AssertBufferBoundsCheck(source.TransferBuffer.Size, source.Offset, destination.Size);
+		AssertBufferBoundsCheck(destination.Buffer.Size, destination.Offset, destination.Size);
+		AssertTransferBufferNotMapped(source.TransferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToBuffer(
 			Handle,
-			transferBufferLocation.ToRefresh(),
-			bufferRegion.ToRefresh(),
+			source.ToRefresh(),
+			destination.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -87,13 +87,13 @@ public class CopyPass
 	/// Copies the entire contents of a TransferBuffer to a Buffer.
 	/// </summary>
 	public void UploadToBuffer(
-		TransferBuffer transferBuffer,
-		Buffer buffer,
+		TransferBuffer source,
+		Buffer destination,
 		bool cycle
 	) {
 		UploadToBuffer(
-			new TransferBufferLocation(transferBuffer),
-			new BufferRegion(buffer, 0, buffer.Size),
+			new TransferBufferLocation(source),
+			new BufferRegion(destination, 0, destination.Size),
 			cycle
 		);
 	}
@@ -102,8 +102,8 @@ public class CopyPass
 	/// Copies data element-wise into from a TransferBuffer to a Buffer.
 	/// </summary>
 	public void UploadToBuffer<T>(
-		TransferBuffer transferBuffer,
-		Buffer buffer,
+		TransferBuffer source,
+		Buffer destination,
 		uint sourceStartElement,
 		uint destinationStartElement,
 		uint numElements,
@@ -116,8 +116,8 @@ public class CopyPass
 		var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);
 
 		UploadToBuffer(
-			new TransferBufferLocation(transferBuffer, srcOffsetInBytes),
-			new BufferRegion(buffer, dstOffsetInBytes, dataLengthInBytes),
+			new TransferBufferLocation(source, srcOffsetInBytes),
+			new BufferRegion(destination, dstOffsetInBytes, dataLengthInBytes),
 			cycle
 		);
 	}
@@ -196,17 +196,17 @@ public class CopyPass
 	}
 
 	public void DownloadFromTexture(
-		in TextureRegion textureRegion,
-		in TextureTransferInfo textureTransferInfo
+		in TextureRegion source,
+		in TextureTransferInfo destination
 	) {
 #if DEBUG
-		AssertTransferBufferNotMapped(textureTransferInfo.TransferBuffer);
+		AssertTransferBufferNotMapped(destination.TransferBuffer);
 #endif
 
 		Refresh.Refresh_DownloadFromTexture(
 			Handle,
-			textureRegion.ToRefresh(),
-			textureTransferInfo.ToRefresh()
+			source.ToRefresh(),
+			destination.ToRefresh()
 		);
 	}
 

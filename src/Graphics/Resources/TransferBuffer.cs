@@ -71,20 +71,20 @@ public unsafe class TransferBuffer : RefreshResource
 	/// which could cause a data race.
 	/// </summary>
 	public unsafe uint SetData<T>(
-		Span<T> data,
+		Span<T> source,
 		uint bufferOffsetInBytes,
 		bool cycle
 	) where T : unmanaged
 	{
 		var elementSize = Marshal.SizeOf<T>();
-		var dataLengthInBytes = (uint) (elementSize * data.Length);
+		var dataLengthInBytes = (uint) (elementSize * source.Length);
 
 #if DEBUG
 		AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
 		AssertNotMapped();
 #endif
 
-		fixed (T* dataPtr = data)
+		fixed (T* dataPtr = source)
 		{
 			Refresh.Refresh_SetTransferData(
 				Device.Handle,
@@ -113,30 +113,30 @@ public unsafe class TransferBuffer : RefreshResource
 	/// which could cause a data race.
 	/// </summary>
 	public unsafe uint SetData<T>(
-		Span<T> data,
+		Span<T> source,
 		bool cycle
 	) where T : unmanaged
 	{
-		return SetData(data, 0, cycle);
+		return SetData(source, 0, cycle);
 	}
 
 	/// <summary>
 	/// Immediately copies data from the TransferBuffer into a Span.
 	/// </summary>
 	public unsafe void GetData<T>(
-		Span<T> data,
+		Span<T> destination,
 		uint bufferOffsetInBytes = 0
 	) where T : unmanaged
 	{
 		var elementSize = Marshal.SizeOf<T>();
-		var dataLengthInBytes = (uint) (elementSize * data.Length);
+		var dataLengthInBytes = (uint) (elementSize * destination.Length);
 
 #if DEBUG
 		AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
 		AssertNotMapped();
 #endif
 
-		fixed (T* dataPtr = data)
+		fixed (T* dataPtr = destination)
 		{
 			Refresh.Refresh_GetTransferData(
 				Device.Handle,
