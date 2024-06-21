@@ -88,9 +88,13 @@ namespace MoonWorks
 			);
 
 			SDL.SDL_WindowFlags windowFlags = 0;
-			if ((preferredBackends & BackendFlags.Vulkan) != 0)
+			if (GraphicsDevice.Backend == BackendFlags.Vulkan)
 			{
 				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
+			}
+			else if (GraphicsDevice.Backend == BackendFlags.Metal)
+			{
+				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_METAL;
 			}
 
 			Logger.LogInfo("Initializing main window...");
