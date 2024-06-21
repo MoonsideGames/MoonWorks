@@ -242,7 +242,7 @@ namespace MoonWorks.Video
 				if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 				{
 					TransferBuffer?.Dispose();
-					TransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, TransferBufferMapFlags.Write, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
+					TransferBuffer = new TransferBuffer(Device, TransferBufferUsage.Upload, (uint) (ySpan.Length + uSpan.Length + vSpan.Length));
 				}
 				TransferBuffer.SetData(ySpan, 0, true);
 				TransferBuffer.SetData(uSpan, (uint) ySpan.Length, false);
@@ -260,37 +260,20 @@ namespace MoonWorks.Video
 			var copyPass = commandBuffer.BeginCopyPass();
 
 			copyPass.UploadToTexture(
-				TransferBuffer,
+				new TextureTransferInfo(TransferBuffer, 0, yStride, yTexture.Height),
 				yTexture,
-				new BufferImageCopy
-				{
-					BufferOffset = 0,
-					BufferStride = yStride,
-					BufferImageHeight = yTexture.Height
-				},
 				true
 			);
 
 			copyPass.UploadToTexture(
-				TransferBuffer,
+				new TextureTransferInfo(TransferBuffer, uOffset, uvStride, uTexture.Height),
 				uTexture,
-				new BufferImageCopy{
-					BufferOffset = uOffset,
-					BufferStride = uvStride,
-					BufferImageHeight = uTexture.Height
-				},
 				true
 			);
 
 			copyPass.UploadToTexture(
-				TransferBuffer,
+				new TextureTransferInfo(TransferBuffer, vOffset, uvStride, vTexture.Height),
 				vTexture,
-				new BufferImageCopy
-				{
-					BufferOffset = vOffset,
-					BufferStride = uvStride,
-					BufferImageHeight = vTexture.Height
-				},
 				true
 			);
 

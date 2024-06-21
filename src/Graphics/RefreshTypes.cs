@@ -131,11 +131,10 @@ public enum BufferUsageFlags
 	ComputeStorageWrite = 0x40
 }
 
-[Flags]
-public enum TransferBufferMapFlags
+public enum TransferBufferUsage
 {
-	Read = 0x1,
-	Write = 0x2
+	Upload,
+	Download
 }
 
 public enum ShaderStage
@@ -276,24 +275,7 @@ public enum SamplerAddressMode
 {
 	Repeat,
 	MirroredRepeat,
-	ClampToEdge,
-	ClampToBorder
-}
-
-public enum BorderColor
-{
-	FloatTransparentBlack,
-	IntTransparentBlack,
-	FloatOpaqueBlack,
-	IntOpaqueBlack,
-	FloatOpaqueWhite,
-	IntOpaqueWhite
-}
-
-public enum TransferUsage
-{
-	Buffer,
-	Texture
+	ClampToEdge
 }
 
 public enum PresentMode
@@ -898,53 +880,38 @@ public struct IndirectDrawCommand
 	}
 }
 
-[StructLayout(LayoutKind.Sequential)]
-public struct BufferCopy
-{
-	public uint SrcOffset;
-	public uint DstOffset;
-	public uint Size;
-
-	public BufferCopy(
-		uint srcOffset,
-		uint dstOffset,
-		uint size
-	) {
-		SrcOffset = srcOffset;
-		DstOffset = dstOffset;
-		Size = size;
-	}
-
-	public Refresh.BufferCopy ToRefresh()
+/// <summary>
+/// A buffer location used when transferring data.
+/// </summary>
+public record struct BufferLocation(
+	Buffer Buffer,
+	uint Offset
+) {
+	public Refresh.BufferLocation ToRefresh()
 	{
-		return new Refresh.BufferCopy
+		return new Refresh.BufferLocation
 		{
-			SourceOffset = SrcOffset,
-			DestinationOffset = DstOffset,
-			Size = Size
+			Buffer = Buffer.Handle,
+			Offset = Offset
 		};
 	}
 }
 
 /// <summary>
-/// Parameters for a copy between buffer and image.
+/// A buffer region used when transferring data.
 /// </summary>
-/// <param name="BufferOffset">The offset into the buffer.</param>
-/// <param name="BufferStride">If 0, image data is assumed tightly packed.</param>
-/// <param name="BufferImageHeight">If 0, image data is assumed tightly packed.</param>
-[StructLayout(LayoutKind.Sequential)]
-public readonly record struct BufferImageCopy(
-	uint BufferOffset,
-	uint BufferStride,
-	uint BufferImageHeight
+public record struct BufferRegion(
+	Buffer Buffer,
+	uint Offset,
+	uint Size
 ) {
-	public Refresh.BufferImageCopy ToRefresh()
+	public Refresh.BufferRegion ToRefresh()
 	{
-		return new Refresh.BufferImageCopy
+		return new Refresh.BufferRegion
 		{
-			BufferOffset = BufferOffset,
-			BufferStride = BufferStride,
-			BufferImageHeight = BufferImageHeight
+			Buffer = Buffer.Handle,
+			Offset = Offset,
+			Size = Size
 		};
 	}
 }
@@ -952,7 +919,7 @@ public readonly record struct BufferImageCopy(
 /// <summary>
 /// A buffer-offset pair to be used when binding buffers.
 /// </summary>
-public readonly record struct BufferBinding(
+public record struct BufferBinding(
 	Buffer Buffer,
 	uint Offset
 ) {
@@ -969,7 +936,7 @@ public readonly record struct BufferBinding(
 /// <summary>
 /// A texture-sampler pair to be used when binding samplers.
 /// </summary>
-public readonly record struct TextureSamplerBinding(
+public record struct TextureSamplerBinding(
 	Texture Texture,
 	Sampler Sampler
 ) {
@@ -983,7 +950,7 @@ public readonly record struct TextureSamplerBinding(
 	}
 }
 
-public readonly record struct StorageBufferReadWriteBinding(
+public record struct StorageBufferReadWriteBinding(
 	Buffer Buffer,
 	bool Cycle
 ) {
@@ -997,7 +964,7 @@ public readonly record struct StorageBufferReadWriteBinding(
 	}
 }
 
-public readonly record struct StorageTextureReadWriteBinding(
+public record struct StorageTextureReadWriteBinding(
 	in TextureSlice TextureSlice,
 	bool Cycle
 ) {
@@ -1309,24 +1276,9 @@ public struct DepthStencilState
 	public CompareOp CompareOp;
 
 	/// <summary>
-	/// If depth lies outside of these bounds the pixel will be culled.
-	/// </summary>
-	public bool DepthBoundsTestEnable;
-
-	/// <summary>
 	/// Specifies whether depth values will be written to the buffer during rendering.
 	/// </summary>
 	public bool DepthWriteEnable;
-
-	/// <summary>
-	/// The minimum depth value in the depth bounds test.
-	/// </summary>
-	public float MinDepthBounds;
-
-	/// <summary>
-	/// The maximum depth value in the depth bounds test.
-	/// </summary>
-	public float MaxDepthBounds;
 
 	/// <summary>
 	/// If disabled, no stencil culling will occur.
@@ -1337,7 +1289,6 @@ public struct DepthStencilState
 	{
 		DepthTestEnable = true,
 		DepthWriteEnable = true,
-		DepthBoundsTestEnable = false,
 		StencilTestEnable = false,
 		CompareOp = CompareOp.LessOrEqual
 	};
@@ -1346,7 +1297,6 @@ public struct DepthStencilState
 	{
 		DepthTestEnable = true,
 		DepthWriteEnable = false,
-		DepthBoundsTestEnable = false,
 		StencilTestEnable = false,
 		CompareOp = CompareOp.LessOrEqual
 	};
@@ -1355,7 +1305,6 @@ public struct DepthStencilState
 	{
 		DepthTestEnable = false,
 		DepthWriteEnable = false,
-		DepthBoundsTestEnable = false,
 		StencilTestEnable = false
 	};
 
@@ -1370,10 +1319,7 @@ public struct DepthStencilState
 			WriteMask = WriteMask,
 			Reference = Reference,
 			CompareOp = (Refresh.CompareOp) CompareOp,
-			DepthBoundsTestEnable = Conversions.BoolToInt(DepthBoundsTestEnable),
 			DepthWriteEnable = Conversions.BoolToInt(DepthWriteEnable),
-			MinDepthBounds = MinDepthBounds,
-			MaxDepthBounds = MaxDepthBounds,
 			StencilTestEnable = Conversions.BoolToInt(StencilTestEnable)
 		};
 	}
@@ -1537,10 +1483,6 @@ public struct SamplerCreateInfo
 	/// Clamps the LOD value to a specified maximum.
 	/// </summary>
 	public float MaxLod;
-	/// <summary>
-	/// If an address mode is set to ClampToBorder, will replace color with this color when samples are outside the [0, 1) range.
-	/// </summary>
-	public BorderColor BorderColor;
 
 	public static readonly SamplerCreateInfo AnisotropicClamp = new SamplerCreateInfo
 	{
@@ -1650,8 +1592,58 @@ public struct SamplerCreateInfo
 			CompareEnable = Conversions.BoolToInt(CompareEnable),
 			CompareOp = (Refresh.CompareOp) CompareOp,
 			MinLod = MinLod,
-			MaxLod = MaxLod,
-			BorderColor = (Refresh.BorderColor) BorderColor
+			MaxLod = MaxLod
+		};
+	}
+}
+
+/// <summary>
+/// Contains data pertaining to a texture upload or download.
+/// </summary>
+public record struct TextureTransferInfo(
+	TransferBuffer TransferBuffer,
+	uint Offset = 0,
+	uint ImagePitch = 0,
+	uint ImageHeight = 0
+) {
+	public Refresh.TextureTransferInfo ToRefresh()
+	{
+		return new Refresh.TextureTransferInfo
+		{
+			TransferBuffer = TransferBuffer.Handle,
+			Offset = Offset,
+			ImagePitch = ImagePitch,
+			ImageHeight = ImageHeight
+		};
+	}
+}
+
+public record struct TransferBufferLocation(
+	TransferBuffer TransferBuffer,
+	uint Offset = 0
+) {
+	public Refresh.TransferBufferLocation ToRefresh()
+	{
+		return new Refresh.TransferBufferLocation
+		{
+			TransferBuffer = TransferBuffer.Handle,
+			Offset = Offset
+		};
+	}
+}
+
+public record struct TransferBufferRegion(
+	TransferBuffer TransferBuffer,
+	uint Offset,
+	uint Size
+) {
+	public Refresh.TransferBufferRegion ToRefresh()
+	{
+		return new Refresh.TransferBufferRegion
+		{
+			TransferBuffer = TransferBuffer.Handle,
+			Offset = Offset,
+			Size = Size
 		};
 	}
 }
@@ -1659,20 +1651,12 @@ public struct SamplerCreateInfo
 /// <summary>
 /// A texture slice specifies a subresource of a texture.
 /// </summary>
-public struct TextureSlice
-{
-	public Texture Texture;
-	public uint MipLevel;
-	public uint Layer;
-
+public record struct TextureSlice(
+	Texture Texture,
+	uint MipLevel = 0,
+	uint Layer = 0
+) {
 	public uint Size => (Texture.Width * Texture.Height * Texture.Depth * Texture.BytesPerPixel(Texture.Format) / Texture.BlockSizeSquared(Texture.Format)) >> (int) MipLevel;
-
-	public TextureSlice(Texture texture)
-	{
-		Texture = texture;
-		MipLevel = 0;
-		Layer = 0;
-	}
 
 	public Refresh.TextureSlice ToRefresh()
 	{
@@ -1685,32 +1669,41 @@ public struct TextureSlice
 	}
 }
 
+public record struct TextureLocation
+(
+	TextureSlice TextureSlice,
+	uint X = 0,
+	uint Y = 0,
+	uint Z = 0
+) {
+	public Refresh.TextureLocation ToRefresh()
+	{
+		return new Refresh.TextureLocation
+		{
+			TextureSlice = TextureSlice.ToRefresh(),
+			X = X,
+			Y = Y,
+			Z = Z
+		};
+	}
+}
+
 /// <summary>
 /// A texture region specifies a subregion of a texture.
 /// These are used by copy commands.
 /// </summary>
-public struct TextureRegion
-{
-	public TextureSlice TextureSlice;
-	public uint X;
-	public uint Y;
-	public uint Z;
-	public uint Width;
-	public uint Height;
-	public uint Depth;
-
+public record struct TextureRegion(
+	TextureSlice TextureSlice,
+	uint X,
+	uint Y,
+	uint Z,
+	uint Width,
+	uint Height,
+	uint Depth
+) {
 	public uint Size => (Width * Height * Depth * Texture.BytesPerPixel(TextureSlice.Texture.Format) / Texture.BlockSizeSquared(TextureSlice.Texture.Format)) >> (int) TextureSlice.MipLevel;
 
-	public TextureRegion(Texture texture)
-	{
-		TextureSlice = new TextureSlice(texture);
-		X = 0;
-		Y = 0;
-		Z = 0;
-		Width = texture.Width;
-		Height = texture.Height;
-		Depth = texture.Depth;
-	}
+	public TextureRegion(Texture texture) : this(texture, 0, 0, 0, texture.Width, texture.Height, texture.Depth) { }
 
 	public Refresh.TextureRegion ToRefresh()
 	{

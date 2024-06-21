@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics;
 
+// FIXME: can we map the transfer buffer instead of maintaining a local pointer
+
 /// <summary>
 /// A convenience structure for creating resources and uploading data to them.
 ///
@@ -26,8 +28,8 @@ public unsafe class ResourceUploader : GraphicsResource
 	uint textureDataOffset = 0;
 	uint textureDataSize = 1024;
 
-	List<(Buffer, BufferCopy, bool)> BufferUploads = new List<(Buffer, BufferCopy, bool)>();
-	List<(TextureRegion, uint, bool)> TextureUploads = new List<(TextureRegion, uint, bool)>();
+	List<(uint, BufferRegion, bool)> BufferUploads = new List<(uint, BufferRegion, bool)>();
+	List<(uint, TextureRegion, bool)> TextureUploads = new List<(uint, TextureRegion, bool)>();
 
 	public ResourceUploader(GraphicsDevice device) : base(device)
 	{
@@ -65,8 +67,8 @@ public unsafe class ResourceUploader : GraphicsResource
 			resourceOffset = CopyBufferData(spanPtr, lengthInBytes);
 		}
 
-		var bufferCopyParams = new BufferCopy(resourceOffset, offsetInBytes, lengthInBytes);
-		BufferUploads.Add((buffer, bufferCopyParams, cycle));
+		var bufferRegion = new BufferRegion(buffer, bufferOffsetInElements, lengthInBytes);
+		BufferUploads.Add((resourceOffset, bufferRegion, cycle));
 	}
 
 	// Textures
@@ -222,7 +224,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, Texture.BytesPerPixel(textureRegion.TextureSlice.Texture.Format));
 		}
 
-		TextureUploads.Add((textureRegion, resourceOffset, cycle));
+		TextureUploads.Add((resourceOffset, textureRegion, cycle));
 	}
 
 	// Upload
@@ -263,7 +265,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			if (BufferTransferBuffer == null || BufferTransferBuffer.Size < bufferDataSize)
 			{
 				BufferTransferBuffer?.Dispose();
-				BufferTransferBuffer = new TransferBuffer(Device, TransferUsage.Buffer, TransferBufferMapFlags.Write, bufferDataSize);
+				BufferTransferBuffer = new TransferBuffer(Device, TransferBufferUsage.Upload, bufferDataSize);
 			}
 
 			var dataSpan = new Span<byte>(bufferData, (int) bufferDataSize);
@@ -276,7 +278,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			if (TextureTransferBuffer == null || TextureTransferBuffer.Size < textureDataSize)
 			{
 				TextureTransferBuffer?.Dispose();
-				TextureTransferBuffer = new TransferBuffer(Device, TransferUsage.Texture, TransferBufferMapFlags.Write, textureDataSize);
+				TextureTransferBuffer = new TransferBuffer(Device, TransferBufferUsage.Upload, textureDataSize);
 			}
 
 			var dataSpan = new Span<byte>(textureData, (int) textureDataSize);
@@ -288,26 +290,20 @@ public unsafe class ResourceUploader : GraphicsResource
 	{
 		var copyPass = commandBuffer.BeginCopyPass();
 
-		foreach (var (buffer, bufferCopyParams, option) in BufferUploads)
+		foreach (var (transferOffset, bufferRegion, option) in BufferUploads)
 		{
 			copyPass.UploadToBuffer(
-				BufferTransferBuffer,
-				buffer,
-				bufferCopyParams,
+				new TransferBufferLocation(BufferTransferBuffer, transferOffset),
+				bufferRegion,
 				option
 			);
 		}
 
-		foreach (var (textureRegion, offset, option) in TextureUploads)
+		foreach (var (transferOffset, textureRegion, option) in TextureUploads)
 		{
 			copyPass.UploadToTexture(
-				TextureTransferBuffer,
+				new TextureTransferInfo(TextureTransferBuffer, transferOffset),
 				textureRegion,
-				new BufferImageCopy(
-					offset,
-					0,
-					0
-				),
 				option
 			);
 		}

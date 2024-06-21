@@ -29,15 +29,13 @@ public unsafe class TransferBuffer : RefreshResource
 	/// <returns></returns>
 	public unsafe static TransferBuffer Create<T>(
 		GraphicsDevice device,
-		TransferUsage usage,
-		TransferBufferMapFlags mapFlags,
+		TransferBufferUsage usage,
 		uint elementCount
 	) where T : unmanaged
 	{
 		return new TransferBuffer(
 			device,
 			usage,
-			mapFlags,
 			(uint) Marshal.SizeOf<T>() * elementCount
 		);
 	}
@@ -46,19 +44,17 @@ public unsafe class TransferBuffer : RefreshResource
 	/// Creates a TransferBuffer.
 	/// </summary>
 	/// <param name="device">An initialized GraphicsDevice.</param>
-	/// <param name="sizeInBytes">The length of the buffer. Cannot be resized.</param>
 	/// <param name="usage">Whether this will be used to upload buffers or textures.</param>
+	/// <param name="sizeInBytes">The length of the buffer. Cannot be resized.</param>
 	public TransferBuffer(
 		GraphicsDevice device,
-		TransferUsage usage,
-		TransferBufferMapFlags mapFlags,
+		TransferBufferUsage usage,
 		uint sizeInBytes
 	) : base(device)
 	{
 		Handle = Refresh.Refresh_CreateTransferBuffer(
 			device.Handle,
-			(Refresh.TransferUsage) usage,
-			(Refresh.TransferBufferMapFlags) mapFlags,
+			(Refresh.TransferBufferUsage) usage,
 			sizeInBytes
 		);
 		Size = sizeInBytes;
@@ -93,11 +89,10 @@ public unsafe class TransferBuffer : RefreshResource
 			Refresh.Refresh_SetTransferData(
 				Device.Handle,
 				(nint) dataPtr,
-				Handle,
-				new Refresh.BufferCopy
+				new Refresh.TransferBufferRegion
 				{
-					SourceOffset = 0,
-					DestinationOffset = bufferOffsetInBytes,
+					TransferBuffer = Handle,
+					Offset = bufferOffsetInBytes,
 					Size = dataLengthInBytes
 				},
 				Conversions.BoolToInt(cycle)
@@ -145,14 +140,13 @@ public unsafe class TransferBuffer : RefreshResource
 		{
 			Refresh.Refresh_GetTransferData(
 				Device.Handle,
-				Handle,
-				(nint) dataPtr,
-				new Refresh.BufferCopy
+				new Refresh.TransferBufferRegion
 				{
-					SourceOffset = bufferOffsetInBytes,
-					DestinationOffset = 0,
+					TransferBuffer = Handle,
+					Offset = bufferOffsetInBytes,
 					Size = dataLengthInBytes
-				}
+				},
+				(nint) dataPtr
 			);
 		}
 	}

@@ -23,21 +23,18 @@ public class CopyPass
 	/// </summary>
 	/// <param name="cycle">If true, cycles the texture if the given slice is bound.</param>
 	public void UploadToTexture(
-		TransferBuffer transferBuffer,
+		in TextureTransferInfo transferInfo,
 		in TextureRegion textureRegion,
-		in BufferImageCopy copyParams,
 		bool cycle
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
-		AssertTransferBufferNotMapped(transferBuffer);
+		AssertTransferBufferNotMapped(transferInfo.TransferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToTexture(
 			Handle,
-			transferBuffer.Handle,
+			transferInfo.ToRefresh(),
 			textureRegion.ToRefresh(),
-			copyParams.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -51,9 +48,8 @@ public class CopyPass
 		bool cycle
 	) {
 		UploadToTexture(
-			transferBuffer,
+			new TextureTransferInfo(transferBuffer),
 			new TextureRegion(texture),
-			new BufferImageCopy(0, 0, 0),
 			cycle
 		);
 	}
@@ -69,22 +65,20 @@ public class CopyPass
 	/// </summary>
 	/// <param name="cycle">If true, cycles the buffer if it is bound.</param>
 	public void UploadToBuffer(
-		TransferBuffer transferBuffer,
-		Buffer buffer,
-		in BufferCopy copyParams,
+		in TransferBufferLocation transferBufferLocation,
+		in BufferRegion bufferRegion,
 		bool cycle
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.SrcOffset, copyParams.Size);
-		AssertBufferBoundsCheck(buffer.Size, copyParams.DstOffset, copyParams.Size);
-		AssertTransferBufferNotMapped(transferBuffer);
+		AssertBufferBoundsCheck(transferBufferLocation.TransferBuffer.Size, transferBufferLocation.Offset, bufferRegion.Size);
+		AssertBufferBoundsCheck(bufferRegion.Buffer.Size, bufferRegion.Offset, bufferRegion.Size);
+		AssertTransferBufferNotMapped(transferBufferLocation.TransferBuffer);
 #endif
 
 		Refresh.Refresh_UploadToBuffer(
 			Handle,
-			transferBuffer.Handle,
-			buffer.Handle,
-			copyParams.ToRefresh(),
+			transferBufferLocation.ToRefresh(),
+			bufferRegion.ToRefresh(),
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -98,9 +92,8 @@ public class CopyPass
 		bool cycle
 	) {
 		UploadToBuffer(
-			transferBuffer,
-			buffer,
-			new BufferCopy(0, 0, transferBuffer.Size),
+			new TransferBufferLocation(transferBuffer),
+			new BufferRegion(buffer, 0, buffer.Size),
 			cycle
 		);
 	}
@@ -123,38 +116,38 @@ public class CopyPass
 		var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);
 
 		UploadToBuffer(
-			transferBuffer,
-			buffer,
-			new BufferCopy(srcOffsetInBytes, dstOffsetInBytes, dataLengthInBytes),
+			new TransferBufferLocation(transferBuffer, srcOffsetInBytes),
+			new BufferRegion(buffer, dstOffsetInBytes, dataLengthInBytes),
 			cycle
 		);
 	}
 
 	/// <summary>
-	/// Copies the contents of a TextureRegion to another TextureRegion.
-	/// The regions must have the same dimensions.
+	/// Copies the contents of a TextureLocation to another TextureLocation.
 	/// This copy occurs on the GPU timeline.
 	///
 	/// You MAY assume that the copy has finished in subsequent commands.
 	/// </summary>
 	public void CopyTextureToTexture(
-		in TextureRegion source,
-		in TextureRegion destination,
+		in TextureLocation source,
+		in TextureLocation destination,
+		uint w,
+		uint h,
+		uint d,
 		bool cycle
 	) {
 #if DEBUG
-		AssertTextureBoundsCheck(destination.Size, source.Size);
-
-		if (source.Width != destination.Width || source.Height != destination.Height || source.Depth != destination.Depth)
-		{
-			throw new System.InvalidOperationException("Texture copy must have the same dimensions!");
-		}
+		AssertTextureBoundsCheck(source, w, h, d);
+		AssertTextureBoundsCheck(destination, w, h, d);
 #endif
 
 		Refresh.Refresh_CopyTextureToTexture(
 			Handle,
 			source.ToRefresh(),
 			destination.ToRefresh(),
+			w,
+			h,
+			d,
 			Conversions.BoolToInt(cycle)
 		);
 	}
@@ -166,59 +159,54 @@ public class CopyPass
 	/// You MAY assume that the copy has finished in subsequent commands.
 	/// </summary>
 	public void CopyBufferToBuffer(
-		Buffer source,
-		Buffer destination,
-		in BufferCopy copyParams,
+		in BufferLocation source,
+		in BufferLocation destination,
+		uint size,
 		bool cycle
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(source.Size, copyParams.SrcOffset, copyParams.Size);
-		AssertBufferBoundsCheck(destination.Size, copyParams.DstOffset, copyParams.Size);
+		AssertBufferBoundsCheck(source.Buffer.Size, source.Offset, size);
+		AssertBufferBoundsCheck(destination.Buffer.Size, destination.Offset, size);
 #endif
 
 		Refresh.Refresh_CopyBufferToBuffer(
 			Handle,
-			source.Handle,
-			destination.Handle,
-			copyParams.ToRefresh(),
+			source.ToRefresh(),
+			destination.ToRefresh(),
+			size,
 			Conversions.BoolToInt(cycle)
 		);
 	}
 
 	public void DownloadFromBuffer(
-		Buffer buffer,
-		TransferBuffer transferBuffer,
-		in BufferCopy copyParams
+		in BufferRegion source,
+		in TransferBufferLocation destination
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(buffer.Size, copyParams.SrcOffset, copyParams.Size);
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.DstOffset, copyParams.Size);
-		AssertTransferBufferNotMapped(transferBuffer);
+		AssertBufferBoundsCheck(source.Buffer.Size, source.Offset, source.Size);
+		AssertBufferBoundsCheck(destination.TransferBuffer.Size, destination.Offset, source.Size);
+		AssertTransferBufferNotMapped(destination.TransferBuffer);
 #endif
 
 		Refresh.Refresh_DownloadFromBuffer(
 			Handle,
-			buffer.Handle,
-			transferBuffer.Handle,
-			copyParams.ToRefresh()
+			source.ToRefresh(),
+			destination.ToRefresh()
 		);
 	}
 
 	public void DownloadFromTexture(
 		in TextureRegion textureRegion,
-		TransferBuffer transferBuffer,
-		in BufferImageCopy copyParams
+		in TextureTransferInfo textureTransferInfo
 	) {
 #if DEBUG
-		AssertBufferBoundsCheck(transferBuffer.Size, copyParams.BufferOffset, textureRegion.Size);
-		AssertTransferBufferNotMapped(transferBuffer);
+		AssertTransferBufferNotMapped(textureTransferInfo.TransferBuffer);
 #endif
 
 		Refresh.Refresh_DownloadFromTexture(
 			Handle,
 			textureRegion.ToRefresh(),
-			transferBuffer.Handle,
-			copyParams.ToRefresh()
+			textureTransferInfo.ToRefresh()
 		);
 	}
 
@@ -231,11 +219,14 @@ public class CopyPass
 		}
 	}
 
-	private void AssertTextureBoundsCheck(uint textureSizeInBytes, uint dataLengthInBytes)
+	private void AssertTextureBoundsCheck(in TextureLocation textureLocation, uint w, uint h, uint d)
 	{
-		if (dataLengthInBytes > textureSizeInBytes)
-		{
-			throw new System.InvalidOperationException($"SetTextureData overflow! texture size {textureSizeInBytes}, data size {dataLengthInBytes}");
+		if (
+			textureLocation.X + w > textureLocation.TextureSlice.Texture.Width ||
+			textureLocation.Y + h > textureLocation.TextureSlice.Texture.Height ||
+			textureLocation.Z + d > textureLocation.TextureSlice.Texture.Depth
+		) {
+			throw new System.InvalidOperationException($"Texture data is out of bounds!");
 		}
 	}
 

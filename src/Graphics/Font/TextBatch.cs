@@ -35,7 +35,7 @@ namespace MoonWorks.Graphics.Font
 			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
 			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferUsage.Buffer, TransferBufferMapFlags.Write, VertexBuffer.Size + IndexBuffer.Size);
+			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -119,7 +119,7 @@ namespace MoonWorks.Graphics.Font
 			if (newTransferBufferNeeded)
 			{
 				TransferBuffer.Dispose();
-				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferUsage.Buffer, TransferBufferMapFlags.Write, VertexBuffer.Size + IndexBuffer.Size);
+				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
@@ -128,8 +128,16 @@ namespace MoonWorks.Graphics.Font
 				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, false);
 
 				var copyPass = commandBuffer.BeginCopyPass();
-				copyPass.UploadToBuffer(TransferBuffer, VertexBuffer, new BufferCopy(0, 0, (uint) vertexSpan.Length), true);
-				copyPass.UploadToBuffer(TransferBuffer, IndexBuffer, new BufferCopy((uint) vertexSpan.Length, 0, (uint) indexSpan.Length), true);
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation(TransferBuffer),
+					new BufferRegion(VertexBuffer, 0, (uint) vertexSpan.Length),
+					true
+				);
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation(TransferBuffer, (uint) vertexSpan.Length),
+					new BufferRegion(IndexBuffer, 0, (uint) indexSpan.Length),
+					true
+				);
 				commandBuffer.EndCopyPass(copyPass);
 			}
 
