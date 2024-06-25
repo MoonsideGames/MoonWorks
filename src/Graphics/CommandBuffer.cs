@@ -206,7 +206,7 @@ public class CommandBuffer
 	{
 		fixed (T* uniformsPtr = &uniforms)
 		{
-			PushUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
+			PushComputeUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
 		}
 	}
 
