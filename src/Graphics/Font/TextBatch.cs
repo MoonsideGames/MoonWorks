@@ -145,16 +145,21 @@ namespace MoonWorks.Graphics.Font
 		}
 
 		// Call this AFTER binding your text pipeline!
-		public void Render(RenderPass renderPass, Math.Float.Matrix4x4 transformMatrix)
-		{
+		public void Render(
+			CommandBuffer commandBuffer,
+			RenderPass renderPass,
+			Math.Float.Matrix4x4 transformMatrix
+		) {
+			commandBuffer.PushVertexUniformData(transformMatrix);
+			commandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
+
 			renderPass.BindFragmentSampler(new TextureSamplerBinding(
 				CurrentFont.Texture,
 				GraphicsDevice.LinearSampler
 			));
 			renderPass.BindVertexBuffer(VertexBuffer);
 			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
-			renderPass.PushVertexUniformData(transformMatrix);
-			renderPass.PushFragmentUniformData(CurrentFont.DistanceRange);
+
 			renderPass.DrawIndexedPrimitives(
 				0,
 				0,

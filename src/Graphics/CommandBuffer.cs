@@ -109,6 +109,108 @@ public class CommandBuffer
 	}
 
 	/// <summary>
+	/// Pushes data to a vertex uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a render or compute pass.
+	/// </summary>
+	public unsafe void PushVertexUniformData(
+		void* uniformsPtr,
+		uint size,
+		uint slot = 0
+	) {
+		Refresh.Refresh_PushVertexUniformData(
+			Handle,
+			slot,
+			(nint) uniformsPtr,
+			size
+		);
+	}
+
+	/// <summary>
+	/// Pushes data to a vertex uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a render or compute pass.
+	/// </summary>
+	public unsafe void PushVertexUniformData<T>(
+		in T uniforms,
+		uint slot = 0
+	) where T : unmanaged
+	{
+		fixed (T* uniformsPtr = &uniforms)
+		{
+			PushVertexUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
+		}
+	}
+
+	/// <summary>
+	/// Pushes data to a fragment uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a pass.
+	/// </summary>
+	public unsafe void PushFragmentUniformData(
+		void* uniformsPtr,
+		uint size,
+		uint slot = 0
+	) {
+		Refresh.Refresh_PushFragmentUniformData(
+			Handle,
+			slot,
+			(nint) uniformsPtr,
+			size
+		);
+	}
+
+	/// <summary>
+	/// Pushes data to a fragment uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a pass.
+	/// </summary>
+	public unsafe void PushFragmentUniformData<T>(
+		in T uniforms,
+		uint slot = 0
+	) where T : unmanaged
+	{
+		fixed (T* uniformsPtr = &uniforms)
+		{
+			PushFragmentUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
+		}
+	}
+
+	/// <summary>
+	/// Pushes data to a compute uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a pass.
+	/// </summary>
+	public unsafe void PushUniformData(
+		void* uniformsPtr,
+		uint size,
+		uint slot = 0
+	) {
+		Refresh.Refresh_PushComputeUniformData(
+			Handle,
+			slot,
+			(nint) uniformsPtr,
+			size
+		);
+	}
+
+	/// <summary>
+	/// Pushes data to a compute uniform slot on the command buffer.
+	/// Subsequent draw calls will use this uniform data.
+	/// It is legal to push uniforms during a pass.
+	/// </summary>
+	public unsafe void PushUniformData<T>(
+		in T uniforms,
+		uint slot = 0
+	) where T : unmanaged
+	{
+		fixed (T* uniformsPtr = &uniforms)
+		{
+			PushUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
+		}
+	}
+
+	/// <summary>
 	/// Begins a render pass.
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this during any kind of pass.
