@@ -181,7 +181,7 @@ public class CommandBuffer
 	/// Subsequent draw calls will use this uniform data.
 	/// It is legal to push uniforms during a pass.
 	/// </summary>
-	public unsafe void PushUniformData(
+	public unsafe void PushComputeUniformData(
 		void* uniformsPtr,
 		uint size,
 		uint slot = 0
@@ -199,7 +199,7 @@ public class CommandBuffer
 	/// Subsequent draw calls will use this uniform data.
 	/// It is legal to push uniforms during a pass.
 	/// </summary>
-	public unsafe void PushUniformData<T>(
+	public unsafe void PushComputeUniformData<T>(
 		in T uniforms,
 		uint slot = 0
 	) where T : unmanaged
