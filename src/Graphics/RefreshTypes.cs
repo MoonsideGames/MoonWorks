@@ -1397,6 +1397,8 @@ public struct ShaderCreateInfo
 	public uint StorageTextureCount;
 	public uint StorageBufferCount;
 	public uint UniformBufferCount;
+
+	public static ShaderCreateInfo None = new ShaderCreateInfo();
 }
 
 /// <summary>

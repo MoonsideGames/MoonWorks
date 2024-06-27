@@ -292,9 +292,7 @@ public class GraphicsDevice : IDisposable
 	/// <summary>
 	/// Changes the present mode of a claimed window. Does nothing if the window is not claimed.
 	/// </summary>
-	/// <param name="window"></param>
-	/// <param name="presentMode"></param>
-	public void SetSwapchainParameters(
+	public bool SetSwapchainParameters(
 		Window window,
 		SwapchainComposition swapchainComposition,
 		PresentMode presentMode
@@ -302,15 +300,28 @@ public class GraphicsDevice : IDisposable
 		if (!window.Claimed)
 		{
 			Logger.LogError("Cannot set present mode on unclaimed window!");
-			return;
+			return false;
 		}
 
-		Refresh.Refresh_SetSwapchainParameters(
+		var success = Conversions.IntToBool(Refresh.Refresh_SetSwapchainParameters(
 			Handle,
 			window.Handle,
 			(Refresh.SwapchainComposition) swapchainComposition,
 			(Refresh.PresentMode) presentMode
-		);
+		));
+
+		if (success)
+		{
+			window.SwapchainComposition = swapchainComposition;
+			window.SwapchainFormat = GetSwapchainFormat(window);
+
+			if (window.SwapchainTexture != null)
+			{
+				window.SwapchainTexture.Format = window.SwapchainFormat;
+			}
+		}
+
+		return success;
 	}
 
 	/// <summary>

@@ -91,47 +91,6 @@ public class ComputePass
 		);
 	}
 
-	/// <summary>
-	/// Pushes compute shader uniform data.
-	/// Subsequent draw calls will use this uniform data.
-	/// </summary>
-	public unsafe void PushUniformData(
-		void* uniformsPtr,
-		uint size,
-		uint slot = 0
-	) {
-#if DEBUG
-		AssertComputePassActive();
-		AssertComputePipelineBound();
-
-		if (slot >= currentComputePipeline.UniformBufferCount)
-		{
-			throw new System.ArgumentException($"Slot {slot} given, but {currentComputePipeline.UniformBufferCount} uniform buffers are used on the shader!");
-		}
-#endif
-
-		Refresh.Refresh_PushComputeUniformData(
-			Handle,
-			slot,
-			(nint) uniformsPtr,
-			size
-		);
-	}
-
-	/// <summary>
-	/// Pushes compute shader uniform data.
-	/// Subsequent draw calls will use this uniform data.
-	/// </summary>
-	public unsafe void PushUniformData<T>(
-		in T uniforms,
-		uint slot = 0
-	) where T : unmanaged
-	{
-		fixed (T* uniformsPtr = &uniforms)
-		{
-			PushUniformData(uniformsPtr, (uint) Marshal.SizeOf<T>(), slot);
-		}
-	}
 
 
 	/// <summary>
