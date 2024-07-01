@@ -146,6 +146,20 @@ public static class ImageUtils
 	}
 
 	/// <summary>
+	/// Saves Color data to a PNG file.
+	/// </summary>
+	public static unsafe void SavePNG(
+		string path,
+		Span<Color> pixels,
+		int width,
+		int height
+	) {
+		fixed (Color* pixelsPtr = pixels) {
+			Refresh.Refresh_Image_SavePNG(path, (byte*) pixelsPtr, width, height);
+		}
+	}
+
+	/// <summary>
 	/// Saves pixel data contained in a TransferBuffer to a PNG file.
 	/// </summary>
 	public static unsafe void SavePNG(
