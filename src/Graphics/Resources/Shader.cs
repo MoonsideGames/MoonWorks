@@ -85,6 +85,11 @@ namespace MoonWorks.Graphics
 				refreshShaderCreateInfo
 			);
 
+			if (shaderModule == nint.Zero)
+			{
+				throw new InvalidOperationException("Shader compilation failed!");
+			}
+
 			NativeMemory.Free(bytecodeBuffer);
 			return shaderModule;
 		}
