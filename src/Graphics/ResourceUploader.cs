@@ -67,7 +67,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			resourceOffset = CopyBufferData(spanPtr, lengthInBytes);
 		}
 
-		var bufferRegion = new BufferRegion(buffer, bufferOffsetInElements, lengthInBytes);
+		var bufferRegion = new BufferRegion(buffer, offsetInBytes, lengthInBytes);
 		BufferUploads.Add((resourceOffset, bufferRegion, cycle));
 	}
 
