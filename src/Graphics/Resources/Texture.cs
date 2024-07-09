@@ -220,11 +220,12 @@ namespace MoonWorks.Graphics
 			switch (format)
 			{
 				case TextureFormat.R8:
+				case TextureFormat.A8:
 				case TextureFormat.R8_UINT:
 					return 1;
-				case TextureFormat.R5G6B5:
+				case TextureFormat.B5G6R5:
 				case TextureFormat.B4G4R4A4:
-				case TextureFormat.A1R5G5B5:
+				case TextureFormat.B5G5R5A1:
 				case TextureFormat.R16_SFLOAT:
 				case TextureFormat.R8G8_SNORM:
 				case TextureFormat.R8G8_UINT:
@@ -237,7 +238,7 @@ namespace MoonWorks.Graphics
 				case TextureFormat.R16G16:
 				case TextureFormat.R16G16_SFLOAT:
 				case TextureFormat.R8G8B8A8_SNORM:
-				case TextureFormat.A2R10G10B10:
+				case TextureFormat.R10G10B10A2:
 				case TextureFormat.R8G8B8A8_UINT:
 				case TextureFormat.R16G16_UINT:
 				case TextureFormat.D24_UNORM_S8_UINT:
@@ -288,13 +289,14 @@ namespace MoonWorks.Graphics
 					return 16;
 				case TextureFormat.R8G8B8A8:
 				case TextureFormat.B8G8R8A8:
-				case TextureFormat.R5G6B5:
-				case TextureFormat.A1R5G5B5:
+				case TextureFormat.B5G6R5:
+				case TextureFormat.B5G5R5A1:
 				case TextureFormat.B4G4R4A4:
-				case TextureFormat.A2R10G10B10:
+				case TextureFormat.R10G10B10A2:
 				case TextureFormat.R16G16:
 				case TextureFormat.R16G16B16A16:
 				case TextureFormat.R8:
+				case TextureFormat.A8:
 				case TextureFormat.R8G8_SNORM:
 				case TextureFormat.R8G8B8A8_SNORM:
 				case TextureFormat.R16_SFLOAT:

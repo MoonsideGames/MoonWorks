@@ -58,7 +58,8 @@ namespace MoonWorks
 			FrameLimiterSettings frameLimiterSettings,
 			BackendFlags preferredBackends,
 			int targetTimestep = 60,
-			bool debugMode = false
+			bool debugMode = false,
+			bool preferLowPower = false
 		) {
 			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
@@ -84,7 +85,8 @@ namespace MoonWorks
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
 				preferredBackends,
-				debugMode
+				debugMode,
+				preferLowPower
 			);
 
 			SDL.SDL_WindowFlags windowFlags = 0;

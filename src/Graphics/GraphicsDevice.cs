@@ -39,7 +39,8 @@ public class GraphicsDevice : IDisposable
 
 	internal unsafe GraphicsDevice(
 		BackendFlags preferredBackends,
-		bool debugMode
+		bool debugMode,
+		bool preferLowPower
 	) {
 		if (preferredBackends == BackendFlags.Invalid)
 		{
@@ -48,7 +49,8 @@ public class GraphicsDevice : IDisposable
 
 		Handle = Refresh.Refresh_CreateDevice(
 			(Refresh.BackendFlags) preferredBackends,
-			Conversions.BoolToInt(debugMode)
+			Conversions.BoolToInt(debugMode),
+			Conversions.BoolToInt(preferLowPower)
 		);
 
 		DebugMode = debugMode;
