@@ -7,7 +7,7 @@ layout(location = 2) in vec4 inColor;
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out vec4 outColor;
 
-layout(binding = 0, set = 2) uniform UBO
+layout(set = 1, binding = 0) uniform UBO
 {
 	mat4 ViewProjection;
 } ubo;

@@ -401,7 +401,7 @@ namespace MoonWorks.Audio
 		/// <param name="easingFunction">An easing function. See MoonWorks.Math.Easing.Function.Float</param>
 		public virtual void SetReverb(float targetValue, float duration, EasingFunction easingFunction)
 		{
-			Device.CreateTween(this, AudioTweenProperty.Reverb, easingFunction, Volume, targetValue, duration, 0);
+			Device.CreateTween(this, AudioTweenProperty.Reverb, easingFunction, Reverb, targetValue, duration, 0);
 		}
 
 		/// <summary>

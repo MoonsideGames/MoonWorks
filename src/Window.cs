@@ -19,7 +19,19 @@ namespace MoonWorks
 		internal Texture SwapchainTexture { get; set; }
 
 		public bool Claimed { get; internal set; }
+		public MoonWorks.Graphics.SwapchainComposition SwapchainComposition { get; internal set; }
 		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }
+
+		public (int, int) Position
+		{
+			get
+			{
+				SDL.SDL_GetWindowPosition(Handle, out var x, out var y);
+				return (x, y);
+			}
+		}
+
+		public string Title { get; private set;}
 
 		private bool IsDisposed;
 
@@ -101,7 +113,7 @@ namespace MoonWorks
 		/// </summary>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
-		public void SetWindowSize(uint width, uint height)
+		public void SetSize(uint width, uint height)
 		{
 			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
 			Width = width;
@@ -111,6 +123,23 @@ namespace MoonWorks
 			{
 				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
 			}
+		}
+
+		/// <summary>
+		/// Sets the window position.
+		/// </summary>
+		public void SetPosition(int x, int y)
+		{
+			SDL.SDL_SetWindowPosition(Handle, x, y);
+		}
+
+		/// <summary>
+		/// Sets the window title.
+		/// </summary>
+		public void SetTitle(string title)
+		{
+			SDL.SDL_SetWindowTitle(Handle, title);
+			Title = title;
 		}
 
 		internal static Window Lookup(uint windowID)

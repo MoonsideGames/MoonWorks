@@ -22,10 +22,6 @@
 		/// </summary>
 		public ScreenMode ScreenMode;
 		/// <summary>
-		/// Specifies the presentation mode for the window. Roughly equivalent to V-Sync.
-		/// </summary>
-		public PresentMode PresentMode;
-		/// <summary>
 		/// Whether the window can be resized using the operating system's window dragging feature.
 		/// </summary>
 		public bool SystemResizable;
@@ -39,7 +35,6 @@
 			uint windowWidth,
 			uint windowHeight,
 			ScreenMode screenMode,
-			PresentMode presentMode,
 			bool systemResizable = false,
 			bool startMaximized = false
 		) {
@@ -47,7 +42,6 @@
 			WindowWidth = windowWidth;
 			WindowHeight = windowHeight;
 			ScreenMode = screenMode;
-			PresentMode = presentMode;
 			SystemResizable = systemResizable;
 			StartMaximized = startMaximized;
 		}
