@@ -40,7 +40,7 @@ namespace MoonWorks.Audio
 				device.DeviceDetails.OutputFormat.Format.nChannels,
 				device.DeviceDetails.OutputFormat.Format.nSamplesPerSec,
 				FAudio.FAUDIO_VOICE_USEFILTER,
-				int.MaxValue,
+				uint.MaxValue,
 				IntPtr.Zero, // default sends to mastering voice
 				IntPtr.Zero
 			);
