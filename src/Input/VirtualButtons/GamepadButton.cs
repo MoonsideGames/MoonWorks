@@ -1,4 +1,4 @@
-using SDL2;
+using SDL3;
 
 namespace MoonWorks.Input
 {
@@ -8,10 +8,10 @@ namespace MoonWorks.Input
 	public class GamepadButton : VirtualButton
 	{
 		public Gamepad Parent { get; }
-		SDL.SDL_GameControllerButton SDL_Button;
+		SDL.SDL_GamepadButton SDL_Button;
 		public GamepadButtonCode Code { get; }
 
-		internal GamepadButton(Gamepad parent, GamepadButtonCode code, SDL.SDL_GameControllerButton sdlButton)
+		internal GamepadButton(Gamepad parent, GamepadButtonCode code, SDL.SDL_GamepadButton sdlButton)
 		{
 			Parent = parent;
 			Code = code;
@@ -20,7 +20,7 @@ namespace MoonWorks.Input
 
 		internal override bool CheckPressed()
 		{
-			return MoonWorks.Conversions.ByteToBool(SDL.SDL_GameControllerGetButton(Parent.Handle, SDL_Button));
+			return SDL.SDL_GetGamepadButton(Parent.Handle, SDL_Button);
 		}
 	}
 }

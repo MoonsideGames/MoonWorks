@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MoonWorks.Graphics;
-using SDL2;
+using SDL3;
 
 namespace MoonWorks
 {
@@ -26,12 +26,19 @@ namespace MoonWorks
 		{
 			get
 			{
-				SDL.SDL_GetWindowPosition(Handle, out var x, out var y);
+				if (!SDL.SDL_GetWindowPosition(Handle, out var x, out var y))
+				{
+					Logger.LogError(SDL.SDL_GetError());
+					return (0, 0);
+				}
+
 				return (x, y);
 			}
 		}
 
 		public string Title { get; private set;}
+
+		public bool RelativeMouseMode { get; private set; } = false;
 
 		private bool IsDisposed;
 
@@ -39,15 +46,11 @@ namespace MoonWorks
 
 		private System.Action<uint, uint> SizeChangeCallback = null;
 
-		public Window(WindowCreateInfo windowCreateInfo, SDL.SDL_WindowFlags flags)
+		public unsafe Window(WindowCreateInfo windowCreateInfo, SDL.SDL_WindowFlags flags)
 		{
 			if (windowCreateInfo.ScreenMode == ScreenMode.Fullscreen)
 			{
 				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
-			}
-			else if (windowCreateInfo.ScreenMode == ScreenMode.BorderlessFullscreen)
-			{
-				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 			}
 
 			if (windowCreateInfo.SystemResizable)
@@ -62,14 +65,13 @@ namespace MoonWorks
 
 			ScreenMode = windowCreateInfo.ScreenMode;
 
-			SDL.SDL_GetDesktopDisplayMode(0, out var displayMode);
+			var displayID = SDL.SDL_GetPrimaryDisplay();
+			SDL.SDL_DisplayMode *displayMode = (SDL.SDL_DisplayMode*) SDL.SDL_GetCurrentDisplayMode(displayID);
 
 			Handle = SDL.SDL_CreateWindow(
 				windowCreateInfo.WindowTitle,
-				SDL.SDL_WINDOWPOS_CENTERED,
-				SDL.SDL_WINDOWPOS_CENTERED,
-				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowWidth : displayMode.w,
-				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowHeight : displayMode.h,
+				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowWidth : displayMode->w,
+				windowCreateInfo.ScreenMode == ScreenMode.Windowed ? (int) windowCreateInfo.WindowHeight : displayMode->h,
 				flags
 			);
 
@@ -84,25 +86,20 @@ namespace MoonWorks
 		/// <summary>
 		/// Changes the ScreenMode of this window.
 		/// </summary>
-		public void SetScreenMode(ScreenMode screenMode)
+		public unsafe void SetScreenMode(ScreenMode screenMode)
 		{
-			SDL.SDL_WindowFlags windowFlag = 0;
-
 			if (screenMode == ScreenMode.Fullscreen)
 			{
-				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+				SDL.SDL_SetWindowFullscreen(Handle, true);
 			}
-			else if (screenMode == ScreenMode.BorderlessFullscreen)
+			else
 			{
-				windowFlag = SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
+				var displayID = SDL.SDL_GetDisplayForWindow(Handle);
+				SDL.SDL_DisplayMode *displayMode = (SDL.SDL_DisplayMode*) SDL.SDL_GetCurrentDisplayMode(displayID);
+				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
 			}
 
-			SDL.SDL_SetWindowFullscreen(Handle, (uint) windowFlag);
-
-			if (screenMode == ScreenMode.Windowed)
-			{
-				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
-			}
+			SDL.SDL_SyncWindow(Handle);
 
 			ScreenMode = screenMode;
 		}
@@ -113,7 +110,7 @@ namespace MoonWorks
 		/// </summary>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
-		public void SetSize(uint width, uint height)
+		public unsafe void SetSize(uint width, uint height)
 		{
 			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
 			Width = width;
@@ -121,8 +118,12 @@ namespace MoonWorks
 
 			if (ScreenMode == ScreenMode.Windowed)
 			{
-				SDL.SDL_SetWindowPosition(Handle, SDL.SDL_WINDOWPOS_CENTERED, SDL.SDL_WINDOWPOS_CENTERED);
+				var displayID = SDL.SDL_GetDisplayForWindow(Handle);
+				SDL.SDL_DisplayMode *displayMode = (SDL.SDL_DisplayMode*) SDL.SDL_GetCurrentDisplayMode(displayID);
+				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
 			}
+
+			SDL.SDL_SyncWindow(Handle);
 		}
 
 		/// <summary>
@@ -131,6 +132,7 @@ namespace MoonWorks
 		public void SetPosition(int x, int y)
 		{
 			SDL.SDL_SetWindowPosition(Handle, x, y);
+			SDL.SDL_SyncWindow(Handle);
 		}
 
 		/// <summary>
@@ -138,8 +140,27 @@ namespace MoonWorks
 		/// </summary>
 		public void SetTitle(string title)
 		{
-			SDL.SDL_SetWindowTitle(Handle, title);
+			if (!SDL.SDL_SetWindowTitle(Handle, title))
+			{
+				Logger.LogError(SDL.SDL_GetError());
+				return;
+			}
 			Title = title;
+		}
+
+		/// <summary>
+		/// If set to true, the cursor is hidden, the mouse position is constrained to the window,
+		/// and relative mouse motion will be reported even if the mouse is at the edge of the window.
+		/// </summary>
+		public void SetRelativeMouseMode(bool enabled)
+		{
+			if (!SDL.SDL_SetWindowRelativeMouseMode(Handle, enabled))
+			{
+				Logger.LogError(SDL.SDL_GetError());
+				return;
+			}
+
+			RelativeMouseMode = enabled;
 		}
 
 		internal static Window Lookup(uint windowID)

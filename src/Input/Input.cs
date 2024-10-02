@@ -1,4 +1,4 @@
-﻿using SDL2;
+﻿using SDL3;
 using System;
 
 namespace MoonWorks.Input
@@ -126,13 +126,13 @@ namespace MoonWorks.Input
 			return Gamepads[slot];
 		}
 
-		internal void AddGamepad(int index)
+		internal void AddGamepad(uint index)
 		{
 			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
 			{
 				if (!GamepadExists(slot))
 				{
-					var openResult = SDL.SDL_GameControllerOpen(index);
+					var openResult = SDL.SDL_OpenGamepad(index);
 					if (openResult == 0)
 					{
 						Logger.LogError("Error opening gamepad!");
@@ -156,13 +156,13 @@ namespace MoonWorks.Input
 			Logger.LogInfo("Too many gamepads already!");
 		}
 
-		internal void RemoveGamepad(int joystickInstanceID)
+		internal void RemoveGamepad(uint joystickInstanceID)
 		{
 			for (int slot = 0; slot < MAX_GAMEPADS; slot += 1)
 			{
 				if (joystickInstanceID == Gamepads[slot].JoystickInstanceID)
 				{
-					SDL.SDL_GameControllerClose(Gamepads[slot].Handle);
+					SDL.SDL_CloseGamepad(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
 					Logger.LogInfo($"Removing gamepad from slot {slot}!");
 					OnGamepadDisconnected(slot);
