@@ -1,6 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL3;
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -57,7 +57,7 @@ public class RenderPass
 		}
 #endif
 
-		Refresh.Refresh_BindGraphicsPipeline(
+		SDL.SDL_BindGPUGraphicsPipeline(
 			Handle,
 			graphicsPipeline.Handle
 		);
@@ -72,9 +72,9 @@ public class RenderPass
 	/// </summary>
 	public void SetViewport(in Viewport viewport)
 	{
-		Refresh.Refresh_SetViewport(
+		SDL.SDL_SetGPUViewport(
 			Handle,
-			viewport.ToRefresh()
+			viewport
 		);
 	}
 
@@ -90,9 +90,9 @@ public class RenderPass
 		}
 #endif
 
-		Refresh.Refresh_SetScissor(
+		SDL.SDL_SetGPUScissor(
 			Handle,
-			scissor.ToRefresh()
+			scissor
 		);
 	}
 
@@ -109,12 +109,10 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		var refreshBufferBinding = bufferBinding.ToRefresh();
-
-		Refresh.Refresh_BindVertexBuffers(
+		SDL.SDL_BindGPUVertexBuffers(
 			Handle,
 			firstBinding,
-			&refreshBufferBinding,
+			[bufferBinding],
 			1
 		);
 	}
@@ -125,7 +123,7 @@ public class RenderPass
 	/// <param name="indexBuffer">The index buffer to bind.</param>
 	/// <param name="indexElementSize">The size in bytes of the index buffer elements.</param>
 	/// <param name="offset">The offset index for the buffer.</param>
-	public void BindIndexBuffer(
+	public unsafe void BindIndexBuffer(
 		BufferBinding bufferBinding,
 		IndexElementSize indexElementSize
 	)
@@ -134,10 +132,10 @@ public class RenderPass
 		AssertGraphicsPipelineBound();
 #endif
 
-		Refresh.Refresh_BindIndexBuffer(
+		SDL.SDL_BindGPUIndexBuffer(
 			Handle,
-			bufferBinding.ToRefresh(),
-			(Refresh.IndexElementSize) indexElementSize
+			bufferBinding,
+			(SDL.SDL_GPUIndexElementSize) indexElementSize
 		);
 	}
 
@@ -155,32 +153,28 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var refreshTextureSamplerBinding = textureSamplerBinding.ToRefresh();
-
-		Refresh.Refresh_BindVertexSamplers(
+		SDL.SDL_BindGPUVertexSamplers(
 			Handle,
 			slot,
-			&refreshTextureSamplerBinding,
+			[textureSamplerBinding],
 			1
 		);
 	}
 
 	public unsafe void BindVertexStorageTexture(
-		in TextureSlice textureSlice,
+		Texture texture,
 		uint slot = 0
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
-		AssertTextureNonNull(textureSlice.Texture);
-		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
+		AssertTextureNonNull(texture);
+		AssertTextureHasGraphicsStorageReadFlag(texture);
 #endif
 
-		var refreshTextureSlice = textureSlice.ToRefresh();
-
-		Refresh.Refresh_BindVertexStorageTextures(
+		SDL.SDL_BindGPUVertexStorageTextures(
 			Handle,
 			slot,
-			&refreshTextureSlice,
+			[texture.Handle],
 			1
 		);
 	}
@@ -192,15 +186,13 @@ public class RenderPass
 #if DEBUG
 		AssertGraphicsPipelineBound();
 		AssertBufferNonNull(buffer);
-		AssertBufferHasGraphicsStorageFlag(buffer);
+		AssertBufferHasGraphicsStorageReadFlag(buffer);
 #endif
 
-		var bufferHandle = buffer.Handle;
-
-		Refresh.Refresh_BindVertexStorageBuffers(
+		SDL.SDL_BindGPUVertexStorageBuffers(
 			Handle,
 			slot,
-			&bufferHandle,
+			[buffer.Handle],
 			1
 		);
 	}
@@ -215,32 +207,28 @@ public class RenderPass
 		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
 #endif
 
-		var refreshTextureSamplerBinding = textureSamplerBinding.ToRefresh();
-
-		Refresh.Refresh_BindFragmentSamplers(
+		SDL.SDL_BindGPUFragmentSamplers(
 			Handle,
 			slot,
-			&refreshTextureSamplerBinding,
+			[textureSamplerBinding],
 			1
 		);
 	}
 
 	public unsafe void BindFragmentStorageTexture(
-		in TextureSlice textureSlice,
+		in Texture texture,
 		uint slot = 0
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
-		AssertTextureNonNull(textureSlice.Texture);
-		AssertTextureHasGraphicsStorageFlag(textureSlice.Texture);
+		AssertTextureNonNull(texture);
+		AssertTextureHasGraphicsStorageReadFlag(texture);
 #endif
 
-		var refreshTextureSlice = textureSlice.ToRefresh();
-
-		Refresh.Refresh_BindFragmentStorageTextures(
+		SDL.SDL_BindGPUFragmentStorageTextures(
 			Handle,
 			slot,
-			&refreshTextureSlice,
+			[texture.Handle],
 			1
 		);
 	}
@@ -252,64 +240,61 @@ public class RenderPass
 #if DEBUG
 		AssertGraphicsPipelineBound();
 		AssertBufferNonNull(buffer);
-		AssertBufferHasGraphicsStorageFlag(buffer);
+		AssertBufferHasGraphicsStorageReadFlag(buffer);
 #endif
 
-		var bufferHandle = buffer.Handle;
-
-		Refresh.Refresh_BindFragmentStorageBuffers(
+		SDL.SDL_BindGPUFragmentStorageBuffers(
 			Handle,
 			slot,
-			&bufferHandle,
+			[buffer.Handle],
 			1
-		);
-	}
-
-	/// <summary>
-	/// Draws using a vertex buffer and an index buffer, and an optional instance count.
-	/// </summary>
-	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
-	/// <param name="startIndex">The starting index offset for the index buffer.</param>
-	/// <param name="primitiveCount">The number of primitives to draw.</param>
-	/// <param name="instanceCount">The number of instances to draw.</param>
-	public void DrawIndexedPrimitives(
-		uint baseVertex,
-		uint startIndex,
-		uint primitiveCount,
-		uint instanceCount = 1
-	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		Refresh.Refresh_DrawIndexedPrimitives(
-			Handle,
-			baseVertex,
-			startIndex,
-			primitiveCount,
-			instanceCount
 		);
 	}
 
 	/// <summary>
 	/// Draws using a vertex buffer and an index buffer.
 	/// </summary>
-	/// <param name="baseVertex">The starting index offset for the vertex buffer.</param>
-	/// <param name="startIndex">The starting index offset for the index buffer.</param>
-	/// <param name="primitiveCount">The number of primitives to draw.</param>
+	public void DrawIndexedPrimitives(
+		uint indexCount,
+		uint instanceCount,
+		uint firstIndex,
+		int vertexOffset,
+		uint firstInstance
+	) {
+#if DEBUG
+		AssertGraphicsPipelineBound();
+#endif
+
+		SDL.SDL_DrawGPUIndexedPrimitives(
+			Handle,
+			indexCount,
+			instanceCount,
+			firstIndex,
+			vertexOffset,
+			firstInstance
+		);
+	}
+
+	/// <summary>
+	/// Draws using a vertex buffer.
+	/// </summary>
 	public void DrawPrimitives(
-		uint vertexStart,
-		uint primitiveCount
+		uint vertexCount,
+		uint instanceCount,
+		uint firstVertex,
+		uint firstInstance
 	)
 	{
 #if DEBUG
 		AssertGraphicsPipelineBound();
 #endif
 
-		Refresh.Refresh_DrawPrimitives(
+		SDL.SDL_DrawGPUPrimitives(
 			Handle,
-			vertexStart,
-			primitiveCount
+			vertexCount,
+			instanceCount,
+			firstVertex,
+			firstInstance
 		);
 	}
 
@@ -320,23 +305,20 @@ public class RenderPass
 	/// <param name="buffer">The draw parameters buffer.</param>
 	/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
 	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
-	/// <param name="stride">The byte stride between sets of draw parameters.</param>
 	public void DrawPrimitivesIndirect(
 		Buffer buffer,
 		uint offsetInBytes,
-		uint drawCount,
-		uint stride
+		uint drawCount
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
 #endif
 
-		Refresh.Refresh_DrawPrimitivesIndirect(
+		SDL.SDL_DrawGPUPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,
-			drawCount,
-			stride
+			drawCount
 		);
 	}
 
@@ -347,23 +329,20 @@ public class RenderPass
 	/// <param name="buffer">The draw parameters buffer.</param>
 	/// <param name="offsetInBytes">The offset to start reading from the draw parameters buffer.</param>
 	/// <param name="drawCount">The number of draw parameter sets that should be read from the buffer.</param>
-	/// <param name="stride">The byte stride between sets of draw parameters.</param>
 	public void DrawIndexedPrimitivesIndirect(
 		Buffer buffer,
 		uint offsetInBytes,
-		uint drawCount,
-		uint stride
+		uint drawCount
 	) {
 #if DEBUG
 		AssertGraphicsPipelineBound();
 #endif
 
-		Refresh.Refresh_DrawIndexedPrimitivesIndirect(
+		SDL.SDL_DrawGPUIndexedPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,
-			drawCount,
-			stride
+			drawCount
 		);
 	}
 
@@ -421,9 +400,9 @@ public class RenderPass
 		}
 	}
 
-	private void AssertTextureNonNull(in TextureSlice textureSlice)
+	private void AssertTextureNonNull(in Texture texture)
 	{
-		if (textureSlice.Texture == null)
+		if (texture == null)
 		{
 			throw new NullReferenceException("Texture must not be null!");
 		}
@@ -450,9 +429,9 @@ public class RenderPass
 		}
 	}
 
-	private void AssertTextureHasGraphicsStorageFlag(Texture texture)
+	private void AssertTextureHasGraphicsStorageReadFlag(Texture texture)
 	{
-		if ((texture.UsageFlags & TextureUsageFlags.GraphicsStorage) == 0)
+		if ((texture.UsageFlags & TextureUsageFlags.GraphicsStorageRead) == 0)
 		{
 			throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.GraphicsStorage!");
 		}
@@ -466,9 +445,9 @@ public class RenderPass
 		}
 	}
 
-	private void AssertBufferHasGraphicsStorageFlag(Buffer buffer)
+	private void AssertBufferHasGraphicsStorageReadFlag(Buffer buffer)
 	{
-		if ((buffer.UsageFlags & BufferUsageFlags.GraphicsStorage) == 0)
+		if ((buffer.UsageFlags & BufferUsageFlags.GraphicsStorageRead) == 0)
 		{
 			throw new System.ArgumentException("The bound Buffer's UsageFlags must include BufferUsageFlag.GraphicsStorage!");
 		}

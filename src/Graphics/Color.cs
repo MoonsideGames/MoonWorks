@@ -21,6 +21,7 @@ using System.Text;
 using MoonWorks.Math;
 using MoonWorks.Math.Float;
 using MoonWorks.Graphics.PackedVector;
+using SDL3;
 #endregion
 
 namespace MoonWorks.Graphics
@@ -1945,5 +1946,12 @@ namespace MoonWorks.Graphics
 
 		#endregion
 
+		public static implicit operator SDL.SDL_FColor(Color color) => new SDL.SDL_FColor
+		{
+			r = color.R / 255f,
+			g = color.G / 255f,
+			b = color.B / 255f,
+			a = color.A / 255f
+		};
 	}
 }

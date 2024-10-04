@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL3;
 
 namespace MoonWorks.Graphics;
 
@@ -83,12 +84,17 @@ public class CommandBuffer
 		}
 #endif
 
-		var texturePtr = Refresh.Refresh_AcquireSwapchainTexture(
+		if (!SDL.SDL_AcquireGPUSwapchainTexture(
 			Handle,
 			window.Handle,
+			out var texturePtr,
 			out var width,
 			out var height
-		);
+		)) {
+			// FIXME: should we throw?
+			Logger.LogError(SDL.SDL_GetError());
+			return null;
+		}
 
 		if (texturePtr == IntPtr.Zero)
 		{
@@ -118,7 +124,7 @@ public class CommandBuffer
 		uint size,
 		uint slot = 0
 	) {
-		Refresh.Refresh_PushVertexUniformData(
+		SDL.SDL_PushGPUVertexUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -152,7 +158,7 @@ public class CommandBuffer
 		uint size,
 		uint slot = 0
 	) {
-		Refresh.Refresh_PushFragmentUniformData(
+		SDL.SDL_PushGPUFragmentUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -186,7 +192,7 @@ public class CommandBuffer
 		uint size,
 		uint slot = 0
 	) {
-		Refresh.Refresh_PushComputeUniformData(
+		SDL.SDL_PushGPUComputeUniformData(
 			Handle,
 			slot,
 			(nint) uniformsPtr,
@@ -215,26 +221,29 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this during any kind of pass.
 	/// </summary>
-	/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfo">The color attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in ColorAttachmentInfo colorAttachmentInfo
+		in ColorTargetInfo colorTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
 		AssertNotInPass("Cannot begin a render pass inside another pass!");
-		AssertTextureNotNull(colorAttachmentInfo);
-		AssertColorTarget(colorAttachmentInfo);
+		AssertTextureNotNull(colorTargetInfo);
+		AssertColorTarget(colorTargetInfo);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfo],
 			1,
-			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
+			Unsafe.NullRef<SDL.SDL_GPUDepthStencilTargetInfo>()
 		);
+
+		if (renderPassHandle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL.SDL_GetError());
+			return null;
+		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
 		renderPass.SetHandle(renderPassHandle);
@@ -242,8 +251,8 @@ public class CommandBuffer
 #if DEBUG
 		renderPassActive = true;
 		renderPass.colorAttachmentCount = 1;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfo.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfo.Texture.Format;
 		renderPass.hasDepthStencilAttachment = false;
 #endif
 
@@ -255,35 +264,37 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
 		AssertNotInPass("Cannot begin a render pass inside another pass!");
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo],
 			2,
-			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
+			Unsafe.NullRef<SDL.SDL_GPUDepthStencilTargetInfo>()
 		);
+
+		if (renderPassHandle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL.SDL_GetError());
+			return null;
+		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
 		renderPass.SetHandle(renderPassHandle);
@@ -291,9 +302,9 @@ public class CommandBuffer
 #if DEBUG
 		renderPassActive = true;
 		renderPass.colorAttachmentCount = 2;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
 		renderPass.hasDepthStencilAttachment = false;
 #endif
 
@@ -305,42 +316,43 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo,
-		in ColorAttachmentInfo colorAttachmentInfoThree
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo,
+		in ColorTargetInfo colorTargetInfoThree
 	) {
 #if DEBUG
 		AssertNotSubmitted();
 		AssertNotInPass("Cannot begin a render pass inside another pass!");
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertTextureNotNull(colorAttachmentInfoThree);
-		AssertColorTarget(colorAttachmentInfoThree);
+		AssertTextureNotNull(colorTargetInfoThree);
+		AssertColorTarget(colorTargetInfoThree);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoThree.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree],
 			3,
-			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
+			Unsafe.NullRef<SDL.SDL_GPUDepthStencilTargetInfo>()
 		);
+
+		if (renderPassHandle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL.SDL_GetError());
+			return null;
+		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
 		renderPass.SetHandle(renderPassHandle);
@@ -348,10 +360,10 @@ public class CommandBuffer
 #if DEBUG
 		renderPassActive = true;
 		renderPass.colorAttachmentCount = 3;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
+		renderPass.colorFormatThree = colorTargetInfoThree.Texture.Format;
 		renderPass.hasDepthStencilAttachment = false;
 #endif
 
@@ -363,47 +375,41 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoFour">The four color attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo,
-		in ColorAttachmentInfo colorAttachmentInfoThree,
-		in ColorAttachmentInfo colorAttachmentInfoFour
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo,
+		in ColorTargetInfo colorTargetInfoThree,
+		in ColorTargetInfo colorTargetInfoFour
 	) {
 #if DEBUG
 		AssertNotSubmitted();
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertTextureNotNull(colorAttachmentInfoThree);
-		AssertColorTarget(colorAttachmentInfoThree);
+		AssertTextureNotNull(colorTargetInfoThree);
+		AssertColorTarget(colorTargetInfoThree);
 
-		AssertTextureNotNull(colorAttachmentInfoFour);
-		AssertColorTarget(colorAttachmentInfoFour);
+		AssertTextureNotNull(colorTargetInfoFour);
+		AssertColorTarget(colorTargetInfoFour);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoThree.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoFour.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree, colorTargetInfoFour],
 			4,
-			(Refresh.DepthStencilAttachmentInfo*) nint.Zero
+			Unsafe.NullRef<SDL.SDL_GPUDepthStencilTargetInfo>()
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -412,11 +418,11 @@ public class CommandBuffer
 #if DEBUG
 		renderPassActive = true;
 		renderPass.colorAttachmentCount = 3;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		renderPass.colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
+		renderPass.colorFormatThree = colorTargetInfoThree.Texture.Format;
+		renderPass.colorFormatFour = colorTargetInfoFour.Texture.Format;
 		renderPass.hasDepthStencilAttachment = false;
 #endif
 
@@ -428,22 +434,20 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
+	/// <param name="depthStencilTargetInfo">The depth stencil target to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilAttachmentInfo depthStencilAttachmentInfo
+		in DepthStencilTargetInfo depthStencilTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertValidDepthAttachment(depthStencilAttachmentInfo);
+		AssertValidDepthAttachment(depthStencilTargetInfo);
 #endif
 
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			(Refresh.ColorAttachmentInfo*) nint.Zero,
+			[],
 			0,
-			&refreshDepthStencilAttachmentInfo
+			depthStencilTargetInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -452,8 +456,8 @@ public class CommandBuffer
 #if DEBUG
 		renderPassActive = true;
 		renderPass.hasDepthStencilAttachment = true;
-		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilTargetInfo.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilTargetInfo.Texture.Format;
 #endif
 
 		return renderPass;
@@ -464,31 +468,26 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfo">The color attachment to use in the render pass.</param>
+	/// <param name="depthStencilTargetInfo">The depth stencil target info to use in the render pass.</param>
+	/// <param name="colorTargetInfo">The color target info to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-		in ColorAttachmentInfo colorAttachmentInfo
+		in ColorTargetInfo colorTargetInfo,
+		in DepthStencilTargetInfo depthStencilTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertValidDepthAttachment(depthStencilAttachmentInfo);
+		AssertValidDepthAttachment(depthStencilTargetInfo);
 
-		AssertTextureNotNull(colorAttachmentInfo);
-		AssertColorTarget(colorAttachmentInfo);
-		AssertSameSampleCount(colorAttachmentInfo.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
+		AssertTextureNotNull(colorTargetInfo);
+		AssertColorTarget(colorTargetInfo);
+		AssertSameSampleCount(colorTargetInfo.Texture, depthStencilTargetInfo.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[1];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfo.ToRefresh();
-
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfo],
 			1,
-			&refreshDepthStencilAttachmentInfo
+			depthStencilTargetInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -498,10 +497,10 @@ public class CommandBuffer
 		renderPassActive = true;
 		renderPass.hasDepthStencilAttachment = true;
 		renderPass.colorAttachmentCount = 1;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfo.TextureSlice.Texture.Format;
-		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfo.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfo.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilTargetInfo.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilTargetInfo.Texture.Format;
 #endif
 
 		return renderPass;
@@ -512,39 +511,33 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="depthStencilTargetInfo">The depth stencil target info to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color target info to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color target info to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo,
+		in DepthStencilTargetInfo depthStencilTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertValidDepthAttachment(depthStencilAttachmentInfo);
+		AssertValidDepthAttachment(depthStencilTargetInfo);
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, depthStencilTargetInfo.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[2];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo],
 			2,
-			&refreshDepthStencilAttachmentInfo
+			depthStencilTargetInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -554,11 +547,11 @@ public class CommandBuffer
 		renderPassActive = true;
 		renderPass.hasDepthStencilAttachment = true;
 		renderPass.colorAttachmentCount = 2;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilTargetInfo.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilTargetInfo.Texture.Format;
 #endif
 
 		return renderPass;
@@ -569,46 +562,39 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
+	/// <param name="depthStencilTargetInfo">The depth stencil attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo,
-		in ColorAttachmentInfo colorAttachmentInfoThree
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo,
+		in ColorTargetInfo colorTargetInfoThree,
+		in DepthStencilTargetInfo depthStencilTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertValidDepthAttachment(depthStencilAttachmentInfo);
+		AssertValidDepthAttachment(depthStencilTargetInfo);
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertTextureNotNull(colorAttachmentInfoThree);
-		AssertColorTarget(colorAttachmentInfoThree);
+		AssertTextureNotNull(colorTargetInfoThree);
+		AssertColorTarget(colorTargetInfoThree);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoThree.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, depthStencilTargetInfo.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[3];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree],
 			3,
-			&refreshDepthStencilAttachmentInfo
+			depthStencilTargetInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -618,12 +604,12 @@ public class CommandBuffer
 		renderPassActive = true;
 		renderPass.hasDepthStencilAttachment = true;
 		renderPass.colorAttachmentCount = 3;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
+		renderPass.colorFormatThree = colorTargetInfoThree.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilTargetInfo.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilTargetInfo.Texture.Format;
 #endif
 
 		return renderPass;
@@ -634,53 +620,45 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
 	/// </summary>
-	/// <param name="depthStencilAttachmentInfo">The depth stencil attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoThree">The third color attachment to use in the render pass.</param>
-	/// <param name="colorAttachmentInfoFour">The four color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfoFour">The four color attachment to use in the render pass.</param>
+	/// <param name="depthStencilTargetInfo">The depth stencil attachment to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilAttachmentInfo depthStencilAttachmentInfo,
-		in ColorAttachmentInfo colorAttachmentInfoOne,
-		in ColorAttachmentInfo colorAttachmentInfoTwo,
-		in ColorAttachmentInfo colorAttachmentInfoThree,
-		in ColorAttachmentInfo colorAttachmentInfoFour
+		in ColorTargetInfo colorTargetInfoOne,
+		in ColorTargetInfo colorTargetInfoTwo,
+		in ColorTargetInfo colorTargetInfoThree,
+		in ColorTargetInfo colorTargetInfoFour,
+		in DepthStencilTargetInfo depthStencilTargetInfo
 	) {
 #if DEBUG
 		AssertNotSubmitted();
-		AssertValidDepthAttachment(depthStencilAttachmentInfo);
+		AssertValidDepthAttachment(depthStencilTargetInfo);
 
-		AssertTextureNotNull(colorAttachmentInfoOne);
-		AssertColorTarget(colorAttachmentInfoOne);
+		AssertTextureNotNull(colorTargetInfoOne);
+		AssertColorTarget(colorTargetInfoOne);
 
-		AssertTextureNotNull(colorAttachmentInfoTwo);
-		AssertColorTarget(colorAttachmentInfoTwo);
+		AssertTextureNotNull(colorTargetInfoTwo);
+		AssertColorTarget(colorTargetInfoTwo);
 
-		AssertTextureNotNull(colorAttachmentInfoThree);
-		AssertColorTarget(colorAttachmentInfoThree);
+		AssertTextureNotNull(colorTargetInfoThree);
+		AssertColorTarget(colorTargetInfoThree);
 
-		AssertTextureNotNull(colorAttachmentInfoFour);
-		AssertColorTarget(colorAttachmentInfoFour);
+		AssertTextureNotNull(colorTargetInfoFour);
+		AssertColorTarget(colorTargetInfoFour);
 
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoTwo.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoThree.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, colorAttachmentInfoFour.TextureSlice.Texture);
-		AssertSameSampleCount(colorAttachmentInfoOne.TextureSlice.Texture, depthStencilAttachmentInfo.TextureSlice.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoTwo.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoThree.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, colorTargetInfoFour.Texture);
+		AssertSameSampleCount(colorTargetInfoOne.Texture, depthStencilTargetInfo.Texture);
 #endif
 
-		var refreshColorAttachmentInfos = stackalloc Refresh.ColorAttachmentInfo[4];
-		refreshColorAttachmentInfos[0] = colorAttachmentInfoOne.ToRefresh();
-		refreshColorAttachmentInfos[1] = colorAttachmentInfoTwo.ToRefresh();
-		refreshColorAttachmentInfos[2] = colorAttachmentInfoThree.ToRefresh();
-		refreshColorAttachmentInfos[3] = colorAttachmentInfoFour.ToRefresh();
-
-		var refreshDepthStencilAttachmentInfo = depthStencilAttachmentInfo.ToRefresh();
-
-		var renderPassHandle = Refresh.Refresh_BeginRenderPass(
+		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			refreshColorAttachmentInfos,
+			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree, colorTargetInfoFour],
 			4,
-			&refreshDepthStencilAttachmentInfo
+			depthStencilTargetInfo
 		);
 
 		var renderPass = Device.RenderPassPool.Obtain();
@@ -690,13 +668,13 @@ public class CommandBuffer
 		renderPassActive = true;
 		renderPass.hasDepthStencilAttachment = true;
 		renderPass.colorAttachmentCount = 4;
-		renderPass.colorAttachmentSampleCount = colorAttachmentInfoOne.TextureSlice.Texture.SampleCount;
-		renderPass.colorFormatOne = colorAttachmentInfoOne.TextureSlice.Texture.Format;
-		renderPass.colorFormatTwo = colorAttachmentInfoTwo.TextureSlice.Texture.Format;
-		renderPass.colorFormatThree = colorAttachmentInfoThree.TextureSlice.Texture.Format;
-		renderPass.colorFormatFour = colorAttachmentInfoFour.TextureSlice.Texture.Format;
-		renderPass.depthStencilAttachmentSampleCount = depthStencilAttachmentInfo.TextureSlice.Texture.SampleCount;
-		renderPass.depthStencilFormat = depthStencilAttachmentInfo.TextureSlice.Texture.Format;
+		renderPass.colorAttachmentSampleCount = colorTargetInfoOne.Texture.SampleCount;
+		renderPass.colorFormatOne = colorTargetInfoOne.Texture.Format;
+		renderPass.colorFormatTwo = colorTargetInfoTwo.Texture.Format;
+		renderPass.colorFormatThree = colorTargetInfoThree.Texture.Format;
+		renderPass.colorFormatFour = colorTargetInfoFour.Texture.Format;
+		renderPass.depthStencilAttachmentSampleCount = depthStencilTargetInfo.Texture.SampleCount;
+		renderPass.depthStencilFormat = depthStencilTargetInfo.Texture.Format;
 #endif
 
 		return renderPass;
@@ -715,33 +693,18 @@ public class CommandBuffer
 		renderPassActive = false;
 #endif
 
-		Refresh.Refresh_EndRenderPass(
-			renderPass.Handle
-		);
-
+		SDL.SDL_EndGPURenderPass(renderPass.Handle);
 		renderPass.SetHandle(nint.Zero);
 		Device.RenderPassPool.Return(renderPass);
 	}
 
 	/// <summary>
 	/// Blits a texture to another texture with the specified filter.
-	///
 	/// This operation cannot be performed inside any pass.
 	/// </summary>
-	/// <param name="cycle">If true, the destination texture will cycle if bound.</param>
-	public void Blit(
-		in TextureRegion source,
-		in TextureRegion destination,
-		Filter filter,
-		bool cycle
-	) {
-		Refresh.Refresh_Blit(
-			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh(),
-			(Refresh.Filter) filter,
-			Conversions.BoolToInt(cycle)
-		);
+	public void Blit(in BlitInfo blitInfo)
+	{
+		SDL.SDL_BlitGPUTexture(Handle, blitInfo);
 	}
 
 	public unsafe ComputePass BeginComputePass(
@@ -945,19 +908,19 @@ public class CommandBuffer
 		}
 	}
 
-	private void AssertTextureNotNull(ColorAttachmentInfo colorAttachmentInfo)
+	private void AssertTextureNotNull(ColorTargetInfo colorTargetInfo)
 	{
-		if (colorAttachmentInfo.TextureSlice.Texture == null || colorAttachmentInfo.TextureSlice.Texture.Handle == IntPtr.Zero)
+		if (colorTargetInfo.Texture == null || colorTargetInfo.Texture.Handle == IntPtr.Zero)
 		{
-			throw new System.ArgumentException("Render pass color attachment Texture cannot be null!");
+			throw new System.ArgumentException("Render pass color target Texture cannot be null!");
 		}
 	}
 
-	private void AssertColorTarget(ColorAttachmentInfo colorAttachmentInfo)
+	private void AssertColorTarget(ColorTargetInfo colorTargetInfo)
 	{
-		if ((colorAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
+		if ((colorTargetInfo.Texture.UsageFlags & TextureUsageFlags.ColorTarget) == 0)
 		{
-			throw new System.ArgumentException("Render pass color attachment UsageFlags must include TextureUsageFlags.ColorTarget!");
+			throw new System.ArgumentException("Render pass color target UsageFlags must include TextureUsageFlags.ColorTarget!");
 		}
 	}
 
@@ -969,15 +932,15 @@ public class CommandBuffer
 		}
 	}
 
-	private void AssertValidDepthAttachment(DepthStencilAttachmentInfo depthStencilAttachmentInfo)
+	private void AssertValidDepthAttachment(DepthStencilTargetInfo depthStencilTargetInfo)
 	{
-		if (depthStencilAttachmentInfo.TextureSlice.Texture == null ||
-			depthStencilAttachmentInfo.TextureSlice.Texture.Handle == IntPtr.Zero)
+		if (depthStencilTargetInfo.Texture == null ||
+			depthStencilTargetInfo.Texture.Handle == IntPtr.Zero)
 		{
 			throw new System.ArgumentException("Render pass depth stencil attachment Texture cannot be null!");
 		}
 
-		if ((depthStencilAttachmentInfo.TextureSlice.Texture.UsageFlags & TextureUsageFlags.DepthStencil) == 0)
+		if ((depthStencilTargetInfo.Texture.UsageFlags & TextureUsageFlags.DepthStencilTarget) == 0)
 		{
 			throw new System.ArgumentException("Render pass depth stencil attachment UsageFlags must include TextureUsageFlags.DepthStencilTarget!");
 		}

@@ -430,6 +430,17 @@ public struct BlitRegion
 	public uint Y;
 	public uint W;
 	public uint H;
+
+	public static implicit operator SDL.SDL_GPUBlitRegion(BlitRegion region) => new()
+	{
+		texture = region.Texture.Handle,
+		mip_level = region.MipLevel,
+		layer_or_depth_plane = region.LayerOrDepthPlane,
+		x = region.X,
+		y = region.Y,
+		w = region.W,
+		h = region.H
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -702,6 +713,21 @@ public struct ColorTargetInfo
 	public bool CycleResolveTexture;
 	public byte Padding1;
 	public byte Padding2;
+
+	public static implicit operator SDL.SDL_GPUColorTargetInfo(ColorTargetInfo info) => new SDL.SDL_GPUColorTargetInfo
+	{
+		texture = info.Texture.Handle,
+		mip_level = info.MipLevel,
+		layer_or_depth_plane = info.LayerOrDepthPlane,
+		clear_color = info.ClearColor,
+		load_op = (SDL.SDL_GPULoadOp) info.LoadOp,
+		store_op = (SDL.SDL_GPUStoreOp) info.StoreOp,
+		resolve_texture = info.ResolveTexture.Handle,
+		resolve_mip_level = info.ResolveMipLevel,
+		resolve_layer = info.ResolveLayer,
+		cycle = info.Cycle,
+		cycle_resolve_texture = info.CycleResolveTexture
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -717,6 +743,18 @@ public struct DepthStencilTargetInfo
 	public byte ClearStencil;
 	public byte Padding1;
 	public byte Padding2;
+
+	public static implicit operator SDL.SDL_GPUDepthStencilTargetInfo(DepthStencilTargetInfo info) => new()
+	{
+		texture = info.Texture.Handle,
+		clear_depth = info.ClearDepth,
+		load_op = (SDL.SDL_GPULoadOp) info.LoadOp,
+		store_op = (SDL.SDL_GPUStoreOp) info.StoreOp,
+		stencil_load_op = (SDL.SDL_GPULoadOp) info.StencilLoadOp,
+		stencil_store_op = (SDL.SDL_GPUStoreOp) info.StencilStoreOp,
+		cycle = info.Cycle,
+		clear_stencil = info.ClearStencil
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -732,6 +770,17 @@ public struct BlitInfo
 	public byte Padding1;
 	public byte Padding2;
 	public byte Padding3;
+
+	public static implicit operator SDL.SDL_GPUBlitInfo(BlitInfo info) => new()
+	{
+		source = info.Source,
+		destination = info.Destination,
+		load_op = (SDL.SDL_GPULoadOp) info.LoadOp,
+		clear_color = info.ClearColor,
+		flip_mode = (SDL.SDL_FlipMode) info.FlipMode,
+		filter = (SDL.SDL_GPUFilter) info.Filter,
+		cycle = info.Cycle
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]

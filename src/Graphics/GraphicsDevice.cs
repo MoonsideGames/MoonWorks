@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
-using RefreshCS;
+using SDL3;
 
 namespace MoonWorks.Graphics;
 
@@ -13,7 +13,7 @@ namespace MoonWorks.Graphics;
 public class GraphicsDevice : IDisposable
 {
 	public IntPtr Handle { get; }
-	public BackendFlags Backend { get; }
+	public string Backend { get; }
 	public bool DebugMode { get; }
 
 	// Built-in video pipeline
@@ -22,7 +22,7 @@ public class GraphicsDevice : IDisposable
 	// Built-in text shader info
 	public Shader TextVertexShader;
 	public Shader TextFragmentShader;
-	public VertexInputState TextVertexInputState { get; }
+	public VertexInputState TextVertexInputState;
 
 	// Built-in samplers
 	public Sampler PointSampler { get; }
@@ -38,25 +38,25 @@ public class GraphicsDevice : IDisposable
 	internal CopyPassPool CopyPassPool = new CopyPassPool();
 
 	internal unsafe GraphicsDevice(
-		BackendFlags preferredBackends,
+		ShaderFormat shaderFormats, // TODO: replace with enum flags
 		bool debugMode,
-		bool preferLowPower
+		string backendName = null
 	) {
-		if (preferredBackends == BackendFlags.Invalid)
+		if (shaderFormats == 0)
 		{
-			throw new System.Exception("Could not set graphics backend!");
+			throw new System.Exception("Need at least one shader format!");
 		}
 
-		Handle = Refresh.Refresh_CreateDevice(
-			(Refresh.BackendFlags) preferredBackends,
-			Conversions.BoolToInt(debugMode),
-			Conversions.BoolToInt(preferLowPower)
+		Handle = SDL.SDL_CreateGPUDevice(
+			shaderFormats,
+			debugMode,
+			backendName
 		);
 
 		DebugMode = debugMode;
 		// TODO: check for CreateDevice fail
 
-		Backend = (BackendFlags) Refresh.Refresh_GetBackend(Handle);
+		Backend = SDL.SDL_GetGPUDeviceDriver(Handle);
 
 		// Check for replacement stock shaders
 		string basePath = System.AppContext.BaseDirectory;
@@ -233,33 +233,20 @@ public class GraphicsDevice : IDisposable
 	/// <summary>
 	/// Prepares a window so that frames can be presented to it.
 	/// </summary>
-	/// <param name="swapchainComposition">The desired composition of the swapchain. Ignore this unless you are using HDR or tonemapping.</param>
-	/// <param name="presentMode">The desired presentation mode for the window. Roughly equivalent to V-Sync.</param>
 	/// <returns>True if successfully claimed.</returns>
-	public bool ClaimWindow(
-		Window window,
-		SwapchainComposition swapchainComposition,
-		PresentMode presentMode
-	) {
+	public bool ClaimWindow(Window window) {
 		if (window.Claimed)
 		{
 			Logger.LogError("Window already claimed!");
 			return false;
 		}
 
-		var success = Conversions.IntToBool(
-			Refresh.Refresh_ClaimWindow(
-				Handle,
-				window.Handle,
-				(Refresh.SwapchainComposition) swapchainComposition,
-				(Refresh.PresentMode) presentMode
-			)
-		);
+		bool result = SDL.SDL_ClaimWindowForGPUDevice(Handle, window.Handle);
 
-		if (success)
+		if (result)
 		{
 			window.Claimed = true;
-			window.SwapchainComposition = swapchainComposition;
+			window.SwapchainComposition = SwapchainComposition.SDR;
 			window.SwapchainFormat = GetSwapchainFormat(window);
 
 			if (window.SwapchainTexture == null)
@@ -267,8 +254,12 @@ public class GraphicsDevice : IDisposable
 				window.SwapchainTexture = new Texture(this, window.SwapchainFormat);
 			}
 		}
+		else
+		{
+			Logger.LogError(SDL.SDL_GetError());
+		}
 
-		return success;
+		return result;
 	}
 
 	/// <summary>
@@ -278,7 +269,7 @@ public class GraphicsDevice : IDisposable
 	{
 		if (window.Claimed)
 		{
-			Refresh.Refresh_UnclaimWindow(
+			SDL.SDL_ReleaseWindowFromGPUDevice(
 				Handle,
 				window.Handle
 			);
@@ -305,14 +296,14 @@ public class GraphicsDevice : IDisposable
 			return false;
 		}
 
-		var success = Conversions.IntToBool(Refresh.Refresh_SetSwapchainParameters(
+		bool result = SDL.SDL_SetGPUSwapchainParameters(
 			Handle,
 			window.Handle,
-			(Refresh.SwapchainComposition) swapchainComposition,
-			(Refresh.PresentMode) presentMode
-		));
+			(SDL.SDL_GPUSwapchainComposition) swapchainComposition,
+			(SDL.SDL_GPUPresentMode) presentMode
+		);
 
-		if (success)
+		if (result)
 		{
 			window.SwapchainComposition = swapchainComposition;
 			window.SwapchainFormat = GetSwapchainFormat(window);
@@ -323,7 +314,7 @@ public class GraphicsDevice : IDisposable
 			}
 		}
 
-		return success;
+		return result;
 	}
 
 	/// <summary>
@@ -333,8 +324,15 @@ public class GraphicsDevice : IDisposable
 	/// <returns></returns>
 	public CommandBuffer AcquireCommandBuffer()
 	{
+		var commandBufferHandle = SDL.SDL_AcquireGPUCommandBuffer(Handle);
+		if (commandBufferHandle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL.SDL_GetError());
+			return null;
+		}
+
 		var commandBuffer = CommandBufferPool.Obtain();
-		commandBuffer.SetHandle(Refresh.Refresh_AcquireCommandBuffer(Handle));
+		commandBuffer.SetHandle(commandBufferHandle);
 #if DEBUG
 		commandBuffer.ResetStateTracking();
 #endif
@@ -353,9 +351,12 @@ public class GraphicsDevice : IDisposable
 		}
 #endif
 
-		Refresh.Refresh_Submit(
-			commandBuffer.Handle
-		);
+		bool result = SDL.SDL_SubmitGPUCommandBuffer(Handle);
+		if (!result)
+		{
+			// submit errors are not recoverable so let's just fail hard
+			throw new InvalidOperationException(SDL.SDL_GetError());
+		}
 
 		CommandBufferPool.Return(commandBuffer);
 
@@ -370,13 +371,16 @@ public class GraphicsDevice : IDisposable
 	/// <returns></returns>
 	public Fence SubmitAndAcquireFence(CommandBuffer commandBuffer)
 	{
-		var fenceHandle = Refresh.Refresh_SubmitAndAcquireFence(
-			commandBuffer.Handle
-		);
+		var fenceHandle = SDL.SDL_SubmitGPUCommandBufferAndAcquireFence(commandBuffer.Handle);
+
+		if (fenceHandle == IntPtr.Zero)
+		{
+			// submit errors are not recoverable so let's just fail hard
+			throw new InvalidOperationException(SDL.SDL_GetError());
+		}
 
 		var fence = FencePool.Obtain();
 		fence.SetHandle(fenceHandle);
-
 		return fence;
 	}
 
@@ -385,7 +389,10 @@ public class GraphicsDevice : IDisposable
 	/// </summary>
 	public void Wait()
 	{
-		Refresh.Refresh_Wait(Handle);
+		if (!SDL.SDL_WaitForGPUIdle(Handle))
+		{
+			Logger.LogError(SDL.SDL_GetError());
+		}
 	}
 
 	/// <summary>
@@ -395,9 +402,9 @@ public class GraphicsDevice : IDisposable
 	{
 		var fenceHandle = fence.Handle;
 
-		Refresh.Refresh_WaitForFences(
+		SDL.SDL_WaitForGPUFences(
 			Handle,
-			1,
+			true,
 			&fenceHandle,
 			1
 		);
@@ -416,9 +423,9 @@ public class GraphicsDevice : IDisposable
 			handlePtr[i] = fences[i].Handle;
 		}
 
-		Refresh.Refresh_WaitForFences(
+		SDL.SDL_WaitForGPUFences(
 			Handle,
-			Conversions.BoolToInt(waitAll),
+			waitAll,
 			handlePtr,
 			(uint) fences.Length
 		);
@@ -427,17 +434,9 @@ public class GraphicsDevice : IDisposable
 	/// <summary>
 	/// Returns true if the fence is signaled, indicating that the associated command buffer has finished processing.
 	/// </summary>
-	/// <exception cref="InvalidOperationException">Throws if the fence query indicates that the graphics device has been lost.</exception>
 	public bool QueryFence(Fence fence)
 	{
-		var result = Refresh.Refresh_QueryFence(Handle, fence.Handle);
-
-		if (result < 0)
-		{
-			throw new InvalidOperationException("The graphics device has been lost.");
-		}
-
-		return result != 0;
+		return SDL.SDL_QueryGPUFence(Handle, fence.Handle);
 	}
 
 	/// <summary>
@@ -445,7 +444,7 @@ public class GraphicsDevice : IDisposable
 	/// </summary>
 	public void ReleaseFence(Fence fence)
 	{
-		Refresh.Refresh_ReleaseFence(Handle, fence.Handle);
+		SDL.SDL_ReleaseGPUFence(Handle, fence.Handle);
 		fence.Handle = IntPtr.Zero;
 		FencePool.Return(fence);
 	}
@@ -457,7 +456,7 @@ public class GraphicsDevice : IDisposable
 			throw new System.ArgumentException("Cannot get swapchain format of unclaimed window!");
 		}
 
-		return (TextureFormat) Refresh.Refresh_GetSwapchainTextureFormat(Handle, window.Handle);
+		return (TextureFormat) SDL.SDL_GetGPUSwapchainTextureFormat(Handle, window.Handle);
 	}
 
 	internal void AddResourceReference(GCHandle resourceReference)
@@ -505,7 +504,7 @@ public class GraphicsDevice : IDisposable
 				}
 			}
 
-			Refresh.Refresh_DestroyDevice(Handle);
+			SDL.SDL_DestroyGPUDevice(Handle);
 
 			IsDisposed = true;
 		}
