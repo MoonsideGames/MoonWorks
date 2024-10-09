@@ -1946,12 +1946,12 @@ namespace MoonWorks.Graphics
 
 		#endregion
 
-		public static implicit operator SDL.SDL_FColor(Color color) => new SDL.SDL_FColor
+		public static implicit operator FColor(Color color) => new FColor
 		{
-			r = color.R / 255f,
-			g = color.G / 255f,
-			b = color.B / 255f,
-			a = color.A / 255f
+			R = color.R / 255f,
+			G = color.G / 255f,
+			B = color.B / 255f,
+			A = color.A / 255f
 		};
 	}
 }

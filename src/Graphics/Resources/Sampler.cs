@@ -1,5 +1,5 @@
 ﻿using System;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -8,16 +8,37 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class Sampler : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseSampler;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUSampler;
+
+	public static Sampler Create(
+		GraphicsDevice device,
+		in SamplerCreateInfo samplerCreateInfo
+	) {
+		var handle = SDL.SDL_CreateGPUSampler(
+			device.Handle,
+			samplerCreateInfo
+		);
+		if (handle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
+		}
+		return new Sampler(device)
+		{
+			Handle = handle
+		};
+	}
+
+	private Sampler(GraphicsDevice device) : base(device) { }
 
 	public Sampler(
 		GraphicsDevice device,
 		in SamplerCreateInfo samplerCreateInfo
 	) : base(device)
 	{
-		Handle = Refresh.Refresh_CreateSampler(
+		Handle = SDL.SDL_CreateGPUSampler(
 			device.Handle,
-			samplerCreateInfo.ToRefresh()
+			samplerCreateInfo
 		);
 	}
 }

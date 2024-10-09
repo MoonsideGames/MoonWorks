@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -9,14 +9,14 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class Buffer : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseBuffer;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUBuffer;
 
 	public BufferUsageFlags UsageFlags { get; }
 
 	/// <summary>
 	/// Size in bytes.
 	/// </summary>
-	public uint Size { get; }
+	public uint Size { get; private init; }
 
 	private string name;
 	public string Name
@@ -27,7 +27,7 @@ public class Buffer : RefreshResource
 		{
 			if (Device.DebugMode)
 			{
-				Refresh.Refresh_SetBufferName(
+				SDL.SDL_SetGPUBufferName(
 					Device.Handle,
 					Handle,
 					value
@@ -46,43 +46,44 @@ public class Buffer : RefreshResource
 	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
 	/// <returns></returns>
-	public unsafe static Buffer Create<T>(
+	public static Buffer Create<T>(
 		GraphicsDevice device,
 		BufferUsageFlags usageFlags,
 		uint elementCount
 	) where T : unmanaged
 	{
-		return new Buffer(
-			device,
-			usageFlags,
-			(uint) Marshal.SizeOf<T>() * elementCount
-		);
+		return Create(device, new BufferCreateInfo
+		{
+			Usage = usageFlags,
+			Size = (uint) Marshal.SizeOf<T>() * elementCount
+		});
 	}
 
-	/// <summary>
-	/// Creates a buffer.
-	/// </summary>
-	/// <param name="device">An initialized GraphicsDevice.</param>
-	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
-	/// <param name="sizeInBytes">The length of the array. Cannot be resized.</param>
-	public Buffer(
+	public static Buffer Create(
 		GraphicsDevice device,
-		BufferUsageFlags usageFlags,
-		uint sizeInBytes
-	) : base(device)
-	{
-		Handle = Refresh.Refresh_CreateBuffer(
-			device.Handle,
-			(Refresh.BufferUsageFlags) usageFlags,
-			sizeInBytes
-		);
-		UsageFlags = usageFlags;
-		Size = sizeInBytes;
-		name = "";
+		in BufferCreateInfo createInfo
+	) {
+		var handle = SDL.SDL_CreateGPUBuffer(device.Handle, createInfo);
+		if (handle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
+		}
+		return new Buffer(device)
+		{
+			Handle = handle,
+			Size = createInfo.Size
+		};
 	}
+
+	private Buffer(GraphicsDevice device) : base(device) { }
 
 	public static implicit operator BufferBinding(Buffer b)
 	{
-		return new BufferBinding(b, 0);
+		return new BufferBinding
+		{
+			Buffer = b.Handle,
+			Offset = 0
+		};
 	}
 }

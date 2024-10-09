@@ -1,7 +1,8 @@
-﻿using RefreshCS;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics
 {
@@ -11,87 +12,79 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Shader : RefreshResource
 	{
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseShader;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUShader;
 
-		public uint SamplerCount { get; }
-		public uint StorageTextureCount { get; }
-		public uint StorageBufferCount { get; }
-		public uint UniformBufferCount { get; }
+		public uint NumSamplers { get; private init; }
+		public uint NumStorageTextures { get; private init; }
+		public uint NumStorageBuffers { get; private init; }
+		public uint NumUniformBuffers { get; private init; }
 
-		public unsafe Shader(
+		private Shader(GraphicsDevice device) : base(device) { }
+
+		public static Shader CreateFromFile(
 			GraphicsDevice device,
 			string filePath,
-			string entryPointName,
+			string entryPoint,
 			in ShaderCreateInfo shaderCreateInfo
-		) : base(device)
-		{
+		) {
 			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			Handle = CreateFromStream(
+			return CreateFromStream(
 				device,
 				stream,
-				entryPointName,
+				entryPoint,
 				shaderCreateInfo
 			);
-
-			SamplerCount = shaderCreateInfo.SamplerCount;
-			StorageTextureCount = shaderCreateInfo.StorageTextureCount;
-			StorageBufferCount = shaderCreateInfo.StorageBufferCount;
-			UniformBufferCount = shaderCreateInfo.UniformBufferCount;
 		}
 
-		public unsafe Shader(
+		public static unsafe Shader CreateFromStream(
 			GraphicsDevice device,
 			Stream stream,
-			string entryPointName,
-			in ShaderCreateInfo shaderCreateInfo
-		) : base(device)
-		{
-			Handle = CreateFromStream(
-				device,
-				stream,
-				entryPointName,
-				shaderCreateInfo
-			);
-
-			SamplerCount = shaderCreateInfo.SamplerCount;
-			StorageTextureCount = shaderCreateInfo.StorageTextureCount;
-			StorageBufferCount = shaderCreateInfo.StorageBufferCount;
-			UniformBufferCount = shaderCreateInfo.UniformBufferCount;
-		}
-
-		private static unsafe IntPtr CreateFromStream(
-			GraphicsDevice device,
-			Stream stream,
-			string entryPointName,
+			string entryPoint,
 			in ShaderCreateInfo shaderCreateInfo
 		) {
 			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
 
-			Refresh.ShaderCreateInfo refreshShaderCreateInfo;
-			refreshShaderCreateInfo.CodeSize = (nuint) stream.Length;
-			refreshShaderCreateInfo.Code = (byte*) bytecodeBuffer;
-			refreshShaderCreateInfo.EntryPointName = entryPointName;
-			refreshShaderCreateInfo.Stage = (Refresh.ShaderStage) shaderCreateInfo.ShaderStage;
-			refreshShaderCreateInfo.Format = (Refresh.ShaderFormat) shaderCreateInfo.ShaderFormat;
-			refreshShaderCreateInfo.SamplerCount = shaderCreateInfo.SamplerCount;
-			refreshShaderCreateInfo.StorageTextureCount = shaderCreateInfo.StorageTextureCount;
-			refreshShaderCreateInfo.StorageBufferCount = shaderCreateInfo.StorageBufferCount;
-			refreshShaderCreateInfo.UniformBufferCount = shaderCreateInfo.UniformBufferCount;
+			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint);
+			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+			Encoding.UTF8.GetString((byte*) entryPointBuffer, entryPointLength);
 
-			var shaderModule = Refresh.Refresh_CreateShader(
+			INTERNAL_ShaderCreateInfo createInfo;
+			createInfo.CodeSize = (nuint) stream.Length;
+			createInfo.Code = (byte*) bytecodeBuffer;
+			createInfo.EntryPoint = (byte*) entryPointBuffer;
+			createInfo.Stage = shaderCreateInfo.Stage;
+			createInfo.Format = shaderCreateInfo.Format;
+			createInfo.NumSamplers = shaderCreateInfo.NumSamplers;
+			createInfo.NumStorageTextures = shaderCreateInfo.NumStorageTextures;
+			createInfo.NumStorageBuffers = shaderCreateInfo.NumStorageBuffers;
+			createInfo.NumUniformBuffers = shaderCreateInfo.NumUniformBuffers;
+			createInfo.Props = shaderCreateInfo.Props;
+
+			var shaderModule = SDL.SDL_CreateGPUShader(
 				device.Handle,
-				refreshShaderCreateInfo
+				createInfo
 			);
+
+			NativeMemory.Free(bytecodeBuffer);
+			NativeMemory.Free(entryPointBuffer);
 
 			if (shaderModule == nint.Zero)
 			{
 				throw new InvalidOperationException("Shader compilation failed!");
 			}
 
-			NativeMemory.Free(bytecodeBuffer);
-			return shaderModule;
+			var shader = new Shader(device)
+			{
+				Handle = shaderModule,
+				NumSamplers = createInfo.NumSamplers,
+				NumStorageTextures = createInfo.NumStorageTextures,
+				NumStorageBuffers = createInfo.NumStorageBuffers,
+				NumUniformBuffers = createInfo.NumUniformBuffers
+			};
+
+			return shader;
 		}
 	}
 }

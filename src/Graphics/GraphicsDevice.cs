@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
-using SDL3;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -77,14 +77,14 @@ public class GraphicsDevice : IDisposable
 
 		if (File.Exists(fullscreenVertPath))
 		{
-			fullscreenVertShader = new Shader(
+			fullscreenVertShader = Shader.CreateFromFile(
 				this,
 				fullscreenVertPath,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage = ShaderStage.Vertex,
-					ShaderFormat = ShaderFormat.SECRET,
+					Stage = ShaderStage.Vertex,
+					Format = ShaderFormat.Private,
 				}
 			);
 		}
@@ -93,29 +93,29 @@ public class GraphicsDevice : IDisposable
 			// use defaults
 			var assembly = typeof(GraphicsDevice).Assembly;
 			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv");
-			fullscreenVertShader = new Shader(
+			fullscreenVertShader = Shader.CreateFromStream(
 				this,
 				vertStream,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage =ShaderStage.Vertex,
-					ShaderFormat = ShaderFormat.SPIRV
+					Stage = ShaderStage.Vertex,
+					Format = ShaderFormat.SPIRV
 				}
 			);
 		}
 
 		if (File.Exists(videoFragPath))
 		{
-			videoFragShader = new Shader(
+			videoFragShader = Shader.CreateFromFile(
 				this,
 				videoFragPath,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage =ShaderStage.Fragment,
-					ShaderFormat = ShaderFormat.SECRET,
-					SamplerCount = 3
+					Stage = ShaderStage.Fragment,
+					Format = ShaderFormat.Private,
+					NumSamplers = 3
 				}
 			);
 		}
@@ -124,43 +124,43 @@ public class GraphicsDevice : IDisposable
 			// use defaults
 			var assembly = typeof(GraphicsDevice).Assembly;
 			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.spv");
-			videoFragShader = new Shader(
+			videoFragShader = Shader.CreateFromStream(
 				this,
 				fragStream,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage =ShaderStage.Fragment,
-					ShaderFormat = ShaderFormat.SPIRV,
-					SamplerCount = 3
+					Stage = ShaderStage.Fragment,
+					Format = ShaderFormat.SPIRV,
+					NumSamplers = 3
 				}
 			);
 		}
 
 		if (File.Exists(textVertPath) && File.Exists(textFragPath))
 		{
-			textVertShader = new Shader(
+			textVertShader = Shader.CreateFromFile(
 				this,
 				textVertPath,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage = ShaderStage.Vertex,
-					ShaderFormat = ShaderFormat.SECRET,
-					UniformBufferCount = 1
+					Stage = ShaderStage.Vertex,
+					Format = ShaderFormat.Private,
+					NumUniformBuffers = 1
 				}
 			);
 
-			textFragShader = new Shader(
+			textFragShader = Shader.CreateFromFile(
 				this,
 				textFragPath,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage = ShaderStage.Fragment,
-					ShaderFormat = ShaderFormat.SECRET,
-					SamplerCount = 1,
-					UniformBufferCount = 1
+					Stage = ShaderStage.Fragment,
+					Format = ShaderFormat.Private,
+					NumSamplers = 1,
+					NumUniformBuffers = 1
 				}
 			);
 		}
@@ -172,28 +172,28 @@ public class GraphicsDevice : IDisposable
 			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.spv");
 			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv");
 
-			textVertShader = new Shader(
+			textVertShader = Shader.CreateFromStream(
 				this,
 				vertStream,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage = ShaderStage.Vertex,
-					ShaderFormat = ShaderFormat.SPIRV,
-					UniformBufferCount = 1
+					Stage = ShaderStage.Vertex,
+					Format = ShaderFormat.SPIRV,
+					NumUniformBuffers = 1
 				}
 			);
 
-			textFragShader = new Shader(
+			textFragShader = Shader.CreateFromStream(
 				this,
 				fragStream,
 				"main",
 				new ShaderCreateInfo
 				{
-					ShaderStage = ShaderStage.Fragment,
-					ShaderFormat = ShaderFormat.SPIRV,
-					SamplerCount = 1,
-					UniformBufferCount = 1
+					Stage = ShaderStage.Fragment,
+					Format = ShaderFormat.SPIRV,
+					NumSamplers = 1,
+					NumUniformBuffers = 1
 				}
 			);
 		}
@@ -202,12 +202,17 @@ public class GraphicsDevice : IDisposable
 			this,
 			new GraphicsPipelineCreateInfo
 			{
-				AttachmentInfo = new GraphicsPipelineAttachmentInfo(
-					new ColorAttachmentDescription(
-						TextureFormat.R8G8B8A8,
-						ColorAttachmentBlendState.None
-					)
-				),
+				TargetInfo = new GraphicsPipelineTargetInfo
+				{
+					ColorTargetDescriptions =
+					[
+						new ColorTargetDescription
+						{
+							Format = TextureFormat.R8G8B8A8_UNORM,
+							BlendState = ColorTargetBlendState.None
+						}
+					]
+				},
 				DepthStencilState = DepthStencilState.Disable,
 				VertexShader = fullscreenVertShader,
 				FragmentShader = videoFragShader,
@@ -221,7 +226,7 @@ public class GraphicsDevice : IDisposable
 		TextVertexShader = textVertShader;
 		TextFragmentShader = textFragShader;
 
-		TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>();
+		TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>(0);
 
 		PointSampler = new Sampler(this, SamplerCreateInfo.PointClamp);
 		LinearSampler = new Sampler(this, SamplerCreateInfo.LinearClamp);
@@ -256,7 +261,7 @@ public class GraphicsDevice : IDisposable
 		}
 		else
 		{
-			Logger.LogError(SDL.SDL_GetError());
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 		}
 
 		return result;
@@ -299,8 +304,8 @@ public class GraphicsDevice : IDisposable
 		bool result = SDL.SDL_SetGPUSwapchainParameters(
 			Handle,
 			window.Handle,
-			(SDL.SDL_GPUSwapchainComposition) swapchainComposition,
-			(SDL.SDL_GPUPresentMode) presentMode
+			swapchainComposition,
+			presentMode
 		);
 
 		if (result)
@@ -327,15 +332,12 @@ public class GraphicsDevice : IDisposable
 		var commandBufferHandle = SDL.SDL_AcquireGPUCommandBuffer(Handle);
 		if (commandBufferHandle == IntPtr.Zero)
 		{
-			Logger.LogError(SDL.SDL_GetError());
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
 		}
 
 		var commandBuffer = CommandBufferPool.Obtain();
 		commandBuffer.SetHandle(commandBufferHandle);
-#if DEBUG
-		commandBuffer.ResetStateTracking();
-#endif
 		return commandBuffer;
 	}
 
@@ -344,25 +346,14 @@ public class GraphicsDevice : IDisposable
 	/// </summary>
 	public void Submit(CommandBuffer commandBuffer)
 	{
-#if DEBUG
-		if (commandBuffer.Submitted)
-		{
-			throw new System.InvalidOperationException("Command buffer already submitted!");
-		}
-#endif
-
 		bool result = SDL.SDL_SubmitGPUCommandBuffer(Handle);
 		if (!result)
 		{
 			// submit errors are not recoverable so let's just fail hard
-			throw new InvalidOperationException(SDL.SDL_GetError());
+			throw new InvalidOperationException(SDL3.SDL.SDL_GetError());
 		}
 
 		CommandBufferPool.Return(commandBuffer);
-
-#if DEBUG
-		commandBuffer.Submitted = true;
-#endif
 	}
 
 	/// <summary>
@@ -376,7 +367,7 @@ public class GraphicsDevice : IDisposable
 		if (fenceHandle == IntPtr.Zero)
 		{
 			// submit errors are not recoverable so let's just fail hard
-			throw new InvalidOperationException(SDL.SDL_GetError());
+			throw new InvalidOperationException(SDL3.SDL.SDL_GetError());
 		}
 
 		var fence = FencePool.Obtain();
@@ -391,7 +382,7 @@ public class GraphicsDevice : IDisposable
 	{
 		if (!SDL.SDL_WaitForGPUIdle(Handle))
 		{
-			Logger.LogError(SDL.SDL_GetError());
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 		}
 	}
 
@@ -400,12 +391,10 @@ public class GraphicsDevice : IDisposable
 	/// </summary>
 	public unsafe void WaitForFence(Fence fence)
 	{
-		var fenceHandle = fence.Handle;
-
 		SDL.SDL_WaitForGPUFences(
 			Handle,
 			true,
-			&fenceHandle,
+			[fence.Handle],
 			1
 		);
 	}
@@ -416,7 +405,7 @@ public class GraphicsDevice : IDisposable
 	/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
 	public unsafe void WaitForFences(Span<Fence> fences, bool waitAll)
 	{
-		var handlePtr = stackalloc nint[fences.Length];
+		Span<IntPtr> handlePtr = stackalloc nint[fences.Length];
 
 		for (var i = 0; i < fences.Length; i += 1)
 		{

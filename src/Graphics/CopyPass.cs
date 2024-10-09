@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -27,15 +27,11 @@ public class CopyPass
 		in TextureRegion destination,
 		bool cycle
 	) {
-#if DEBUG
-		AssertTransferBufferNotMapped(source.TransferBuffer);
-#endif
-
-		Refresh.Refresh_UploadToTexture(
+		SDL.SDL_UploadToGPUTexture(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh(),
-			Conversions.BoolToInt(cycle)
+			source,
+			destination,
+			cycle
 		);
 	}
 
@@ -48,8 +44,17 @@ public class CopyPass
 		bool cycle
 	) {
 		UploadToTexture(
-			new TextureTransferInfo(source),
-			new TextureRegion(destination),
+			new TextureTransferInfo
+			{
+				TransferBuffer = source.Handle,
+				Offset = 0
+			},
+			new TextureRegion
+			{
+				Texture = destination.Handle,
+				W = destination.Width,
+				H = destination.Height
+			},
 			cycle
 		);
 	}
@@ -69,17 +74,11 @@ public class CopyPass
 		in BufferRegion destination,
 		bool cycle
 	) {
-#if DEBUG
-		AssertBufferBoundsCheck(source.TransferBuffer.Size, source.Offset, destination.Size);
-		AssertBufferBoundsCheck(destination.Buffer.Size, destination.Offset, destination.Size);
-		AssertTransferBufferNotMapped(source.TransferBuffer);
-#endif
-
-		Refresh.Refresh_UploadToBuffer(
+		SDL.SDL_UploadToGPUBuffer(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh(),
-			Conversions.BoolToInt(cycle)
+			source,
+			destination,
+			cycle
 		);
 	}
 
@@ -92,8 +91,17 @@ public class CopyPass
 		bool cycle
 	) {
 		UploadToBuffer(
-			new TransferBufferLocation(source),
-			new BufferRegion(destination, 0, destination.Size),
+			new TransferBufferLocation
+			{
+				TransferBuffer = source.Handle,
+				Offset = 0
+			},
+			new BufferRegion
+			{
+				Buffer = destination.Handle,
+				Offset = 0,
+				Size = destination.Size
+			},
 			cycle
 		);
 	}
@@ -136,19 +144,14 @@ public class CopyPass
 		uint d,
 		bool cycle
 	) {
-#if DEBUG
-		AssertTextureBoundsCheck(source, w, h, d);
-		AssertTextureBoundsCheck(destination, w, h, d);
-#endif
-
-		Refresh.Refresh_CopyTextureToTexture(
+		SDL.SDL_CopyGPUTextureToTexture(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh(),
+			source,
+			destination,
 			w,
 			h,
 			d,
-			Conversions.BoolToInt(cycle)
+			cycle
 		);
 	}
 
@@ -164,17 +167,12 @@ public class CopyPass
 		uint size,
 		bool cycle
 	) {
-#if DEBUG
-		AssertBufferBoundsCheck(source.Buffer.Size, source.Offset, size);
-		AssertBufferBoundsCheck(destination.Buffer.Size, destination.Offset, size);
-#endif
-
-		Refresh.Refresh_CopyBufferToBuffer(
+		SDL.SDL_CopyGPUBufferToBuffer(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh(),
+			source,
+			destination,
 			size,
-			Conversions.BoolToInt(cycle)
+			cycle
 		);
 	}
 
@@ -182,16 +180,10 @@ public class CopyPass
 		in BufferRegion source,
 		in TransferBufferLocation destination
 	) {
-#if DEBUG
-		AssertBufferBoundsCheck(source.Buffer.Size, source.Offset, source.Size);
-		AssertBufferBoundsCheck(destination.TransferBuffer.Size, destination.Offset, source.Size);
-		AssertTransferBufferNotMapped(destination.TransferBuffer);
-#endif
-
-		Refresh.Refresh_DownloadFromBuffer(
+		SDL.SDL_DownloadFromGPUBuffer(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh()
+			source,
+			destination
 		);
 	}
 
@@ -199,43 +191,10 @@ public class CopyPass
 		in TextureRegion source,
 		in TextureTransferInfo destination
 	) {
-#if DEBUG
-		AssertTransferBufferNotMapped(destination.TransferBuffer);
-#endif
-
-		Refresh.Refresh_DownloadFromTexture(
+		SDL.SDL_DownloadFromGPUTexture(
 			Handle,
-			source.ToRefresh(),
-			destination.ToRefresh()
+			source,
+			destination
 		);
 	}
-
-#if DEBUG
-	private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
-	{
-		if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
-		{
-			throw new System.InvalidOperationException($"SetBufferData overflow! buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
-		}
-	}
-
-	private void AssertTextureBoundsCheck(in TextureLocation textureLocation, uint w, uint h, uint d)
-	{
-		if (
-			textureLocation.X + w > textureLocation.TextureSlice.Texture.Width ||
-			textureLocation.Y + h > textureLocation.TextureSlice.Texture.Height ||
-			textureLocation.Z + d > textureLocation.TextureSlice.Texture.Depth
-		) {
-			throw new System.InvalidOperationException($"Texture data is out of bounds!");
-		}
-	}
-
-	private void AssertTransferBufferNotMapped(TransferBuffer transferBuffer)
-	{
-		if (transferBuffer.Mapped)
-		{
-			throw new System.InvalidOperationException("Transfer buffer must not be mapped!");
-		}
-	}
-#endif
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics
 {
@@ -8,16 +8,14 @@ namespace MoonWorks.Graphics
 	/// </summary>
 	public class Texture : RefreshResource
 	{
+		public TextureType Type { get; private init; }
 		public uint Width { get; internal set; }
 		public uint Height { get; internal set; }
-		public uint Depth { get; }
+		public uint LayerCountOrDepth { get; private init; }
 		public TextureFormat Format { get; internal set; }
-		public bool IsCube { get; }
-		public uint LayerCount { get; }
-		public uint LevelCount { get; }
-		public SampleCount SampleCount { get; }
-		public TextureUsageFlags UsageFlags { get; }
-		public uint Size { get; }
+		public uint LevelCount { get; private init; }
+		public SampleCount SampleCount { get; private init; }
+		public TextureUsageFlags UsageFlags { get; private init; }
 
 		private string name;
 		public string Name
@@ -28,7 +26,7 @@ namespace MoonWorks.Graphics
 			{
 				if (Device.DebugMode)
 				{
-					Refresh.Refresh_SetTextureName(
+					SDL.SDL_SetGPUTextureName(
 						Device.Handle,
 						Handle,
 						value
@@ -40,7 +38,7 @@ namespace MoonWorks.Graphics
 		}
 
 		// FIXME: this allocates a delegate instance
-		protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseTexture;
+		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUTexture;
 
 		/// <summary>
 		/// Creates a 2D texture.
@@ -62,18 +60,18 @@ namespace MoonWorks.Graphics
 		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
+				Type = TextureType.TwoDimensional,
+				Format = format,
+				Usage = usageFlags,
 				Width = width,
 				Height = height,
-				Depth = 1,
-				IsCube = false,
-				LayerCount = 1,
-				LevelCount = levelCount,
+				LayerCountOrDepth = 1,
+				NumLevels = levelCount,
 				SampleCount = sampleCount,
-				Format = format,
-				UsageFlags = usageFlags
+				Props = 0
 			};
 
-			return new Texture(device, textureCreateInfo);
+			return CreateTexture(device, textureCreateInfo);
 		}
 
 		/// <summary>
@@ -97,17 +95,18 @@ namespace MoonWorks.Graphics
 		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
+				Type = TextureType.TwoDimensionalArray,
+				Format = format,
+				Usage = usageFlags,
 				Width = width,
 				Height = height,
-				Depth = 1,
-				IsCube = false,
-				LayerCount = layerCount,
-				LevelCount = levelCount,
-				Format = format,
-				UsageFlags = usageFlags
+				LayerCountOrDepth = layerCount,
+				NumLevels = levelCount,
+				SampleCount = SampleCount.One,
+				Props = 0
 			};
 
-			return new Texture(device, textureCreateInfo);
+			return CreateTexture(device, textureCreateInfo);
 		}
 
 		/// <summary>
@@ -125,17 +124,18 @@ namespace MoonWorks.Graphics
 		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
+				Type = TextureType.ThreeDimensional,
+				Format = format,
+				Usage = usageFlags,
 				Width = width,
 				Height = height,
-				Depth = depth,
-				IsCube = false,
-				LayerCount = 1,
-				LevelCount = levelCount,
-				Format = format,
-				UsageFlags = usageFlags
+				LayerCountOrDepth = depth,
+				NumLevels = levelCount,
+				SampleCount = SampleCount.One,
+				Props = 0
 			};
 
-			return new Texture(device, textureCreateInfo);
+			return CreateTexture(device, textureCreateInfo);
 		}
 
 		/// <summary>
@@ -155,46 +155,70 @@ namespace MoonWorks.Graphics
 		) {
 			var textureCreateInfo = new TextureCreateInfo
 			{
+				Type = TextureType.Cube,
+				Format = format,
+				Usage = usageFlags,
 				Width = size,
 				Height = size,
-				Depth = 1,
-				IsCube = true,
-				LayerCount = 6,
-				LevelCount = levelCount,
-				Format = format,
-				UsageFlags = usageFlags
+				LayerCountOrDepth = 6,
+				NumLevels = levelCount,
+				SampleCount = SampleCount.One,
+				Props = 0
 			};
 
-			return new Texture(device, textureCreateInfo);
+			return CreateTexture(device, textureCreateInfo);
 		}
 
-		/// <summary>
-		/// Creates a new texture using a TextureCreateInfo struct.
-		/// </summary>
-		/// <param name="device">An initialized GraphicsDevice.</param>
-		/// <param name="textureCreateInfo">The parameters to use when creating the texture.</param>
-		public Texture(
+		public static Texture CreateTextureCubeArray(
 			GraphicsDevice device,
-			in TextureCreateInfo textureCreateInfo
-		) : base(device)
-		{
-			Handle = Refresh.Refresh_CreateTexture(
-				device.Handle,
-				textureCreateInfo.ToRefresh()
-			);
+			uint size,
+			TextureFormat format,
+			TextureUsageFlags usageFlags,
+			uint arrayCount,
+			uint levelCount = 1
+		) {
+			var textureCreateInfo = new TextureCreateInfo
+			{
+				Type = TextureType.CubeArray,
+				Format = format,
+				Width = size,
+				Height = size,
+				LayerCountOrDepth = arrayCount * 6,
+				NumLevels = levelCount,
+				SampleCount = SampleCount.One,
+				Props = 0
+			};
 
-			Format = textureCreateInfo.Format;
-			Width = textureCreateInfo.Width;
-			Height = textureCreateInfo.Height;
-			Depth = textureCreateInfo.Depth;
-			IsCube = textureCreateInfo.IsCube;
-			LayerCount = textureCreateInfo.LayerCount;
-			LevelCount = textureCreateInfo.LevelCount;
-			SampleCount = textureCreateInfo.SampleCount;
-			UsageFlags = textureCreateInfo.UsageFlags;
-			Size = Width * Height * BytesPerPixel(Format) / BlockSizeSquared(Format);
-			name = "";
+			return CreateTexture(device, textureCreateInfo);
 		}
+
+		public static Texture CreateTexture(
+			GraphicsDevice device,
+			in TextureCreateInfo createInfo
+		) {
+			var handle = SDL.SDL_CreateGPUTexture(device.Handle, createInfo);
+
+			if (handle == IntPtr.Zero)
+			{
+				Logger.LogError(SDL3.SDL.SDL_GetError());
+				return null;
+			}
+
+			return new Texture(device)
+			{
+				Handle = handle,
+				Type = createInfo.Type,
+				Width = createInfo.Width,
+				Height = createInfo.Height,
+				LayerCountOrDepth = createInfo.LayerCountOrDepth,
+				Format = createInfo.Format,
+				LevelCount = createInfo.NumLevels,
+				SampleCount = createInfo.SampleCount,
+				UsageFlags = createInfo.Usage
+			};
+		}
+
+		private Texture(GraphicsDevice device) : base(device) { }
 
 		// Used by Window. Swapchain texture handles are managed by the driver backend.
 		internal Texture(
@@ -203,127 +227,22 @@ namespace MoonWorks.Graphics
 		) : base(device)
 		{
 			Handle = IntPtr.Zero;
-
+			Type = TextureType.TwoDimensional;
 			Format = format;
 			Width = 0;
 			Height = 0;
-			Depth = 1;
-			IsCube = false;
+			LayerCountOrDepth = 1;
 			LevelCount = 1;
 			SampleCount = SampleCount.One;
 			UsageFlags = TextureUsageFlags.ColorTarget;
-			Size = Width * Height * BytesPerPixel(Format) / BlockSizeSquared(Format);
 		}
 
-		public static uint BytesPerPixel(TextureFormat format)
+		public static implicit operator TextureRegion(Texture t) => new TextureRegion
 		{
-			switch (format)
-			{
-				case TextureFormat.R8:
-				case TextureFormat.A8:
-				case TextureFormat.R8_UINT:
-					return 1;
-				case TextureFormat.B5G6R5:
-				case TextureFormat.B4G4R4A4:
-				case TextureFormat.B5G5R5A1:
-				case TextureFormat.R16_SFLOAT:
-				case TextureFormat.R8G8_SNORM:
-				case TextureFormat.R8G8_UINT:
-				case TextureFormat.R16_UINT:
-				case TextureFormat.D16_UNORM:
-					return 2;
-				case TextureFormat.R8G8B8A8:
-				case TextureFormat.B8G8R8A8:
-				case TextureFormat.R32_SFLOAT:
-				case TextureFormat.R16G16:
-				case TextureFormat.R16G16_SFLOAT:
-				case TextureFormat.R8G8B8A8_SNORM:
-				case TextureFormat.R10G10B10A2:
-				case TextureFormat.R8G8B8A8_UINT:
-				case TextureFormat.R16G16_UINT:
-				case TextureFormat.D24_UNORM_S8_UINT:
-				case TextureFormat.D32_SFLOAT:
-					return 4;
-				case TextureFormat.D32_SFLOAT_S8_UINT:
-					return 5;
-				case TextureFormat.R16G16B16A16_SFLOAT:
-				case TextureFormat.R16G16B16A16:
-				case TextureFormat.R32G32_SFLOAT:
-				case TextureFormat.R16G16B16A16_UINT:
-				case TextureFormat.BC1:
-					return 8;
-				case TextureFormat.R32G32B32A32_SFLOAT:
-				case TextureFormat.BC2:
-				case TextureFormat.BC3:
-				case TextureFormat.BC7:
-					return 16;
-				default:
-					Logger.LogError("Texture format not recognized!");
-					return 0;
-			}
-		}
-
-		public static uint TexelSize(TextureFormat format)
-		{
-			switch (format)
-			{
-				case TextureFormat.BC2:
-				case TextureFormat.BC3:
-				case TextureFormat.BC7:
-					return 16;
-				case TextureFormat.BC1:
-					return 8;
-				default:
-					return 1;
-			}
-		}
-
-		public static uint BlockSizeSquared(TextureFormat format)
-		{
-			switch (format)
-			{
-				case TextureFormat.BC1:
-				case TextureFormat.BC2:
-				case TextureFormat.BC3:
-				case TextureFormat.BC7:
-					return 16;
-				case TextureFormat.R8G8B8A8:
-				case TextureFormat.B8G8R8A8:
-				case TextureFormat.B5G6R5:
-				case TextureFormat.B5G5R5A1:
-				case TextureFormat.B4G4R4A4:
-				case TextureFormat.R10G10B10A2:
-				case TextureFormat.R16G16:
-				case TextureFormat.R16G16B16A16:
-				case TextureFormat.R8:
-				case TextureFormat.A8:
-				case TextureFormat.R8G8_SNORM:
-				case TextureFormat.R8G8B8A8_SNORM:
-				case TextureFormat.R16_SFLOAT:
-				case TextureFormat.R16G16_SFLOAT:
-				case TextureFormat.R16G16B16A16_SFLOAT:
-				case TextureFormat.R32_SFLOAT:
-				case TextureFormat.R32G32_SFLOAT:
-				case TextureFormat.R32G32B32A32_SFLOAT:
-				case TextureFormat.R8_UINT:
-				case TextureFormat.R8G8_UINT:
-				case TextureFormat.R8G8B8A8_UINT:
-				case TextureFormat.R16_UINT:
-				case TextureFormat.R16G16_UINT:
-				case TextureFormat.R16G16B16A16_UINT:
-				case TextureFormat.D16_UNORM:
-				case TextureFormat.D24_UNORM:
-				case TextureFormat.D24_UNORM_S8_UINT:
-				case TextureFormat.D32_SFLOAT:
-				case TextureFormat.D32_SFLOAT_S8_UINT:
-					return 1;
-				default:
-					Logger.LogError("Texture format not recognized!");
-					return 0;
-			}
-		}
-
-		public static implicit operator TextureSlice(Texture t) => new TextureSlice(t);
-		public static implicit operator TextureRegion(Texture t) => new TextureRegion(t);
+			Texture = t.Handle,
+			W = t.Width,
+			H = t.Height,
+			D = t.LayerCountOrDepth
+		};
 	}
 }

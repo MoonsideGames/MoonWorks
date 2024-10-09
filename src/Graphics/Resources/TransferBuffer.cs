@@ -1,24 +1,20 @@
 using System;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
 /// <summary>
 /// A data container that can efficiently transfer data to and from the GPU.
 /// </summary>
-public unsafe class TransferBuffer : RefreshResource
+public class TransferBuffer : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseTransferBuffer;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUTransferBuffer;
 
 	/// <summary>
 	/// Size in bytes.
 	/// </summary>
-	public uint Size { get; }
-
-#if DEBUG
-	public bool Mapped { get; private set; }
-#endif
+	public uint Size { get; private init; }
 
 	/// <summary>
 	/// Creates a buffer of requested size given a type and element count.
@@ -27,150 +23,58 @@ public unsafe class TransferBuffer : RefreshResource
 	/// <param name="device">The GraphicsDevice.</param>
 	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
 	/// <returns></returns>
-	public unsafe static TransferBuffer Create<T>(
+	public static TransferBuffer Create<T>(
 		GraphicsDevice device,
 		TransferBufferUsage usage,
 		uint elementCount
 	) where T : unmanaged
 	{
-		return new TransferBuffer(
-			device,
-			usage,
-			(uint) Marshal.SizeOf<T>() * elementCount
-		);
+		return Create(device, new TransferBufferCreateInfo
+		{
+			Usage = usage,
+			Size = (uint) (Marshal.SizeOf<T>() * elementCount),
+			Props = 0
+		});
 	}
 
-	/// <summary>
-	/// Creates a TransferBuffer.
-	/// </summary>
-	/// <param name="device">An initialized GraphicsDevice.</param>
-	/// <param name="usage">Whether this will be used to upload buffers or textures.</param>
-	/// <param name="sizeInBytes">The length of the buffer. Cannot be resized.</param>
-	public TransferBuffer(
+	public static TransferBuffer Create(
 		GraphicsDevice device,
-		TransferBufferUsage usage,
-		uint sizeInBytes
-	) : base(device)
-	{
-		Handle = Refresh.Refresh_CreateTransferBuffer(
-			device.Handle,
-			(Refresh.TransferBufferUsage) usage,
-			sizeInBytes
-		);
-		Size = sizeInBytes;
-	}
-
-	/// <summary>
-	/// Immediately copies data from a Span to the TransferBuffer.
-	/// Returns the length of the copy in bytes.
-	///
-	/// If cycle is set to true and this TransferBuffer was used in an Upload command,
-	/// that command will still use the correct data at the cost of increased memory usage.
-	///
-	/// If cycle is set to false, the data will be overwritten immediately,
-	/// which could cause a data race.
-	/// </summary>
-	public unsafe uint SetData<T>(
-		Span<T> source,
-		uint bufferOffsetInBytes,
-		bool cycle
-	) where T : unmanaged
-	{
-		var elementSize = Marshal.SizeOf<T>();
-		var dataLengthInBytes = (uint) (elementSize * source.Length);
-
-#if DEBUG
-		AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
-		AssertNotMapped();
-#endif
-
-		fixed (T* dataPtr = source)
+		in TransferBufferCreateInfo createInfo
+	) {
+		var handle = SDL.SDL_CreateGPUTransferBuffer(device.Handle, createInfo);
+		if (handle == IntPtr.Zero)
 		{
-			Refresh.Refresh_SetTransferData(
-				Device.Handle,
-				(nint) dataPtr,
-				new Refresh.TransferBufferRegion
-				{
-					TransferBuffer = Handle,
-					Offset = bufferOffsetInBytes,
-					Size = dataLengthInBytes
-				},
-				Conversions.BoolToInt(cycle)
-			);
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
 		}
-
-		return dataLengthInBytes;
-	}
-
-	/// <summary>
-	/// Immediately copies data from a Span to the TransferBuffer.
-	/// Returns the length of the copy in bytes.
-	///
-	/// If cycle is set to true and this TransferBuffer was used in an Upload command,
-	/// that command will still use the corret data at the cost of increased memory usage.
-	///
-	/// If cycle is set to false, the data will be overwritten immediately,
-	/// which could cause a data race.
-	/// </summary>
-	public unsafe uint SetData<T>(
-		Span<T> source,
-		bool cycle
-	) where T : unmanaged
-	{
-		return SetData(source, 0, cycle);
-	}
-
-	/// <summary>
-	/// Immediately copies data from the TransferBuffer into a Span.
-	/// </summary>
-	public unsafe void GetData<T>(
-		Span<T> destination,
-		uint bufferOffsetInBytes = 0
-	) where T : unmanaged
-	{
-		var elementSize = Marshal.SizeOf<T>();
-		var dataLengthInBytes = (uint) (elementSize * destination.Length);
-
-#if DEBUG
-		AssertBufferBoundsCheck(Size, bufferOffsetInBytes, dataLengthInBytes);
-		AssertNotMapped();
-#endif
-
-		fixed (T* dataPtr = destination)
+		return new TransferBuffer(device)
 		{
-			Refresh.Refresh_GetTransferData(
-				Device.Handle,
-				new Refresh.TransferBufferRegion
-				{
-					TransferBuffer = Handle,
-					Offset = bufferOffsetInBytes,
-					Size = dataLengthInBytes
-				},
-				(nint) dataPtr
-			);
-		}
+			Handle = handle,
+			Size = createInfo.Size
+		};
 	}
+
+	private TransferBuffer(GraphicsDevice device) : base(device) { }
 
 	/// <summary>
 	/// Maps the transfer buffer into application address space.
 	/// You must call Unmap before encoding transfer commands.
 	/// </summary>
-	public unsafe void Map(bool cycle, out byte* data)
+	public unsafe Span<T> Map<T>(bool cycle) where T : unmanaged
 	{
-#if DEBUG
-		AssertNotMapped();
-#endif
-
-		Refresh.Refresh_MapTransferBuffer(
+		var ptr = SDL.SDL_MapGPUTransferBuffer(
 			Device.Handle,
 			Handle,
-			Conversions.BoolToInt(cycle),
-			out data
+			cycle
 		);
 
-#if DEBUG
-		Mapped = true;
-#endif
+		if (ptr == IntPtr.Zero)
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
+		}
+
+		return new Span<T>((void*) ptr, (int) Size);
 	}
 
 	/// <summary>
@@ -179,31 +83,9 @@ public unsafe class TransferBuffer : RefreshResource
 	/// </summary>
 	public void Unmap()
 	{
-		Refresh.Refresh_UnmapTransferBuffer(
+		SDL.SDL_UnmapGPUTransferBuffer(
 			Device.Handle,
 			Handle
 		);
-
-#if DEBUG
-		Mapped = false;
-#endif
 	}
-
-#if DEBUG
-	private void AssertBufferBoundsCheck(uint bufferLengthInBytes, uint offsetInBytes, uint copyLengthInBytes)
-	{
-		if (copyLengthInBytes > bufferLengthInBytes + offsetInBytes)
-		{
-			throw new InvalidOperationException($"Data overflow! Transfer buffer length {bufferLengthInBytes}, offset {offsetInBytes}, copy length {copyLengthInBytes}");
-		}
-	}
-
-	private void AssertNotMapped()
-	{
-		if (Mapped)
-		{
-			throw new InvalidOperationException("Transfer buffer must not be mapped!");
-		}
-	}
-#endif
 }

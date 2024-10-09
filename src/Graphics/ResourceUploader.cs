@@ -17,6 +17,7 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public unsafe class ResourceUploader : GraphicsResource
 {
+	// FIXME: we no longer need two separate buffers
 	TransferBuffer BufferTransferBuffer;
 	TransferBuffer TextureTransferBuffer;
 
@@ -44,8 +45,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
 	{
-		var lengthInBytes = (uint) (Marshal.SizeOf<T>() * data.Length);
-		var buffer = new Buffer(Device, usageFlags, lengthInBytes);
+		var buffer = Buffer.Create<T>(Device, usageFlags, (uint) data.Length);
 
 		SetBufferData(buffer, 0, data, false);
 
@@ -67,15 +67,21 @@ public unsafe class ResourceUploader : GraphicsResource
 			resourceOffset = CopyBufferData(spanPtr, lengthInBytes);
 		}
 
-		var bufferRegion = new BufferRegion(buffer, offsetInBytes, lengthInBytes);
+		var bufferRegion = new BufferRegion
+		{
+			Buffer = buffer.Handle,
+			Offset = offsetInBytes,
+			Size = lengthInBytes
+		};
+
 		BufferUploads.Add((resourceOffset, bufferRegion, cycle));
 	}
 
 	// Textures
 
-	public Texture CreateTexture2D<T>(Span<T> pixelData, uint width, uint height) where T : unmanaged
+	public Texture CreateTexture2D<T>(Span<T> pixelData, TextureFormat format, uint width, uint height) where T : unmanaged
 	{
-		var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
+		var texture = Texture.CreateTexture2D(Device, width, height, format, TextureUsageFlags.Sampler);
 		SetTextureData(texture, pixelData, false);
 		return texture;
 	}
@@ -83,10 +89,10 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData)
+	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData, TextureFormat format)
 	{
 		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
-		var texture = Texture.CreateTexture2D(Device, width, height, TextureFormat.R8G8B8A8, TextureUsageFlags.Sampler);
+		var texture = Texture.CreateTexture2D(Device, width, height, format, TextureUsageFlags.Sampler);
 		SetTextureDataFromCompressed(texture, compressedImageData);
 		return texture;
 	}
@@ -94,14 +100,14 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from a compressed image stream to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Stream compressedImageStream)
+	public Texture CreateTexture2DFromCompressed(Stream compressedImageStream, TextureFormat format)
 	{
 		var length = compressedImageStream.Length;
 		var buffer = NativeMemory.Alloc((nuint) length);
 		var span = new Span<byte>(buffer, (int) length);
 		compressedImageStream.ReadExactly(span);
 
-		var texture = CreateTexture2DFromCompressed(span);
+		var texture = CreateTexture2DFromCompressed(span, format);
 
 		NativeMemory.Free(buffer);
 
@@ -111,10 +117,10 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string compressedImageFilePath)
+	public Texture CreateTexture2DFromCompressed(string compressedImageFilePath, TextureFormat format)
 	{
 		var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-		return CreateTexture2DFromCompressed(fileStream);
+		return CreateTexture2DFromCompressed(fileStream, format);
 	}
 
 	/// <summary>
@@ -152,18 +158,15 @@ public unsafe class ResourceUploader : GraphicsResource
 
 				var textureRegion = new TextureRegion
 				{
-					TextureSlice = new TextureSlice
-					{
-						Texture = texture,
-						Layer = (uint) face,
-						MipLevel = (uint) level
-					},
+					Texture = texture.Handle,
+					Layer = (uint) face,
+					MipLevel = (uint) level,
 					X = 0,
 					Y = 0,
 					Z = 0,
-					Width = (uint) levelWidth,
-					Height = (uint) levelHeight,
-					Depth = 1
+					W = (uint) levelWidth,
+					H = (uint) levelHeight,
+					D = 1
 				};
 
 				SetTextureData(textureRegion, byteSpan, false);
@@ -265,11 +268,13 @@ public unsafe class ResourceUploader : GraphicsResource
 			if (BufferTransferBuffer == null || BufferTransferBuffer.Size < bufferDataSize)
 			{
 				BufferTransferBuffer?.Dispose();
-				BufferTransferBuffer = new TransferBuffer(Device, TransferBufferUsage.Upload, bufferDataSize);
+				BufferTransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, bufferDataSize);
 			}
 
 			var dataSpan = new Span<byte>(bufferData, (int) bufferDataSize);
-			BufferTransferBuffer.SetData(dataSpan, true);
+			var transferBufferSpan = BufferTransferBuffer.Map<byte>(true);
+			dataSpan.CopyTo(transferBufferSpan);
+			BufferTransferBuffer.Unmap();
 		}
 
 
@@ -278,11 +283,13 @@ public unsafe class ResourceUploader : GraphicsResource
 			if (TextureTransferBuffer == null || TextureTransferBuffer.Size < textureDataSize)
 			{
 				TextureTransferBuffer?.Dispose();
-				TextureTransferBuffer = new TransferBuffer(Device, TransferBufferUsage.Upload, textureDataSize);
+				TextureTransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, textureDataSize);
 			}
 
 			var dataSpan = new Span<byte>(textureData, (int) textureDataSize);
-			TextureTransferBuffer.SetData(dataSpan, true);
+			var transferBufferSpan = TextureTransferBuffer.Map<byte>(true);
+			dataSpan.CopyTo(transferBufferSpan);
+			TextureTransferBuffer.Unmap();
 		}
 	}
 
@@ -293,7 +300,11 @@ public unsafe class ResourceUploader : GraphicsResource
 		foreach (var (transferOffset, bufferRegion, option) in BufferUploads)
 		{
 			copyPass.UploadToBuffer(
-				new TransferBufferLocation(BufferTransferBuffer, transferOffset),
+				new TransferBufferLocation
+				{
+					TransferBuffer = BufferTransferBuffer.Handle,
+					Offset = transferOffset
+				},
 				bufferRegion,
 				option
 			);
@@ -302,7 +313,11 @@ public unsafe class ResourceUploader : GraphicsResource
 		foreach (var (transferOffset, textureRegion, option) in TextureUploads)
 		{
 			copyPass.UploadToTexture(
-				new TextureTransferInfo(TextureTransferBuffer, transferOffset),
+				new TextureTransferInfo
+				{
+					TransferBuffer = TextureTransferBuffer.Handle,
+					Offset = transferOffset
+				},
 				textureRegion,
 				option
 			);

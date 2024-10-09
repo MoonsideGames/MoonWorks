@@ -1,7 +1,8 @@
-﻿using RefreshCS;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -10,82 +11,81 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class ComputePipeline : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseComputePipeline;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUComputePipeline;
 
-	public uint ReadOnlyStorageTextureCount { get; }
-	public uint ReadOnlyStorageBufferCount { get; }
-	public uint ReadWriteStorageTextureCount { get; }
-	public uint ReadWriteStorageBufferCount { get; }
-	public uint UniformBufferCount { get; }
+	public uint NumSamplers { get; private init; }
+	public uint NumReadOnlyStorageTextures { get; private init; }
+	public uint NumReadOnlyStorageBuffers { get; private init; }
+	public uint NumReadWriteStorageTextures { get; private init; }
+	public uint NumReadWriteStorageBuffers { get; private init; }
+	public uint NumUniformBuffers { get; private init; }
 
-	public ComputePipeline(
+	private ComputePipeline(GraphicsDevice device) : base(device) { }
+
+	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
 		string filePath,
-		string entryPointName,
-		in ComputePipelineCreateInfo computePipelineCreateInfo
-	) : base(device)
-	{
-		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-		Handle = CreateFromStream(device, stream, entryPointName, computePipelineCreateInfo);
-
-		ReadOnlyStorageTextureCount = computePipelineCreateInfo.ReadOnlyStorageTextureCount;
-		ReadOnlyStorageBufferCount = computePipelineCreateInfo.ReadOnlyStorageBufferCount;
-		ReadWriteStorageTextureCount = computePipelineCreateInfo.ReadWriteStorageTextureCount;
-		ReadWriteStorageBufferCount = computePipelineCreateInfo.ReadWriteStorageBufferCount;
-		UniformBufferCount = computePipelineCreateInfo.UniformBufferCount;
-	}
-
-	public ComputePipeline(
-		GraphicsDevice device,
-		Stream stream,
-		string entryPointName,
-		in ComputePipelineCreateInfo computePipelineCreateInfo
-	) : base(device)
-	{
-		Handle = CreateFromStream(device, stream, entryPointName, computePipelineCreateInfo);
-
-		ReadOnlyStorageTextureCount = computePipelineCreateInfo.ReadOnlyStorageTextureCount;
-		ReadOnlyStorageBufferCount = computePipelineCreateInfo.ReadOnlyStorageBufferCount;
-		ReadWriteStorageTextureCount = computePipelineCreateInfo.ReadWriteStorageTextureCount;
-		ReadWriteStorageBufferCount = computePipelineCreateInfo.ReadWriteStorageBufferCount;
-		UniformBufferCount = computePipelineCreateInfo.UniformBufferCount;
-	}
-
-	private static unsafe nint CreateFromStream(
-		GraphicsDevice device,
-		Stream stream,
-		string entryPointName,
+		string entryPoint,
 		in ComputePipelineCreateInfo computePipelineCreateInfo
 	) {
-		var bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length);
+		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+		return Create(device, stream, entryPoint, computePipelineCreateInfo);
+	}
+
+	public static unsafe ComputePipeline Create(
+		GraphicsDevice device,
+		Stream stream,
+		string entryPoint,
+		in ComputePipelineCreateInfo computePipelineCreateInfo
+	) {
+		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
 
-		Refresh.ComputePipelineCreateInfo refreshPipelineCreateInfo;
-		refreshPipelineCreateInfo.Code = bytecodeBuffer;
-		refreshPipelineCreateInfo.CodeSize = (nuint) stream.Length;
-		refreshPipelineCreateInfo.EntryPointName = entryPointName;
-		refreshPipelineCreateInfo.Format = (Refresh.ShaderFormat) computePipelineCreateInfo.ShaderFormat;
-		refreshPipelineCreateInfo.ReadOnlyStorageTextureCount = computePipelineCreateInfo.ReadOnlyStorageTextureCount;
-		refreshPipelineCreateInfo.ReadOnlyStorageBufferCount = computePipelineCreateInfo.ReadOnlyStorageBufferCount;
-		refreshPipelineCreateInfo.ReadWriteStorageTextureCount = computePipelineCreateInfo.ReadWriteStorageTextureCount;
-		refreshPipelineCreateInfo.ReadWriteStorageBufferCount = computePipelineCreateInfo.ReadWriteStorageBufferCount;
-		refreshPipelineCreateInfo.UniformBufferCount = computePipelineCreateInfo.UniformBufferCount;
-		refreshPipelineCreateInfo.ThreadCountX = computePipelineCreateInfo.ThreadCountX;
-		refreshPipelineCreateInfo.ThreadCountY = computePipelineCreateInfo.ThreadCountY;
-		refreshPipelineCreateInfo.ThreadCountZ = computePipelineCreateInfo.ThreadCountZ;
+		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint);
+		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+		Encoding.UTF8.GetString((byte*) entryPointBuffer, entryPointLength);
 
-		var computePipelineHandle = Refresh.Refresh_CreateComputePipeline(
+		INTERNAL_ComputePipelineCreateInfo pipelineCreateInfo;
+		pipelineCreateInfo.CodeSize = (nuint) stream.Length;
+		pipelineCreateInfo.Code = (byte*) bytecodeBuffer;
+		pipelineCreateInfo.EntryPoint = (byte*) entryPointBuffer;
+		pipelineCreateInfo.Format = computePipelineCreateInfo.Format;
+		pipelineCreateInfo.NumSamplers = computePipelineCreateInfo.NumSamplers;
+		pipelineCreateInfo.NumReadonlyStorageTextures = computePipelineCreateInfo.NumReadonlyStorageTextures;
+		pipelineCreateInfo.NumReadonlyStorageBuffers = computePipelineCreateInfo.NumReadonlyStorageBuffers;
+		pipelineCreateInfo.NumReadWriteStorageTextures = computePipelineCreateInfo.NumReadWriteStorageTextures;
+		pipelineCreateInfo.NumReadWriteStorageBuffers = computePipelineCreateInfo.NumReadWriteStorageBuffers;
+		pipelineCreateInfo.NumUniformBuffers = computePipelineCreateInfo.NumUniformBuffers;
+		pipelineCreateInfo.ThreadCountX = computePipelineCreateInfo.ThreadCountX;
+		pipelineCreateInfo.ThreadCountY = computePipelineCreateInfo.ThreadCountY;
+		pipelineCreateInfo.ThreadCountZ = computePipelineCreateInfo.ThreadCountZ;
+		pipelineCreateInfo.Props = computePipelineCreateInfo.Props;
+
+		var computePipelineHandle = SDL.SDL_CreateGPUComputePipeline(
 			device.Handle,
-			refreshPipelineCreateInfo
+			pipelineCreateInfo
 		);
+
+		NativeMemory.Free(bytecodeBuffer);
+		NativeMemory.Free(entryPointBuffer);
 
 		if (computePipelineHandle == nint.Zero)
 		{
 			throw new Exception("Could not create compute pipeline!");
 		}
 
-		NativeMemory.Free(bytecodeBuffer);
-		return computePipelineHandle;
+		var computePipeline = new ComputePipeline(device)
+		{
+			Handle = computePipelineHandle,
+			NumSamplers = pipelineCreateInfo.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+		};
+
+		return computePipeline;
 	}
 }

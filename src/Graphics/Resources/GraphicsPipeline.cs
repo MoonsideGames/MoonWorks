@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using RefreshCS;
+using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
@@ -10,90 +10,82 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class GraphicsPipeline : RefreshResource
 {
-	protected override Action<IntPtr, IntPtr> ReleaseFunction => Refresh.Refresh_ReleaseGraphicsPipeline;
+	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUGraphicsPipeline;
 
 	public Shader VertexShader;
 	public Shader FragmentShader;
 	public SampleCount SampleCount { get; }
-
-#if DEBUG
-	internal GraphicsPipelineAttachmentInfo AttachmentInfo { get; }
-#endif
 
 	public unsafe GraphicsPipeline(
 		GraphicsDevice device,
 		in GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
 	) : base(device)
 	{
-		Refresh.GraphicsPipelineCreateInfo refreshGraphicsPipelineCreateInfo;
+		INTERNAL_GraphicsPipelineCreateInfo createInfo;
 
-		var vertexAttributes = (Refresh.VertexAttribute*) NativeMemory.Alloc(
-			(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length * Marshal.SizeOf<Refresh.VertexAttribute>())
+		var vertexAttributes = (VertexAttribute*) NativeMemory.Alloc(
+			(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length * Marshal.SizeOf<VertexAttribute>())
 		);
 
 		for (var i = 0; i < graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length; i += 1)
 		{
-			vertexAttributes[i] = graphicsPipelineCreateInfo.VertexInputState.VertexAttributes[i].ToRefresh();
+			vertexAttributes[i] = graphicsPipelineCreateInfo.VertexInputState.VertexAttributes[i];
 		}
 
-		var vertexBindings = (Refresh.VertexBinding*) NativeMemory.Alloc(
-			(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length * Marshal.SizeOf<Refresh.VertexBinding>())
+		var vertexBindings = (VertexBufferDescription*) NativeMemory.Alloc(
+			(nuint) (graphicsPipelineCreateInfo.VertexInputState.VertexBufferDescriptions.Length * Marshal.SizeOf<VertexBufferDescription>())
 		);
 
-		for (var i = 0; i < graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length; i += 1)
+		for (var i = 0; i < graphicsPipelineCreateInfo.VertexInputState.VertexBufferDescriptions.Length; i += 1)
 		{
-			vertexBindings[i] = graphicsPipelineCreateInfo.VertexInputState.VertexBindings[i].ToRefresh();
+			vertexBindings[i] = graphicsPipelineCreateInfo.VertexInputState.VertexBufferDescriptions[i];
 		}
 
-		var colorAttachmentDescriptions = stackalloc Refresh.ColorAttachmentDescription[
-			graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length
+		var colorAttachmentDescriptions = stackalloc ColorTargetDescription[
+			graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length
 		];
 
-		for (var i = 0; i < graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
+		for (var i = 0; i < graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length; i += 1)
 		{
-			colorAttachmentDescriptions[i].Format = (Refresh.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].Format;
-			colorAttachmentDescriptions[i].BlendState = graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions[i].BlendState.ToRefresh();
+			colorAttachmentDescriptions[i].Format = graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions[i].Format;
+			colorAttachmentDescriptions[i].BlendState = graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions[i].BlendState;
 		}
 
-		refreshGraphicsPipelineCreateInfo.VertexShader = graphicsPipelineCreateInfo.VertexShader.Handle;
-		refreshGraphicsPipelineCreateInfo.FragmentShader = graphicsPipelineCreateInfo.FragmentShader.Handle;
+		createInfo.VertexShader = graphicsPipelineCreateInfo.VertexShader.Handle;
+		createInfo.FragmentShader = graphicsPipelineCreateInfo.FragmentShader.Handle;
 
-		refreshGraphicsPipelineCreateInfo.VertexInputState.VertexAttributes = vertexAttributes;
-		refreshGraphicsPipelineCreateInfo.VertexInputState.VertexAttributeCount = (uint) graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length;
-		refreshGraphicsPipelineCreateInfo.VertexInputState.VertexBindings = vertexBindings;
-		refreshGraphicsPipelineCreateInfo.VertexInputState.VertexBindingCount = (uint) graphicsPipelineCreateInfo.VertexInputState.VertexBindings.Length;
+		createInfo.VertexInputState.VertexAttributes = vertexAttributes;
+		createInfo.VertexInputState.NumVertexAttributes = (uint) graphicsPipelineCreateInfo.VertexInputState.VertexAttributes.Length;
+		createInfo.VertexInputState.VertexBufferDescriptions = vertexBindings;
+		createInfo.VertexInputState.NumVertexBuffers = (uint) graphicsPipelineCreateInfo.VertexInputState.VertexBufferDescriptions.Length;
 
-		refreshGraphicsPipelineCreateInfo.PrimitiveType = (Refresh.PrimitiveType) graphicsPipelineCreateInfo.PrimitiveType;
+		createInfo.PrimitiveType = graphicsPipelineCreateInfo.PrimitiveType;
+		createInfo.RasterizerState = graphicsPipelineCreateInfo.RasterizerState;
+		createInfo.MultisampleState = graphicsPipelineCreateInfo.MultisampleState;
+		createInfo.DepthStencilState = graphicsPipelineCreateInfo.DepthStencilState;
 
-		refreshGraphicsPipelineCreateInfo.RasterizerState = graphicsPipelineCreateInfo.RasterizerState.ToRefresh();
-		refreshGraphicsPipelineCreateInfo.MultisampleState = graphicsPipelineCreateInfo.MultisampleState.ToRefresh();
-		refreshGraphicsPipelineCreateInfo.DepthStencilState = graphicsPipelineCreateInfo.DepthStencilState.ToRefresh();
+		createInfo.TargetInfo = new INTERNAL_GraphicsPipelineTargetInfo
+		{
+			NumColorTargets = (uint) graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length,
+			ColorTargetDescriptions = colorAttachmentDescriptions,
+			DepthStencilFormat = graphicsPipelineCreateInfo.TargetInfo.DepthStencilFormat,
+			HasDepthStencilTarget = graphicsPipelineCreateInfo.TargetInfo.HasDepthStencilTarget
+		};
 
-		refreshGraphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentCount = (uint) graphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions.Length;
-		refreshGraphicsPipelineCreateInfo.AttachmentInfo.ColorAttachmentDescriptions = colorAttachmentDescriptions;
-		refreshGraphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat = (Refresh.TextureFormat) graphicsPipelineCreateInfo.AttachmentInfo.DepthStencilFormat;
-		refreshGraphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment = Conversions.BoolToInt(graphicsPipelineCreateInfo.AttachmentInfo.HasDepthStencilAttachment);
+		createInfo.Props = graphicsPipelineCreateInfo.Props;
 
-		refreshGraphicsPipelineCreateInfo.BlendConstants[0] = graphicsPipelineCreateInfo.BlendConstants.R;
-		refreshGraphicsPipelineCreateInfo.BlendConstants[1] = graphicsPipelineCreateInfo.BlendConstants.G;
-		refreshGraphicsPipelineCreateInfo.BlendConstants[2] = graphicsPipelineCreateInfo.BlendConstants.B;
-		refreshGraphicsPipelineCreateInfo.BlendConstants[3] = graphicsPipelineCreateInfo.BlendConstants.A;
+		Handle = SDL.SDL_CreateGPUGraphicsPipeline(device.Handle, createInfo);
 
-		Handle = Refresh.Refresh_CreateGraphicsPipeline(device.Handle, refreshGraphicsPipelineCreateInfo);
+		NativeMemory.Free(vertexAttributes);
+		NativeMemory.Free(vertexBindings);
+
 		if (Handle == IntPtr.Zero)
 		{
 			throw new Exception("Could not create graphics pipeline!");
 		}
 
-		NativeMemory.Free(vertexAttributes);
-		NativeMemory.Free(vertexBindings);
-
 		VertexShader = graphicsPipelineCreateInfo.VertexShader;
 		FragmentShader = graphicsPipelineCreateInfo.FragmentShader;
-		SampleCount = graphicsPipelineCreateInfo.MultisampleState.MultisampleCount;
-
-#if DEBUG
-		AttachmentInfo = graphicsPipelineCreateInfo.AttachmentInfo;
-#endif
+		SampleCount = graphicsPipelineCreateInfo.MultisampleState.SampleCount;
 	}
 }
