@@ -105,37 +105,60 @@ namespace MoonWorks.Graphics.Font
 			if (VertexBuffer.Size < vertexDataLengthInBytes)
 			{
 				VertexBuffer.Dispose();
-				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				VertexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
 				newTransferBufferNeeded = true;
 			}
 
 			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				IndexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
 				newTransferBufferNeeded = true;
 			}
 
 			if (newTransferBufferNeeded)
 			{
 				TransferBuffer.Dispose();
-				TransferBuffer = new TransferBuffer(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
+				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				TransferBuffer.SetData(vertexSpan, true);
-				TransferBuffer.SetData(indexSpan, (uint) vertexSpan.Length, false);
+				var transferVertexSpan = TransferBuffer.Map<byte>(true);
+				var transferIndexSpan = vertexSpan[vertexSpan.Length..];
+
+				vertexSpan.CopyTo(transferVertexSpan);
+				indexSpan.CopyTo(transferIndexSpan);
+
+				TransferBuffer.Unmap();
 
 				var copyPass = commandBuffer.BeginCopyPass();
 				copyPass.UploadToBuffer(
-					new TransferBufferLocation(TransferBuffer),
-					new BufferRegion(VertexBuffer, 0, (uint) vertexSpan.Length),
+					new TransferBufferLocation
+					{
+						TransferBuffer = TransferBuffer.Handle,
+						Offset = 0
+					},
+					new BufferRegion
+					{
+						Buffer = VertexBuffer.Handle,
+						Offset = 0,
+						Size = (uint) vertexSpan.Length
+					},
 					true
 				);
 				copyPass.UploadToBuffer(
-					new TransferBufferLocation(TransferBuffer, (uint) vertexSpan.Length),
-					new BufferRegion(IndexBuffer, 0, (uint) indexSpan.Length),
+					new TransferBufferLocation
+					{
+						TransferBuffer = TransferBuffer.Handle,
+						Offset = (uint) vertexSpan.Length
+					},
+					new BufferRegion
+					{
+						Buffer = IndexBuffer.Handle,
+						Offset = 0,
+						Size = (uint) indexSpan.Length
+					},
 					true
 				);
 				commandBuffer.EndCopyPass(copyPass);
@@ -161,9 +184,11 @@ namespace MoonWorks.Graphics.Font
 			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
 
 			renderPass.DrawIndexedPrimitives(
+				PrimitiveCount * 3,
+				1,
 				0,
 				0,
-				PrimitiveCount
+				0
 			);
 		}
 

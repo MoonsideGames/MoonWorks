@@ -1,7 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using SDL3;
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -11,21 +7,6 @@ namespace MoonWorks.Graphics;
 public class RenderPass
 {
 	public nint Handle { get; private set; }
-
-#if DEBUG
-	internal uint colorAttachmentCount;
-	internal SampleCount colorAttachmentSampleCount;
-	internal TextureFormat colorFormatOne;
-	internal TextureFormat colorFormatTwo;
-	internal TextureFormat colorFormatThree;
-	internal TextureFormat colorFormatFour;
-	internal bool hasDepthStencilAttachment;
-	internal SampleCount depthStencilAttachmentSampleCount;
-	internal TextureFormat depthStencilFormat;
-
-	GraphicsPipeline currentGraphicsPipeline;
-#endif
-
 	internal void SetHandle(nint handle)
 	{
 		Handle = handle;
@@ -38,34 +19,10 @@ public class RenderPass
 	public void BindGraphicsPipeline(
 		GraphicsPipeline graphicsPipeline
 	) {
-#if DEBUG
-		AssertRenderPassPipelineFormatMatch(graphicsPipeline);
-
-		if (colorAttachmentCount > 0)
-		{
-			if (graphicsPipeline.SampleCount != colorAttachmentSampleCount)
-			{
-				throw new System.InvalidOperationException($"Sample count mismatch! Graphics pipeline sample count: {graphicsPipeline.SampleCount}, Color attachment sample count: {colorAttachmentSampleCount}");
-			}
-		}
-
-		if (hasDepthStencilAttachment)
-		{
-			if (graphicsPipeline.SampleCount != depthStencilAttachmentSampleCount)
-			{
-				throw new System.InvalidOperationException($"Sample count mismatch! Graphics pipeline sample count: {graphicsPipeline.SampleCount}, Depth stencil attachment sample count: {depthStencilAttachmentSampleCount}");
-			}
-		}
-#endif
-
-		SDL.SDL_BindGPUGraphicsPipeline(
+		SDL_GPU.SDL_BindGPUGraphicsPipeline(
 			Handle,
 			graphicsPipeline.Handle
 		);
-
-#if DEBUG
-		currentGraphicsPipeline = graphicsPipeline;
-#endif
 	}
 
 	/// <summary>
@@ -73,7 +30,7 @@ public class RenderPass
 	/// </summary>
 	public void SetViewport(in Viewport viewport)
 	{
-		SDL.SDL_SetGPUViewport(
+		SDL_GPU.SDL_SetGPUViewport(
 			Handle,
 			viewport
 		);
@@ -84,14 +41,7 @@ public class RenderPass
 	/// </summary>
 	public void SetScissor(in Rect scissor)
 	{
-#if DEBUG
-		if (scissor.X < 0 || scissor.Y < 0 || scissor.W <= 0 || scissor.H <= 0)
-		{
-			throw new System.ArgumentOutOfRangeException("Scissor position cannot be negative and dimensions must be positive!");
-		}
-#endif
-
-		SDL.SDL_SetGPUScissor(
+		SDL_GPU.SDL_SetGPUScissor(
 			Handle,
 			scissor
 		);
@@ -106,11 +56,7 @@ public class RenderPass
 		in BufferBinding bufferBinding,
 		uint firstBinding = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_BindGPUVertexBuffers(
+		SDL_GPU.SDL_BindGPUVertexBuffers(
 			Handle,
 			firstBinding,
 			[bufferBinding],
@@ -127,16 +73,11 @@ public class RenderPass
 	public unsafe void BindIndexBuffer(
 		BufferBinding bufferBinding,
 		IndexElementSize indexElementSize
-	)
-	{
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_BindGPUIndexBuffer(
+	) {
+		SDL_GPU.SDL_BindGPUIndexBuffer(
 			Handle,
 			bufferBinding,
-			(SDL.SDL_GPUIndexElementSize) indexElementSize
+			indexElementSize
 		);
 	}
 
@@ -148,13 +89,7 @@ public class RenderPass
 		in TextureSamplerBinding textureSamplerBinding,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertTextureSamplerBindingNonNull(textureSamplerBinding);
-		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
-#endif
-
-		SDL.SDL_BindGPUVertexSamplers(
+		SDL_GPU.SDL_BindGPUVertexSamplers(
 			Handle,
 			slot,
 			[textureSamplerBinding],
@@ -166,13 +101,7 @@ public class RenderPass
 		Texture texture,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertTextureNonNull(texture);
-		AssertTextureHasGraphicsStorageReadFlag(texture);
-#endif
-
-		SDL.SDL_BindGPUVertexStorageTextures(
+		SDL_GPU.SDL_BindGPUVertexStorageTextures(
 			Handle,
 			slot,
 			[texture.Handle],
@@ -184,13 +113,7 @@ public class RenderPass
 		Buffer buffer,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertBufferNonNull(buffer);
-		AssertBufferHasGraphicsStorageReadFlag(buffer);
-#endif
-
-		SDL.SDL_BindGPUVertexStorageBuffers(
+		SDL_GPU.SDL_BindGPUVertexStorageBuffers(
 			Handle,
 			slot,
 			[buffer.Handle],
@@ -202,13 +125,7 @@ public class RenderPass
 		in TextureSamplerBinding textureSamplerBinding,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertTextureSamplerBindingNonNull(textureSamplerBinding);
-		AssertTextureHasSamplerFlag(textureSamplerBinding.Texture);
-#endif
-
-		SDL.SDL_BindGPUFragmentSamplers(
+		SDL_GPU.SDL_BindGPUFragmentSamplers(
 			Handle,
 			slot,
 			[textureSamplerBinding],
@@ -220,13 +137,7 @@ public class RenderPass
 		in Texture texture,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertTextureNonNull(texture);
-		AssertTextureHasGraphicsStorageReadFlag(texture);
-#endif
-
-		SDL.SDL_BindGPUFragmentStorageTextures(
+		SDL_GPU.SDL_BindGPUFragmentStorageTextures(
 			Handle,
 			slot,
 			[texture.Handle],
@@ -238,13 +149,7 @@ public class RenderPass
 		Buffer buffer,
 		uint slot = 0
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-		AssertBufferNonNull(buffer);
-		AssertBufferHasGraphicsStorageReadFlag(buffer);
-#endif
-
-		SDL.SDL_BindGPUFragmentStorageBuffers(
+		SDL_GPU.SDL_BindGPUFragmentStorageBuffers(
 			Handle,
 			slot,
 			[buffer.Handle],
@@ -262,11 +167,7 @@ public class RenderPass
 		int vertexOffset,
 		uint firstInstance
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_DrawGPUIndexedPrimitives(
+		SDL_GPU.SDL_DrawGPUIndexedPrimitives(
 			Handle,
 			indexCount,
 			instanceCount,
@@ -286,11 +187,7 @@ public class RenderPass
 		uint firstInstance
 	)
 	{
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_DrawGPUPrimitives(
+		SDL_GPU.SDL_DrawGPUPrimitives(
 			Handle,
 			vertexCount,
 			instanceCount,
@@ -311,11 +208,7 @@ public class RenderPass
 		uint offsetInBytes,
 		uint drawCount
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_DrawGPUPrimitivesIndirect(
+		SDL_GPU.SDL_DrawGPUPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,
@@ -335,123 +228,11 @@ public class RenderPass
 		uint offsetInBytes,
 		uint drawCount
 	) {
-#if DEBUG
-		AssertGraphicsPipelineBound();
-#endif
-
-		SDL.SDL_DrawGPUIndexedPrimitivesIndirect(
+		SDL_GPU.SDL_DrawGPUIndexedPrimitivesIndirect(
 			Handle,
 			buffer.Handle,
 			offsetInBytes,
 			drawCount
 		);
 	}
-
-#if DEBUG
-	private void AssertRenderPassPipelineFormatMatch(GraphicsPipeline graphicsPipeline)
-	{
-		for (var i = 0; i < graphicsPipeline.AttachmentInfo.ColorAttachmentDescriptions.Length; i += 1)
-		{
-			TextureFormat format;
-			if (i == 0)
-			{
-				format = colorFormatOne;
-			}
-			else if (i == 1)
-			{
-				format = colorFormatTwo;
-			}
-			else if (i == 2)
-			{
-				format = colorFormatThree;
-			}
-			else
-			{
-				format = colorFormatFour;
-			}
-
-			var pipelineFormat = graphicsPipeline.AttachmentInfo.ColorAttachmentDescriptions[i].Format;
-			if (pipelineFormat != format)
-			{
-				throw new System.InvalidOperationException($"Color texture format mismatch! Pipeline expects {pipelineFormat}, render pass attachment is {format}");
-			}
-		}
-
-		if (graphicsPipeline.AttachmentInfo.HasDepthStencilAttachment)
-		{
-			var pipelineDepthFormat = graphicsPipeline.AttachmentInfo.DepthStencilFormat;
-
-			if (!hasDepthStencilAttachment)
-			{
-				throw new System.InvalidOperationException("Pipeline expects depth attachment!");
-			}
-
-			if (pipelineDepthFormat != depthStencilFormat)
-			{
-				throw new System.InvalidOperationException($"Depth texture format mismatch! Pipeline expects {pipelineDepthFormat}, render pass attachment is {depthStencilFormat}");
-			}
-		}
-	}
-
-	private void AssertGraphicsPipelineBound(string message = "No graphics pipeline is bound!")
-	{
-		if (currentGraphicsPipeline == null)
-		{
-			throw new System.InvalidOperationException(message);
-		}
-	}
-
-	private void AssertTextureNonNull(in Texture texture)
-	{
-		if (texture == null)
-		{
-			throw new NullReferenceException("Texture must not be null!");
-		}
-	}
-
-	private void AssertTextureSamplerBindingNonNull(in TextureSamplerBinding binding)
-	{
-		if (binding.Texture == null || binding.Texture.Handle == IntPtr.Zero)
-		{
-			throw new NullReferenceException("Texture binding must not be null!");
-		}
-
-		if (binding.Sampler == null || binding.Sampler.Handle == IntPtr.Zero)
-		{
-			throw new NullReferenceException("Sampler binding must not be null!");
-		}
-	}
-
-	private void AssertTextureHasSamplerFlag(Texture texture)
-	{
-		if ((texture.UsageFlags & TextureUsageFlags.Sampler) == 0)
-		{
-			throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.Sampler!");
-		}
-	}
-
-	private void AssertTextureHasGraphicsStorageReadFlag(Texture texture)
-	{
-		if ((texture.UsageFlags & TextureUsageFlags.GraphicsStorageRead) == 0)
-		{
-			throw new System.ArgumentException("The bound Texture's UsageFlags must include TextureUsageFlags.GraphicsStorage!");
-		}
-	}
-
-	private void AssertBufferNonNull(Buffer buffer)
-	{
-		if (buffer == null || buffer.Handle == IntPtr.Zero)
-		{
-			throw new System.NullReferenceException("Buffer must not be null!");
-		}
-	}
-
-	private void AssertBufferHasGraphicsStorageReadFlag(Buffer buffer)
-	{
-		if ((buffer.UsageFlags & BufferUsageFlags.GraphicsStorageRead) == 0)
-		{
-			throw new System.ArgumentException("The bound Buffer's UsageFlags must include BufferUsageFlag.GraphicsStorage!");
-		}
-	}
-#endif
 }

@@ -5,6 +5,7 @@ using MoonWorks.Input;
 using System.Text;
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks
 {
@@ -342,10 +343,9 @@ namespace MoonWorks
 			}
 		}
 
-		private void HandleFileDrop(SDL.SDL_DropEvent evt)
+		private unsafe void HandleFileDrop(SDL.SDL_DropEvent evt)
 		{
-			// Need to do it this way because SDL2 expects you to free the filename string.
-			string filePath = SDL.UTF8_ToManaged(evt.data, true);
+			var filePath = Marshal.PtrToStringUTF8((nint) evt.data);
 			DropFile(filePath);
 		}
 

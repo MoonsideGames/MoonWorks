@@ -983,6 +983,12 @@ public struct TextureSamplerBinding
 {
 	public IntPtr Texture;
 	public IntPtr Sampler;
+
+	public TextureSamplerBinding(Texture texture, Sampler sampler)
+	{
+		Texture = texture.Handle;
+		Sampler = sampler.Handle;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]

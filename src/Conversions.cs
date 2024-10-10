@@ -13,18 +13,18 @@ namespace MoonWorks
 		private readonly static Dictionary<VertexElementFormat, uint> Sizes = new Dictionary<VertexElementFormat, uint>
 		{
 			{ VertexElementFormat.Byte4, (uint) Marshal.SizeOf<Byte4>() },
-			{ VertexElementFormat.Color, (uint) Marshal.SizeOf<Color>() },
+			{ VertexElementFormat.Ubyte4Norm, (uint) Marshal.SizeOf<Color>() },
 			{ VertexElementFormat.Float, (uint) Marshal.SizeOf<float>() },
-			{ VertexElementFormat.HalfVector2, (uint) Marshal.SizeOf<HalfVector2>() },
-			{ VertexElementFormat.HalfVector4, (uint) Marshal.SizeOf<HalfVector4>() },
-			{ VertexElementFormat.NormalizedShort2, (uint) Marshal.SizeOf<NormalizedShort2>() },
-			{ VertexElementFormat.NormalizedShort4, (uint) Marshal.SizeOf<NormalizedShort4>() },
+			{ VertexElementFormat.Half2, (uint) Marshal.SizeOf<HalfVector2>() },
+			{ VertexElementFormat.Half4, (uint) Marshal.SizeOf<HalfVector4>() },
+			{ VertexElementFormat.Short2Norm, (uint) Marshal.SizeOf<NormalizedShort2>() },
+			{ VertexElementFormat.Short4Norm, (uint) Marshal.SizeOf<NormalizedShort4>() },
 			{ VertexElementFormat.Short2, (uint) Marshal.SizeOf<Short2>() },
 			{ VertexElementFormat.Short4, (uint) Marshal.SizeOf<Short4>() },
 			{ VertexElementFormat.Uint, (uint) Marshal.SizeOf<uint>() },
-			{ VertexElementFormat.Vector2, (uint) Marshal.SizeOf<Math.Float.Vector2>() },
-			{ VertexElementFormat.Vector3, (uint) Marshal.SizeOf<Math.Float.Vector3>() },
-			{ VertexElementFormat.Vector4, (uint) Marshal.SizeOf<Math.Float.Vector4>() }
+			{ VertexElementFormat.Float2, (uint) Marshal.SizeOf<Math.Float.Vector2>() },
+			{ VertexElementFormat.Float3, (uint) Marshal.SizeOf<Math.Float.Vector3>() },
+			{ VertexElementFormat.Float4, (uint) Marshal.SizeOf<Math.Float.Vector4>() }
 		};
 
 		public static byte BoolToByte(bool b)

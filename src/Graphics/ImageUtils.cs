@@ -350,19 +350,19 @@ public static class ImageUtils
 			switch (formatFourCC)
 			{
 				case 0x71: // D3DFMT_A16B16G16R16F
-					format = TextureFormat.R16G16B16A16_SFLOAT;
+					format = TextureFormat.R16G16B16A16_FLOAT;
 					break;
 				case 0x74: // D3DFMT_A32B32G32R32F
-					format = TextureFormat.R32G32B32A32_SFLOAT;
+					format = TextureFormat.R32G32B32A32_FLOAT;
 					break;
 				case FOURCC_DXT1:
-					format = TextureFormat.BC1;
+					format = TextureFormat.BC1_RGBA_UNORM;
 					break;
 				case FOURCC_DXT3:
-					format = TextureFormat.BC2;
+					format = TextureFormat.BC2_RGBA_UNORM;
 					break;
 				case FOURCC_DXT5:
-					format = TextureFormat.BC3;
+					format = TextureFormat.BC3_RGBA_UNORM;
 					break;
 				case FOURCC_DX10:
 					// If the fourCC is DX10, there is an extra header with additional format information.
@@ -372,27 +372,27 @@ public static class ImageUtils
 					switch (dxgiFormat)
 					{
 						case 2:
-							format = TextureFormat.R32G32B32A32_SFLOAT;
+							format = TextureFormat.R32G32B32A32_FLOAT;
 							break;
 
 						case 10:
-							format = TextureFormat.R16G16B16A16_SFLOAT;
+							format = TextureFormat.R16G16B16A16_FLOAT;
 							break;
 
 						case 71:
-							format = TextureFormat.BC1;
+							format = TextureFormat.BC1_RGBA_UNORM;
 							break;
 
 						case 74:
-							format = TextureFormat.BC2;
+							format = TextureFormat.BC2_RGBA_UNORM;
 							break;
 
 						case 77:
-							format = TextureFormat.BC3;
+							format = TextureFormat.BC3_RGBA_UNORM;
 							break;
 
 						case 98:
-							format = TextureFormat.BC7;
+							format = TextureFormat.BC7_RGBA_UNORM;
 							break;
 
 						default:
@@ -456,7 +456,7 @@ public static class ImageUtils
 				);
 			}
 
-			format = TextureFormat.B8G8R8A8;
+			format = TextureFormat.B8G8R8A8_UNORM;
 		}
 		else
 		{
@@ -471,22 +471,22 @@ public static class ImageUtils
 		int height,
 		TextureFormat format
 	) {
-		if (format == TextureFormat.R8G8B8A8)
+		if (format == TextureFormat.R8G8B8A8_UNORM)
 		{
 			return (((width * 32) + 7) / 8) * height;
 		}
-		else if (format == TextureFormat.R16G16B16A16_SFLOAT)
+		else if (format == TextureFormat.R16G16B16A16_FLOAT)
 		{
 			return (((width * 64) + 7) / 8) * height;
 		}
-		else if (format == TextureFormat.R32G32B32A32_SFLOAT)
+		else if (format == TextureFormat.R32G32B32A32_FLOAT)
 		{
 			return (((width * 128) + 7) / 8) * height;
 		}
 		else
 		{
 			int blockSize = 16;
-			if (format == TextureFormat.BC1)
+			if (format == TextureFormat.BC1_RGBA_UNORM)
 			{
 				blockSize = 8;
 			}

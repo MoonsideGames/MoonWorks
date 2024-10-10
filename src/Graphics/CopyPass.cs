@@ -124,8 +124,17 @@ public class CopyPass
 		var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);
 
 		UploadToBuffer(
-			new TransferBufferLocation(source, srcOffsetInBytes),
-			new BufferRegion(destination, dstOffsetInBytes, dataLengthInBytes),
+			new TransferBufferLocation
+			{
+				TransferBuffer = source.Handle,
+				Offset = srcOffsetInBytes
+			},
+			new BufferRegion
+			{
+				Buffer = destination.Handle,
+				Offset = dstOffsetInBytes,
+				Size = dataLengthInBytes
+			},
 			cycle
 		);
 	}

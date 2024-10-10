@@ -12,9 +12,9 @@ namespace MoonWorks.Graphics.Font
 
 		public static VertexElementFormat[] Formats { get; } =
 		[
-			VertexElementFormat.Vector3,
-			VertexElementFormat.Vector2,
-			VertexElementFormat.Color
+			VertexElementFormat.Float3,
+			VertexElementFormat.Float2,
+			VertexElementFormat.Byte4
 		];
 
 		public static uint[] Offsets { get; } =

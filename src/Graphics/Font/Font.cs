@@ -48,10 +48,8 @@ namespace MoonWorks.Graphics.Font
 			);
 
 			var imagePath = Path.ChangeExtension(fontPath, ".png");
-			ImageUtils.ImageInfoFromFile(imagePath, out var width, out var height, out var sizeInBytes);
-
 			var uploader = new ResourceUploader(graphicsDevice);
-			var texture = uploader.CreateTexture2DFromCompressed(imagePath);
+			var texture = uploader.CreateTexture2DFromCompressed(imagePath, TextureFormat.R8G8B8A8_UNORM);
 			uploader.Upload();
 			uploader.Dispose();
 

@@ -20,7 +20,7 @@ internal class FencePool
 		}
 		else
 		{
-			return new Fence(GraphicsDevice);
+			return new Fence();
 		}
 	}
 
