@@ -275,7 +275,13 @@ namespace MoonWorks.Video
 					PixelsPerRow = yStride,
 					RowsPerLayer = yTexture.Height
 				},
-				yTexture,
+				new TextureRegion
+				{
+					Texture = yTexture.Handle,
+					W = yTexture.Width,
+					H = yTexture.Height,
+					D = 1
+				},
 				true
 			);
 
@@ -287,7 +293,13 @@ namespace MoonWorks.Video
 					PixelsPerRow = uvStride,
 					RowsPerLayer = uTexture.Height
 				},
-				uTexture,
+				new TextureRegion
+				{
+					Texture = uTexture.Handle,
+					W = uTexture.Width,
+					H = uTexture.Height,
+					D = 1
+				},
 				true
 			);
 
@@ -299,7 +311,13 @@ namespace MoonWorks.Video
 					PixelsPerRow = uvStride,
 					RowsPerLayer = vTexture.Height
 				},
-				vTexture,
+				new TextureRegion
+				{
+					Texture = vTexture.Handle,
+					W = vTexture.Width,
+					H = vTexture.Height,
+					D = 1
+				},
 				true
 			);
 

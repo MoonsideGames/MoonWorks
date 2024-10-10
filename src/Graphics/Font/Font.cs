@@ -49,7 +49,7 @@ namespace MoonWorks.Graphics.Font
 
 			var imagePath = Path.ChangeExtension(fontPath, ".png");
 			var uploader = new ResourceUploader(graphicsDevice);
-			var texture = uploader.CreateTexture2DFromCompressed(imagePath, TextureFormat.R8G8B8A8_UNORM);
+			var texture = uploader.CreateTexture2DFromCompressed(imagePath, TextureFormat.R8G8B8A8_UNORM, TextureUsageFlags.Sampler);
 			uploader.Upload();
 			uploader.Dispose();
 

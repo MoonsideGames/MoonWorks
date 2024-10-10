@@ -1379,6 +1379,10 @@ internal static partial class SDL_GPU
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool SDL_GPUTextureSupportsSampleCount(IntPtr device, TextureFormat format, SampleCount sample_count);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial uint SDL_CalculateGPUTextureFormatSize(TextureFormat format, uint width, uint height, uint depth);
 }
 
 internal static partial class IRO

@@ -16,6 +16,7 @@ namespace MoonWorks.Graphics
 		public uint LevelCount { get; private init; }
 		public SampleCount SampleCount { get; private init; }
 		public TextureUsageFlags UsageFlags { get; private init; }
+		public uint Size => SDL.SDL_CalculateGPUTextureFormatSize(Format, Width, Height, LayerCountOrDepth);
 
 		private string name;
 		public string Name
@@ -236,13 +237,5 @@ namespace MoonWorks.Graphics
 			SampleCount = SampleCount.One;
 			UsageFlags = TextureUsageFlags.ColorTarget;
 		}
-
-		public static implicit operator TextureRegion(Texture t) => new TextureRegion
-		{
-			Texture = t.Handle,
-			W = t.Width,
-			H = t.Height,
-			D = t.LayerCountOrDepth
-		};
 	}
 }
