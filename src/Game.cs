@@ -48,18 +48,15 @@ namespace MoonWorks
 		/// </summary>
 		/// <param name="windowCreateInfo">The parameters that will be used to create the MainWindow.</param>
 		/// <param name="frameLimiterSettings">The frame limiter settings.</param>
-		/// <param name="preferredBackends">Bitflags of which GPU backends to attempt to initialize.</param>
+		/// <param name="availableShaderFormats">Bitflags of which GPU backends to attempt to initialize.</param>
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
-			SwapchainComposition swapchainComposition,
-			PresentMode presentMode,
 			FrameLimiterSettings frameLimiterSettings,
-			BackendFlags preferredBackends,
+			ShaderFormat availableShaderFormats,
 			int targetTimestep = 60,
-			bool debugMode = false,
-			bool preferLowPower = false
+			bool debugMode = false
 		) {
 			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
@@ -84,17 +81,16 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
-				preferredBackends,
-				debugMode,
-				preferLowPower
+				availableShaderFormats,
+				debugMode
 			);
 
 			SDL.SDL_WindowFlags windowFlags = 0;
-			if (GraphicsDevice.Backend == BackendFlags.Vulkan)
+			if (GraphicsDevice.Backend == "Vulkan")
 			{
 				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
 			}
-			else if (GraphicsDevice.Backend == BackendFlags.Metal)
+			else if (GraphicsDevice.Backend == "Metal")
 			{
 				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_METAL;
 			}
@@ -102,7 +98,7 @@ namespace MoonWorks
 			Logger.LogInfo("Initializing main window...");
 			MainWindow = new Window(windowCreateInfo, windowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
-			if (!GraphicsDevice.ClaimWindow(MainWindow, swapchainComposition, presentMode))
+			if (!GraphicsDevice.ClaimWindow(MainWindow))
 			{
 				throw new System.SystemException("Could not claim window!");
 			}

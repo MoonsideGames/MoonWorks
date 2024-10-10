@@ -1374,3 +1374,49 @@ internal static partial class SDL_GPU
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool SDL_GPUTextureSupportsSampleCount(IntPtr device, TextureFormat format, SampleCount sample_count);
 }
+
+internal static partial class IRO
+{
+	const string nativeLibName = "IRO";
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr IRO_LoadImage(
+		IntPtr bufferPtr,
+		uint bufferLength,
+		out uint w,
+		out uint h,
+		out uint len
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool IRO_GetImageInfo(
+		IntPtr bufferPtr,
+		uint bufferLength,
+		out uint w,
+		out uint h,
+		out uint len
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial void IRO_FreeImage(IntPtr mem);
+
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void IRO_WriteFunc(
+		IntPtr context,
+		IntPtr data,
+		int size
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool IRO_EncodePNG(
+		IRO_WriteFunc writeFunc,
+		IntPtr context,
+		IntPtr data,
+		uint w,
+		uint h
+	);
+}

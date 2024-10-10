@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using RefreshCS;
 
 namespace MoonWorks.Graphics;
 
@@ -21,19 +20,19 @@ public static class ImageUtils
 		fixed (byte* ptr = data)
 		{
 			var pixelData =
-				Refresh.Refresh_Image_Load(
-				ptr,
-				data.Length,
+				IRO.IRO_LoadImage(
+				(nint) ptr,
+				(uint) data.Length,
 				out var w,
 				out var h,
 				out var len
 			);
 
-			width = (uint) w;
-			height = (uint) h;
-			sizeInBytes = (uint) len;
+			width = w;
+			height = h;
+			sizeInBytes = len;
 
-			return pixelData;
+			return (byte*) pixelData;
 		}
 	}
 
@@ -87,19 +86,19 @@ public static class ImageUtils
 		fixed (byte* ptr = data)
 		{
 			var result =
-				Refresh.Refresh_Image_Info(
-				ptr,
-				data.Length,
+				IRO.IRO_GetImageInfo(
+				(nint) ptr,
+				(uint) data.Length,
 				out var w,
 				out var h,
 				out var len
 			);
 
-			width = (uint) w;
-			height = (uint) h;
-			sizeInBytes = (uint) len;
+			width = w;
+			height = h;
+			sizeInBytes = len;
 
-			return Conversions.IntToBool(result);
+			return result;
 		}
 	}
 
@@ -142,7 +141,24 @@ public static class ImageUtils
 	/// </summary>
 	public unsafe static void FreePixelData(byte* pixels)
 	{
-		Refresh.Refresh_Image_Free(pixels);
+		IRO.IRO_FreeImage((nint) pixels);
+	}
+
+	private static int writeGlobal = 0;
+	private static System.Collections.Generic.Dictionary<IntPtr, Stream> writeStreams =
+		new System.Collections.Generic.Dictionary<IntPtr, Stream>();
+
+	private unsafe static void INTERNAL_Write(
+		IntPtr context,
+		IntPtr data,
+		int size
+	) {
+		Stream stream;
+		lock (writeStreams)
+		{
+			stream = writeStreams[context];
+		}
+		stream.Write(new Span<byte>((void*) data, size));
 	}
 
 	/// <summary>
@@ -151,11 +167,28 @@ public static class ImageUtils
 	public static unsafe void SavePNG(
 		string path,
 		Span<Color> pixels,
-		int width,
-		int height
+		uint width,
+		uint height
 	) {
+		IntPtr context;
+		Stream stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+		lock (writeStreams)
+		{
+			context = (IntPtr) writeGlobal++;
+			writeStreams.Add(context, stream);
+		}
 		fixed (Color* pixelsPtr = pixels) {
-			Refresh.Refresh_Image_SavePNG(path, (byte*) pixelsPtr, width, height);
+			IRO.IRO_EncodePNG(
+				INTERNAL_Write,
+				context,
+				(IntPtr) pixelsPtr,
+				width,
+				height
+			);
+		}
+		lock (writeStreams)
+		{
+			writeStreams.Remove(context);
 		}
 	}
 
@@ -166,22 +199,19 @@ public static class ImageUtils
 		string path,
 		TransferBuffer transferBuffer,
 		uint bufferOffsetInBytes,
-		int width,
-		int height,
+		uint width,
+		uint height,
 		bool bgra
 	) {
 		var sizeInBytes = width * height * 4;
 
-		var pixelsPtr = (byte*) NativeMemory.Alloc((nuint) sizeInBytes);
-		var pixelsSpan = new Span<byte>(pixelsPtr, sizeInBytes);
-
-		transferBuffer.GetData(pixelsSpan, bufferOffsetInBytes);
+		var pixelsSpan = transferBuffer.Map<Color>(false);
 
 		if (bgra)
 		{
 			// if data is bgra, we have to swap the R and B channels
-			var rgbaPtr = (byte*) NativeMemory.Alloc((nuint) sizeInBytes);
-			var rgbaSpan = new Span<byte>(rgbaPtr, sizeInBytes);
+			var rgbaPtr = (byte*) NativeMemory.Alloc(sizeInBytes);
+			var rgbaSpan = new Span<Color>(rgbaPtr, (int) (width * height));
 
 			for (var i = 0; i < sizeInBytes; i += 4)
 			{
@@ -191,12 +221,15 @@ public static class ImageUtils
 				rgbaSpan[i + 3] = pixelsSpan[i + 3];
 			}
 
-			NativeMemory.Free(pixelsPtr);
-			pixelsPtr = rgbaPtr;
+			SavePNG(path, rgbaSpan, width, height);
+			NativeMemory.Free(rgbaPtr);
+		}
+		else
+		{
+			SavePNG(path, pixelsSpan, width, height);
 		}
 
-		Refresh.Refresh_Image_SavePNG(path, pixelsPtr, width, height);
-		NativeMemory.Free(pixelsPtr);
+		transferBuffer.Unmap();
 	}
 
 	// DDS loading extension, based on MojoDDS
