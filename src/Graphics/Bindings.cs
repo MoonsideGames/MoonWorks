@@ -823,7 +823,7 @@ public struct VertexInputState
 		VertexAttributes = []
 	};
 
-	public static VertexInputState CreateSingleBinding<T>(uint slot, VertexInputRate inputRate = VertexInputRate.Vertex, uint stepRate = 0, uint locationOffset = 0) where T : unmanaged, IVertexType
+	public static VertexInputState CreateSingleBinding<T>(uint slot = 0, VertexInputRate inputRate = VertexInputRate.Vertex, uint stepRate = 0, uint locationOffset = 0) where T : unmanaged, IVertexType
 	{
 		var description = VertexBufferDescription.Create<T>(slot, inputRate, stepRate);
 		var attributes = new VertexAttribute[T.Formats.Length];

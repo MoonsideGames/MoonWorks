@@ -435,7 +435,7 @@ public class CommandBuffer
 		SDL.SDL_BlitGPUTexture(Handle, blitInfo);
 	}
 
-	public unsafe ComputePass BeginComputePass(
+	public ComputePass BeginComputePass(
 		Span<StorageTextureReadWriteBinding> readWriteTextureBindings,
 		Span<StorageBufferReadWriteBinding> readWriteBufferBindings
 	) {
@@ -453,13 +453,47 @@ public class CommandBuffer
 		return computePass;
 	}
 
-	public unsafe ComputePass BeginComputePass(
+	public ComputePass BeginComputePass(
 		in StorageTextureReadWriteBinding readWriteTextureBinding,
 		in StorageBufferReadWriteBinding readWriteBufferBinding
 	) {
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			[readWriteTextureBinding],
+			1,
+			[readWriteBufferBinding],
+			1
+		);
+
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
+		return computePass;
+	}
+
+	public ComputePass BeginComputePass(
+		in StorageTextureReadWriteBinding readWriteTextureBinding
+	) {
+		var computePassHandle = SDL.SDL_BeginGPUComputePass(
+			Handle,
+			[readWriteTextureBinding],
+			1,
+			[],
+			1
+		);
+
+		var computePass = Device.ComputePassPool.Obtain();
+		computePass.SetHandle(computePassHandle);
+
+		return computePass;
+	}
+
+	public ComputePass BeginComputePass(
+		in StorageBufferReadWriteBinding readWriteBufferBinding
+	) {
+		var computePassHandle = SDL.SDL_BeginGPUComputePass(
+			Handle,
+			[],
 			1,
 			[readWriteBufferBinding],
 			1
