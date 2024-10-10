@@ -243,7 +243,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		uint resourceOffset;
 		fixed (T* dataPtr = data)
 		{
-			resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, 128); // Align to biggest possible pixel size
+			resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, 16); // Align to biggest possible pixel size
 		}
 
 		TextureUploads.Add((resourceOffset, textureRegion, cycle));

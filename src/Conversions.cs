@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
-using MoonWorks.Graphics.PackedVector;
 
 namespace MoonWorks
 {
@@ -10,21 +9,38 @@ namespace MoonWorks
 	/// </summary>
 	public static class Conversions
 	{
-		private readonly static Dictionary<VertexElementFormat, uint> Sizes = new Dictionary<VertexElementFormat, uint>
+		private readonly static Dictionary<VertexElementFormat, uint> Sizes = new()
 		{
-			{ VertexElementFormat.Byte4, (uint) Marshal.SizeOf<Byte4>() },
-			{ VertexElementFormat.Ubyte4Norm, (uint) Marshal.SizeOf<Color>() },
-			{ VertexElementFormat.Float, (uint) Marshal.SizeOf<float>() },
-			{ VertexElementFormat.Half2, (uint) Marshal.SizeOf<HalfVector2>() },
-			{ VertexElementFormat.Half4, (uint) Marshal.SizeOf<HalfVector4>() },
-			{ VertexElementFormat.Short2Norm, (uint) Marshal.SizeOf<NormalizedShort2>() },
-			{ VertexElementFormat.Short4Norm, (uint) Marshal.SizeOf<NormalizedShort4>() },
-			{ VertexElementFormat.Short2, (uint) Marshal.SizeOf<Short2>() },
-			{ VertexElementFormat.Short4, (uint) Marshal.SizeOf<Short4>() },
-			{ VertexElementFormat.Uint, (uint) Marshal.SizeOf<uint>() },
-			{ VertexElementFormat.Float2, (uint) Marshal.SizeOf<Math.Float.Vector2>() },
-			{ VertexElementFormat.Float3, (uint) Marshal.SizeOf<Math.Float.Vector3>() },
-			{ VertexElementFormat.Float4, (uint) Marshal.SizeOf<Math.Float.Vector4>() }
+			{ VertexElementFormat.Int,         (uint) Marshal.SizeOf<VertexStructs.Int>() },
+			{ VertexElementFormat.Int2,        (uint) Marshal.SizeOf<VertexStructs.Int2>() },
+			{ VertexElementFormat.Int3,        (uint) Marshal.SizeOf<VertexStructs.Int3>() },
+			{ VertexElementFormat.Int4,        (uint) Marshal.SizeOf<VertexStructs.Int4>() },
+			{ VertexElementFormat.Uint,        (uint) Marshal.SizeOf<VertexStructs.Uint>() },
+			{ VertexElementFormat.Uint2,       (uint) Marshal.SizeOf<VertexStructs.Uint2>() },
+			{ VertexElementFormat.Uint3,       (uint) Marshal.SizeOf<VertexStructs.Uint3>() },
+			{ VertexElementFormat.Uint4,       (uint) Marshal.SizeOf<VertexStructs.Uint4>() },
+			{ VertexElementFormat.Float,       (uint) Marshal.SizeOf<VertexStructs.Float>() },
+			{ VertexElementFormat.Float2,      (uint) Marshal.SizeOf<VertexStructs.Float2>() },
+			{ VertexElementFormat.Float3,      (uint) Marshal.SizeOf<VertexStructs.Float3>() },
+			{ VertexElementFormat.Float4,      (uint) Marshal.SizeOf<VertexStructs.Float4>() },
+			{ VertexElementFormat.Byte2,       (uint) Marshal.SizeOf<VertexStructs.Byte2>() },
+			{ VertexElementFormat.Byte4,       (uint) Marshal.SizeOf<VertexStructs.Byte4>() },
+			{ VertexElementFormat.Ubyte2,      (uint) Marshal.SizeOf<VertexStructs.Ubyte2>() },
+			{ VertexElementFormat.Ubyte4,      (uint) Marshal.SizeOf<VertexStructs.Ubyte4>() },
+			{ VertexElementFormat.Byte2Norm,   (uint) Marshal.SizeOf<VertexStructs.Byte2Norm>() },
+			{ VertexElementFormat.Byte4Norm,   (uint) Marshal.SizeOf<VertexStructs.Byte4Norm>() },
+			{ VertexElementFormat.Ubyte2Norm,  (uint) Marshal.SizeOf<VertexStructs.Ubyte2Norm> () },
+			{ VertexElementFormat.Ubyte4Norm,  (uint) Marshal.SizeOf<VertexStructs.Ubyte4Norm> () },
+			{ VertexElementFormat.Short2,      (uint) Marshal.SizeOf<VertexStructs.Short2>() },
+			{ VertexElementFormat.Short4,      (uint) Marshal.SizeOf<VertexStructs.Short4>() },
+			{ VertexElementFormat.Ushort2,     (uint) Marshal.SizeOf<VertexStructs.Ushort2>() },
+			{ VertexElementFormat.Ushort4,     (uint) Marshal.SizeOf<VertexStructs.Ushort4>() },
+			{ VertexElementFormat.Short2Norm,  (uint) Marshal.SizeOf<VertexStructs.Short2Norm>() },
+			{ VertexElementFormat.Short4Norm,  (uint) Marshal.SizeOf<VertexStructs.Short4Norm>() },
+			{ VertexElementFormat.Ushort2Norm, (uint) Marshal.SizeOf<VertexStructs.Ushort2Norm>() },
+			{ VertexElementFormat.Ushort4Norm, (uint) Marshal.SizeOf<VertexStructs.Ushort4Norm>() },
+			{ VertexElementFormat.Half2,       (uint) Marshal.SizeOf<VertexStructs.Half2>() },
+			{ VertexElementFormat.Half4,       (uint) Marshal.SizeOf<VertexStructs.Half4>() }
 		};
 
 		public static byte BoolToByte(bool b)

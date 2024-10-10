@@ -351,7 +351,7 @@ namespace MoonWorks.Video
 				graphicsDevice,
 				(uint) width,
 				(uint) height,
-				TextureFormat.R8G8B8A8_UNORM,
+				TextureFormat.R8G8B8A8Unorm,
 				TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
 			);
 		}
@@ -362,7 +362,7 @@ namespace MoonWorks.Video
 				graphicsDevice,
 				(uint) width,
 				(uint) height,
-				TextureFormat.R8_UNORM,
+				TextureFormat.R8Unorm,
 				TextureUsageFlags.Sampler
 			);
 		}
