@@ -22,10 +22,10 @@ Join our Discord! https://discord.gg/ujhwdkHmhN
 
 ## Dependencies
 
-* [SDL2](https://github.com/flibitijibibo/SDL2-CS) - Window management, Input
-* [Refresh](https://gitea.moonside.games/MoonsideGames/Refresh) - Graphics
+* [SDL3](https://github.com/flibitijibibo/SDL3-CS) - Window management, Input, Graphics
+* [IRO](https://github.com/MoonsideGames/IRO) - Image Loading
 * [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
-* [Wellspring](https://gitea.moonside.games/MoonsideGames/Wellspring) - Font Rendering
+* [Wellspring](https://github.com/MoonsideGames/Wellspring) - Font Rendering
 * [dav1dfile](https://github.com/MoonsideGames/dav1dfile) - Compressed Video
 
 Prebuilt dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.bz2
