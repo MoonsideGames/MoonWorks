@@ -1,3 +1,5 @@
+using SDL3;
+
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -28,24 +30,23 @@ public class RenderPass
 	/// <summary>
 	/// Sets the viewport.
 	/// </summary>
-	public void SetViewport(in Viewport viewport)
-	{
-		SDL_GPU.SDL_SetGPUViewport(
-			Handle,
-			viewport
-		);
-	}
+	public void SetViewport(in Viewport viewport) => SDL_GPU.SDL_SetGPUViewport(Handle, viewport);
 
 	/// <summary>
 	/// Sets the scissor area.
 	/// </summary>
-	public void SetScissor(in Rect scissor)
-	{
-		SDL_GPU.SDL_SetGPUScissor(
-			Handle,
-			scissor
-		);
-	}
+	public void SetScissor(in Rect scissor) => SDL_GPU.SDL_SetGPUScissor(Handle, scissor);
+
+	/// <summary>
+	/// Sets the stencil reference.
+	/// </summary>
+	public void SetStencilReference(byte stencilRef) => SDL_GPU.SDL_SetGPUStencilReference(Handle, stencilRef);
+
+	/// <summary>
+	/// Sets the blend constants.
+	/// </summary>
+	/// <param name="blendConstants"></param>
+	public void SetBlendConstants(Color blendConstants) => SDL_GPU.SDL_SetGPUBlendConstants(Handle, blendConstants);
 
 	/// <summary>
 	/// Binds vertex buffers to be used by subsequent draw calls.

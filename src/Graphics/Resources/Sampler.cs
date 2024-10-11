@@ -30,15 +30,4 @@ public class Sampler : RefreshResource
 	}
 
 	private Sampler(GraphicsDevice device) : base(device) { }
-
-	public Sampler(
-		GraphicsDevice device,
-		in SamplerCreateInfo samplerCreateInfo
-	) : base(device)
-	{
-		Handle = SDL.SDL_CreateGPUSampler(
-			device.Handle,
-			samplerCreateInfo
-		);
-	}
 }

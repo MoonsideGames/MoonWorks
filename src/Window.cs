@@ -12,7 +12,7 @@ namespace MoonWorks
 	/// </summary>
 	public class Window : IDisposable
 	{
-		internal IntPtr Handle { get; }
+		public IntPtr Handle { get; }
 		public ScreenMode ScreenMode { get; private set; }
 		public uint Width { get; private set; }
 		public uint Height { get; private set; }
@@ -133,6 +133,16 @@ namespace MoonWorks
 		{
 			SDL.SDL_SetWindowPosition(Handle, x, y);
 			SDL.SDL_SyncWindow(Handle);
+		}
+
+		/// <summary>
+		/// Sets the window position to the center of the display.
+		/// </summary>
+		public void SetPositionCentered()
+		{
+			var display = SDL.SDL_GetDisplayForWindow(Handle);
+			SDL.SDL_GetDisplayUsableBounds(display, out var rect);
+			SDL.SDL_SetWindowPosition(Handle, (rect.x + rect.w) / 2, (rect.y + rect.h) / 2);
 		}
 
 		/// <summary>

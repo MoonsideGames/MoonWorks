@@ -538,4 +538,21 @@ public class CommandBuffer
 		copyPass.SetHandle(nint.Zero);
 		Device.CopyPassPool.Return(copyPass);
 	}
+
+	// Debug Labels
+
+	public void InsertDebugLabel(string text)
+	{
+		SDL.SDL_InsertGPUDebugLabel(Handle, text);
+	}
+
+	public void PushDebugGroup(string name)
+	{
+		SDL.SDL_PushGPUDebugGroup(Handle, name);
+	}
+
+	public void PopDebugGroup()
+	{
+		SDL.SDL_PopGPUDebugGroup(Handle);
+	}
 }

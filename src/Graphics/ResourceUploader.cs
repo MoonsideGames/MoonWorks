@@ -81,7 +81,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	public Texture CreateTexture2D<T>(Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged
 	{
-		var texture = Texture.CreateTexture2D(Device, width, height, format, usage);
+		var texture = Texture.Create2D(Device, width, height, format, usage);
 		SetTextureData(
 			new TextureRegion
 			{
@@ -102,7 +102,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
 	{
 		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
-		var texture = Texture.CreateTexture2D(Device, width, height, format, usage);
+		var texture = Texture.Create2D(Device, width, height, format, usage);
 		SetTextureDataFromCompressed(
 			new TextureRegion
 			{
@@ -154,12 +154,12 @@ public unsafe class ResourceUploader : GraphicsResource
 
 		if (isCube)
 		{
-			texture = Texture.CreateTextureCube(Device, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
+			texture = Texture.CreateCube(Device, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
 			faces = 6;
 		}
 		else
 		{
-			texture = Texture.CreateTexture2D(Device, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
+			texture = Texture.Create2D(Device, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
 			faces = 1;
 		}
 

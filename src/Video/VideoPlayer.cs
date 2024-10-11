@@ -35,7 +35,7 @@ namespace MoonWorks.Video
 		{
 			Stream = new VideoAV1Stream(device);
 
-			LinearSampler = new Sampler(device, SamplerCreateInfo.LinearClamp);
+			LinearSampler = Sampler.Create(device, SamplerCreateInfo.LinearClamp);
 
 			timer = new Stopwatch();
 		}
@@ -347,7 +347,7 @@ namespace MoonWorks.Video
 
 		private static Texture CreateRenderTexture(GraphicsDevice graphicsDevice, int width, int height)
 		{
-			return Texture.CreateTexture2D(
+			return Texture.Create2D(
 				graphicsDevice,
 				(uint) width,
 				(uint) height,
@@ -358,7 +358,7 @@ namespace MoonWorks.Video
 
 		private static Texture CreateSubTexture(GraphicsDevice graphicsDevice, int width, int height)
 		{
-			return Texture.CreateTexture2D(
+			return Texture.Create2D(
 				graphicsDevice,
 				(uint) width,
 				(uint) height,

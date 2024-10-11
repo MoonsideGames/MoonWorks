@@ -26,7 +26,7 @@ namespace MoonWorks.Graphics
 		public Color(byte r, byte g, byte b) : this(r, g, b, 255) { }
 
 		/// <summary>
-		/// Constructs an RGBA color from scalars which representing red, green, blue and alpha values.
+		/// Constructs an RGBA color from scalars which represent red, green, blue and alpha values.
 		/// </summary>
 		/// <param name="r">Red component value from 0.0f to 1.0f.</param>
 		/// <param name="g">Green component value from 0.0f to 1.0f.</param>
@@ -37,6 +37,19 @@ namespace MoonWorks.Graphics
 			(byte) (System.Math.Clamp(g, 0, 1) * byte.MaxValue),
 			(byte) (System.Math.Clamp(b, 0, 1) * byte.MaxValue),
 			(byte) (System.Math.Clamp(a, 0, 1) * byte.MaxValue)
+		) { }
+
+		/// <summary>
+		/// Constructs an RGBA color from scalars which represent red, green, blue values. Alpha is assumed to be 1.
+		/// </summary>
+		/// <param name="r">Red component value from 0.0f to 1.0f.</param>
+		/// <param name="g">Green component value from 0.0f to 1.0f.</param>
+		/// <param name="b">Blue component value from 0.0f to 1.0f.</param>
+		public Color(float r, float g, float b) : this(
+			(byte) (System.Math.Clamp(r, 0, 1) * byte.MaxValue),
+			(byte) (System.Math.Clamp(g, 0, 1) * byte.MaxValue),
+			(byte) (System.Math.Clamp(b, 0, 1) * byte.MaxValue),
+			255
 		) { }
 
 		/// <summary>

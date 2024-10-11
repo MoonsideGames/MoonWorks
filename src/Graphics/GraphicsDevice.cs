@@ -37,6 +37,10 @@ public class GraphicsDevice : IDisposable
 	internal ComputePassPool ComputePassPool = new ComputePassPool();
 	internal CopyPassPool CopyPassPool = new CopyPassPool();
 
+	// For depth formats greater than 16-bit, have to query the supported format!
+	public TextureFormat SupportedDepthFormat { get; private set; }
+	public TextureFormat SupportedDepthStencilFormat { get; private set; }
+
 	internal unsafe GraphicsDevice(
 		ShaderFormat shaderFormats, // TODO: replace with enum flags
 		bool debugMode,
@@ -198,7 +202,7 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		VideoPipeline = new GraphicsPipeline(
+		VideoPipeline = GraphicsPipeline.Create(
 			this,
 			new GraphicsPipelineCreateInfo
 			{
@@ -228,17 +232,30 @@ public class GraphicsDevice : IDisposable
 
 		TextVertexInputState = VertexInputState.CreateSingleBinding<Font.Vertex>(0);
 
-		PointSampler = new Sampler(this, SamplerCreateInfo.PointClamp);
-		LinearSampler = new Sampler(this, SamplerCreateInfo.LinearClamp);
+		PointSampler = Sampler.Create(this, SamplerCreateInfo.PointClamp);
+		LinearSampler = Sampler.Create(this, SamplerCreateInfo.LinearClamp);
 
 		FencePool = new FencePool(this);
 		CommandBufferPool = new CommandBufferPool(this);
+
+		SupportedDepthFormat = SDL.SDL_GPUTextureSupportsFormat(
+			Handle,
+			TextureFormat.D24Unorm,
+			TextureType.TwoDimensional,
+			TextureUsageFlags.DepthStencilTarget
+		) ? TextureFormat.D24Unorm : TextureFormat.D32Float;
+
+		SupportedDepthStencilFormat = SDL.SDL_GPUTextureSupportsFormat(
+			Handle,
+			TextureFormat.D24UnormS8Uint,
+			TextureType.TwoDimensional,
+			TextureUsageFlags.DepthStencilTarget
+		) ? TextureFormat.D24UnormS8Uint : TextureFormat.D32FloatS8Uint;
 	}
 
 	/// <summary>
 	/// Prepares a window so that frames can be presented to it.
 	/// </summary>
-	/// <returns>True if successfully claimed.</returns>
 	public bool ClaimWindow(Window window) {
 		if (window.Claimed)
 		{

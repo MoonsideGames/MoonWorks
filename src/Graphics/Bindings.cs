@@ -353,6 +353,20 @@ public struct Rect
 	public int Y;
 	public int W;
 	public int H;
+
+	public Rect(int w, int h)
+	{
+		W = w;
+		H = h;
+	}
+
+	public Rect(int x, int y, int w, int h)
+	{
+		X = x;
+		Y = y;
+		W = w;
+		H = h;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -364,6 +378,22 @@ public struct Viewport
 	public float H;
 	public float MinDepth;
 	public float MaxDepth;
+
+	public Viewport(float w, float h)
+	{
+		W = w;
+		H = h;
+		MaxDepth = 1;
+	}
+
+	public Viewport(float x, float y, float w, float h)
+	{
+		X = x;
+		Y = y;
+		W = w;
+		H = h;
+		MaxDepth = 1;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -623,7 +653,19 @@ public struct ColorTargetBlendState
 	public static ColorTargetBlendState None = new ColorTargetBlendState
 	{
 		EnableBlend = false,
+		EnableColorWriteMask = true,
 		ColorWriteMask = ColorComponentFlags.None
+	};
+
+	public static ColorTargetBlendState Opaque = new ColorTargetBlendState
+	{
+		EnableBlend = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		SrcColorBlendFactor = BlendFactor.One,
+		SrcAlphaBlendFactor = BlendFactor.One,
+		DstColorBlendFactor = BlendFactor.One,
+		DstAlphaBlendFactor = BlendFactor.One
 	};
 }
 

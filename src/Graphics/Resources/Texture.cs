@@ -50,7 +50,7 @@ namespace MoonWorks.Graphics
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		public static Texture CreateTexture2D(
+		public static Texture Create2D(
 			GraphicsDevice device,
 			uint width,
 			uint height,
@@ -72,7 +72,7 @@ namespace MoonWorks.Graphics
 				Props = 0
 			};
 
-			return CreateTexture(device, textureCreateInfo);
+			return Create(device, textureCreateInfo);
 		}
 
 		/// <summary>
@@ -85,7 +85,7 @@ namespace MoonWorks.Graphics
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		public static Texture CreateTexture2DArray(
+		public static Texture Create2DArray(
 			GraphicsDevice device,
 			uint width,
 			uint height,
@@ -107,14 +107,14 @@ namespace MoonWorks.Graphics
 				Props = 0
 			};
 
-			return CreateTexture(device, textureCreateInfo);
+			return Create(device, textureCreateInfo);
 		}
 
 		/// <summary>
 		/// Creates a 3D texture.
 		/// Note that the width, height and depth all form one slice and cannot be subdivided in a texture slice.
 		/// </summary>
-		public static Texture CreateTexture3D(
+		public static Texture Create3D(
 			GraphicsDevice device,
 			uint width,
 			uint height,
@@ -136,7 +136,7 @@ namespace MoonWorks.Graphics
 				Props = 0
 			};
 
-			return CreateTexture(device, textureCreateInfo);
+			return Create(device, textureCreateInfo);
 		}
 
 		/// <summary>
@@ -147,7 +147,7 @@ namespace MoonWorks.Graphics
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		public static Texture CreateTextureCube(
+		public static Texture CreateCube(
 			GraphicsDevice device,
 			uint size,
 			TextureFormat format,
@@ -167,10 +167,10 @@ namespace MoonWorks.Graphics
 				Props = 0
 			};
 
-			return CreateTexture(device, textureCreateInfo);
+			return Create(device, textureCreateInfo);
 		}
 
-		public static Texture CreateTextureCubeArray(
+		public static Texture CreateCubeArray(
 			GraphicsDevice device,
 			uint size,
 			TextureFormat format,
@@ -190,10 +190,10 @@ namespace MoonWorks.Graphics
 				Props = 0
 			};
 
-			return CreateTexture(device, textureCreateInfo);
+			return Create(device, textureCreateInfo);
 		}
 
-		public static Texture CreateTexture(
+		public static Texture Create(
 			GraphicsDevice device,
 			in TextureCreateInfo createInfo
 		) {

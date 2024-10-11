@@ -14,13 +14,11 @@ public class GraphicsPipeline : RefreshResource
 
 	public Shader VertexShader;
 	public Shader FragmentShader;
-	public SampleCount SampleCount { get; }
 
-	public unsafe GraphicsPipeline(
+	public static unsafe GraphicsPipeline Create(
 		GraphicsDevice device,
 		in GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
-	) : base(device)
-	{
+	) {
 		INTERNAL_GraphicsPipelineCreateInfo createInfo;
 
 		var vertexAttributes = (VertexAttribute*) NativeMemory.Alloc(
@@ -74,18 +72,23 @@ public class GraphicsPipeline : RefreshResource
 
 		createInfo.Props = graphicsPipelineCreateInfo.Props;
 
-		Handle = SDL.SDL_CreateGPUGraphicsPipeline(device.Handle, createInfo);
+		var handle = SDL.SDL_CreateGPUGraphicsPipeline(device.Handle, createInfo);
 
 		NativeMemory.Free(vertexAttributes);
 		NativeMemory.Free(vertexBindings);
 
-		if (Handle == IntPtr.Zero)
+		if (handle == IntPtr.Zero)
 		{
 			throw new Exception("Could not create graphics pipeline!");
 		}
 
-		VertexShader = graphicsPipelineCreateInfo.VertexShader;
-		FragmentShader = graphicsPipelineCreateInfo.FragmentShader;
-		SampleCount = graphicsPipelineCreateInfo.MultisampleState.SampleCount;
+		return new GraphicsPipeline(device)
+		{
+			Handle = handle,
+			VertexShader = graphicsPipelineCreateInfo.VertexShader,
+			FragmentShader = graphicsPipelineCreateInfo.FragmentShader,
+		};
 	}
+
+	private GraphicsPipeline(GraphicsDevice device) : base(device) { }
 }
