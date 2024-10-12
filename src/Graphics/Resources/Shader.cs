@@ -46,9 +46,11 @@ namespace MoonWorks.Graphics
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
 
-			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint);
+			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
 			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-			Encoding.UTF8.GetString((byte*) entryPointBuffer, entryPointLength);
+			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
+			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
+			buffer[byteCount] = 0;
 
 			INTERNAL_ShaderCreateInfo createInfo;
 			createInfo.CodeSize = (nuint) stream.Length;

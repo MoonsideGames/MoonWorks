@@ -55,7 +55,7 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Gets packed value of this <see cref="Color"/>.
 		/// </summary>
-		public readonly uint PackedValue => Unsafe.BitCast<Color, uint>(this);
+		public readonly uint PackedValue() => Unsafe.BitCast<Color, uint>(this);
 
 		/// <summary>
 		/// Transparent color (R:0,G:0,B:0,A:0).

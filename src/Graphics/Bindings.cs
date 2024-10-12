@@ -667,6 +667,39 @@ public struct ColorTargetBlendState
 		DstColorBlendFactor = BlendFactor.One,
 		DstAlphaBlendFactor = BlendFactor.One
 	};
+
+	public static ColorTargetBlendState Additive = new ColorTargetBlendState
+	{
+		EnableBlend = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		SrcColorBlendFactor = BlendFactor.SrcAlpha,
+		SrcAlphaBlendFactor = BlendFactor.SrcAlpha,
+		DstColorBlendFactor = BlendFactor.One,
+		DstAlphaBlendFactor = BlendFactor.One
+	};
+
+	public static ColorTargetBlendState PremultipliedAlphaBlend = new ColorTargetBlendState
+	{
+		EnableBlend = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		SrcColorBlendFactor = BlendFactor.One,
+		SrcAlphaBlendFactor = BlendFactor.One,
+		DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+		DstAlphaBlendFactor = BlendFactor.OneMinusSrcAlpha
+	};
+
+	public static ColorTargetBlendState NonPremultipliedAlphaBlend = new ColorTargetBlendState
+	{
+		EnableBlend = true,
+		AlphaBlendOp = BlendOp.Add,
+		ColorBlendOp = BlendOp.Add,
+		SrcColorBlendFactor = BlendFactor.SrcAlpha,
+		SrcAlphaBlendFactor = BlendFactor.SrcAlpha,
+		DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+		DstAlphaBlendFactor = BlendFactor.OneMinusSrcAlpha
+	};
 }
 
 public struct ShaderCreateInfo
@@ -971,7 +1004,7 @@ public struct ColorTargetInfo
 	public IntPtr Texture;
 	public uint MipLevel;
 	public uint LayerOrDepthPlane;
-	public Color ClearColor;
+	public FColor ClearColor;
 	public LoadOp LoadOp;
 	public StoreOp StoreOp;
 	public IntPtr ResolveTexture;
@@ -1004,7 +1037,7 @@ public struct BlitInfo
 	public BlitRegion Source;
 	public BlitRegion Destination;
 	public LoadOp LoadOp;
-	public Color ClearColor;
+	public FColor ClearColor;
 	public FlipMode FlipMode;
 	public Filter Filter;
 	public SDLBool Cycle;
@@ -1220,7 +1253,7 @@ internal static partial class SDL_GPU
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial void SDL_SetGPUBlendConstants(IntPtr render_pass, Color blend_constants);
+	public static partial void SDL_SetGPUBlendConstants(IntPtr render_pass, FColor blend_constants);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

@@ -363,7 +363,7 @@ public class GraphicsDevice : IDisposable
 	/// </summary>
 	public void Submit(CommandBuffer commandBuffer)
 	{
-		bool result = SDL.SDL_SubmitGPUCommandBuffer(Handle);
+		bool result = SDL.SDL_SubmitGPUCommandBuffer(commandBuffer.Handle);
 		if (!result)
 		{
 			// submit errors are not recoverable so let's just fail hard
