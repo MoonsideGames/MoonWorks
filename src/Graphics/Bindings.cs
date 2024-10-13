@@ -664,8 +664,8 @@ public struct ColorTargetBlendState
 		ColorBlendOp = BlendOp.Add,
 		SrcColorBlendFactor = BlendFactor.One,
 		SrcAlphaBlendFactor = BlendFactor.One,
-		DstColorBlendFactor = BlendFactor.One,
-		DstAlphaBlendFactor = BlendFactor.One
+		DstColorBlendFactor = BlendFactor.Zero,
+		DstAlphaBlendFactor = BlendFactor.Zero
 	};
 
 	public static ColorTargetBlendState Additive = new ColorTargetBlendState
