@@ -12,7 +12,7 @@ namespace MoonWorks.Video
 		IntPtr handle;
 
 		public bool Loaded => handle != IntPtr.Zero;
-		public bool Ended => Dav1dfile.df_eos(Handle) == 1;
+		public bool Ended => Handle == IntPtr.Zero || Dav1dfile.df_eos(Handle) == 1;
 
 		public IntPtr yDataHandle;
 		public IntPtr uDataHandle;
