@@ -99,8 +99,6 @@ namespace MoonWorks
 				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
 			}
 
-			SDL.SDL_SyncWindow(Handle);
-
 			ScreenMode = screenMode;
 		}
 
@@ -123,7 +121,6 @@ namespace MoonWorks
 				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
 			}
 
-			SDL.SDL_SyncWindow(Handle);
 		}
 
 		/// <summary>
@@ -132,7 +129,6 @@ namespace MoonWorks
 		public void SetPosition(int x, int y)
 		{
 			SDL.SDL_SetWindowPosition(Handle, x, y);
-			SDL.SDL_SyncWindow(Handle);
 		}
 
 		/// <summary>
@@ -142,7 +138,7 @@ namespace MoonWorks
 		{
 			var display = SDL.SDL_GetDisplayForWindow(Handle);
 			SDL.SDL_GetDisplayUsableBounds(display, out var rect);
-			SDL.SDL_SetWindowPosition(Handle, (rect.x + rect.w - (int) Width) / 2, (rect.y + rect.h - (int) Height) / 2);
+			SetPosition((rect.x + rect.w - (int) Width) / 2, (rect.y + rect.h - (int) Height) / 2);
 		}
 
 		/// <summary>
