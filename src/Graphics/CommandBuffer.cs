@@ -427,12 +427,37 @@ public class CommandBuffer
 	}
 
 	/// <summary>
-	/// Blits a texture to another texture with the specified filter.
+	/// Blits a texture to another texture.
 	/// This operation cannot be performed inside any pass.
 	/// </summary>
 	public void Blit(in BlitInfo blitInfo)
 	{
 		SDL.SDL_BlitGPUTexture(Handle, blitInfo);
+	}
+
+	/// <summary>
+	/// Convenience method that blits a 2D texture to a 2D texture.
+	/// </summary>
+	public void Blit(Texture source, Texture destination, Filter filter, bool cycle = false)
+	{
+		SDL.SDL_BlitGPUTexture(Handle, new BlitInfo
+		{
+			Source = new BlitRegion
+			{
+				Texture = source.Handle,
+				W = source.Width,
+				H = source.Height
+			},
+			Destination = new BlitRegion
+			{
+				Texture = destination.Handle,
+				W = destination.Width,
+				H = destination.Height
+			},
+			Filter = filter,
+			LoadOp = LoadOp.DontCare,
+			Cycle = cycle
+		});
 	}
 
 	public ComputePass BeginComputePass(
