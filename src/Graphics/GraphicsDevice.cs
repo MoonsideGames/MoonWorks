@@ -213,7 +213,7 @@ public class GraphicsDevice : IDisposable
 						new ColorTargetDescription
 						{
 							Format = TextureFormat.R8G8B8A8Unorm,
-							BlendState = ColorTargetBlendState.None
+							BlendState = ColorTargetBlendState.NoBlend
 						}
 					]
 				},

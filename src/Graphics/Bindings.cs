@@ -650,11 +650,16 @@ public struct ColorTargetBlendState
 	public byte Padding2;
 	public byte Padding3;
 
-	public static ColorTargetBlendState None = new ColorTargetBlendState
+	public static ColorTargetBlendState NoWrite = new ColorTargetBlendState
 	{
-		EnableBlend = false,
 		EnableColorWriteMask = true,
 		ColorWriteMask = ColorComponentFlags.None
+	};
+
+	public static ColorTargetBlendState NoBlend = new ColorTargetBlendState
+	{
+		EnableColorWriteMask = true,
+		ColorWriteMask = ColorComponentFlags.RGBA
 	};
 
 	public static ColorTargetBlendState Opaque = new ColorTargetBlendState
