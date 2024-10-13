@@ -479,7 +479,7 @@ public class CommandBuffer
 			[readWriteTextureBinding],
 			1,
 			[],
-			1
+			0
 		);
 
 		var computePass = Device.ComputePassPool.Obtain();
@@ -494,7 +494,7 @@ public class CommandBuffer
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			[],
-			1,
+			0,
 			[readWriteBufferBinding],
 			1
 		);

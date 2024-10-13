@@ -74,7 +74,7 @@ public class TransferBuffer : RefreshResource
 			return null;
 		}
 
-		return new Span<T>((void*) ptr, (int) Size);
+		return new Span<T>((void*) ptr, (int) Size / Marshal.SizeOf<T>());
 	}
 
 	/// <summary>
