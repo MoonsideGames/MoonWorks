@@ -902,11 +902,11 @@ public struct VertexInputState
 	{
 		var description = VertexBufferDescription.Create<T>(slot, inputRate, stepRate);
 		var attributes = new VertexAttribute[T.Formats.Length];
-		uint offset = 0;
 
 		for (uint i = 0; i < T.Formats.Length; i += 1)
 		{
 			var format = T.Formats[i];
+			var offset = T.Offsets[i];
 
 			attributes[i] = new VertexAttribute
 			{
@@ -915,8 +915,6 @@ public struct VertexInputState
 				Format = format,
 				Offset = offset
 			};
-
-			offset += Conversions.VertexElementFormatSize(format);
 		}
 
 		return new VertexInputState
