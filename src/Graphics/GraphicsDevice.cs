@@ -81,7 +81,7 @@ public class GraphicsDevice : IDisposable
 
 		if (File.Exists(fullscreenVertPath))
 		{
-			fullscreenVertShader = Shader.CreateFromFile(
+			fullscreenVertShader = Shader.Create(
 				this,
 				fullscreenVertPath,
 				"main",
@@ -97,7 +97,7 @@ public class GraphicsDevice : IDisposable
 			// use defaults
 			var assembly = typeof(GraphicsDevice).Assembly;
 			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv");
-			fullscreenVertShader = Shader.CreateFromStream(
+			fullscreenVertShader = Shader.Create(
 				this,
 				vertStream,
 				"main",
@@ -111,7 +111,7 @@ public class GraphicsDevice : IDisposable
 
 		if (File.Exists(videoFragPath))
 		{
-			videoFragShader = Shader.CreateFromFile(
+			videoFragShader = Shader.Create(
 				this,
 				videoFragPath,
 				"main",
@@ -128,7 +128,7 @@ public class GraphicsDevice : IDisposable
 			// use defaults
 			var assembly = typeof(GraphicsDevice).Assembly;
 			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.spv");
-			videoFragShader = Shader.CreateFromStream(
+			videoFragShader = Shader.Create(
 				this,
 				fragStream,
 				"main",
@@ -143,7 +143,7 @@ public class GraphicsDevice : IDisposable
 
 		if (File.Exists(textVertPath) && File.Exists(textFragPath))
 		{
-			textVertShader = Shader.CreateFromFile(
+			textVertShader = Shader.Create(
 				this,
 				textVertPath,
 				"main",
@@ -155,7 +155,7 @@ public class GraphicsDevice : IDisposable
 				}
 			);
 
-			textFragShader = Shader.CreateFromFile(
+			textFragShader = Shader.Create(
 				this,
 				textFragPath,
 				"main",
@@ -176,7 +176,7 @@ public class GraphicsDevice : IDisposable
 			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.spv");
 			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv");
 
-			textVertShader = Shader.CreateFromStream(
+			textVertShader = Shader.Create(
 				this,
 				vertStream,
 				"main",
@@ -188,7 +188,7 @@ public class GraphicsDevice : IDisposable
 				}
 			);
 
-			textFragShader = Shader.CreateFromStream(
+			textFragShader = Shader.Create(
 				this,
 				fragStream,
 				"main",

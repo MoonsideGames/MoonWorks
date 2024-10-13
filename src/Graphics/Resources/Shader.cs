@@ -21,14 +21,14 @@ namespace MoonWorks.Graphics
 
 		private Shader(GraphicsDevice device) : base(device) { }
 
-		public static Shader CreateFromFile(
+		public static Shader Create(
 			GraphicsDevice device,
 			string filePath,
 			string entryPoint,
 			in ShaderCreateInfo shaderCreateInfo
 		) {
 			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			return CreateFromStream(
+			return Create(
 				device,
 				stream,
 				entryPoint,
@@ -36,7 +36,7 @@ namespace MoonWorks.Graphics
 			);
 		}
 
-		public static unsafe Shader CreateFromStream(
+		public static unsafe Shader Create(
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
