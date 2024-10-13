@@ -142,7 +142,7 @@ namespace MoonWorks
 		{
 			var display = SDL.SDL_GetDisplayForWindow(Handle);
 			SDL.SDL_GetDisplayUsableBounds(display, out var rect);
-			SDL.SDL_SetWindowPosition(Handle, (rect.x + rect.w) / 2, (rect.y + rect.h) / 2);
+			SDL.SDL_SetWindowPosition(Handle, (rect.x + rect.w - (int) Width) / 2, (rect.y + rect.h - (int) Height) / 2);
 		}
 
 		/// <summary>
