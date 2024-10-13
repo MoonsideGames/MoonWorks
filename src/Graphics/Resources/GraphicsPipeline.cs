@@ -39,11 +39,13 @@ public class GraphicsPipeline : RefreshResource
 			vertexBindings[i] = graphicsPipelineCreateInfo.VertexInputState.VertexBufferDescriptions[i];
 		}
 
+		var numColorTargets = graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions != null ? graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length : 0;
+
 		var colorAttachmentDescriptions = stackalloc ColorTargetDescription[
-			graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length
+			numColorTargets
 		];
 
-		for (var i = 0; i < graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length; i += 1)
+		for (var i = 0; i < numColorTargets; i += 1)
 		{
 			colorAttachmentDescriptions[i].Format = graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions[i].Format;
 			colorAttachmentDescriptions[i].BlendState = graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions[i].BlendState;
@@ -64,7 +66,7 @@ public class GraphicsPipeline : RefreshResource
 
 		createInfo.TargetInfo = new INTERNAL_GraphicsPipelineTargetInfo
 		{
-			NumColorTargets = (uint) graphicsPipelineCreateInfo.TargetInfo.ColorTargetDescriptions.Length,
+			NumColorTargets = (uint) numColorTargets,
 			ColorTargetDescriptions = colorAttachmentDescriptions,
 			DepthStencilFormat = graphicsPipelineCreateInfo.TargetInfo.DepthStencilFormat,
 			HasDepthStencilTarget = graphicsPipelineCreateInfo.TargetInfo.HasDepthStencilTarget
