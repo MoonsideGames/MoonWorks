@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks
 {
@@ -32,35 +33,26 @@ namespace MoonWorks
 			Console.WriteLine(str);
 		}
 
-		private static void RefreshLogInfo(IntPtr msg)
+		internal static unsafe void Init()
 		{
-			LogInfo(UTF8_ToManaged(msg));
+			SDL3.SDL.SDL_SetLogPriority((int) SDL3.SDL.SDL_LogCategory.SDL_LOG_CATEGORY_GPU, SDL3.SDL.SDL_LogPriority.SDL_LOG_PRIORITY_INFO);
+			SDL3.SDL.SDL_SetLogOutputFunction(SDLLog, IntPtr.Zero);
 		}
 
-		private static void RefreshLogWarn(IntPtr msg)
+		internal static unsafe void SDLLog(IntPtr userdata, int category, SDL3.SDL.SDL_LogPriority priority, byte* message)
 		{
-			LogWarn(UTF8_ToManaged(msg));
-		}
-
-		private static void RefreshLogError(IntPtr msg)
-		{
-			LogError(UTF8_ToManaged(msg));
-		}
-
-		private unsafe static string UTF8_ToManaged(IntPtr s)
-		{
-			byte* ptr = (byte*) s;
-			while (*ptr != 0)
+			if (priority == SDL3.SDL.SDL_LogPriority.SDL_LOG_PRIORITY_INFO)
 			{
-				ptr += 1;
+				LogInfo(Marshal.PtrToStringUTF8((nint) message));
 			}
-
-			string result = System.Text.Encoding.UTF8.GetString(
-				(byte*) s,
-				(int) (ptr - (byte*) s)
-			);
-
-			return result;
+			else if (priority == SDL3.SDL.SDL_LogPriority.SDL_LOG_PRIORITY_WARN)
+			{
+				LogWarn(Marshal.PtrToStringUTF8((nint) message));
+			}
+			else if (priority == SDL3.SDL.SDL_LogPriority.SDL_LOG_PRIORITY_ERROR)
+			{
+				LogError(Marshal.PtrToStringUTF8((nint) message));
+			}
 		}
 	}
 }

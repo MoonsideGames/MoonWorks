@@ -77,6 +77,8 @@ namespace MoonWorks
 				return;
 			}
 
+			Logger.Init();
+
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
