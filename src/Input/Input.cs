@@ -141,7 +141,7 @@ namespace MoonWorks.Input
 					else
 					{
 						Gamepads[slot].Register(openResult);
-						Logger.LogInfo($"Gamepad added to slot {slot}!");
+						Logger.LogInfo($"Gamepad {SDL.SDL_GetGamepadName(openResult)} added to slot {slot}!");
 
 						if (OnGamepadConnected != null)
 						{

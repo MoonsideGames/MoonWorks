@@ -356,7 +356,7 @@ namespace MoonWorks
 			var index = evt.which;
 			if (SDL.SDL_IsGamepad(index))
 			{
-				Logger.LogInfo("New controller detected!");
+				Logger.LogInfo("New controller detected...");
 				Inputs.AddGamepad(index);
 			}
 		}
