@@ -65,12 +65,12 @@ public class GraphicsDevice : IDisposable
 		// Check for replacement stock shaders
 		string basePath = System.AppContext.BaseDirectory;
 
-		string fullscreenVertPath = Path.Combine(basePath, "fullscreen.vert.refresh");
+		string fullscreenVertPath = Path.Combine(basePath, "fullscreen.vert.private");
 
-		string textVertPath = Path.Combine(basePath, "text_transform.vert.refresh");
-		string textFragPath = Path.Combine(basePath, "text_msdf.frag.refresh");
+		string textVertPath = Path.Combine(basePath, "text_transform.vert.private");
+		string textFragPath = Path.Combine(basePath, "text_msdf.frag.private");
 
-		string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.refresh");
+		string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.private");
 
 		Shader fullscreenVertShader;
 

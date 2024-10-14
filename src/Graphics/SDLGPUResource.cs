@@ -3,15 +3,20 @@ using System.Threading;
 
 namespace MoonWorks.Graphics;
 
-public abstract class RefreshResource : GraphicsResource
+public abstract class SDLGPUResource : GraphicsResource
 {
 	public IntPtr Handle { get => handle; internal set => handle = value; }
 	private IntPtr handle;
 
 	protected abstract Action<IntPtr, IntPtr> ReleaseFunction { get; }
 
-	protected RefreshResource(GraphicsDevice device) : base(device)
+	protected SDLGPUResource(GraphicsDevice device) : base(device)
 	{
+	}
+
+	public static implicit operator IntPtr(SDLGPUResource resource)
+	{
+		return resource.Handle;
 	}
 
 	protected override void Dispose(bool disposing)

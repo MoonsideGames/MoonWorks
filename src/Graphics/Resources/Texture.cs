@@ -6,7 +6,7 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// A multi-dimensional data container that can be efficiently used by the GPU.
 	/// </summary>
-	public class Texture : RefreshResource
+	public class Texture : SDLGPUResource
 	{
 		public TextureType Type { get; private init; }
 		public uint Width { get; internal set; }

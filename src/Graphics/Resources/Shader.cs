@@ -10,7 +10,7 @@ namespace MoonWorks.Graphics
 	/// Shaders are used to create graphics pipelines.
 	/// Graphics pipelines take a vertex shader and a fragment shader.
 	/// </summary>
-	public class Shader : RefreshResource
+	public class Shader : SDLGPUResource
 	{
 		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUShader;
 

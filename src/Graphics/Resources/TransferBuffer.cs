@@ -7,7 +7,7 @@ namespace MoonWorks.Graphics;
 /// <summary>
 /// A data container that can efficiently transfer data to and from the GPU.
 /// </summary>
-public class TransferBuffer : RefreshResource
+public class TransferBuffer : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUTransferBuffer;
 

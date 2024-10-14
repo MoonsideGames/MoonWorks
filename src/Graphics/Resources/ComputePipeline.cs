@@ -9,7 +9,7 @@ namespace MoonWorks.Graphics;
 /// <summary>
 /// Compute pipelines perform arbitrary parallel processing on input data.
 /// </summary>
-public class ComputePipeline : RefreshResource
+public class ComputePipeline : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUComputePipeline;
 

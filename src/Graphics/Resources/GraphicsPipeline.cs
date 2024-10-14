@@ -8,7 +8,7 @@ namespace MoonWorks.Graphics;
 /// Graphics pipelines encapsulate all of the render state in a single object. <br/>
 /// These pipelines are bound before draw calls are issued.
 /// </summary>
-public class GraphicsPipeline : RefreshResource
+public class GraphicsPipeline : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUGraphicsPipeline;
 

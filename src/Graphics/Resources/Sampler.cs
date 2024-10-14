@@ -6,7 +6,7 @@ namespace MoonWorks.Graphics;
 /// <summary>
 /// Specifies how a texture will be sampled in a shader.
 /// </summary>
-public class Sampler : RefreshResource
+public class Sampler : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUSampler;
 
