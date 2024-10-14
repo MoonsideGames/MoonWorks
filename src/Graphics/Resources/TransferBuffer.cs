@@ -100,7 +100,7 @@ public class TransferBuffer : SDLGPUResource
 	public Span<T> Map<T>(bool cycle, uint offsetInBytes = 0) where T : unmanaged
 	{
 		Map(cycle);
-		return MappedSpan<T>();
+		return MappedSpan<T>(offsetInBytes);
 	}
 
 	/// <summary>
