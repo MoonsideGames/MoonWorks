@@ -403,6 +403,11 @@ public struct TextureTransferInfo
 	public uint Offset;
 	public uint PixelsPerRow;
 	public uint RowsPerLayer;
+
+	public TextureTransferInfo(TransferBuffer transferBuffer)
+	{
+		TransferBuffer = transferBuffer;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -410,6 +415,17 @@ public struct TransferBufferLocation
 {
 	public IntPtr TransferBuffer;
 	public uint Offset;
+
+	public TransferBufferLocation(TransferBuffer transferBuffer)
+	{
+		TransferBuffer = transferBuffer;
+	}
+
+	public static implicit operator TransferBufferLocation(TransferBuffer transferBuffer) => new()
+	{
+		TransferBuffer = transferBuffer,
+		Offset = 0
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -421,6 +437,11 @@ public struct TextureLocation
 	public uint X;
 	public uint Y;
 	public uint Z;
+
+	public TextureLocation(Texture texture)
+	{
+		Texture = texture;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -435,6 +456,14 @@ public struct TextureRegion
 	public uint W;
 	public uint H;
 	public uint D;
+
+	public TextureRegion(Texture texture)
+	{
+		Texture = texture;
+		W = texture.Width;
+		H = texture.Height;
+		D = texture.Type == TextureType.ThreeDimensional ? texture.LayerCountOrDepth : 1;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -447,6 +476,13 @@ public struct BlitRegion
 	public uint Y;
 	public uint W;
 	public uint H;
+
+	public BlitRegion(Texture texture)
+	{
+		Texture = texture;
+		W = texture.Width;
+		H = texture.Height;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -462,6 +498,27 @@ public struct BufferRegion
 	public IntPtr Buffer;
 	public uint Offset;
 	public uint Size;
+
+	public BufferRegion(Buffer buffer, uint offset = 0)
+	{
+		Buffer = buffer;
+		Offset = offset;
+		Size = buffer.Size - offset;
+	}
+
+	public BufferRegion(Buffer buffer, uint offset, uint size)
+	{
+		Buffer = buffer;
+		Offset = offset;
+		Size = size;
+	}
+
+	public static implicit operator BufferRegion(Buffer buffer) => new()
+	{
+		Buffer = buffer,
+		Offset = 0,
+		Size = buffer.Size
+	};
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1017,6 +1074,32 @@ public struct ColorTargetInfo
 	public SDLBool CycleResolveTexture;
 	public byte Padding1;
 	public byte Padding2;
+
+	/// <summary>
+	/// Shortcut constructor for the common case of clearing and storing a 2D texture.
+	/// </summary>
+	public ColorTargetInfo(Texture texture, Color clearColor, bool cycle = false)
+	{
+		Texture = texture;
+		LoadOp = LoadOp.Clear;
+		ClearColor = clearColor;
+		StoreOp = StoreOp.Store;
+		Cycle = cycle;
+	}
+
+	/// <summary>
+	/// Shortcut constructor for the common case of specifying a load op and storing a 2D texture.
+	/// </summary>
+	/// <param name="texture"></param>
+	/// <param name="loadOp"></param>
+	/// <param name="cycle"></param>
+	public ColorTargetInfo(Texture texture, LoadOp loadOp, bool cycle = false)
+	{
+		Texture = texture;
+		LoadOp = loadOp;
+		StoreOp = StoreOp.Store;
+		Cycle = cycle;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1032,6 +1115,38 @@ public struct DepthStencilTargetInfo
 	public byte ClearStencil;
 	public byte Padding1;
 	public byte Padding2;
+
+	/// <summary>
+	/// Shortcut constructor for the common case of clearing to a depth value and not storing the results.
+	/// </summary>
+	public DepthStencilTargetInfo(Texture texture, float clearDepth, bool cycle = false)
+	{
+		Texture = texture;
+		LoadOp = LoadOp.Clear;
+		ClearDepth = clearDepth;
+		StencilLoadOp = LoadOp.DontCare;
+		StoreOp = StoreOp.DontCare;
+		StencilStoreOp = StoreOp.DontCare;
+		Cycle = cycle;
+	}
+
+	/// <summary>
+	/// Shortcut constructor for the common case of clearing to a depth-stencil value and not storing the results.
+	/// </summary>
+	/// <param name="texture"></param>
+	/// <param name="clearDepth"></param>
+	/// <param name="clearStencil"></param>
+	public DepthStencilTargetInfo(Texture texture, float clearDepth, byte clearStencil, bool cycle = false)
+	{
+		Texture = texture;
+		LoadOp = LoadOp.Clear;
+		StencilLoadOp = LoadOp.Clear;
+		ClearDepth = clearDepth;
+		ClearStencil = clearStencil;
+		StoreOp = StoreOp.DontCare;
+		StencilStoreOp = StoreOp.DontCare;
+		Cycle = cycle;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1077,6 +1192,12 @@ public struct StorageBufferReadWriteBinding
 	public byte Padding1;
 	public byte Padding2;
 	public byte Padding3;
+
+	public StorageBufferReadWriteBinding(Buffer buffer, bool cycle = false)
+	{
+		Buffer = buffer;
+		Cycle = cycle;
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1089,8 +1210,23 @@ public struct StorageTextureReadWriteBinding
 	public byte Padding1;
 	public byte Padding2;
 	public byte Padding3;
+
+	public StorageTextureReadWriteBinding(Texture texture, bool cycle = false)
+	{
+		Texture = texture;
+		Cycle = cycle;
+	}
+
+	public StorageTextureReadWriteBinding(Texture texture, uint mipLevel, uint layer, bool cycle = false)
+	{
+		Texture = texture;
+		MipLevel = mipLevel;
+		Layer = layer;
+		Cycle = cycle;
+	}
 }
 
+[StructLayout(LayoutKind.Sequential)]
 public struct FColor
 {
 	public float R;
@@ -1504,6 +1640,16 @@ internal static partial class IRO
 		IRO_WriteFunc writeFunc,
 		IntPtr context,
 		IntPtr data,
+		uint w,
+		uint h
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool IRO_EncodePNG(
+		IRO_WriteFunc writeFunc,
+		IntPtr context,
+		Span<Color> data,
 		uint w,
 		uint h
 	);
