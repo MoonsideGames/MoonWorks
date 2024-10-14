@@ -67,6 +67,11 @@ namespace MoonWorks.Input
 		/// </summary>
 		public VirtualButton AnyPressedButton { get; private set; }
 
+		/// <summary>
+		/// The implementation-dependent name of the gamepad.
+		/// </summary>
+		public string Name { get; private set;}
+
 		private Dictionary<SDL.SDL_GamepadButton, GamepadButton> EnumToButton;
 		private Dictionary<SDL.SDL_GamepadAxis, Axis> EnumToAxis;
 		private Dictionary<SDL.SDL_GamepadAxis, Trigger> EnumToTrigger;
@@ -214,6 +219,8 @@ namespace MoonWorks.Input
 
 			IntPtr joystickHandle = SDL.SDL_GetGamepadJoystick(Handle);
 			JoystickInstanceID = SDL.SDL_GetJoystickID(joystickHandle);
+
+			Name = SDL.SDL_GetGamepadName(Handle);
 		}
 
 		internal void Unregister()

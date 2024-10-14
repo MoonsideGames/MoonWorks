@@ -141,7 +141,7 @@ namespace MoonWorks.Input
 					else
 					{
 						Gamepads[slot].Register(openResult);
-						Logger.LogInfo($"Gamepad {SDL.SDL_GetGamepadName(openResult)} added to slot {slot}!");
+						Logger.LogInfo($"Gamepad {Gamepads[slot].Name} added to slot {slot}!");
 
 						if (OnGamepadConnected != null)
 						{
@@ -162,9 +162,9 @@ namespace MoonWorks.Input
 			{
 				if (joystickInstanceID == Gamepads[slot].JoystickInstanceID)
 				{
+					Logger.LogInfo($"Gamepad {Gamepads[slot].Name} removed from slot {slot}!");
 					SDL.SDL_CloseGamepad(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
-					Logger.LogInfo($"Removing gamepad from slot {slot}!");
 					OnGamepadDisconnected(slot);
 					return;
 				}
