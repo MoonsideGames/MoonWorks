@@ -5,10 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks.Graphics;
 
-// FIXME: can we map the transfer buffer instead of maintaining a local pointer
-
 /// <summary>
 /// A convenience structure for creating resources and uploading data to them.
+/// If the data provided is too long for the size of the uploader, it will resize itself.
 ///
 /// Note that Upload or UploadAndWait must be called after the Create methods for the data to actually be uploaded.
 ///
@@ -17,25 +16,25 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public unsafe class ResourceUploader : GraphicsResource
 {
-	// FIXME: we no longer need two separate buffers
-	TransferBuffer BufferTransferBuffer;
-	TransferBuffer TextureTransferBuffer;
+	TransferBuffer TransferBuffer;
+	uint WriteOffset = 0;
 
-	byte* bufferData;
-	uint bufferDataOffset = 0;
-	uint bufferDataSize = 1024;
+	record struct BufferUpload(uint Offset, BufferRegion BufferRegion, bool Cycle);
+	record struct TextureUpload(uint Offset, TextureRegion TextureRegion, bool Cycle);
 
-	byte* textureData;
-	uint textureDataOffset = 0;
-	uint textureDataSize = 1024;
+	List<BufferUpload> BufferUploads = [];
+	List<TextureUpload> TextureUploads = [];
 
-	List<(uint, BufferRegion, bool)> BufferUploads = new List<(uint, BufferRegion, bool)>();
-	List<(uint, TextureRegion, bool)> TextureUploads = new List<(uint, TextureRegion, bool)>();
-
-	public ResourceUploader(GraphicsDevice device) : base(device)
+	/// <summary>
+	/// If a size value is not provided, the uploader will automatically resize itself on the next upload command.
+	/// </summary>
+	public ResourceUploader(GraphicsDevice device, uint size = 0) : base(device)
 	{
-		bufferData = (byte*) NativeMemory.Alloc(bufferDataSize);
-		textureData = (byte*) NativeMemory.Alloc(textureDataSize);
+		if (size != 0)
+		{
+			TransferBuffer = TransferBuffer.Create<byte>(device, TransferBufferUsage.Upload, size);
+			TransferBuffer.Map(false);
+		}
 	}
 
 	// Buffers
@@ -46,9 +45,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
 	{
 		var buffer = Buffer.Create<T>(Device, usageFlags, (uint) data.Length);
-
 		SetBufferData(buffer, 0, data, false);
-
 		return buffer;
 	}
 
@@ -64,17 +61,19 @@ public unsafe class ResourceUploader : GraphicsResource
 		uint resourceOffset;
 		fixed (void* spanPtr = data)
 		{
-			resourceOffset = CopyBufferData(spanPtr, lengthInBytes);
+			resourceOffset = CopyBufferData(data);
 		}
 
-		var bufferRegion = new BufferRegion
-		{
-			Buffer = buffer.Handle,
-			Offset = offsetInBytes,
-			Size = lengthInBytes
-		};
-
-		BufferUploads.Add((resourceOffset, bufferRegion, cycle));
+		BufferUploads.Add(new BufferUpload(
+			resourceOffset,
+			new BufferRegion
+			{
+				Buffer = buffer.Handle,
+				Offset = offsetInBytes,
+				Size = lengthInBytes
+			},
+			cycle
+		));
 	}
 
 	// Textures
@@ -243,10 +242,14 @@ public unsafe class ResourceUploader : GraphicsResource
 		uint resourceOffset;
 		fixed (T* dataPtr = data)
 		{
-			resourceOffset = CopyTextureData(dataPtr, dataLengthInBytes, 16); // Align to biggest possible pixel size
+			resourceOffset = CopyTextureData(data, 16); // Align to biggest possible pixel size
 		}
 
-		TextureUploads.Add((resourceOffset, textureRegion, cycle));
+		TextureUploads.Add(new TextureUpload(
+			resourceOffset,
+			textureRegion,
+			cycle
+		));
 	}
 
 	// Upload
@@ -256,11 +259,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public void Upload()
 	{
-		CopyToTransferBuffer();
-
-		var commandBuffer = Device.AcquireCommandBuffer();
-		RecordUploadCommands(commandBuffer);
-		Device.Submit(commandBuffer);
+		Flush();
 	}
 
 	/// <summary>
@@ -269,118 +268,110 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public void UploadAndWait()
 	{
-		CopyToTransferBuffer();
-
-		var commandBuffer = Device.AcquireCommandBuffer();
-		RecordUploadCommands(commandBuffer);
-		var fence = Device.SubmitAndAcquireFence(commandBuffer);
-		Device.WaitForFence(fence);
-		Device.ReleaseFence(fence);
+		Flush(true);
 	}
 
 	// Helper methods
 
-	private void CopyToTransferBuffer()
+	private void Flush(bool wait = false)
 	{
-		if (BufferUploads.Count > 0)
-		{
-			if (BufferTransferBuffer == null || BufferTransferBuffer.Size < bufferDataSize)
-			{
-				BufferTransferBuffer?.Dispose();
-				BufferTransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, bufferDataSize);
-			}
-
-			var dataSpan = new Span<byte>(bufferData, (int) bufferDataSize);
-			var transferBufferSpan = BufferTransferBuffer.Map<byte>(true);
-			dataSpan.CopyTo(transferBufferSpan);
-			BufferTransferBuffer.Unmap();
-		}
-
-
-		if (TextureUploads.Count > 0)
-		{
-			if (TextureTransferBuffer == null || TextureTransferBuffer.Size < textureDataSize)
-			{
-				TextureTransferBuffer?.Dispose();
-				TextureTransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, textureDataSize);
-			}
-
-			var dataSpan = new Span<byte>(textureData, (int) textureDataSize);
-			var transferBufferSpan = TextureTransferBuffer.Map<byte>(true);
-			dataSpan.CopyTo(transferBufferSpan);
-			TextureTransferBuffer.Unmap();
-		}
-	}
-
-	private void RecordUploadCommands(CommandBuffer commandBuffer)
-	{
+		TransferBuffer.Unmap();
+		var commandBuffer = Device.AcquireCommandBuffer();
 		var copyPass = commandBuffer.BeginCopyPass();
-
-		foreach (var (transferOffset, bufferRegion, option) in BufferUploads)
+		for (var i = 0; i < BufferUploads.Count; i += 1)
 		{
 			copyPass.UploadToBuffer(
 				new TransferBufferLocation
 				{
-					TransferBuffer = BufferTransferBuffer.Handle,
-					Offset = transferOffset
+					TransferBuffer = TransferBuffer.Handle,
+					Offset = BufferUploads[i].Offset
 				},
-				bufferRegion,
-				option
+				BufferUploads[i].BufferRegion,
+				BufferUploads[i].Cycle
 			);
 		}
-
-		foreach (var (transferOffset, textureRegion, option) in TextureUploads)
+		for (var i = 0; i < TextureUploads.Count; i += 1)
 		{
 			copyPass.UploadToTexture(
 				new TextureTransferInfo
 				{
-					TransferBuffer = TextureTransferBuffer.Handle,
-					Offset = transferOffset
+					TransferBuffer = TransferBuffer.Handle,
+					Offset = TextureUploads[i].Offset
 				},
-				textureRegion,
-				option
+				TextureUploads[i].TextureRegion,
+				TextureUploads[i].Cycle
 			);
 		}
-
 		commandBuffer.EndCopyPass(copyPass);
 
+		if (wait)
+		{
+			var fence = Device.SubmitAndAcquireFence(commandBuffer);
+			Device.WaitForFence(fence);
+			Device.ReleaseFence(fence);
+		}
+		else
+		{
+			Device.Submit(commandBuffer);
+		}
+
+		TransferBuffer.Map(true);
+		WriteOffset = 0;
 		BufferUploads.Clear();
 		TextureUploads.Clear();
-		bufferDataOffset = 0;
 	}
 
-	private uint CopyBufferData(void* ptr, uint lengthInBytes)
+	private uint CopyBufferData<T>(Span<T> span) where T : unmanaged
 	{
-		if (bufferDataOffset + lengthInBytes >= bufferDataSize)
+		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
+		CheckAndResizeTransferBuffer(lengthInBytes);
+
+		if (WriteOffset + lengthInBytes > TransferBuffer.Size)
 		{
-			bufferDataSize = bufferDataOffset + lengthInBytes;
-			bufferData = (byte*) NativeMemory.Realloc(bufferData, bufferDataSize);
+			Flush();
 		}
 
-		var resourceOffset = bufferDataOffset;
-
-		NativeMemory.Copy(ptr, bufferData + bufferDataOffset, lengthInBytes);
-		bufferDataOffset += lengthInBytes;
+		var resourceOffset = WriteOffset;
+		span.CopyTo(TransferBuffer.MappedSpan<T>(resourceOffset));
+		WriteOffset += lengthInBytes;
 
 		return resourceOffset;
 	}
 
-	private uint CopyTextureData(void* ptr, uint lengthInBytes, uint alignment)
+	private uint CopyTextureData<T>(Span<T> span, uint alignment) where T : unmanaged
 	{
-		textureDataOffset = RoundToAlignment(textureDataOffset, alignment);
+		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
+		CheckAndResizeTransferBuffer(lengthInBytes);
 
-		if (textureDataOffset + lengthInBytes >= textureDataSize)
+		WriteOffset = RoundToAlignment(WriteOffset, alignment);
+		if (WriteOffset + lengthInBytes >= TransferBuffer.Size)
 		{
-			textureDataSize = textureDataOffset + lengthInBytes;
-			textureData = (byte*) NativeMemory.Realloc(textureData, textureDataSize);
+			Flush();
 		}
 
-		var resourceOffset = textureDataOffset;
-
-		NativeMemory.Copy(ptr, textureData + textureDataOffset, lengthInBytes);
-		textureDataOffset += lengthInBytes;
+		var resourceOffset = WriteOffset;
+		span.CopyTo(TransferBuffer.MappedSpan<T>(resourceOffset));
+		WriteOffset += lengthInBytes;
 
 		return resourceOffset;
+	}
+
+	private void CheckAndResizeTransferBuffer(uint dataLengthInBytes)
+	{
+		if (TransferBuffer == null)
+		{
+			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
+			TransferBuffer.Map(false);
+		}
+		else if (dataLengthInBytes > TransferBuffer.Size)
+		{
+			Logger.LogInfo("Resizing resource uploader!");
+			Flush();
+			TransferBuffer.Unmap();
+			TransferBuffer.Dispose();
+			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
+			TransferBuffer.Map(false);
+		}
 	}
 
 	private uint RoundToAlignment(uint value, uint alignment)
@@ -399,11 +390,8 @@ public unsafe class ResourceUploader : GraphicsResource
 		{
 			if (disposing)
 			{
-				BufferTransferBuffer?.Dispose();
-				TextureTransferBuffer?.Dispose();
+				TransferBuffer.Dispose();
 			}
-
-			NativeMemory.Free(bufferData);
 		}
 		base.Dispose(disposing);
 	}

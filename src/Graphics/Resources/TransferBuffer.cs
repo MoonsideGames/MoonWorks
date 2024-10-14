@@ -16,6 +16,8 @@ public class TransferBuffer : RefreshResource
 	/// </summary>
 	public uint Size { get; private init; }
 
+	private IntPtr MapPointer;
+
 	/// <summary>
 	/// Creates a buffer of requested size given a type and element count.
 	/// </summary>
@@ -60,26 +62,49 @@ public class TransferBuffer : RefreshResource
 	/// Maps the transfer buffer into application address space.
 	/// You must call Unmap before encoding transfer commands.
 	/// </summary>
-	public unsafe Span<T> Map<T>(bool cycle) where T : unmanaged
+	public void Map(bool cycle)
 	{
-		var ptr = SDL.SDL_MapGPUTransferBuffer(
-			Device.Handle,
-			Handle,
-			cycle
-		);
-
-		if (ptr == IntPtr.Zero)
+		if (MapPointer == IntPtr.Zero)
 		{
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			return null;
+			MapPointer = SDL.SDL_MapGPUTransferBuffer(
+				Device.Handle,
+				Handle,
+				cycle
+			);
+
+			if (MapPointer == IntPtr.Zero)
+			{
+				Logger.LogError(SDL3.SDL.SDL_GetError());
+			}
+		}
+	}
+
+	/// <summary>
+	/// Returns a Span of the mapped data. You can only access this after calling Map.
+	/// </summary>
+	public unsafe Span<T> MappedSpan<T>(uint offsetInBytes = 0) where T : unmanaged
+	{
+		if (MapPointer == IntPtr.Zero)
+		{
+			Logger.LogError("Cannot access MappedSpan if TransferBuffer is not mapped!");
+			return Span<T>.Empty;
 		}
 
-		return new Span<T>((void*) ptr, (int) Size / Marshal.SizeOf<T>());
+		return new Span<T>((void*) (MapPointer + offsetInBytes), (int) ((Size - offsetInBytes) / Marshal.SizeOf<T>()));
+	}
+
+	/// <summary>
+	/// Maps the transfer buffer into application address space and immediately returns a Span on the data.
+	/// You must call Unmap before encoding transfer commands.
+	/// </summary>
+	public Span<T> Map<T>(bool cycle, uint offsetInBytes = 0) where T : unmanaged
+	{
+		Map(cycle);
+		return MappedSpan<T>();
 	}
 
 	/// <summary>
 	/// Unmaps the transfer buffer.
-	/// The pointer given by Map is no longer valid.
 	/// </summary>
 	public void Unmap()
 	{
@@ -87,5 +112,6 @@ public class TransferBuffer : RefreshResource
 			Device.Handle,
 			Handle
 		);
+		MapPointer = IntPtr.Zero;
 	}
 }

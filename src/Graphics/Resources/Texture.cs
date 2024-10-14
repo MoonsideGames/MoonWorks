@@ -16,7 +16,7 @@ namespace MoonWorks.Graphics
 		public uint LevelCount { get; private init; }
 		public SampleCount SampleCount { get; private init; }
 		public TextureUsageFlags UsageFlags { get; private init; }
-		public uint Size => SDL.SDL_CalculateGPUTextureFormatSize(Format, Width, Height, LayerCountOrDepth);
+		public uint Size { get; private init; }
 
 		private string name;
 		public string Name
@@ -215,7 +215,8 @@ namespace MoonWorks.Graphics
 				Format = createInfo.Format,
 				LevelCount = createInfo.NumLevels,
 				SampleCount = createInfo.SampleCount,
-				UsageFlags = createInfo.Usage
+				UsageFlags = createInfo.Usage,
+				Size = CalculateSize(createInfo.Format, createInfo.Width, createInfo.Height, createInfo.LayerCountOrDepth)
 			};
 		}
 
@@ -236,6 +237,16 @@ namespace MoonWorks.Graphics
 			LevelCount = 1;
 			SampleCount = SampleCount.One;
 			UsageFlags = TextureUsageFlags.ColorTarget;
+		}
+
+		public static uint CalculateSize(TextureFormat format, uint width, uint height, uint layerCountOrDepth)
+		{
+			return SDL.SDL_CalculateGPUTextureFormatSize(
+				format,
+				width,
+				height,
+				layerCountOrDepth
+			);
 		}
 	}
 }
