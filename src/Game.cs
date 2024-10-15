@@ -1,4 +1,4 @@
-using SDL3;
+﻿using SDL3;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -59,6 +59,7 @@ namespace MoonWorks
 			int targetTimestep = 60,
 			bool debugMode = false
 		) {
+			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
@@ -77,7 +78,7 @@ namespace MoonWorks
 				return;
 			}
 
-			Logger.Init();
+			Logger.InitSDLLogging();
 
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();

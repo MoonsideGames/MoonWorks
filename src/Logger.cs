@@ -33,7 +33,7 @@ namespace MoonWorks
 			Console.WriteLine(str);
 		}
 
-		internal static unsafe void Init()
+		internal static unsafe void InitSDLLogging()
 		{
 			SDL3.SDL.SDL_SetLogPriority((int) SDL3.SDL.SDL_LogCategory.SDL_LOG_CATEGORY_GPU, SDL3.SDL.SDL_LogPriority.SDL_LOG_PRIORITY_INFO);
 			SDL3.SDL.SDL_SetLogOutputFunction(SDLLog, IntPtr.Zero);
