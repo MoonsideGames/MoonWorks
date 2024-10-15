@@ -23,7 +23,6 @@ namespace MoonWorks.Graphics.Font
 		/// <returns></returns>
 		public unsafe static Font Load(
 			GraphicsDevice graphicsDevice,
-			CommandBuffer commandBuffer,
 			string fontPath
 		) {
 			var fontFileStream = new FileStream(fontPath, FileMode.Open, FileAccess.Read);
