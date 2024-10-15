@@ -139,7 +139,10 @@ namespace MoonWorks
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
 
+			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();
+
+			Logger.LogInfo("MoonWorks shutdown complete, see you next time!");
 		}
 
 		/// <summary>
