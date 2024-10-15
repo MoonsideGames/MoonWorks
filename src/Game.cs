@@ -1,4 +1,4 @@
-﻿using SDL3;
+using SDL3;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -88,18 +88,8 @@ namespace MoonWorks
 				debugMode
 			);
 
-			SDL.SDL_WindowFlags windowFlags = 0;
-			if (GraphicsDevice.Backend == "Vulkan")
-			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_VULKAN;
-			}
-			else if (GraphicsDevice.Backend == "Metal")
-			{
-				windowFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_METAL;
-			}
-
 			Logger.LogInfo("Initializing main window...");
-			MainWindow = new Window(windowCreateInfo, windowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
+			MainWindow = new Window(windowCreateInfo, SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
 			if (!GraphicsDevice.ClaimWindow(MainWindow))
 			{
