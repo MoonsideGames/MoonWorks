@@ -14,7 +14,7 @@ namespace MoonWorks.Graphics.Font
 		[
 			VertexElementFormat.Float3,
 			VertexElementFormat.Float2,
-			VertexElementFormat.Byte4
+			VertexElementFormat.Ubyte4Norm
 		];
 
 		public static uint[] Offsets { get; } =

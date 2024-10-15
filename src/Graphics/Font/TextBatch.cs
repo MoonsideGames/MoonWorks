@@ -125,7 +125,7 @@ namespace MoonWorks.Graphics.Font
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
 				var transferVertexSpan = TransferBuffer.Map<byte>(true);
-				var transferIndexSpan = vertexSpan[vertexSpan.Length..];
+				var transferIndexSpan = transferVertexSpan[vertexSpan.Length..];
 
 				vertexSpan.CopyTo(transferVertexSpan);
 				indexSpan.CopyTo(transferIndexSpan);
