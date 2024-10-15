@@ -4,9 +4,6 @@
 [submodule "lib/dav1dfile"]
 	path = lib/dav1dfile
 	url = https://github.com/MoonsideGames/dav1dfile.git
-[submodule "lib/RefreshCS"]
-	path = lib/RefreshCS
-	url = https://github.com/MoonsideGames/RefreshCS.git
 [submodule "lib/WellspringCS"]
 	path = lib/WellspringCS
 	url = https://github.com/MoonsideGames/WellspringCS.git
