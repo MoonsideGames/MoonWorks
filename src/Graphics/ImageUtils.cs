@@ -168,68 +168,54 @@ public static class ImageUtils
 		string path,
 		Span<Color> pixels,
 		uint width,
-		uint height
+		uint height,
+		bool bgra
 	) {
 		IntPtr context;
 		Stream stream = new FileStream(path, FileMode.Create, FileAccess.Write);
 		lock (writeStreams)
 		{
-			context = (IntPtr) writeGlobal++;
+			context = writeGlobal++;
 			writeStreams.Add(context, stream);
 		}
-		fixed (Color* pixelsPtr = pixels) {
+
+		if (bgra)
+		{
+			var bgraPtr = NativeMemory.Alloc(width * height * 4);
+			Span<Color> bgraColors = new Span<Color>(bgraPtr, (int) (width * height * 4));
+			for (var i = 0; i < width * height; i += 1)
+			{
+				bgraColors[i].R = pixels[i].B;
+				bgraColors[i].G = pixels[i].G;
+				bgraColors[i].B = pixels[i].R;
+				bgraColors[i].A = pixels[i].A;
+			}
+
 			IRO.IRO_EncodePNG(
 				INTERNAL_Write,
 				context,
-				(IntPtr) pixelsPtr,
+				bgraColors,
+				width,
+				height
+			);
+
+			NativeMemory.Free(bgraPtr);
+		}
+		else
+		{
+			IRO.IRO_EncodePNG(
+				INTERNAL_Write,
+				context,
+				pixels,
 				width,
 				height
 			);
 		}
+
 		lock (writeStreams)
 		{
 			writeStreams.Remove(context);
 		}
-	}
-
-	/// <summary>
-	/// Saves pixel data contained in a TransferBuffer to a PNG file.
-	/// </summary>
-	public static unsafe void SavePNG(
-		string path,
-		TransferBuffer transferBuffer,
-		uint bufferOffsetInBytes,
-		uint width,
-		uint height,
-		bool bgra
-	) {
-		var sizeInBytes = width * height * 4;
-
-		var pixelsSpan = transferBuffer.Map<Color>(false);
-
-		if (bgra)
-		{
-			// if data is bgra, we have to swap the R and B channels
-			var rgbaPtr = (byte*) NativeMemory.Alloc(sizeInBytes);
-			var rgbaSpan = new Span<Color>(rgbaPtr, (int) (width * height));
-
-			for (var i = 0; i < sizeInBytes; i += 4)
-			{
-				rgbaSpan[i] = pixelsSpan[i + 2];
-				rgbaSpan[i + 1] = pixelsSpan[i + 1];
-				rgbaSpan[i + 2] = pixelsSpan[i];
-				rgbaSpan[i + 3] = pixelsSpan[i + 3];
-			}
-
-			SavePNG(path, rgbaSpan, width, height);
-			NativeMemory.Free(rgbaPtr);
-		}
-		else
-		{
-			SavePNG(path, pixelsSpan, width, height);
-		}
-
-		transferBuffer.Unmap();
 	}
 
 	// DDS loading extension, based on MojoDDS
