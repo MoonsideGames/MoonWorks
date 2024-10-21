@@ -12,10 +12,6 @@ MoonWorks uses strictly Free Open Source Software. It will never have any kind o
 
 ## Documentation
 
-API Reference: https://moonside.games/docs/moonworksapi/
-
-High-level documentation is provided here: https://moonside.games/docs/moonworks/
-
 The source is documented in doc comments that your preferred IDE can read.
 
 Join our Discord! https://discord.gg/ujhwdkHmhN
@@ -28,7 +24,7 @@ Join our Discord! https://discord.gg/ujhwdkHmhN
 * [Wellspring](https://github.com/MoonsideGames/Wellspring) - Font Rendering
 * [dav1dfile](https://github.com/MoonsideGames/dav1dfile) - Compressed Video
 
-Prebuilt dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.bz2
+Prebuilt native dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.gz
 
 ## License
 
