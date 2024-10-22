@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -56,6 +56,12 @@ public class GraphicsDevice : IDisposable
 			debugMode,
 			backendName
 		);
+
+		if (Handle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			throw new InvalidOperationException("Failed to create graphics device!");
+		}
 
 		DebugMode = debugMode;
 		// TODO: check for CreateDevice fail
