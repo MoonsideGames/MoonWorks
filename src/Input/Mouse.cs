@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using SDL2;
+using SDL3;
 
 namespace MoonWorks.Input
 {
@@ -34,50 +34,19 @@ namespace MoonWorks.Input
 		/// </summary>
 		public MouseButton AnyPressedButton { get; private set; }
 
-		internal uint ButtonMask { get; private set; }
+		internal SDL.SDL_MouseButtonFlags ButtonMask { get; private set; }
 
-		private bool relativeMode;
-		/// <summary>
-		/// If set to true, the cursor is hidden, the mouse position is constrained to the window,
-		/// and relative mouse motion will be reported even if the mouse is at the edge of the window.
-		/// </summary>
-		public bool RelativeMode
-		{
-			get => relativeMode;
-			set
-			{
-				relativeMode = value;
-				SDL.SDL_SetRelativeMouseMode(
-					relativeMode ?
-					SDL.SDL_bool.SDL_TRUE :
-					SDL.SDL_bool.SDL_FALSE
-				);
-			}
-		}
-
-		private bool hidden;
-		/// <summary>
-		/// If set to true, the OS cursor will not be shown in your application window.
-		/// </summary>
-		public bool Hidden
-		{
-			get => hidden;
-			set
-			{
-				hidden = value;
-				SDL.SDL_ShowCursor(hidden ? SDL.SDL_DISABLE : SDL.SDL_ENABLE);
-			}
-		}
+		public bool Visible => SDL.SDL_CursorVisible();
 
 		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
 
 		internal Mouse()
 		{
-			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_BUTTON_LMASK);
-			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_BUTTON_MMASK);
-			RightButton = new MouseButton(this, MouseButtonCode.Right, SDL.SDL_BUTTON_RMASK);
-			X1Button = new MouseButton(this, MouseButtonCode.X1, SDL.SDL_BUTTON_X1MASK);
-			X2Button = new MouseButton(this, MouseButtonCode.X2, SDL.SDL_BUTTON_X2MASK);
+			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_MouseButtonFlags.SDL_BUTTON_LMASK);
+			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_MouseButtonFlags.SDL_BUTTON_MMASK);
+			RightButton = new MouseButton(this, MouseButtonCode.Right, SDL.SDL_MouseButtonFlags.SDL_BUTTON_RMASK);
+			X1Button = new MouseButton(this, MouseButtonCode.X1, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X1MASK);
+			X2Button = new MouseButton(this, MouseButtonCode.X2, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X2MASK);
 
 			CodeToButton = new Dictionary<MouseButtonCode, MouseButton>
 			{
@@ -96,10 +65,11 @@ namespace MoonWorks.Input
 			ButtonMask = SDL.SDL_GetMouseState(out var x, out var y);
 			var _ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
 
-			X = x;
-			Y = y;
-			DeltaX = deltaX;
-			DeltaY = deltaY;
+			// TODO: should we support subpixel movement?
+			X = (int) x;
+			Y = (int) y;
+			DeltaX = (int) deltaX;
+			DeltaY = (int) deltaY;
 
 			Wheel = WheelRaw - previousWheelRaw;
 			previousWheelRaw = WheelRaw;
@@ -130,6 +100,16 @@ namespace MoonWorks.Input
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
 			return CodeToButton[buttonCode].State;
+		}
+
+		public void Show()
+		{
+			SDL.SDL_ShowCursor();
+		}
+
+		public void Hide()
+		{
+			SDL.SDL_HideCursor();
 		}
 	}
 }

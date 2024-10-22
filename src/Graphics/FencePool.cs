@@ -1,32 +1,31 @@
 using System.Collections.Concurrent;
 
-namespace MoonWorks.Graphics
+namespace MoonWorks.Graphics;
+
+internal class FencePool
 {
-	internal class FencePool
+	private GraphicsDevice GraphicsDevice;
+	private ConcurrentQueue<Fence> Fences = new ConcurrentQueue<Fence>();
+
+	public FencePool(GraphicsDevice graphicsDevice)
 	{
-		private GraphicsDevice GraphicsDevice;
-		private ConcurrentQueue<Fence> Fences = new ConcurrentQueue<Fence>();
+		GraphicsDevice = graphicsDevice;
+	}
 
-		public FencePool(GraphicsDevice graphicsDevice)
+	public Fence Obtain()
+	{
+		if (Fences.TryDequeue(out var fence))
 		{
-			GraphicsDevice = graphicsDevice;
+			return fence;
 		}
+		else
+		{
+			return new Fence();
+		}
+	}
 
-		public Fence Obtain()
-		{
-			if (Fences.TryDequeue(out var fence))
-			{
-				return fence;
-			}
-			else
-			{
-				return new Fence(GraphicsDevice);
-			}
-		}
-
-		public void Return(Fence fence)
-		{
-			Fences.Enqueue(fence);
-		}
+	public void Return(Fence fence)
+	{
+		Fences.Enqueue(fence);
 	}
 }

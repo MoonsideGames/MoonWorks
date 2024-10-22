@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using SDL2;
+using SDL3;
 
 namespace MoonWorks.Input
 {

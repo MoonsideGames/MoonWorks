@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MoonWorks.Math;
-using SDL2;
+using SDL3;
 
 namespace MoonWorks.Input
 {
@@ -14,7 +14,7 @@ namespace MoonWorks.Input
 	public class Gamepad
 	{
 		internal IntPtr Handle;
-		internal int JoystickInstanceID;
+		internal uint JoystickInstanceID;
 
 		public int Slot { get; internal set; }
 
@@ -67,9 +67,14 @@ namespace MoonWorks.Input
 		/// </summary>
 		public VirtualButton AnyPressedButton { get; private set; }
 
-		private Dictionary<SDL.SDL_GameControllerButton, GamepadButton> EnumToButton;
-		private Dictionary<SDL.SDL_GameControllerAxis, Axis> EnumToAxis;
-		private Dictionary<SDL.SDL_GameControllerAxis, Trigger> EnumToTrigger;
+		/// <summary>
+		/// The implementation-dependent name of the gamepad.
+		/// </summary>
+		public string Name { get; private set;}
+
+		private Dictionary<SDL.SDL_GamepadButton, GamepadButton> EnumToButton;
+		private Dictionary<SDL.SDL_GamepadAxis, Axis> EnumToAxis;
+		private Dictionary<SDL.SDL_GamepadAxis, Trigger> EnumToTrigger;
 
 		private Dictionary<AxisButtonCode, AxisButton> AxisButtonCodeToAxisButton;
 		private Dictionary<TriggerCode, TriggerButton> TriggerCodeToTriggerButton;
@@ -81,35 +86,35 @@ namespace MoonWorks.Input
 			Handle = handle;
 			Slot = slot;
 
-			IntPtr joystickHandle = SDL.SDL_GameControllerGetJoystick(Handle);
-			JoystickInstanceID = SDL.SDL_JoystickInstanceID(joystickHandle);
+			IntPtr joystickHandle = SDL.SDL_GetGamepadJoystick(Handle);
+			JoystickInstanceID = SDL.SDL_GetJoystickID(joystickHandle);
 
 			AnyPressed = false;
 
-			A = new GamepadButton(this, GamepadButtonCode.A, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
-			B = new GamepadButton(this, GamepadButtonCode.B, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
-			X = new GamepadButton(this, GamepadButtonCode.X, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X);
-			Y = new GamepadButton(this, GamepadButtonCode.Y, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y);
+			A = new GamepadButton(this, GamepadButtonCode.A, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH);
+			B = new GamepadButton(this, GamepadButtonCode.B, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST);
+			X = new GamepadButton(this, GamepadButtonCode.X, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST);
+			Y = new GamepadButton(this, GamepadButtonCode.Y, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH);
 
-			Back = new GamepadButton(this, GamepadButtonCode.Back, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK);
-			Guide = new GamepadButton(this, GamepadButtonCode.Guide, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE);
-			Start = new GamepadButton(this, GamepadButtonCode.Start, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START);
+			Back = new GamepadButton(this, GamepadButtonCode.Back, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK);
+			Guide = new GamepadButton(this, GamepadButtonCode.Guide, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE);
+			Start = new GamepadButton(this, GamepadButtonCode.Start, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START);
 
-			LeftStick = new GamepadButton(this, GamepadButtonCode.LeftStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
-			RightStick = new GamepadButton(this, GamepadButtonCode.RightStick, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+			LeftStick = new GamepadButton(this, GamepadButtonCode.LeftStick, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK);
+			RightStick = new GamepadButton(this, GamepadButtonCode.RightStick, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK);
 
-			LeftShoulder = new GamepadButton(this, GamepadButtonCode.LeftShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-			RightShoulder = new GamepadButton(this, GamepadButtonCode.RightShoulder, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+			LeftShoulder = new GamepadButton(this, GamepadButtonCode.LeftShoulder, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+			RightShoulder = new GamepadButton(this, GamepadButtonCode.RightShoulder, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
 
-			DpadUp = new GamepadButton(this, GamepadButtonCode.DpadUp, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP);
-			DpadDown = new GamepadButton(this, GamepadButtonCode.DpadDown, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-			DpadLeft = new GamepadButton(this, GamepadButtonCode.DpadLeft, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-			DpadRight = new GamepadButton(this, GamepadButtonCode.DpadRight, SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+			DpadUp = new GamepadButton(this, GamepadButtonCode.DpadUp, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_UP);
+			DpadDown = new GamepadButton(this, GamepadButtonCode.DpadDown, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+			DpadLeft = new GamepadButton(this, GamepadButtonCode.DpadLeft, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+			DpadRight = new GamepadButton(this, GamepadButtonCode.DpadRight, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
 
-			LeftX = new Axis(this, AxisCode.LeftX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
-			LeftY = new Axis(this, AxisCode.LeftY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
-			RightX = new Axis(this, AxisCode.RightX, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX);
-			RightY = new Axis(this, AxisCode.RightY, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY);
+			LeftX = new Axis(this, AxisCode.LeftX, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX);
+			LeftY = new Axis(this, AxisCode.LeftY, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY);
+			RightX = new Axis(this, AxisCode.RightX, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX);
+			RightY = new Axis(this, AxisCode.RightY, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY);
 
 			LeftXLeft = new AxisButton(LeftX, false);
 			LeftXRight = new AxisButton(LeftX, true);
@@ -121,43 +126,43 @@ namespace MoonWorks.Input
 			RightYUp = new AxisButton(RightY, true);
 			RightYDown = new AxisButton(RightY, false);
 
-			TriggerLeft = new Trigger(this, TriggerCode.Left, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-			TriggerRight = new Trigger(this, TriggerCode.Right, SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+			TriggerLeft = new Trigger(this, TriggerCode.Left, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+			TriggerRight = new Trigger(this, TriggerCode.Right, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
 			TriggerLeftButton = new TriggerButton(TriggerLeft);
 			TriggerRightButton = new TriggerButton(TriggerRight);
 
-			EnumToButton = new Dictionary<SDL.SDL_GameControllerButton, GamepadButton>
+			EnumToButton = new Dictionary<SDL.SDL_GamepadButton, GamepadButton>
 			{
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A, A },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B, B },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_X, X },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_Y, Y },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_BACK, Back },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_GUIDE, Guide },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_START, Start },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK, LeftStick },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK, RightStick },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSHOULDER, LeftShoulder },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, RightShoulder },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP, DpadUp },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN, DpadDown },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT, DpadLeft },
-				{ SDL.SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT, DpadRight }
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH, A },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST, B },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST, X },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH, Y },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK, Back },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE, Guide },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START, Start },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK, LeftStick },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK, RightStick },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, LeftShoulder },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, RightShoulder },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_UP, DpadUp },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN, DpadDown },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT, DpadLeft },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT, DpadRight }
 			};
 
-			EnumToAxis = new Dictionary<SDL.SDL_GameControllerAxis, Axis>
+			EnumToAxis = new Dictionary<SDL.SDL_GamepadAxis, Axis>
 			{
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX, LeftX },
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY, LeftY },
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTX, RightX },
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_RIGHTY, RightY }
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX, LeftX },
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY, LeftY },
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX, RightX },
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY, RightY }
 			};
 
-			EnumToTrigger = new Dictionary<SDL.SDL_GameControllerAxis, Trigger>
+			EnumToTrigger = new Dictionary<SDL.SDL_GamepadAxis, Trigger>
 			{
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT, TriggerLeft },
-				{ SDL.SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT, TriggerRight }
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER, TriggerLeft },
+				{ SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, TriggerRight }
 			};
 
 			AxisButtonCodeToAxisButton = new Dictionary<AxisButtonCode, AxisButton>
@@ -212,14 +217,16 @@ namespace MoonWorks.Input
 		{
 			Handle = handle;
 
-			IntPtr joystickHandle = SDL.SDL_GameControllerGetJoystick(Handle);
-			JoystickInstanceID = SDL.SDL_JoystickInstanceID(joystickHandle);
+			IntPtr joystickHandle = SDL.SDL_GetGamepadJoystick(Handle);
+			JoystickInstanceID = SDL.SDL_GetJoystickID(joystickHandle);
+
+			Name = SDL.SDL_GetGamepadName(Handle);
 		}
 
 		internal void Unregister()
 		{
 			Handle = IntPtr.Zero;
-			JoystickInstanceID = -1;
+			JoystickInstanceID = 0;
 		}
 
 		internal void Update()
@@ -272,12 +279,12 @@ namespace MoonWorks.Input
 		/// </summary>
 		public bool SetVibration(float leftMotor, float rightMotor, uint durationInMilliseconds)
 		{
-			return SDL.SDL_GameControllerRumble(
+			return SDL.SDL_RumbleGamepad(
 				Handle,
 				(ushort) (MathHelper.Clamp(leftMotor, 0f, 1f) * 0xFFFF),
 				(ushort) (MathHelper.Clamp(rightMotor, 0f, 1f) * 0xFFFF),
 				durationInMilliseconds
-			) == 0;
+			);
 		}
 
 		/// <summary>
@@ -285,7 +292,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public GamepadButton Button(GamepadButtonCode buttonCode)
 		{
-			return EnumToButton[(SDL.SDL_GameControllerButton) buttonCode];
+			return EnumToButton[(SDL.SDL_GamepadButton) buttonCode];
 		}
 
 		/// <summary>
@@ -310,7 +317,7 @@ namespace MoonWorks.Input
 		/// <returns>A value between -1 and 1.</returns>
 		public float AxisValue(AxisCode axisCode)
 		{
-			return EnumToAxis[(SDL.SDL_GameControllerAxis) axisCode].Value;
+			return EnumToAxis[(SDL.SDL_GamepadAxis) axisCode].Value;
 		}
 
 		/// <summary>
@@ -319,7 +326,7 @@ namespace MoonWorks.Input
 		/// <returns>A value between 0 and 1.</returns>
 		public float TriggerValue(TriggerCode triggerCode)
 		{
-			return EnumToTrigger[(SDL.SDL_GameControllerAxis) triggerCode].Value;
+			return EnumToTrigger[(SDL.SDL_GamepadAxis) triggerCode].Value;
 		}
 	}
 }

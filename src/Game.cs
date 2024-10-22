@@ -1,10 +1,11 @@
-﻿using SDL2;
+﻿using SDL3;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
 using System.Text;
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace MoonWorks
 {
@@ -48,15 +49,17 @@ namespace MoonWorks
 		/// </summary>
 		/// <param name="windowCreateInfo">The parameters that will be used to create the MainWindow.</param>
 		/// <param name="frameLimiterSettings">The frame limiter settings.</param>
+		/// <param name="availableShaderFormats">Bitflags of which GPU backends to attempt to initialize.</param>
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
 			FrameLimiterSettings frameLimiterSettings,
+			ShaderFormat availableShaderFormats,
 			int targetTimestep = 60,
 			bool debugMode = false
-		)
-		{
+		) {
+			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
@@ -69,27 +72,27 @@ namespace MoonWorks
 			}
 
 			Logger.LogInfo("Initializing SDL...");
-			if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_TIMER | SDL.SDL_INIT_GAMECONTROLLER) < 0)
+			if (!SDL.SDL_Init(SDL.SDL_InitFlags.SDL_INIT_VIDEO | SDL.SDL_InitFlags.SDL_INIT_TIMER | SDL.SDL_InitFlags.SDL_INIT_GAMEPAD))
 			{
 				Logger.LogError("Failed to initialize SDL!");
 				return;
 			}
 
-			Logger.Initialize();
+			Logger.InitSDLLogging();
 
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
-				Backend.Vulkan,
+				availableShaderFormats,
 				debugMode
 			);
 
 			Logger.LogInfo("Initializing main window...");
-			MainWindow = new Window(windowCreateInfo, GraphicsDevice.WindowFlags | SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
+			MainWindow = new Window(windowCreateInfo, SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN);
 
-			if (!GraphicsDevice.ClaimWindow(MainWindow, windowCreateInfo.PresentMode))
+			if (!GraphicsDevice.ClaimWindow(MainWindow))
 			{
 				throw new System.SystemException("Could not claim window!");
 			}
@@ -127,7 +130,10 @@ namespace MoonWorks
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
 
+			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();
+
+			Logger.LogInfo("MoonWorks shutdown complete, see you next time!");
 		}
 
 		/// <summary>
@@ -245,70 +251,72 @@ namespace MoonWorks
 
 		private void HandleSDLEvents()
 		{
-			while (SDL.SDL_PollEvent(out var _event) == 1)
+			while (SDL.SDL_PollEvent(out var _event))
 			{
 				switch (_event.type)
 				{
-					case SDL.SDL_EventType.SDL_QUIT:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_QUIT:
 						quit = true;
 						break;
 
-					case SDL.SDL_EventType.SDL_TEXTINPUT:
-						HandleTextInput(_event);
+					case (uint) SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+						HandleTextInput(_event.text);
 						break;
 
-					case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-						Inputs.Mouse.WheelRaw += _event.wheel.y;
+					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+						Inputs.Mouse.WheelRaw += (int) _event.wheel.y;
 						break;
 
-					case SDL.SDL_EventType.SDL_DROPBEGIN:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_BEGIN:
 						DropBegin();
 						break;
 
-					case SDL.SDL_EventType.SDL_DROPCOMPLETE:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_COMPLETE:
 						DropComplete();
 						break;
 
-					case SDL.SDL_EventType.SDL_DROPFILE:
-						HandleFileDrop(_event);
+					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_FILE:
+						HandleFileDrop(_event.drop);
 						break;
 
-					case SDL.SDL_EventType.SDL_CONTROLLERDEVICEADDED:
-						HandleControllerAdded(_event);
+					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
+						HandleControllerAdded(_event.gdevice);
 						break;
 
-					case SDL.SDL_EventType.SDL_CONTROLLERDEVICEREMOVED:
-						HandleControllerRemoved(_event);
+					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
+						HandleControllerRemoved(_event.gdevice);
 						break;
 
-					case SDL.SDL_EventType.SDL_WINDOWEVENT:
-						HandleWindowEvent(_event);
+					case (uint) SDL.SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+						HandleWindowPixelSizeChangeEvent(_event.window);
+						break;
+
+					case (uint) SDL.SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						HandleWindowCloseRequestedEvent(_event.window);
 						break;
 				}
 			}
 		}
 
-		private void HandleWindowEvent(SDL.SDL_Event evt)
+		private void HandleWindowPixelSizeChangeEvent(SDL.SDL_WindowEvent evt)
 		{
-			if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
-			{
-				var window = Window.Lookup(evt.window.windowID);
-				window.HandleSizeChange((uint) evt.window.data1, (uint) evt.window.data2);
-			}
-			else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE)
-			{
-				var window = Window.Lookup(evt.window.windowID);
-				GraphicsDevice.UnclaimWindow(window);
-				window.Dispose();
-			}
+			var window = Window.Lookup(evt.windowID);
+			window.HandleSizeChange((uint) evt.data1, (uint) evt.data2);
 		}
 
-		private void HandleTextInput(SDL.SDL_Event evt)
+		private void HandleWindowCloseRequestedEvent(SDL.SDL_WindowEvent evt)
+		{
+			var window = Window.Lookup(evt.windowID);
+			GraphicsDevice.UnclaimWindow(window);
+			window.Dispose();
+		}
+
+		private void HandleTextInput(SDL.SDL_TextInputEvent evt)
 		{
 			// Based on the SDL2# LPUtf8StrMarshaler
 			unsafe
 			{
-				int bytes = MeasureStringLength(evt.text.text);
+				int bytes = MeasureStringLength(evt.text);
 				if (bytes > 0)
 				{
 					/* UTF8 will never encode more characters
@@ -317,7 +325,7 @@ namespace MoonWorks
                         */
 					char* charsBuffer = stackalloc char[bytes];
 					int chars = Encoding.UTF8.GetChars(
-						evt.text.text,
+						evt.text,
 						bytes,
 						charsBuffer,
 						bytes
@@ -331,27 +339,26 @@ namespace MoonWorks
 			}
 		}
 
-		private void HandleFileDrop(SDL.SDL_Event evt)
+		private unsafe void HandleFileDrop(SDL.SDL_DropEvent evt)
 		{
-			// Need to do it this way because SDL2 expects you to free the filename string.
-			string filePath = SDL.UTF8_ToManaged(evt.drop.file, true);
+			var filePath = Marshal.PtrToStringUTF8((nint) evt.data);
 			DropFile(filePath);
 		}
 
-		private void HandleControllerAdded(SDL.SDL_Event evt)
+		private void HandleControllerAdded(SDL.SDL_GamepadDeviceEvent evt)
 		{
-			var index = evt.cdevice.which;
-			if (SDL.SDL_IsGameController(index) == SDL.SDL_bool.SDL_TRUE)
+			var index = evt.which;
+			if (SDL.SDL_IsGamepad(index))
 			{
-				Logger.LogInfo("New controller detected!");
+				Logger.LogInfo("New controller detected...");
 				Inputs.AddGamepad(index);
 			}
 		}
 
-		private void HandleControllerRemoved(SDL.SDL_Event evt)
+		private void HandleControllerRemoved(SDL.SDL_GamepadDeviceEvent evt)
 		{
 			Logger.LogInfo("Controller removal detected!");
-			Inputs.RemoveGamepad(evt.cdevice.which);
+			Inputs.RemoveGamepad(evt.which);
 		}
 
 		public static void ShowRuntimeError(string title, string message)

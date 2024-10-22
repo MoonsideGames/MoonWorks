@@ -10,11 +10,18 @@ namespace MoonWorks.Graphics.Font
 		public Vector2 TexCoord;
 		public Color Color;
 
-		public static VertexElementFormat[] Formats { get; } = new VertexElementFormat[]
-		{
-			VertexElementFormat.Vector3,
-			VertexElementFormat.Vector2,
-			VertexElementFormat.Color
-		};
+		public static VertexElementFormat[] Formats { get; } =
+		[
+			VertexElementFormat.Float3,
+			VertexElementFormat.Float2,
+			VertexElementFormat.Ubyte4Norm
+		];
+
+		public static uint[] Offsets { get; } =
+		[
+			0,
+			12,
+			20
+		];
 	}
 }

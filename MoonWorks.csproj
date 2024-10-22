@@ -3,7 +3,6 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<LangVersion>11</LangVersion>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -12,31 +11,30 @@
 
 	<ItemGroup>
 		<Compile Include="lib\FAudio\csharp\FAudio.cs" />
-		<Compile Include="lib\RefreshCS\src\Refresh.cs" />
-		<Compile Include="lib\SDL2-CS\src\SDL2.cs" />
+		<Compile Include="lib\SDL3-CS\SDL3\SDL3.Core.cs" />
 		<Compile Include="lib\WellspringCS\WellspringCS.cs" />
 		<Compile Include="lib\dav1dfile\csharp\dav1dfile.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="MoonWorks.dll.config">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
 		</None>
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_fullscreen.vert.refresh">
-			<LogicalName>MoonWorks.Graphics.StockShaders.VideoFullscreen.vert.refresh</LogicalName>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.spv">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv</LogicalName>
 		</EmbeddedResource>
-		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.refresh">
-			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.refresh</LogicalName>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.spv">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.spv</LogicalName>
 		</EmbeddedResource>
-		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_transform.vert.refresh">
-			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.refresh</LogicalName>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_transform.vert.spv">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.spv</LogicalName>
 		</EmbeddedResource>
-		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.refresh">
-			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.refresh</LogicalName>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.spv">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv</LogicalName>
 		</EmbeddedResource>
 	</ItemGroup>
 </Project>

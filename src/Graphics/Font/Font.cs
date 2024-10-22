@@ -23,7 +23,6 @@ namespace MoonWorks.Graphics.Font
 		/// <returns></returns>
 		public unsafe static Font Load(
 			GraphicsDevice graphicsDevice,
-			CommandBuffer commandBuffer,
 			string fontPath
 		) {
 			var fontFileStream = new FileStream(fontPath, FileMode.Open, FileAccess.Read);
@@ -47,7 +46,11 @@ namespace MoonWorks.Graphics.Font
 				out float distanceRange
 			);
 
-			var texture = Texture.FromImageFile(graphicsDevice, commandBuffer, Path.ChangeExtension(fontPath, ".png"));
+			var imagePath = Path.ChangeExtension(fontPath, ".png");
+			var uploader = new ResourceUploader(graphicsDevice);
+			var texture = uploader.CreateTexture2DFromCompressed(imagePath, TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.Sampler);
+			uploader.Upload();
+			uploader.Dispose();
 
 			NativeMemory.Free(fontFileByteBuffer);
 			NativeMemory.Free(atlasFileByteBuffer);

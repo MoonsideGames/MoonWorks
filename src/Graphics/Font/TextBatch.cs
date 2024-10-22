@@ -17,6 +17,8 @@ namespace MoonWorks.Graphics.Font
 		public Buffer IndexBuffer { get; protected set; } = null;
 		public uint PrimitiveCount { get; protected set; }
 
+		private TransferBuffer TransferBuffer;
+
 		public Font CurrentFont { get; private set; }
 
 		private byte* StringBytes;
@@ -32,6 +34,8 @@ namespace MoonWorks.Graphics.Font
 
 			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
 			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+
+			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -93,42 +97,98 @@ namespace MoonWorks.Graphics.Font
 				out uint indexDataLengthInBytes
 			);
 
+			var vertexSpan = new Span<byte>((void*) vertexDataPointer, (int) vertexDataLengthInBytes);
+			var indexSpan = new Span<byte>((void*) indexDataPointer, (int) indexDataLengthInBytes);
+
+			var newTransferBufferNeeded = false;
+
 			if (VertexBuffer.Size < vertexDataLengthInBytes)
 			{
 				VertexBuffer.Dispose();
-				VertexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				VertexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
+				newTransferBufferNeeded = true;
 			}
 
 			if (IndexBuffer.Size < indexDataLengthInBytes)
 			{
 				IndexBuffer.Dispose();
-				IndexBuffer = new Buffer(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				IndexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
+				newTransferBufferNeeded = true;
+			}
+
+			if (newTransferBufferNeeded)
+			{
+				TransferBuffer.Dispose();
+				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				commandBuffer.SetBufferData(VertexBuffer, vertexDataPointer, 0, vertexDataLengthInBytes);
-				commandBuffer.SetBufferData(IndexBuffer, indexDataPointer, 0, indexDataLengthInBytes);
+				var transferVertexSpan = TransferBuffer.Map<byte>(true);
+				var transferIndexSpan = transferVertexSpan[vertexSpan.Length..];
+
+				vertexSpan.CopyTo(transferVertexSpan);
+				indexSpan.CopyTo(transferIndexSpan);
+
+				TransferBuffer.Unmap();
+
+				var copyPass = commandBuffer.BeginCopyPass();
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation
+					{
+						TransferBuffer = TransferBuffer.Handle,
+						Offset = 0
+					},
+					new BufferRegion
+					{
+						Buffer = VertexBuffer.Handle,
+						Offset = 0,
+						Size = (uint) vertexSpan.Length
+					},
+					true
+				);
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation
+					{
+						TransferBuffer = TransferBuffer.Handle,
+						Offset = (uint) vertexSpan.Length
+					},
+					new BufferRegion
+					{
+						Buffer = IndexBuffer.Handle,
+						Offset = 0,
+						Size = (uint) indexSpan.Length
+					},
+					true
+				);
+				commandBuffer.EndCopyPass(copyPass);
 			}
 
 			PrimitiveCount = vertexCount / 2;
 		}
 
 		// Call this AFTER binding your text pipeline!
-		public void Render(CommandBuffer commandBuffer, Math.Float.Matrix4x4 transformMatrix)
-		{
-			commandBuffer.BindFragmentSamplers(new TextureSamplerBinding(
+		public void Render(
+			CommandBuffer commandBuffer,
+			RenderPass renderPass,
+			Math.Float.Matrix4x4 transformMatrix
+		) {
+			commandBuffer.PushVertexUniformData(transformMatrix);
+			commandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
+
+			renderPass.BindFragmentSampler(new TextureSamplerBinding(
 				CurrentFont.Texture,
 				GraphicsDevice.LinearSampler
 			));
-			commandBuffer.BindVertexBuffers(VertexBuffer);
-			commandBuffer.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
-			commandBuffer.DrawIndexedPrimitives(
+			renderPass.BindVertexBuffer(VertexBuffer);
+			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
+
+			renderPass.DrawIndexedPrimitives(
+				PrimitiveCount * 3,
+				1,
 				0,
 				0,
-				PrimitiveCount,
-				commandBuffer.PushVertexShaderUniforms(transformMatrix),
-				commandBuffer.PushFragmentShaderUniforms(CurrentFont.DistanceRange)
+				0
 			);
 		}
 
