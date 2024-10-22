@@ -24,6 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Embedded SPIR-V shaders  -->
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.spv">
 			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv</LogicalName>
 		</EmbeddedResource>
@@ -35,6 +36,45 @@
 		</EmbeddedResource>
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.spv">
 			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv</LogicalName>
+		</EmbeddedResource>
+		<!-- Embedded MSL shaders -->
+		<EmbeddedResource Include="src\Graphics\StockShaders\TranslatedSource\fullscreen.vert.msl">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.msl</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\TranslatedSource\video_yuv2rgba.frag.msl">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.msl</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\TranslatedSource\text_transform.vert.msl">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.msl</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\TranslatedSource\text_msdf.frag.msl">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.msl</LogicalName>
+		</EmbeddedResource>
+		<!-- Embedded DXBC shaders -->
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.dxbc">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.dxbc</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.dxbc">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.dxbc</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_transform.vert.dxbc">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.dxbc</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.dxbc">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.dxbc</LogicalName>
+		</EmbeddedResource>
+		<!-- Embedded HLSL SM 6.0 shaders -->
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.dxil">
+			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.dxil</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\video_yuv2rgba.frag.dxil">
+			<LogicalName>MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.dxil</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_transform.vert.dxil">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextTransform.vert.dxil</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.dxil">
+			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.dxil</LogicalName>
 		</EmbeddedResource>
 	</ItemGroup>
 </Project>

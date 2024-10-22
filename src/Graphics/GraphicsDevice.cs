@@ -95,16 +95,11 @@ public class GraphicsDevice : IDisposable
 		else
 		{
 			// use defaults
-			var assembly = typeof(GraphicsDevice).Assembly;
-			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.Fullscreen.vert.spv");
-			fullscreenVertShader = Shader.Create(
-				this,
-				vertStream,
-				"main",
-				new ShaderCreateInfo
-				{
-					Stage = ShaderStage.Vertex,
-					Format = ShaderFormat.SPIRV
+			fullscreenVertShader = LoadShaderFromManifest(
+				Backend,
+				"Fullscreen.vert",
+				new ShaderCreateInfo {
+					Stage = ShaderStage.Vertex
 				}
 			);
 		}
@@ -126,16 +121,12 @@ public class GraphicsDevice : IDisposable
 		else
 		{
 			// use defaults
-			var assembly = typeof(GraphicsDevice).Assembly;
-			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.VideoYUV2RGBA.frag.spv");
-			videoFragShader = Shader.Create(
-				this,
-				fragStream,
-				"main",
+			videoFragShader = LoadShaderFromManifest(
+				Backend,
+				"VideoYUV2RGBA.frag",
 				new ShaderCreateInfo
 				{
 					Stage = ShaderStage.Fragment,
-					Format = ShaderFormat.SPIRV,
 					NumSamplers = 3
 				}
 			);
@@ -176,26 +167,22 @@ public class GraphicsDevice : IDisposable
 			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.spv");
 			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv");
 
-			textVertShader = Shader.Create(
-				this,
-				vertStream,
-				"main",
+			textVertShader = LoadShaderFromManifest(
+				Backend,
+				"TextTransform.vert",
 				new ShaderCreateInfo
 				{
 					Stage = ShaderStage.Vertex,
-					Format = ShaderFormat.SPIRV,
 					NumUniformBuffers = 1
 				}
 			);
 
-			textFragShader = Shader.Create(
-				this,
-				fragStream,
-				"main",
+			textFragShader = LoadShaderFromManifest(
+				Backend,
+				"TextMSDF.frag",
 				new ShaderCreateInfo
 				{
 					Stage = ShaderStage.Fragment,
-					Format = ShaderFormat.SPIRV,
 					NumSamplers = 1,
 					NumUniformBuffers = 1
 				}
@@ -463,6 +450,48 @@ public class GraphicsDevice : IDisposable
 		}
 
 		return (TextureFormat) SDL.SDL_GetGPUSwapchainTextureFormat(Handle, window.Handle);
+	}
+
+	private Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
+	{
+		ShaderFormat shaderFormat;
+		string extension;
+		switch (backend)
+		{
+			case "vulkan":
+				shaderFormat = ShaderFormat.SPIRV;
+				extension = "spv";
+				break;
+
+			case "metal":
+				shaderFormat = ShaderFormat.MSL;
+				extension = "msl";
+				break;
+
+			case "direct3d11":
+				shaderFormat = ShaderFormat.DXBC;
+				extension = "dxbc";
+				break;
+
+			case "direct3d12":
+				shaderFormat = ShaderFormat.DXIL;
+				extension = "dxil";
+				break;
+
+			default:
+				throw new ArgumentException("This shouldn't happen!");
+		}
+
+		var createInfoWithFormat = createInfo with { Format = shaderFormat };
+		var path = $"MoonWorks.Graphics.StockShaders.{name}.{extension}";
+		var assembly = typeof(GraphicsDevice).Assembly;
+		using var stream = assembly.GetManifestResourceStream(path);
+		return Shader.Create(
+			this,
+			stream,
+			"main",
+			createInfoWithFormat
+		);
 	}
 
 	internal void AddResourceReference(GCHandle resourceReference)

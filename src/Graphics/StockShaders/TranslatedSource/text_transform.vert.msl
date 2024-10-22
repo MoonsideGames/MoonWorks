@@ -1,0 +1,33 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct UBO
+{
+    float4x4 ViewProjection;
+};
+
+struct main0_out
+{
+    float2 outTexCoord [[user(locn0)]];
+    float4 outColor [[user(locn1)]];
+    float4 gl_Position [[position]];
+};
+
+struct main0_in
+{
+    float3 inPos [[attribute(0)]];
+    float2 inTexCoord [[attribute(1)]];
+    float4 inColor [[attribute(2)]];
+};
+
+vertex main0_out main0(main0_in in [[stage_in]], constant UBO& ubo [[buffer(0)]])
+{
+    main0_out out = {};
+    out.gl_Position = ubo.ViewProjection * float4(in.inPos, 1.0);
+    out.outTexCoord = in.inTexCoord;
+    out.outColor = in.inColor;
+    return out;
+}
+

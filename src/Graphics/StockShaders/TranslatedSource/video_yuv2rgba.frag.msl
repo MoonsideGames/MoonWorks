@@ -1,0 +1,30 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct main0_out
+{
+    float4 FragColor [[color(0)]];
+};
+
+struct main0_in
+{
+    float2 TexCoord [[user(locn0)]];
+};
+
+fragment main0_out main0(main0_in in [[stage_in]], texture2d<float> YSampler [[texture(0)]], texture2d<float> USampler [[texture(1)]], texture2d<float> VSampler [[texture(2)]], sampler YSamplerSmplr [[sampler(0)]], sampler USamplerSmplr [[sampler(1)]], sampler VSamplerSmplr [[sampler(2)]])
+{
+    main0_out out = {};
+    float3 yuv;
+    yuv.x = YSampler.sample(YSamplerSmplr, in.TexCoord).x;
+    yuv.y = USampler.sample(USamplerSmplr, in.TexCoord).x;
+    yuv.z = VSampler.sample(VSamplerSmplr, in.TexCoord).x;
+    yuv += float3(-0.0625, -0.5, -0.5);
+    out.FragColor.x = dot(yuv, float3(1.164000034332275390625, 0.0, 1.7929999828338623046875));
+    out.FragColor.y = dot(yuv, float3(1.164000034332275390625, -0.212999999523162841796875, -0.53299999237060546875));
+    out.FragColor.z = dot(yuv, float3(1.164000034332275390625, 2.111999988555908203125, 0.0));
+    out.FragColor.w = 1.0;
+    return out;
+}
+

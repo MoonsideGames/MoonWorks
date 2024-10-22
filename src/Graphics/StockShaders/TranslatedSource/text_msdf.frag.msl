@@ -1,0 +1,51 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct UBO
+{
+    float pxRange;
+};
+
+struct main0_out
+{
+    float4 outColor [[color(0)]];
+};
+
+struct main0_in
+{
+    float2 inTexCoord [[user(locn0)]];
+    float4 inColor [[user(locn1)]];
+};
+
+static inline __attribute__((always_inline))
+float median(thread const float& r, thread const float& g, thread const float& b)
+{
+    return fast::max(fast::min(r, g), fast::min(fast::max(r, g), b));
+}
+
+static inline __attribute__((always_inline))
+float screenPxRange(constant UBO& ubo, texture2d<float> msdf, sampler msdfSmplr, thread float2& inTexCoord)
+{
+    float2 unitRange = float2(ubo.pxRange) / float2(int2(msdf.get_width(), msdf.get_height()));
+    float2 screenTexSize = float2(1.0) / fwidth(inTexCoord);
+    return fast::max(0.5 * dot(unitRange, screenTexSize), 1.0);
+}
+
+fragment main0_out main0(main0_in in [[stage_in]], constant UBO& ubo [[buffer(0)]], texture2d<float> msdf [[texture(0)]], sampler msdfSmplr [[sampler(0)]])
+{
+    main0_out out = {};
+    float3 msd = msdf.sample(msdfSmplr, in.inTexCoord).xyz;
+    float param = msd.x;
+    float param_1 = msd.y;
+    float param_2 = msd.z;
+    float sd = median(param, param_1, param_2);
+    float screenPxDistance = screenPxRange(ubo, msdf, msdfSmplr, in.inTexCoord) * (sd - 0.5);
+    float opacity = fast::clamp(screenPxDistance + 0.5, 0.0, 1.0);
+    out.outColor = mix(float4(0.0), in.inColor, float4(opacity));
+    return out;
+}
+
