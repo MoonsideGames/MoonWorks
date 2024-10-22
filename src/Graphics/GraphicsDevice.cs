@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -462,26 +462,31 @@ public class GraphicsDevice : IDisposable
 	{
 		ShaderFormat shaderFormat;
 		string extension;
+		string entryPointName;
 		switch (backend)
 		{
 			case "vulkan":
 				shaderFormat = ShaderFormat.SPIRV;
 				extension = "spv";
+				entryPointName = "main";
 				break;
 
 			case "metal":
 				shaderFormat = ShaderFormat.MSL;
 				extension = "msl";
+				entryPointName = "main0";
 				break;
 
 			case "direct3d11":
 				shaderFormat = ShaderFormat.DXBC;
 				extension = "dxbc";
+				entryPointName = "main";
 				break;
 
 			case "direct3d12":
 				shaderFormat = ShaderFormat.DXIL;
 				extension = "dxil";
+				entryPointName = "main";
 				break;
 
 			default:
@@ -495,7 +500,7 @@ public class GraphicsDevice : IDisposable
 		return Shader.Create(
 			this,
 			stream,
-			"main",
+			entryPointName,
 			createInfoWithFormat
 		);
 	}
