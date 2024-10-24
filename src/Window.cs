@@ -97,7 +97,6 @@ namespace MoonWorks
 			{
 				SDL.SDL_SetWindowFullscreen(Handle, false);
 				UpdateSize();
-				SetPositionCentered();
 			}
 
 			ScreenMode = screenMode;
@@ -139,9 +138,7 @@ namespace MoonWorks
 		/// </summary>
 		public void SetPositionCentered()
 		{
-			var display = SDL.SDL_GetDisplayForWindow(Handle);
-			SDL.SDL_GetDisplayUsableBounds(display, out var rect);
-			SetPosition((rect.x + rect.w - (int) Width) / 2, (rect.y + rect.h - (int) Height) / 2);
+			SDL.SDL_SetWindowPosition(Handle, (int) 0x2FFF0000u, (int) 0x2FFF0000u);
 		}
 
 		/// <summary>
@@ -182,7 +179,7 @@ namespace MoonWorks
 			SDL.SDL_ShowWindow(Handle);
 		}
 
-		private void UpdateSize()
+		internal void UpdateSize()
 		{
 			SDL.SDL_GetWindowSizeInPixels(Handle, out var w, out var h);
 			Width = (uint) w;
