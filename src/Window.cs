@@ -91,12 +91,13 @@ namespace MoonWorks
 			if (screenMode == ScreenMode.Fullscreen)
 			{
 				SDL.SDL_SetWindowFullscreen(Handle, true);
+				UpdateSize();
 			}
 			else
 			{
-				var displayID = SDL.SDL_GetDisplayForWindow(Handle);
-				SDL.SDL_DisplayMode *displayMode = (SDL.SDL_DisplayMode*) SDL.SDL_GetCurrentDisplayMode(displayID);
-				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
+				SDL.SDL_SetWindowFullscreen(Handle, false);
+				UpdateSize();
+				SetPositionCentered();
 			}
 
 			ScreenMode = screenMode;
@@ -110,17 +111,19 @@ namespace MoonWorks
 		/// <param name="height"></param>
 		public unsafe void SetSize(uint width, uint height)
 		{
-			SDL.SDL_SetWindowSize(Handle, (int) width, (int) height);
+			if (!SDL.SDL_SetWindowSize(Handle, (int) width, (int) height))
+			{
+				Logger.LogError(SDL.SDL_GetError());
+				return;
+			}
+
 			Width = width;
 			Height = height;
 
 			if (ScreenMode == ScreenMode.Windowed)
 			{
-				var displayID = SDL.SDL_GetDisplayForWindow(Handle);
-				SDL.SDL_DisplayMode *displayMode = (SDL.SDL_DisplayMode*) SDL.SDL_GetCurrentDisplayMode(displayID);
-				SDL.SDL_SetWindowPosition(Handle, displayMode->w / 2, displayMode->h / 2);
+				SetPositionCentered();
 			}
-
 		}
 
 		/// <summary>
@@ -177,6 +180,13 @@ namespace MoonWorks
 		internal void Show()
 		{
 			SDL.SDL_ShowWindow(Handle);
+		}
+
+		private void UpdateSize()
+		{
+			SDL.SDL_GetWindowSizeInPixels(Handle, out var w, out var h);
+			Width = (uint) w;
+			Height = (uint) h;
 		}
 
 		internal void HandleSizeChange(uint width, uint height)
