@@ -22,6 +22,9 @@ public class ComputePipeline : SDLGPUResource
 
 	private ComputePipeline(GraphicsDevice device) : base(device) { }
 
+	/// <summary>
+	/// Creates a compute pipeline using a specified shader format.
+	/// </summary>
 	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
 		string filePath,
@@ -32,6 +35,9 @@ public class ComputePipeline : SDLGPUResource
 		return Create(device, stream, entryPoint, computePipelineCreateInfo);
 	}
 
+	/// <summary>
+	/// Creates a compute pipeline using a specified shader format.
+	/// </summary>
 	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
 		Stream stream,
@@ -75,6 +81,171 @@ public class ComputePipeline : SDLGPUResource
 		if (computePipelineHandle == nint.Zero)
 		{
 			throw new Exception("Could not create compute pipeline!");
+		}
+
+		var computePipeline = new ComputePipeline(device)
+		{
+			Handle = computePipelineHandle,
+			NumSamplers = pipelineCreateInfo.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+		};
+
+		return computePipeline;
+	}
+
+	/// <summary>
+	/// Creates a compute pipeline for any backend from SPIRV bytecode.
+	/// </summary>
+	public static unsafe ComputePipeline CreateFromSPIRV(
+		GraphicsDevice device,
+		string filePath,
+		string entrypoint,
+		in ShaderCrossComputePipelineCreateInfo createInfo
+	) {
+		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+		return CreateFromSPIRV(device, stream, entrypoint, createInfo);
+	}
+
+	/// <summary>
+	/// Creates a compute pipeline for any backend from SPIRV bytecode.
+	/// </summary>
+	public static unsafe ComputePipeline CreateFromSPIRV(
+		GraphicsDevice device,
+		Stream stream,
+		string entryPoint,
+		in ShaderCrossComputePipelineCreateInfo createInfo
+	) {
+		device.InitializeShaderCross();
+
+		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
+		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
+		stream.ReadExactly(bytecodeSpan);
+
+		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
+		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+		var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
+		var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
+		buffer[byteCount] = 0;
+
+		INTERNAL_ComputePipelineCreateInfo pipelineCreateInfo;
+		pipelineCreateInfo.CodeSize = (nuint) stream.Length;
+		pipelineCreateInfo.Code = (byte*) bytecodeBuffer;
+		pipelineCreateInfo.EntryPoint = (byte*) entryPointBuffer;
+		pipelineCreateInfo.Format = ShaderFormat.Private; // this will be replaced
+		pipelineCreateInfo.NumSamplers = createInfo.NumSamplers;
+		pipelineCreateInfo.NumReadonlyStorageTextures = createInfo.NumReadonlyStorageTextures;
+		pipelineCreateInfo.NumReadonlyStorageBuffers = createInfo.NumReadonlyStorageBuffers;
+		pipelineCreateInfo.NumReadWriteStorageTextures = createInfo.NumReadWriteStorageTextures;
+		pipelineCreateInfo.NumReadWriteStorageBuffers = createInfo.NumReadWriteStorageBuffers;
+		pipelineCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
+		pipelineCreateInfo.ThreadCountX = createInfo.ThreadCountX;
+		pipelineCreateInfo.ThreadCountY = createInfo.ThreadCountY;
+		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
+		pipelineCreateInfo.Props = createInfo.Props;
+
+		var computePipelineHandle = ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
+			device.Handle,
+			pipelineCreateInfo
+		);
+
+		NativeMemory.Free(bytecodeBuffer);
+		NativeMemory.Free(entryPointBuffer);
+
+		if (computePipelineHandle == nint.Zero)
+		{
+			Logger.LogError("Failed to create compute pipeline!");
+			return null;
+		}
+
+		var computePipeline = new ComputePipeline(device)
+		{
+			Handle = computePipelineHandle,
+			NumSamplers = pipelineCreateInfo.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+		};
+
+		return computePipeline;
+	}
+
+	public static unsafe ComputePipeline CreateFromHLSL(
+		GraphicsDevice device,
+		string filePath,
+		string entrypoint,
+		HLSLShaderModel shaderModel,
+		in ShaderCrossComputePipelineCreateInfo createInfo
+	) {
+		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+		return CreateFromHLSL(device, stream, entrypoint, shaderModel, createInfo);
+	}
+
+	/// <summary>
+	/// Creates a compute pipeline for any backend from HLSL source.
+	/// </summary>
+	public static unsafe ComputePipeline CreateFromHLSL(
+		GraphicsDevice device,
+		Stream stream,
+		string entryPoint,
+		HLSLShaderModel shaderModel,
+		in ShaderCrossComputePipelineCreateInfo createInfo
+	) {
+		device.InitializeShaderCross();
+
+		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length + 1);
+		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
+		stream.ReadExactly(bytecodeSpan);
+		bytecodeSpan[(int)stream.Length] = 0; // null-terminate
+
+		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
+		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+		var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
+		var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
+		buffer[byteCount] = 0;
+
+		INTERNAL_ComputePipelineCreateInfo pipelineCreateInfo;
+		pipelineCreateInfo.CodeSize = (nuint) stream.Length;
+		pipelineCreateInfo.Code = (byte*) bytecodeBuffer;
+		pipelineCreateInfo.EntryPoint = (byte*) entryPointBuffer;
+		pipelineCreateInfo.Format = ShaderFormat.Private; // this will be replaced
+		pipelineCreateInfo.NumSamplers = createInfo.NumSamplers;
+		pipelineCreateInfo.NumReadonlyStorageTextures = createInfo.NumReadonlyStorageTextures;
+		pipelineCreateInfo.NumReadonlyStorageBuffers = createInfo.NumReadonlyStorageBuffers;
+		pipelineCreateInfo.NumReadWriteStorageTextures = createInfo.NumReadWriteStorageTextures;
+		pipelineCreateInfo.NumReadWriteStorageBuffers = createInfo.NumReadWriteStorageBuffers;
+		pipelineCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
+		pipelineCreateInfo.ThreadCountX = createInfo.ThreadCountX;
+		pipelineCreateInfo.ThreadCountY = createInfo.ThreadCountY;
+		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
+		pipelineCreateInfo.Props = createInfo.Props;
+
+		string shaderProfile;
+		if (shaderModel == HLSLShaderModel.Five) {
+			shaderProfile = "cs_5_0";
+		} else {
+			shaderProfile = "cs_6_0";
+		}
+
+		var computePipelineHandle = ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
+			device.Handle,
+			pipelineCreateInfo,
+			bytecodeSpan,
+			shaderProfile
+		);
+
+		NativeMemory.Free(bytecodeBuffer);
+		NativeMemory.Free(entryPointBuffer);
+
+		if (computePipelineHandle == nint.Zero)
+		{
+			Logger.LogError("Failed to create compute pipeline!");
+			return null;
 		}
 
 		var computePipeline = new ComputePipeline(device)

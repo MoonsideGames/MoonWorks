@@ -21,6 +21,9 @@ namespace MoonWorks.Graphics
 
 		private Shader(GraphicsDevice device) : base(device) { }
 
+		/// <summary>
+		/// Creates a shader using a specified shader format.
+		/// </summary>
 		public static Shader Create(
 			GraphicsDevice device,
 			string filePath,
@@ -36,6 +39,9 @@ namespace MoonWorks.Graphics
 			);
 		}
 
+		/// <summary>
+		/// Creates a shader using a specified shader format.
+		/// </summary>
 		public static unsafe Shader Create(
 			GraphicsDevice device,
 			Stream stream,
@@ -74,7 +80,183 @@ namespace MoonWorks.Graphics
 
 			if (shaderModule == nint.Zero)
 			{
-				throw new InvalidOperationException("Shader compilation failed!");
+				Logger.LogError("Failed to compile shader!");
+				return null;
+			}
+
+			var shader = new Shader(device)
+			{
+				Handle = shaderModule,
+				NumSamplers = createInfo.NumSamplers,
+				NumStorageTextures = createInfo.NumStorageTextures,
+				NumStorageBuffers = createInfo.NumStorageBuffers,
+				NumUniformBuffers = createInfo.NumUniformBuffers
+			};
+
+			return shader;
+		}
+
+		/// <summary>
+		/// Creates a shader for any backend from SPIRV bytecode.
+		/// </summary>
+		public static Shader CreateFromSPIRV(
+			GraphicsDevice device,
+			string filePath,
+			string entryPoint,
+			in ShaderCrossGraphicsShaderCreateInfo createInfo
+		) {
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			return CreateFromSPIRV(
+				device,
+				stream,
+				entryPoint,
+				createInfo
+			);
+		}
+
+		/// <summary>
+		/// Creates a shader for any backend from SPIRV bytecode.
+		/// </summary>
+		public static unsafe Shader CreateFromSPIRV(
+			GraphicsDevice device,
+			Stream stream,
+			string entryPoint,
+			in ShaderCrossGraphicsShaderCreateInfo createInfo
+		) {
+			device.InitializeShaderCross();
+
+			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
+			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
+			stream.ReadExactly(bytecodeSpan);
+
+			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
+			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
+			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
+			buffer[byteCount] = 0;
+
+			INTERNAL_ShaderCreateInfo shaderCreateInfo;
+			shaderCreateInfo.CodeSize = (nuint) stream.Length;
+			shaderCreateInfo.Code = (byte*) bytecodeBuffer;
+			shaderCreateInfo.EntryPoint = (byte*) entryPointBuffer;
+			shaderCreateInfo.Format = ShaderFormat.SPIRV;
+			shaderCreateInfo.Stage = createInfo.Stage;
+			shaderCreateInfo.NumSamplers = createInfo.NumSamplers;
+			shaderCreateInfo.NumStorageTextures = createInfo.NumStorageTextures;
+			shaderCreateInfo.NumStorageBuffers = createInfo.NumStorageBuffers;
+			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
+			shaderCreateInfo.Props = createInfo.Props;
+
+			var shaderModule = ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+				device.Handle,
+				shaderCreateInfo
+			);
+
+			NativeMemory.Free(bytecodeBuffer);
+			NativeMemory.Free(entryPointBuffer);
+
+			if (shaderModule == nint.Zero)
+			{
+				Logger.LogError("Failed to compile shader!");
+				return null;
+			}
+
+			var shader = new Shader(device)
+			{
+				Handle = shaderModule,
+				NumSamplers = createInfo.NumSamplers,
+				NumStorageTextures = createInfo.NumStorageTextures,
+				NumStorageBuffers = createInfo.NumStorageBuffers,
+				NumUniformBuffers = createInfo.NumUniformBuffers
+			};
+
+			return shader;
+		}
+
+		/// <summary>
+		/// Creates a shader for any backend from HLSL source.
+		/// </summary>
+		public static unsafe Shader CreateFromHLSL(
+			GraphicsDevice device,
+			string filePath,
+			string entryPoint,
+			HLSLShaderModel shaderModel,
+			in ShaderCrossGraphicsShaderCreateInfo createInfo
+		) {
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			return CreateFromHLSL(
+				device,
+				stream,
+				entryPoint,
+				shaderModel,
+				createInfo
+			);
+		}
+
+		/// <summary>
+		/// Creates a shader for any backend from HLSL source.
+		/// </summary>
+		public static unsafe Shader CreateFromHLSL(
+			GraphicsDevice device,
+			Stream stream,
+			string entryPoint,
+			HLSLShaderModel shaderModel,
+			in ShaderCrossGraphicsShaderCreateInfo createInfo
+		) {
+			device.InitializeShaderCross();
+
+			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length + 1);
+			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
+			stream.ReadExactly(bytecodeSpan);
+			bytecodeSpan[(int)stream.Length] = 0; // null-terminate
+
+			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
+			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
+			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
+			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
+			buffer[byteCount] = 0;
+
+			INTERNAL_ShaderCreateInfo shaderCreateInfo;
+			shaderCreateInfo.CodeSize = (nuint) stream.Length;
+			shaderCreateInfo.Code = (byte*) bytecodeBuffer;
+			shaderCreateInfo.EntryPoint = (byte*) entryPointBuffer;
+			shaderCreateInfo.Format = ShaderFormat.Private; // this gets replaced
+			shaderCreateInfo.Stage = createInfo.Stage;
+			shaderCreateInfo.NumSamplers = createInfo.NumSamplers;
+			shaderCreateInfo.NumStorageTextures = createInfo.NumStorageTextures;
+			shaderCreateInfo.NumStorageBuffers = createInfo.NumStorageBuffers;
+			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
+			shaderCreateInfo.Props = createInfo.Props;
+
+			string shaderProfile;
+			if (createInfo.Stage == ShaderStage.Vertex) {
+				if (shaderModel == HLSLShaderModel.Five) {
+					shaderProfile = "vs_5_0";
+				} else {
+					shaderProfile = "vs_6_0";
+				}
+			} else {
+				if (shaderModel == HLSLShaderModel.Five) {
+					shaderProfile = "ps_5_0";
+				} else {
+					shaderProfile = "ps_6_0";
+				}
+			}
+
+			var shaderModule = ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
+				device.Handle,
+				shaderCreateInfo,
+				bytecodeSpan,
+				shaderProfile
+			);
+
+			NativeMemory.Free(bytecodeBuffer);
+			NativeMemory.Free(entryPointBuffer);
+
+			if (shaderModule == nint.Zero)
+			{
+				Logger.LogError("Failed to compile shader!");
+				return null;
 			}
 
 			var shader = new Shader(device)

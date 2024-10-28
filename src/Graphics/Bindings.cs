@@ -660,7 +660,7 @@ public struct VertexBufferDescription
 			Slot = slot,
 			Pitch = (uint) Marshal.SizeOf<T>(),
 			InputRate = inputRate,
-			InstanceStepRate = 0
+			InstanceStepRate = stepRate
 		};
 	}
 }
@@ -773,6 +773,36 @@ public struct ShaderCreateInfo
 	public uint NumStorageBuffers;
 	public uint NumUniformBuffers;
 	public uint Props;
+}
+
+public struct ShaderCrossGraphicsShaderCreateInfo
+{
+	public ShaderStage Stage;
+	public uint NumSamplers;
+	public uint NumStorageTextures;
+	public uint NumStorageBuffers;
+	public uint NumUniformBuffers;
+	public uint Props;
+}
+
+public struct ShaderCrossComputePipelineCreateInfo
+{
+	public uint NumSamplers;
+	public uint NumReadonlyStorageTextures;
+	public uint NumReadonlyStorageBuffers;
+	public uint NumReadWriteStorageTextures;
+	public uint NumReadWriteStorageBuffers;
+	public uint NumUniformBuffers;
+	public uint ThreadCountX;
+	public uint ThreadCountY;
+	public uint ThreadCountZ;
+	public uint Props;
+}
+
+public enum HLSLShaderModel
+{
+	Five,
+	Six
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1652,5 +1682,148 @@ internal static partial class IRO
 		Span<Color> data,
 		uint w,
 		uint h
+	);
+}
+
+internal static partial class ShaderCross
+{
+	const string nativeLibName = "SDL3_gpu_shadercross";
+
+	public enum ShaderStage
+	{
+		Vertex,
+		Fragment,
+		Compute
+	}
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_ShaderCross_Init();
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_ShaderCross_Quit();
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial ShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats();
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_TranspileMSLFromSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		string entrypoint,
+		ShaderStage shaderStage
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_TranspileHLSLFromSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		string entrypoint,
+		string shaderProfile
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		string entrypoint,
+		ShaderStage shaderStage,
+		out UIntPtr size
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileDXILFromSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		string entrypoint,
+		ShaderStage shaderStage,
+		out UIntPtr size
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+		IntPtr device,
+		in INTERNAL_ShaderCreateInfo createInfo
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromSPIRV(
+		IntPtr device,
+		in INTERNAL_ComputePipelineCreateInfo createInfo
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial ShaderFormat SDL_ShaderCross_GetHLSLShaderFormats();
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromHLSL(
+		string hlslSource,
+		string entrypoint,
+		string shaderProfile,
+		out UIntPtr size
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileDXILFromHLSL(
+		string hlslSource,
+		string entrypoint,
+		string shaderProfile,
+		out UIntPtr size
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileSPIRVFromHLSL(
+		string hlslSource,
+		string entrypoint,
+		string shaderProfile,
+		out UIntPtr size
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
+		IntPtr device,
+		in INTERNAL_ShaderCreateInfo createInfo,
+		string hlslSource,
+		string shaderProfile
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
+		IntPtr device,
+		in INTERNAL_ShaderCreateInfo createInfo,
+		Span<byte> hlslSource,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string shaderProfile
+	);
+
+	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
+		IntPtr device,
+		in INTERNAL_ComputePipelineCreateInfo createInfo,
+		string hlslSource,
+		string shaderProfile
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
+		IntPtr device,
+		in INTERNAL_ComputePipelineCreateInfo createInfo,
+		Span<byte> hlslSource,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string shaderProfile
 	);
 }

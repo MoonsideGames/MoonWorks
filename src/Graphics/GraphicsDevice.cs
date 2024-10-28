@@ -41,6 +41,11 @@ public class GraphicsDevice : IDisposable
 	public TextureFormat SupportedDepthFormat { get; private set; }
 	public TextureFormat SupportedDepthStencilFormat { get; private set; }
 
+	public static ShaderFormat SPIRVShaderFormats => ShaderCross.SDL_ShaderCross_GetSPIRVShaderFormats();
+	public static ShaderFormat HLSLShaderFormats => ShaderCross.SDL_ShaderCross_GetHLSLShaderFormats();
+
+	private bool ShaderCrossInitialized;
+
 	internal unsafe GraphicsDevice(
 		ShaderFormat shaderFormats, // TODO: replace with enum flags
 		bool debugMode,
@@ -505,6 +510,12 @@ public class GraphicsDevice : IDisposable
 		);
 	}
 
+	internal void InitializeShaderCross()
+	{
+		ShaderCross.SDL_ShaderCross_Init();
+		ShaderCrossInitialized = true;
+	}
+
 	internal void AddResourceReference(GCHandle resourceReference)
 	{
 		lock (resources)
@@ -551,6 +562,11 @@ public class GraphicsDevice : IDisposable
 			}
 
 			SDL.SDL_DestroyGPUDevice(Handle);
+
+			if (ShaderCrossInitialized)
+			{
+				ShaderCross.SDL_ShaderCross_Quit();
+			}
 
 			IsDisposed = true;
 		}
