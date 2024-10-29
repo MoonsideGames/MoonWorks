@@ -100,27 +100,12 @@ public class ComputePipeline : SDLGPUResource
 	/// <summary>
 	/// Creates a compute pipeline for any backend from SPIRV bytecode.
 	/// </summary>
-	public static unsafe ComputePipeline CreateFromSPIRV(
-		GraphicsDevice device,
-		string filePath,
-		string entrypoint,
-		in ShaderCrossComputePipelineCreateInfo createInfo
-	) {
-		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-		return CreateFromSPIRV(device, stream, entrypoint, createInfo);
-	}
-
-	/// <summary>
-	/// Creates a compute pipeline for any backend from SPIRV bytecode.
-	/// </summary>
-	public static unsafe ComputePipeline CreateFromSPIRV(
+	internal static unsafe ComputePipeline CreateFromSPIRV(
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		in ShaderCrossComputePipelineCreateInfo createInfo
+		in ShaderCross.ComputePipelineCreateInfo createInfo
 	) {
-		device.InitializeShaderCross();
-
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
@@ -147,7 +132,7 @@ public class ComputePipeline : SDLGPUResource
 		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
 		pipelineCreateInfo.Props = createInfo.Props;
 
-		var computePipelineHandle = ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
+		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 			device.Handle,
 			pipelineCreateInfo
 		);
@@ -175,29 +160,16 @@ public class ComputePipeline : SDLGPUResource
 		return computePipeline;
 	}
 
-	public static unsafe ComputePipeline CreateFromHLSL(
-		GraphicsDevice device,
-		string filePath,
-		string entrypoint,
-		HLSLShaderModel shaderModel,
-		in ShaderCrossComputePipelineCreateInfo createInfo
-	) {
-		using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-		return CreateFromHLSL(device, stream, entrypoint, shaderModel, createInfo);
-	}
-
 	/// <summary>
 	/// Creates a compute pipeline for any backend from HLSL source.
 	/// </summary>
-	public static unsafe ComputePipeline CreateFromHLSL(
+	internal static unsafe ComputePipeline CreateFromHLSL(
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		HLSLShaderModel shaderModel,
-		in ShaderCrossComputePipelineCreateInfo createInfo
+		ShaderCross.HLSLShaderModel shaderModel,
+		in ShaderCross.ComputePipelineCreateInfo createInfo
 	) {
-		device.InitializeShaderCross();
-
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length + 1);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
@@ -226,13 +198,13 @@ public class ComputePipeline : SDLGPUResource
 		pipelineCreateInfo.Props = createInfo.Props;
 
 		string shaderProfile;
-		if (shaderModel == HLSLShaderModel.Five) {
+		if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
 			shaderProfile = "cs_5_0";
 		} else {
 			shaderProfile = "cs_6_0";
 		}
 
-		var computePipelineHandle = ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
+		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
 			device.Handle,
 			pipelineCreateInfo,
 			bytecodeSpan,

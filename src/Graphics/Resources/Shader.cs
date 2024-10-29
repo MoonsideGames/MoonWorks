@@ -99,32 +99,12 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a shader for any backend from SPIRV bytecode.
 		/// </summary>
-		public static Shader CreateFromSPIRV(
-			GraphicsDevice device,
-			string filePath,
-			string entryPoint,
-			in ShaderCrossGraphicsShaderCreateInfo createInfo
-		) {
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			return CreateFromSPIRV(
-				device,
-				stream,
-				entryPoint,
-				createInfo
-			);
-		}
-
-		/// <summary>
-		/// Creates a shader for any backend from SPIRV bytecode.
-		/// </summary>
-		public static unsafe Shader CreateFromSPIRV(
+		internal static unsafe Shader CreateFromSPIRV(
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			in ShaderCrossGraphicsShaderCreateInfo createInfo
+			in ShaderCross.ShaderCreateInfo createInfo
 		) {
-			device.InitializeShaderCross();
-
 			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
@@ -147,7 +127,7 @@ namespace MoonWorks.Graphics
 			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
 			shaderCreateInfo.Props = createInfo.Props;
 
-			var shaderModule = ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 				device.Handle,
 				shaderCreateInfo
 			);
@@ -176,35 +156,13 @@ namespace MoonWorks.Graphics
 		/// <summary>
 		/// Creates a shader for any backend from HLSL source.
 		/// </summary>
-		public static unsafe Shader CreateFromHLSL(
-			GraphicsDevice device,
-			string filePath,
-			string entryPoint,
-			HLSLShaderModel shaderModel,
-			in ShaderCrossGraphicsShaderCreateInfo createInfo
-		) {
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			return CreateFromHLSL(
-				device,
-				stream,
-				entryPoint,
-				shaderModel,
-				createInfo
-			);
-		}
-
-		/// <summary>
-		/// Creates a shader for any backend from HLSL source.
-		/// </summary>
-		public static unsafe Shader CreateFromHLSL(
+		internal static unsafe Shader CreateFromHLSL(
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			HLSLShaderModel shaderModel,
-			in ShaderCrossGraphicsShaderCreateInfo createInfo
+			ShaderCross.HLSLShaderModel shaderModel,
+			in ShaderCross.ShaderCreateInfo createInfo
 		) {
-			device.InitializeShaderCross();
-
 			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length + 1);
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
@@ -230,20 +188,20 @@ namespace MoonWorks.Graphics
 
 			string shaderProfile;
 			if (createInfo.Stage == ShaderStage.Vertex) {
-				if (shaderModel == HLSLShaderModel.Five) {
+				if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
 					shaderProfile = "vs_5_0";
 				} else {
 					shaderProfile = "vs_6_0";
 				}
 			} else {
-				if (shaderModel == HLSLShaderModel.Five) {
+				if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
 					shaderProfile = "ps_5_0";
 				} else {
 					shaderProfile = "ps_6_0";
 				}
 			}
 
-			var shaderModule = ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
+			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
 				device.Handle,
 				shaderCreateInfo,
 				bytecodeSpan,

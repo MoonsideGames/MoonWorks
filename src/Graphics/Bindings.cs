@@ -775,36 +775,6 @@ public struct ShaderCreateInfo
 	public uint Props;
 }
 
-public struct ShaderCrossGraphicsShaderCreateInfo
-{
-	public ShaderStage Stage;
-	public uint NumSamplers;
-	public uint NumStorageTextures;
-	public uint NumStorageBuffers;
-	public uint NumUniformBuffers;
-	public uint Props;
-}
-
-public struct ShaderCrossComputePipelineCreateInfo
-{
-	public uint NumSamplers;
-	public uint NumReadonlyStorageTextures;
-	public uint NumReadonlyStorageBuffers;
-	public uint NumReadWriteStorageTextures;
-	public uint NumReadWriteStorageBuffers;
-	public uint NumUniformBuffers;
-	public uint ThreadCountX;
-	public uint ThreadCountY;
-	public uint ThreadCountZ;
-	public uint Props;
-}
-
-public enum HLSLShaderModel
-{
-	Five,
-	Six
-}
-
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe struct INTERNAL_ShaderCreateInfo
 {
@@ -1685,7 +1655,7 @@ internal static partial class IRO
 	);
 }
 
-internal static partial class ShaderCross
+internal static partial class SDL_ShaderCross
 {
 	const string nativeLibName = "SDL3_gpu_shadercross";
 
