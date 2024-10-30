@@ -170,10 +170,10 @@ public class ComputePipeline : SDLGPUResource
 		ShaderCross.HLSLShaderModel shaderModel,
 		in ShaderCross.ComputePipelineCreateInfo createInfo
 	) {
-		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length + 1);
+		byte* bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
-		bytecodeSpan[(int)stream.Length] = 0; // null-terminate
+		bytecodeBuffer[(int)stream.Length] = 0; // null-terminate
 
 		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
 		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
