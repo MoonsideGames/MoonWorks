@@ -167,7 +167,6 @@ public class ComputePipeline : SDLGPUResource
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		ShaderCross.HLSLShaderModel shaderModel,
 		in ShaderCross.ComputePipelineCreateInfo createInfo
 	) {
 		byte* bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
@@ -197,18 +196,10 @@ public class ComputePipeline : SDLGPUResource
 		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
 		pipelineCreateInfo.Props = createInfo.Props;
 
-		string shaderProfile;
-		if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
-			shaderProfile = "cs_5_0";
-		} else {
-			shaderProfile = "cs_6_0";
-		}
-
 		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
 			device.Handle,
 			pipelineCreateInfo,
-			bytecodeSpan,
-			shaderProfile
+			bytecodeSpan
 		);
 
 		NativeMemory.Free(bytecodeBuffer);

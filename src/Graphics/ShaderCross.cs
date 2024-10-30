@@ -25,7 +25,6 @@ public static class ShaderCross
 	public struct ShaderCreateInfo
 	{
 		public ShaderFormat Format;
-		public HLSLShaderModel HLSLShaderModel; // Only used for HLSL
 		public ShaderStage Stage;
 		public uint NumSamplers;
 		public uint NumStorageTextures;
@@ -37,7 +36,6 @@ public static class ShaderCross
 	public struct ComputePipelineCreateInfo
 	{
 		public ShaderFormat Format;
-		public HLSLShaderModel HLSLShaderModel; // only used for HLSL
 		public uint NumSamplers;
 		public uint NumReadonlyStorageTextures;
 		public uint NumReadonlyStorageBuffers;
@@ -97,7 +95,7 @@ public static class ShaderCross
 		}
 		else if (shaderCreateInfo.Format == ShaderFormat.HLSL)
 		{
-			return Shader.CreateFromHLSL(device, stream, entrypoint, shaderCreateInfo.HLSLShaderModel, shaderCreateInfo);
+			return Shader.CreateFromHLSL(device, stream, entrypoint, shaderCreateInfo);
 		}
 		else
 		{
@@ -133,7 +131,7 @@ public static class ShaderCross
 		}
 		else if (pipelineCreateInfo.Format == ShaderFormat.HLSL)
 		{
-			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, pipelineCreateInfo.HLSLShaderModel, pipelineCreateInfo);
+			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, pipelineCreateInfo);
 		}
 		else
 		{

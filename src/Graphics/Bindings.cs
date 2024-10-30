@@ -1666,6 +1666,12 @@ internal static partial class SDL_ShaderCross
 		Compute
 	}
 
+	public enum ShaderModel
+	{
+		FivePointZero,
+		SixPointZero
+	}
+
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool SDL_ShaderCross_Init();
@@ -1693,7 +1699,8 @@ internal static partial class SDL_ShaderCross
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
 		string entrypoint,
-		string shaderProfile
+		ShaderStage shaderStage,
+		ShaderModel shaderModel
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1739,7 +1746,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromHLSL(
 		string hlslSource,
 		string entrypoint,
-		string shaderProfile,
+		ShaderStage shaderStage,
 		out UIntPtr size
 	);
 
@@ -1748,7 +1755,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileDXILFromHLSL(
 		string hlslSource,
 		string entrypoint,
-		string shaderProfile,
+		ShaderStage shaderStage,
 		out UIntPtr size
 	);
 
@@ -1757,7 +1764,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileSPIRVFromHLSL(
 		string hlslSource,
 		string entrypoint,
-		string shaderProfile,
+		ShaderStage shaderStage,
 		out UIntPtr size
 	);
 
@@ -1767,7 +1774,7 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		in INTERNAL_ShaderCreateInfo createInfo,
 		string hlslSource,
-		string shaderProfile
+		Graphics.ShaderStage graphicsShaderStage
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1776,7 +1783,7 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		in INTERNAL_ShaderCreateInfo createInfo,
 		Span<byte> hlslSource,
-		[MarshalAs(UnmanagedType.LPUTF8Str)] string shaderProfile
+		Graphics.ShaderStage graphicsShaderStage
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1784,8 +1791,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
 		IntPtr device,
 		in INTERNAL_ComputePipelineCreateInfo createInfo,
-		string hlslSource,
-		string shaderProfile
+		string hlslSource
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1793,7 +1799,6 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
 		IntPtr device,
 		in INTERNAL_ComputePipelineCreateInfo createInfo,
-		Span<byte> hlslSource,
-		[MarshalAs(UnmanagedType.LPUTF8Str)] string shaderProfile
+		Span<byte> hlslSource
 	);
 }

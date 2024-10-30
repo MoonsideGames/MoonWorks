@@ -160,7 +160,6 @@ namespace MoonWorks.Graphics
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			ShaderCross.HLSLShaderModel shaderModel,
 			in ShaderCross.ShaderCreateInfo createInfo
 		) {
 			byte* bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
@@ -186,26 +185,11 @@ namespace MoonWorks.Graphics
 			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
 			shaderCreateInfo.Props = createInfo.Props;
 
-			string shaderProfile;
-			if (createInfo.Stage == ShaderStage.Vertex) {
-				if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
-					shaderProfile = "vs_5_0";
-				} else {
-					shaderProfile = "vs_6_0";
-				}
-			} else {
-				if (shaderModel == ShaderCross.HLSLShaderModel.Five) {
-					shaderProfile = "ps_5_0";
-				} else {
-					shaderProfile = "ps_6_0";
-				}
-			}
-
 			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
 				device.Handle,
 				shaderCreateInfo,
 				bytecodeSpan,
-				shaderProfile
+				createInfo.Stage
 			);
 
 			NativeMemory.Free(bytecodeBuffer);
