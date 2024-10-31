@@ -24,6 +24,9 @@ public class GraphicsDevice : IDisposable
 	public Shader TextFragmentShader;
 	public VertexInputState TextVertexInputState;
 
+	// Built-in fullscreen vertex shader
+	public Shader FullscreenVertexShader;
+
 	// Built-in samplers
 	public Sampler PointSampler { get; }
 	public Sampler LinearSampler { get; }
@@ -78,8 +81,6 @@ public class GraphicsDevice : IDisposable
 
 		string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.private");
 
-		Shader fullscreenVertShader;
-
 		Shader textVertShader;
 		Shader textFragShader;
 
@@ -87,7 +88,7 @@ public class GraphicsDevice : IDisposable
 
 		if (File.Exists(fullscreenVertPath))
 		{
-			fullscreenVertShader = Shader.Create(
+			FullscreenVertexShader = Shader.Create(
 				this,
 				fullscreenVertPath,
 				"main",
@@ -101,7 +102,7 @@ public class GraphicsDevice : IDisposable
 		else
 		{
 			// use defaults
-			fullscreenVertShader = LoadShaderFromManifest(
+			FullscreenVertexShader = LoadShaderFromManifest(
 				Backend,
 				"Fullscreen.vert",
 				new ShaderCreateInfo {
@@ -211,7 +212,7 @@ public class GraphicsDevice : IDisposable
 					]
 				},
 				DepthStencilState = DepthStencilState.Disable,
-				VertexShader = fullscreenVertShader,
+				VertexShader = FullscreenVertexShader,
 				FragmentShader = videoFragShader,
 				VertexInputState = VertexInputState.Empty,
 				RasterizerState = RasterizerState.CCW_CullNone,
