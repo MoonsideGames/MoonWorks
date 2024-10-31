@@ -48,7 +48,7 @@ namespace MoonWorks.Audio
 			get => volume;
 			internal set
 			{
-				value = Math.MathHelper.Max(0, value);
+				value = float.Max(0, value);
 				if (volume != value)
 				{
 					volume = value;
@@ -66,7 +66,7 @@ namespace MoonWorks.Audio
 			get => pitch;
 			internal set
 			{
-				value = Math.MathHelper.Clamp(value, -1f, 1f);
+				value = float.Clamp(value, -1f, 1f);
 				if (pitch != value)
 				{
 					pitch = value;
@@ -187,7 +187,7 @@ namespace MoonWorks.Audio
 			get => pan;
 			internal set
 			{
-				value = Math.MathHelper.Clamp(value, -1f, 1f);
+				value = float.Clamp(value, -1f, 1f);
 				if (pan != value)
 				{
 					pan = value;

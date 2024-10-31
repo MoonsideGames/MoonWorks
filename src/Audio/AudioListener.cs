@@ -1,5 +1,5 @@
 ﻿using System;
-using MoonWorks.Math.Float;
+using System.Numerics;
 
 namespace MoonWorks.Audio
 {
@@ -86,9 +86,9 @@ namespace MoonWorks.Audio
 		public AudioListener(AudioDevice device) : base(device)
 		{
 			listenerData = new FAudio.F3DAUDIO_LISTENER();
-			Forward = Vector3.Forward;
+			Forward = -Vector3.UnitZ;
 			Position = Vector3.Zero;
-			Up = Vector3.Up;
+			Up = Vector3.UnitY;
 			Velocity = Vector3.Zero;
 
 			/* Unexposed variables, defaults based on XNA behavior */

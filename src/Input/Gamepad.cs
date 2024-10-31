@@ -281,8 +281,8 @@ namespace MoonWorks.Input
 		{
 			return SDL.SDL_RumbleGamepad(
 				Handle,
-				(ushort) (MathHelper.Clamp(leftMotor, 0f, 1f) * 0xFFFF),
-				(ushort) (MathHelper.Clamp(rightMotor, 0f, 1f) * 0xFFFF),
+				(ushort) (float.Clamp(leftMotor, 0f, 1f) * 0xFFFF),
+				(ushort) (float.Clamp(rightMotor, 0f, 1f) * 0xFFFF),
 				durationInMilliseconds
 			);
 		}

@@ -171,7 +171,7 @@ namespace MoonWorks.Graphics.Font
 		public void Render(
 			CommandBuffer commandBuffer,
 			RenderPass renderPass,
-			Math.Float.Matrix4x4 transformMatrix
+			System.Numerics.Matrix4x4 transformMatrix
 		) {
 			commandBuffer.PushVertexUniformData(transformMatrix);
 			commandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);

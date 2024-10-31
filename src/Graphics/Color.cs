@@ -14,6 +14,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MoonWorks.Math;
+using System.Numerics;
 
 namespace MoonWorks.Graphics
 {
@@ -790,10 +791,10 @@ namespace MoonWorks.Graphics
 		{
 			amount = float.Clamp(amount, 0.0f, 1.0f);
 			return new Color(
-				(int) float.Lerp(value1.R, value2.R, amount),
-				(int) float.Lerp(value1.G, value2.G, amount),
-				(int) float.Lerp(value1.B, value2.B, amount),
-				(int) float.Lerp(value1.A, value2.A, amount)
+				float.Lerp(value1.R / 255f, value2.R / 255f, amount),
+				float.Lerp(value1.G / 255f, value2.G / 255f, amount),
+				float.Lerp(value1.B / 255f, value2.B / 255f, amount),
+				float.Lerp(value1.A / 255f, value2.A / 255f, amount)
 			);
 		}
 
@@ -872,8 +873,8 @@ namespace MoonWorks.Graphics
 			Vector3 scrollingRGBForOddSlices = new Vector3(tempRGB.Y, b, tempRGB.X);  // (Temp Green, V, Temp Red) for odd slices (1, 3, 5)
 			Vector3 scrollingRGB = Vector3.Lerp(scrollingRGBForEvenSlices, scrollingRGBForOddSlices, isOddSlice);
 
-			float IsNotFirstSlice = MathHelper.Clamp(threeSliceSelector, 0f, 1f);        // 1 if NOT the first slice (true for slices 1 and 2)
-			float IsNotSecondSlice = MathHelper.Clamp(threeSliceSelector - 1f, 0f, 1f);  // 1 if NOT the first or second slice (true only for slice 2)
+			float IsNotFirstSlice = float.Clamp(threeSliceSelector, 0f, 1f);        // 1 if NOT the first slice (true for slices 1 and 2)
+			float IsNotSecondSlice = float.Clamp(threeSliceSelector - 1f, 0f, 1f);  // 1 if NOT the first or second slice (true only for slice 2)
 
 			Vector3 color = Vector3.Lerp(
 				scrollingRGB,
@@ -902,10 +903,10 @@ namespace MoonWorks.Graphics
 		public static Color operator *(Color value, float scale)
 		{
 			return new Color(
-				(int) (value.R * scale),
-				(int) (value.G * scale),
-				(int) (value.B * scale),
-				(int) (value.A * scale)
+				value.R * scale / 255f,
+				value.G * scale / 255f,
+				value.B * scale / 255f,
+				value.A * scale / 255f
 			);
 		}
 
