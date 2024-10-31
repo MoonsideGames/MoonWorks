@@ -14,7 +14,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using MoonWorks.Math;
-using MoonWorks.Math.Float;
 
 namespace MoonWorks.Graphics
 {
@@ -789,12 +788,12 @@ namespace MoonWorks.Graphics
 		/// <returns>Interpolated <see cref="Color"/>.</returns>
 		public static Color Lerp(Color value1, Color value2, float amount)
 		{
-			amount = MathHelper.Clamp(amount, 0.0f, 1.0f);
+			amount = float.Clamp(amount, 0.0f, 1.0f);
 			return new Color(
-				(int) MathHelper.Lerp(value1.R, value2.R, amount),
-				(int) MathHelper.Lerp(value1.G, value2.G, amount),
-				(int) MathHelper.Lerp(value1.B, value2.B, amount),
-				(int) MathHelper.Lerp(value1.A, value2.A, amount)
+				(int) float.Lerp(value1.R, value2.R, amount),
+				(int) float.Lerp(value1.G, value2.G, amount),
+				(int) float.Lerp(value1.B, value2.B, amount),
+				(int) float.Lerp(value1.A, value2.A, amount)
 			);
 		}
 
@@ -804,7 +803,7 @@ namespace MoonWorks.Graphics
 		/// </summary>
 		/// <param name="vector">A <see cref="Vector4"/> representing color.</param>
 		/// <returns>A <see cref="Color"/> which contains premultiplied alpha data.</returns>
-		public static Color FromNonPremultiplied(Vector4 vector)
+		public static Color FromNonPremultiplied(System.Numerics.Vector4 vector)
 		{
 			return new Color(
 				vector.X * vector.W,

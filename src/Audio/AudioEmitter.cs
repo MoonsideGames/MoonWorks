@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using MoonWorks.Math.Float;
+using System.Numerics;
 
 namespace MoonWorks.Audio
 {
@@ -115,9 +115,9 @@ namespace MoonWorks.Audio
 			emitterData = new FAudio.F3DAUDIO_EMITTER();
 
 			DopplerScale = 1f;
-			Forward = Vector3.Forward;
+			Forward = -Vector3.UnitZ;
 			Position = Vector3.Zero;
-			Up = Vector3.Up;
+			Up = Vector3.UnitY;
 			Velocity = Vector3.Zero;
 
 			/* Unexposed variables, defaults based on XNA behavior */

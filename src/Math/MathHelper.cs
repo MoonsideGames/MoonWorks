@@ -24,11 +24,6 @@ namespace MoonWorks.Math
 		#region Public Constants
 
 		/// <summary>
-		/// Represents the mathematical constant e(2.71828175).
-		/// </summary>
-		public const float E = (float) System.Math.E;
-
-		/// <summary>
 		/// Represents the log base ten of e(0.4342945).
 		/// </summary>
 		public const float Log10E = 0.4342945f;
@@ -39,24 +34,19 @@ namespace MoonWorks.Math
 		public const float Log2E = 1.442695f;
 
 		/// <summary>
-		/// Represents the value of pi(3.14159274).
-		/// </summary>
-		public const float Pi = (float) System.Math.PI;
-
-		/// <summary>
 		/// Represents the value of pi divided by two(1.57079637).
 		/// </summary>
-		public const float PiOver2 = (float) (System.Math.PI / 2.0);
+		public const float PiOver2 = float.Pi / 2f;
 
 		/// <summary>
 		/// Represents the value of pi divided by four(0.7853982).
 		/// </summary>
-		public const float PiOver4 = (float) (System.Math.PI / 4.0);
+		public const float PiOver4 = float.Pi / 4f;
 
 		/// <summary>
 		/// Represents the value of pi times two(6.28318548).
 		/// </summary>
-		public const float TwoPi = (float) (System.Math.PI * 2.0);
+		public const float TwoPi = float.Pi * 2f;
 
 		#endregion
 
@@ -136,62 +126,6 @@ namespace MoonWorks.Math
 		}
 
 		/// <summary>
-		/// Restricts a value to be within a specified range.
-		/// </summary>
-		/// <param name="value">The value to clamp.</param>
-		/// <param name="min">
-		/// The minimum value. If <c>value</c> is less than <c>min</c>, <c>min</c>
-		/// will be returned.
-		/// </param>
-		/// <param name="max">
-		/// The maximum value. If <c>value</c> is greater than <c>max</c>, <c>max</c>
-		/// will be returned.
-		/// </param>
-		/// <returns>The clamped value.</returns>
-		public static float Clamp(float value, float min, float max)
-		{
-			// First we check to see if we're greater than the max.
-			value = (value > max) ? max : value;
-
-			// Then we check to see if we're less than the min.
-			value = (value < min) ? min : value;
-
-			// There's no check to see if min > max.
-			return value;
-		}
-
-		/// <summary>
-		/// Restricts a value to be within a specified range.
-		/// </summary>
-		/// <param name="value">The value to clamp.</param>
-		/// <param name="min">
-		/// The minimum value. If <c>value</c> is less than <c>min</c>, <c>min</c>
-		/// will be returned.
-		/// </param>
-		/// <param name="max">
-		/// The maximum value. If <c>value</c> is greater than <c>max</c>, <c>max</c>
-		/// will be returned.
-		/// </param>
-		/// <returns>The clamped value.</returns>
-		public static int Clamp(int value, int min, int max)
-		{
-			value = (value > max) ? max : value;
-			value = (value < min) ? min : value;
-			return value;
-		}
-
-		/// <summary>
-		/// Calculates the absolute value of the difference of two values.
-		/// </summary>
-		/// <param name="value1">Source value.</param>
-		/// <param name="value2">Source value.</param>
-		/// <returns>Distance between the two values.</returns>
-		public static float Distance(float value1, float value2)
-		{
-			return System.Math.Abs(value1 - value2);
-		}
-
-		/// <summary>
 		/// Performs a Hermite spline interpolation.
 		/// </summary>
 		/// <param name="value1">Source position.</param>
@@ -238,68 +172,6 @@ namespace MoonWorks.Math
 			return (float) result;
 		}
 
-
-		/// <summary>
-		/// Linearly interpolates between two values.
-		/// </summary>
-		/// <param name="value1">Source value.</param>
-		/// <param name="value2">Source value.</param>
-		/// <param name="amount">
-		/// Value between 0 and 1 indicating the weight of value2.
-		/// </param>
-		/// <returns>Interpolated value.</returns>
-		/// <remarks>
-		/// This method performs the linear interpolation based on the following formula.
-		/// <c>value1 + (value2 - value1) * amount</c>
-		/// Passing amount a value of 0 will cause value1 to be returned, a value of 1 will
-		/// cause value2 to be returned.
-		/// </remarks>
-		public static float Lerp(float value1, float value2, float amount)
-		{
-			return value1 + (value2 - value1) * amount;
-		}
-
-		/// <summary>
-		/// Returns the greater of two values.
-		/// </summary>
-		/// <param name="value1">Source value.</param>
-		/// <param name="value2">Source value.</param>
-		/// <returns>The greater value.</returns>
-		public static float Max(float value1, float value2)
-		{
-			return value1 > value2 ? value1 : value2;
-		}
-
-		/// <summary>
-		/// Returns the lesser of two values.
-		/// </summary>
-		/// <param name="value1">Source value.</param>
-		/// <param name="value2">Source value.</param>
-		/// <returns>The lesser value.</returns>
-		public static float Min(float value1, float value2)
-		{
-			return value1 < value2 ? value1 : value2;
-		}
-
-		/// <summary>
-		/// Interpolates between two values using a cubic equation.
-		/// </summary>
-		/// <param name="value1">Source value.</param>
-		/// <param name="value2">Source value.</param>
-		/// <param name="amount">Weighting value.</param>
-		/// <returns>Interpolated value.</returns>
-		public static float SmoothStep(float value1, float value2, float amount)
-		{
-			/* It is expected that 0 < amount < 1.
-			 * If amount < 0, return value1.
-			 * If amount > 1, return value2.
-			 */
-			float result = MathHelper.Clamp(amount, 0f, 1f);
-			result = MathHelper.Hermite(value1, 0f, value2, 0f, result);
-
-			return result;
-		}
-
 		public static float Quantize(float value, float step)
 		{
 			return System.MathF.Round(value / step) * step;
@@ -308,57 +180,6 @@ namespace MoonWorks.Math
 		public static Fixed.Fix64 Quantize(Fixed.Fix64 value, Fixed.Fix64 step)
 		{
 			return Fixed.Fix64.Round(value / step) * step;
-		}
-
-		/// <summary>
-		/// Converts radians to degrees.
-		/// </summary>
-		/// <param name="radians">The angle in radians.</param>
-		/// <returns>The angle in degrees.</returns>
-		/// <remarks>
-		/// This method uses double precision internally, though it returns single float.
-		/// Factor = 180 / pi
-		/// </remarks>
-		public static float ToDegrees(float radians)
-		{
-			return (float) (radians * 57.295779513082320876798154814105);
-		}
-
-		/// <summary>
-		/// Converts degrees to radians.
-		/// </summary>
-		/// <param name="degrees">The angle in degrees.</param>
-		/// <returns>The angle in radians.</returns>
-		/// <remarks>
-		/// This method uses double precision internally, though it returns single float.
-		/// Factor = pi / 180
-		/// </remarks>
-		public static float ToRadians(float degrees)
-		{
-			return (float) (degrees * 0.017453292519943295769236907684886);
-		}
-
-		/// <summary>
-		/// Reduces a given angle to a value between pi and -pi.
-		/// </summary>
-		/// <param name="angle">The angle to reduce, in radians.</param>
-		/// <returns>The new angle, in radians.</returns>
-		public static float WrapAngle(float angle)
-		{
-			if ((angle > -Pi) && (angle <= Pi))
-			{
-				return angle;
-			}
-			angle %= TwoPi;
-			if (angle <= -Pi)
-			{
-				return angle + TwoPi;
-			}
-			if (angle > Pi)
-			{
-				return angle - TwoPi;
-			}
-			return angle;
 		}
 
 		/// <summary>
@@ -423,32 +244,6 @@ namespace MoonWorks.Math
 		internal static bool WithinEpsilon(float floatA, float floatB)
 		{
 			return System.Math.Abs(floatA - floatB) < MachineEpsilonFloat;
-		}
-
-		internal static int ClosestMSAAPower(int value)
-		{
-			/* Checking for the highest power of two _after_ than the given int:
-			 * http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-			 * Take result, divide by 2, get the highest power of two _before_!
-			 * -flibit
-			 */
-			if (value == 1)
-			{
-				// ... Except for 1, which is invalid for MSAA -flibit
-				return 0;
-			}
-			int result = value - 1;
-			result |= result >> 1;
-			result |= result >> 2;
-			result |= result >> 4;
-			result |= result >> 8;
-			result |= result >> 16;
-			result += 1;
-			if (result == value)
-			{
-				return result;
-			}
-			return result >> 1;
 		}
 
 		#endregion
