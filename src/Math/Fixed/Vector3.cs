@@ -1,7 +1,5 @@
-#region License
-
 /* MoonWorks - Game Development Framework
- * Copyright 2022 Evan Hemsley
+ * Copyright 2021-2024 Evan Hemsley
  */
 
 /* Derived from code by Ethan Lee (Copyright 2009-2021).
@@ -12,37 +10,24 @@
  * Released under the MIT License. See monoxna.LICENSE for details.
  */
 
-#endregion
-
-#region Using Statements
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
-
-#endregion
 
 namespace MoonWorks.Math.Fixed
 {
 	/// <summary>
 	/// Describes a fixed point 3D-vector.
 	/// </summary>
-	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
-	[StructLayout(LayoutKind.Explicit)]
 	public struct Vector3 : IEquatable<Vector3>
 	{
-		#region Public Static Properties
-
 		/// <summary>
 		/// Returns a <see cref="Vector3"/> with components 0, 0, 0.
 		/// </summary>
 		public static Vector3 Zero
 		{
-			get
-			{
-				return zero;
-			}
+			get => new Vector3(0, 0, 0);
 		}
 
 		/// <summary>
@@ -50,10 +35,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 One
 		{
-			get
-			{
-				return one;
-			}
+			get => new Vector3(1, 1, 1);
 		}
 
 		/// <summary>
@@ -61,10 +43,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitX
 		{
-			get
-			{
-				return unitX;
-			}
+			get => new Vector3(1, 0, 0);
 		}
 
 		/// <summary>
@@ -72,10 +51,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitY
 		{
-			get
-			{
-				return unitY;
-			}
+			get => new Vector3(0, 1, 0);
 		}
 
 		/// <summary>
@@ -83,81 +59,8 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitZ
 		{
-			get
-			{
-				return unitZ;
-			}
+			get => new Vector3(0, 0, 1);
 		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 1, 0.
-		/// </summary>
-		public static Vector3 Up
-		{
-			get
-			{
-				return up;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, -1, 0.
-		/// </summary>
-		public static Vector3 Down
-		{
-			get
-			{
-				return down;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 1, 0, 0.
-		/// </summary>
-		public static Vector3 Right
-		{
-			get
-			{
-				return right;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components -1, 0, 0.
-		/// </summary>
-		public static Vector3 Left
-		{
-			get
-			{
-				return left;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 0, -1.
-		/// </summary>
-		public static Vector3 Forward
-		{
-			get
-			{
-				return forward;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 0, 1.
-		/// </summary>
-		public static Vector3 Backward
-		{
-			get
-			{
-				return backward;
-			}
-		}
-
-		#endregion
-
-		#region Internal Properties
 
 		internal string DebugDisplayString
 		{
@@ -171,47 +74,20 @@ namespace MoonWorks.Math.Fixed
 			}
 		}
 
-		#endregion
-
-		#region Private Static Fields
-
-		private static Vector3 zero = new Vector3(0, 0, 0); // Not readonly for performance -flibit
-		private static readonly Vector3 one = new Vector3(1, 1, 1);
-		private static readonly Vector3 unitX = new Vector3(1, 0, 0);
-		private static readonly Vector3 unitY = new Vector3(0, 1, 0);
-		private static readonly Vector3 unitZ = new Vector3(0, 0, 1);
-		private static readonly Vector3 up = new Vector3(0, 1, 0);
-		private static readonly Vector3 down = new Vector3(0, -1, 0);
-		private static readonly Vector3 right = new Vector3(1, 0, 0);
-		private static readonly Vector3 left = new Vector3(-1, 0, 0);
-		private static readonly Vector3 forward = new Vector3(0, 0, -1);
-		private static readonly Vector3 backward = new Vector3(0, 0, 1);
-
-		#endregion
-
-		#region Public Fields
-
 		/// <summary>
 		/// The x coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(0)]
 		public Fix64 X;
 
 		/// <summary>
 		/// The y coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(8)]
 		public Fix64 Y;
 
 		/// <summary>
 		/// The z coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(16)]
 		public Fix64 Z;
-
-		#endregion
-
-		#region Public Constructors
 
 		/// <summary>
 		/// Constructs a 3d vector with X, Y and Z from three values.
@@ -255,10 +131,6 @@ namespace MoonWorks.Math.Fixed
 			this.Y = value.Y;
 			this.Z = z;
 		}
-
-		#endregion
-
-		#region Public Methods
 
 		/// <summary>
 		/// Compares whether current instance is equal to specified <see cref="Object"/>.
@@ -326,10 +198,6 @@ namespace MoonWorks.Math.Fixed
 			sb.Append("}");
 			return sb.ToString();
 		}
-
-		#endregion
-
-		#region Public Static Methods
 
 		/// <summary>
 		/// Performs vector addition on <paramref name="value1"/> and <paramref name="value2"/>.
@@ -785,207 +653,6 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="position">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <returns>Transformed <see cref="Vector3"/>.</returns>
-		public static Vector3 Transform(Vector3 position, Matrix4x4 matrix)
-		{
-			Transform(ref position, ref matrix, out position);
-			return position;
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="position">Source <see cref="Vector3"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="result">Transformed <see cref="Vector3"/> as an output parameter.</param>
-		public static void Transform(
-			ref Vector3 position,
-			ref Matrix4x4 matrix,
-			out Vector3 result
-		)
-		{
-			Fix64 x = (
-				(position.X * matrix.M11) +
-				(position.Y * matrix.M21) +
-				(position.Z * matrix.M31) +
-				matrix.M41
-			);
-			Fix64 y = (
-				(position.X * matrix.M12) +
-				(position.Y * matrix.M22) +
-				(position.Z * matrix.M32) +
-				matrix.M42
-			);
-			Fix64 z = (
-				(position.X * matrix.M13) +
-				(position.Y * matrix.M23) +
-				(position.Z * matrix.M33) +
-				matrix.M43
-			);
-			result.X = x;
-			result.Y = y;
-			result.Z = z;
-		}
-
-		/// <summary>
-		/// Apply transformation on all vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		public static void Transform(
-			Vector3[] sourceArray,
-			ref Matrix4x4 matrix,
-			Vector3[] destinationArray
-		)
-		{
-			Debug.Assert(
-				destinationArray.Length >= sourceArray.Length,
-				"The destination array is smaller than the source array."
-			);
-
-			/* TODO: Are there options on some platforms to implement
-			 * a vectorized version of this?
-			 */
-
-			for (int i = 0; i < sourceArray.Length; i += 1)
-			{
-				Vector3 position = sourceArray[i];
-				destinationArray[i] = new Vector3(
-					(position.X * matrix.M11) + (position.Y * matrix.M21) +
-						(position.Z * matrix.M31) + matrix.M41,
-					(position.X * matrix.M12) + (position.Y * matrix.M22) +
-						(position.Z * matrix.M32) + matrix.M42,
-					(position.X * matrix.M13) + (position.Y * matrix.M23) +
-						(position.Z * matrix.M33) + matrix.M43
-				);
-			}
-		}
-
-		/// <summary>
-		/// Apply transformation on vectors within array of <see cref="Vector3"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector3"/> should be written.</param>
-		/// <param name="length">The number of vectors to be transformed.</param>
-		public static void Transform(
-			Vector3[] sourceArray,
-			int sourceIndex,
-			ref Matrix4x4 matrix,
-			Vector3[] destinationArray,
-			int destinationIndex,
-			int length
-		)
-		{
-			Debug.Assert(
-				sourceArray.Length - sourceIndex >= length,
-				"The source array is too small for the given sourceIndex and length."
-			);
-			Debug.Assert(
-				destinationArray.Length - destinationIndex >= length,
-				"The destination array is too small for " +
-				"the given destinationIndex and length."
-			);
-
-			/* TODO: Are there options on some platforms to implement a
-			 * vectorized version of this?
-			 */
-
-			for (int i = 0; i < length; i += 1)
-			{
-				Vector3 position = sourceArray[sourceIndex + i];
-				destinationArray[destinationIndex + i] = new Vector3(
-					(position.X * matrix.M11) + (position.Y * matrix.M21) +
-						(position.Z * matrix.M31) + matrix.M41,
-					(position.X * matrix.M12) + (position.Y * matrix.M22) +
-						(position.Z * matrix.M32) + matrix.M42,
-					(position.X * matrix.M13) + (position.Y * matrix.M23) +
-						(position.Z * matrix.M33) + matrix.M43
-				);
-			}
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Quaternion"/>, representing the rotation.
-		/// </summary>
-		/// <param name="value">Source <see cref="Vector3"/>.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <returns>Transformed <see cref="Vector3"/>.</returns>
-		public static Vector3 Transform(Vector3 value, Quaternion rotation)
-		{
-			Vector3 result;
-			Transform(ref value, ref rotation, out result);
-			return result;
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of 3d-vector by the specified <see cref="Quaternion"/>, representing the rotation.
-		/// </summary>
-		/// <param name="value">Source <see cref="Vector3"/>.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <param name="result">Transformed <see cref="Vector3"/> as an output parameter.</param>
-		public static void Transform(
-			ref Vector3 value,
-			ref Quaternion rotation,
-			out Vector3 result
-		)
-		{
-			Fix64 two = new Fix64(2);
-			Fix64 x = two * (rotation.Y * value.Z - rotation.Z * value.Y);
-			Fix64 y = two * (rotation.Z * value.X - rotation.X * value.Z);
-			Fix64 z = two * (rotation.X * value.Y - rotation.Y * value.X);
-
-			result.X = value.X + x * rotation.W + (rotation.Y * z - rotation.Z * y);
-			result.Y = value.Y + y * rotation.W + (rotation.Z * x - rotation.X * z);
-			result.Z = value.Z + z * rotation.W + (rotation.X * y - rotation.Y * x);
-		}
-
-		/// <summary>
-
-		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="normal">Source <see cref="Vector3"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <returns>Transformed normal.</returns>
-		public static Vector3 TransformNormal(Vector3 normal, Matrix4x4 matrix)
-		{
-			TransformNormal(ref normal, ref matrix, out normal);
-			return normal;
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector3"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="normal">Source <see cref="Vector3"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="result">Transformed normal as an output parameter.</param>
-		public static void TransformNormal(
-			ref Vector3 normal,
-			ref Matrix4x4 matrix,
-			out Vector3 result
-		)
-		{
-			Fix64 x = (normal.X * matrix.M11) + (normal.Y * matrix.M21) + (normal.Z * matrix.M31);
-			Fix64 y = (normal.X * matrix.M12) + (normal.Y * matrix.M22) + (normal.Z * matrix.M32);
-			Fix64 z = (normal.X * matrix.M13) + (normal.Y * matrix.M23) + (normal.Z * matrix.M33);
-			result.X = x;
-			result.Y = y;
-			result.Z = z;
-		}
-
-		#endregion
-
-		#region Public Static Operators
-
-		/// <summary>
 		/// Compares whether two <see cref="Vector3"/> instances are equal.
 		/// </summary>
 		/// <param name="value1"><see cref="Vector3"/> instance on the left of the equal sign.</param>
@@ -1118,7 +785,5 @@ namespace MoonWorks.Math.Fixed
 			value.Z *= factor;
 			return value;
 		}
-
-		#endregion
 	}
 }

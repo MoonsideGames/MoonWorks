@@ -1,7 +1,5 @@
-#region License
-
 /* MoonWorks - Game Development Framework
- * Copyright 2022 Evan Hemsley
+ * Copyright 2021-2024 Evan Hemsley
  */
 
 /* Derived from code by Ethan Lee (Copyright 2009-2021).
@@ -11,37 +9,24 @@
  * Derived from code by the Mono.Xna Team (Copyright 2006).
  * Released under the MIT License. See monoxna.LICENSE for details.
  */
-
-#endregion
-
-#region Using Statements
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-
-#endregion
 
 namespace MoonWorks.Math.Fixed
 {
 	/// <summary>
 	/// Describes a fixed point 2D-vector.
 	/// </summary>
-	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
-	[StructLayout(LayoutKind.Explicit)]
 	public struct Vector2 : IEquatable<Vector2>
 	{
-		#region Public Static Properties
-
 		/// <summary>
 		/// Returns a <see cref="Vector2"/> with components 0, 0.
 		/// </summary>
 		public static Vector2 Zero
 		{
-			get
-			{
-				return zeroVector;
-			}
+			get => new Vector2(0, 0);
 		}
 
 		/// <summary>
@@ -49,10 +34,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 One
 		{
-			get
-			{
-				return unitVector;
-			}
+			get => new Vector2(1, 1);
 		}
 
 		/// <summary>
@@ -60,10 +42,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 UnitX
 		{
-			get
-			{
-				return unitXVector;
-			}
+			get => new Vector2(1, 0);
 		}
 
 		/// <summary>
@@ -71,15 +50,8 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 UnitY
 		{
-			get
-			{
-				return unitYVector;
-			}
+			get => new Vector2(0, 1);
 		}
-
-		#endregion
-
-		#region Internal Properties
 
 		internal string DebugDisplayString
 		{
@@ -92,34 +64,15 @@ namespace MoonWorks.Math.Fixed
 			}
 		}
 
-		#endregion
-
-		#region Public Fields
-
 		/// <summary>
 		/// The x coordinate of this <see cref="Vector2"/>.
 		/// </summary>
-		[FieldOffset(0)]
 		public Fix64 X;
 
 		/// <summary>
 		/// The y coordinate of this <see cref="Vector2"/>.
 		/// </summary>
-		[FieldOffset(8)]
 		public Fix64 Y;
-
-		#endregion
-
-		#region Private Static Fields
-
-		private static readonly Vector2 zeroVector = new Vector2(0, 0);
-		private static readonly Vector2 unitVector = new Vector2(1, 1);
-		private static readonly Vector2 unitXVector = new Vector2(1, 0);
-		private static readonly Vector2 unitYVector = new Vector2(0, 1);
-
-		#endregion
-
-		#region Public Constructors
 
 		/// <summary>
 		/// Constructs a 2d vector with X and Y from two values.
@@ -147,10 +100,6 @@ namespace MoonWorks.Math.Fixed
 			this.X = new Fix64(x);
 			this.Y = new Fix64(y);
 		}
-
-		#endregion
-
-		#region Public Methods
 
 		/// <summary>
 		/// Compares whether current instance is equal to specified <see cref="Object"/>.
@@ -244,10 +193,6 @@ namespace MoonWorks.Math.Fixed
 				"}"
 			);
 		}
-
-		#endregion
-
-		#region Public Static Methods
 
 		/// <summary>
 		/// Performs vector addition on <paramref name="value1"/> and <paramref name="value2"/>.
@@ -455,238 +400,6 @@ namespace MoonWorks.Math.Fixed
 		}
 
 		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="position">Source <see cref="Vector2"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <returns>Transformed <see cref="Vector2"/>.</returns>
-		public static Vector2 Transform(Vector2 position, Matrix4x4 matrix)
-		{
-			return new Vector2(
-				(position.X * matrix.M11) + (position.Y * matrix.M21) + matrix.M41,
-				(position.X * matrix.M12) + (position.Y * matrix.M22) + matrix.M42
-			);
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Quaternion"/>, representing the rotation.
-		/// </summary>
-		/// <param name="value">Source <see cref="Vector2"/>.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <returns>Transformed <see cref="Vector2"/>.</returns>
-		public static Vector2 Transform(Vector2 value, Quaternion rotation)
-		{
-			Transform(ref value, ref rotation, out value);
-			return value;
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Quaternion"/>, representing the rotation.
-		/// </summary>
-		/// <param name="value">Source <see cref="Vector2"/>.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <param name="result">Transformed <see cref="Vector2"/> as an output parameter.</param>
-		public static void Transform(
-			ref Vector2 value,
-			ref Quaternion rotation,
-			out Vector2 result
-		)
-		{
-			Fix64 two = new Fix64(2);
-			Fix64 x = two * -(rotation.Z * value.Y);
-			Fix64 y = two * (rotation.Z * value.X);
-			Fix64 z = two * (rotation.X * value.Y - rotation.Y * value.X);
-
-			result.X = value.X + x * rotation.W + (rotation.Y * z - rotation.Z * y);
-			result.Y = value.Y + y * rotation.W + (rotation.Z * x - rotation.X * z);
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of 2d-vector by the specified <see cref="Math.Matrix3x2"/>.
-		/// </summary>
-		/// <param name="position">Source <see cref="Vector2"/>.</param>
-		/// <param name="matrix">The transformation <see cref="Math.Matrix3x2"/>.</param>
-		/// <returns>Transformed <see cref="Vector2"/>.</returns>
-		public static Vector2 Transform(Vector2 position, Matrix3x2 matrix)
-		{
-			return new Vector2(
-				(position.X * matrix.M11) + (position.Y * matrix.M21) + matrix.M31,
-				(position.X * matrix.M12) + (position.Y * matrix.M22) + matrix.M32
-			);
-		}
-
-		/// <summary>
-		/// Apply transformation on all vectors within array of <see cref="Vector2"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		public static void Transform(
-			Vector2[] sourceArray,
-			ref Matrix4x4 matrix,
-			Vector2[] destinationArray
-		)
-		{
-			Transform(sourceArray, 0, ref matrix, destinationArray, 0, sourceArray.Length);
-		}
-
-		/// <summary>
-		/// Apply transformation on vectors within array of <see cref="Vector2"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector2"/> should be written.</param>
-		/// <param name="length">The number of vectors to be transformed.</param>
-		public static void Transform(
-			Vector2[] sourceArray,
-			int sourceIndex,
-			ref Matrix4x4 matrix,
-			Vector2[] destinationArray,
-			int destinationIndex,
-			int length
-		)
-		{
-			for (int x = 0; x < length; x += 1)
-			{
-				Vector2 position = sourceArray[sourceIndex + x];
-				Vector2 destination = destinationArray[destinationIndex + x];
-				destination.X = (position.X * matrix.M11) + (position.Y * matrix.M21)
-						+ matrix.M41;
-				destination.Y = (position.X * matrix.M12) + (position.Y * matrix.M22)
-						+ matrix.M42;
-				destinationArray[destinationIndex + x] = destination;
-			}
-		}
-
-		/// <summary>
-		/// Apply transformation on all vectors within array of <see cref="Vector2"/> by the specified <see cref="Quaternion"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		public static void Transform(
-			Vector2[] sourceArray,
-			ref Quaternion rotation,
-			Vector2[] destinationArray
-		)
-		{
-			Transform(
-				sourceArray,
-				0,
-				ref rotation,
-				destinationArray,
-				0,
-				sourceArray.Length
-			);
-		}
-
-		/// <summary>
-		/// Apply transformation on vectors within array of <see cref="Vector2"/> by the specified <see cref="Quaternion"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="rotation">The <see cref="Quaternion"/> which contains rotation transformation.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector2"/> should be written.</param>
-		/// <param name="length">The number of vectors to be transformed.</param>
-		public static void Transform(
-			Vector2[] sourceArray,
-			int sourceIndex,
-			ref Quaternion rotation,
-			Vector2[] destinationArray,
-			int destinationIndex,
-			int length
-		)
-		{
-			for (int i = 0; i < length; i += 1)
-			{
-				Vector2 position = sourceArray[sourceIndex + i];
-				Vector2 v;
-				Transform(ref position, ref rotation, out v);
-				destinationArray[destinationIndex + i] = v;
-			}
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of the specified normal by the specified <see cref="Matrix4x4"/>.
-		/// </summary>
-		/// <param name="normal">Source <see cref="Vector2"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <returns>Transformed normal.</returns>
-		public static Vector2 TransformNormal(Vector2 normal, Matrix4x4 matrix)
-		{
-			return new Vector2(
-				(normal.X * matrix.M11) + (normal.Y * matrix.M21),
-				(normal.X * matrix.M12) + (normal.Y * matrix.M22)
-			);
-		}
-
-		/// <summary>
-		/// Creates a new <see cref="Vector2"/> that contains a transformation of the specified normal by the specified <see cref="Math.Matrix3x2"/>.
-		/// </summary>
-		/// <param name="normal">Source <see cref="Vector2"/> which represents a normal vector.</param>
-		/// <param name="matrix">The transformation <see cref="Math.Matrix3x2"/>.</param>
-		/// <returns>Transformed normal.</returns>
-		public static Vector2 TransformNormal(Vector2 normal, Matrix3x2 matrix)
-        {
-            return new Vector2(
-                normal.X * matrix.M11 + normal.Y * matrix.M21,
-                normal.X * matrix.M12 + normal.Y * matrix.M22);
-        }
-
-		/// <summary>
-		/// Apply transformation on all normals within array of <see cref="Vector2"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		public static void TransformNormal(
-			Vector2[] sourceArray,
-			ref Matrix4x4 matrix,
-			Vector2[] destinationArray
-		)
-		{
-			TransformNormal(
-				sourceArray,
-				0,
-				ref matrix,
-				destinationArray,
-				0,
-				sourceArray.Length
-			);
-		}
-
-		/// <summary>
-		/// Apply transformation on normals within array of <see cref="Vector2"/> by the specified <see cref="Matrix4x4"/> and places the results in an another array.
-		/// </summary>
-		/// <param name="sourceArray">Source array.</param>
-		/// <param name="sourceIndex">The starting index of transformation in the source array.</param>
-		/// <param name="matrix">The transformation <see cref="Matrix4x4"/>.</param>
-		/// <param name="destinationArray">Destination array.</param>
-		/// <param name="destinationIndex">The starting index in the destination array, where the first <see cref="Vector2"/> should be written.</param>
-		/// <param name="length">The number of normals to be transformed.</param>
-		public static void TransformNormal(
-			Vector2[] sourceArray,
-			int sourceIndex,
-			ref Matrix4x4 matrix,
-			Vector2[] destinationArray,
-			int destinationIndex,
-			int length
-		)
-		{
-			for (int i = 0; i < length; i += 1)
-			{
-				Vector2 position = sourceArray[sourceIndex + i];
-				Vector2 result;
-				result.X = (position.X * matrix.M11) + (position.Y * matrix.M21);
-				result.Y = (position.X * matrix.M12) + (position.Y * matrix.M22);
-				destinationArray[destinationIndex + i] = result;
-			}
-		}
-
-		/// <summary>
 		/// Rotates a Vector2 by an angle.
 		/// </summary>
 		/// <param name="vector">The vector to rotate.</param>
@@ -698,10 +411,6 @@ namespace MoonWorks.Math.Fixed
 				vector.X * Fix64.Sin(angle) + vector.Y * Fix64.Cos(angle)
 			);
 		}
-
-		#endregion
-
-		#region Public Static Operators
 
 		/// <summary>
 		/// Inverts values in the specified <see cref="Vector2"/>.
@@ -829,7 +538,5 @@ namespace MoonWorks.Math.Fixed
 			value1.Y *= factor;
 			return value1;
 		}
-
-		#endregion
 	}
 }

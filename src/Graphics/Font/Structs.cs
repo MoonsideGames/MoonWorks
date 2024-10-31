@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using MoonWorks.Math.Float;
+using System.Numerics;
 
 namespace MoonWorks.Graphics.Font
 {
