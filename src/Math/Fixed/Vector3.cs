@@ -1,7 +1,5 @@
-#region License
-
 /* MoonWorks - Game Development Framework
- * Copyright 2022 Evan Hemsley
+ * Copyright 2021-2024 Evan Hemsley
  */
 
 /* Derived from code by Ethan Lee (Copyright 2009-2021).
@@ -12,37 +10,25 @@
  * Released under the MIT License. See monoxna.LICENSE for details.
  */
 
-#endregion
-
-#region Using Statements
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-
-#endregion
 
 namespace MoonWorks.Math.Fixed
 {
 	/// <summary>
 	/// Describes a fixed point 3D-vector.
 	/// </summary>
-	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
-	[StructLayout(LayoutKind.Explicit)]
 	public struct Vector3 : IEquatable<Vector3>
 	{
-		#region Public Static Properties
-
 		/// <summary>
 		/// Returns a <see cref="Vector3"/> with components 0, 0, 0.
 		/// </summary>
 		public static Vector3 Zero
 		{
-			get
-			{
-				return zero;
-			}
+			get => new Vector3(0, 0, 0);
 		}
 
 		/// <summary>
@@ -50,10 +36,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 One
 		{
-			get
-			{
-				return one;
-			}
+			get => new Vector3(1, 1, 1);
 		}
 
 		/// <summary>
@@ -61,10 +44,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitX
 		{
-			get
-			{
-				return unitX;
-			}
+			get => new Vector3(1, 0, 0);
 		}
 
 		/// <summary>
@@ -72,10 +52,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitY
 		{
-			get
-			{
-				return unitY;
-			}
+			get => new Vector3(0, 1, 0);
 		}
 
 		/// <summary>
@@ -83,81 +60,8 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector3 UnitZ
 		{
-			get
-			{
-				return unitZ;
-			}
+			get => new Vector3(0, 0, 1);
 		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 1, 0.
-		/// </summary>
-		public static Vector3 Up
-		{
-			get
-			{
-				return up;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, -1, 0.
-		/// </summary>
-		public static Vector3 Down
-		{
-			get
-			{
-				return down;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 1, 0, 0.
-		/// </summary>
-		public static Vector3 Right
-		{
-			get
-			{
-				return right;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components -1, 0, 0.
-		/// </summary>
-		public static Vector3 Left
-		{
-			get
-			{
-				return left;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 0, -1.
-		/// </summary>
-		public static Vector3 Forward
-		{
-			get
-			{
-				return forward;
-			}
-		}
-
-		/// <summary>
-		/// Returns a <see cref="Vector3"/> with components 0, 0, 1.
-		/// </summary>
-		public static Vector3 Backward
-		{
-			get
-			{
-				return backward;
-			}
-		}
-
-		#endregion
-
-		#region Internal Properties
 
 		internal string DebugDisplayString
 		{
@@ -171,47 +75,20 @@ namespace MoonWorks.Math.Fixed
 			}
 		}
 
-		#endregion
-
-		#region Private Static Fields
-
-		private static Vector3 zero = new Vector3(0, 0, 0); // Not readonly for performance -flibit
-		private static readonly Vector3 one = new Vector3(1, 1, 1);
-		private static readonly Vector3 unitX = new Vector3(1, 0, 0);
-		private static readonly Vector3 unitY = new Vector3(0, 1, 0);
-		private static readonly Vector3 unitZ = new Vector3(0, 0, 1);
-		private static readonly Vector3 up = new Vector3(0, 1, 0);
-		private static readonly Vector3 down = new Vector3(0, -1, 0);
-		private static readonly Vector3 right = new Vector3(1, 0, 0);
-		private static readonly Vector3 left = new Vector3(-1, 0, 0);
-		private static readonly Vector3 forward = new Vector3(0, 0, -1);
-		private static readonly Vector3 backward = new Vector3(0, 0, 1);
-
-		#endregion
-
-		#region Public Fields
-
 		/// <summary>
 		/// The x coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(0)]
 		public Fix64 X;
 
 		/// <summary>
 		/// The y coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(8)]
 		public Fix64 Y;
 
 		/// <summary>
 		/// The z coordinate of this <see cref="Vector3"/>.
 		/// </summary>
-		[FieldOffset(16)]
 		public Fix64 Z;
-
-		#endregion
-
-		#region Public Constructors
 
 		/// <summary>
 		/// Constructs a 3d vector with X, Y and Z from three values.
@@ -255,10 +132,6 @@ namespace MoonWorks.Math.Fixed
 			this.Y = value.Y;
 			this.Z = z;
 		}
-
-		#endregion
-
-		#region Public Methods
 
 		/// <summary>
 		/// Compares whether current instance is equal to specified <see cref="Object"/>.
@@ -326,10 +199,6 @@ namespace MoonWorks.Math.Fixed
 			sb.Append("}");
 			return sb.ToString();
 		}
-
-		#endregion
-
-		#region Public Static Methods
 
 		/// <summary>
 		/// Performs vector addition on <paramref name="value1"/> and <paramref name="value2"/>.
@@ -784,10 +653,6 @@ namespace MoonWorks.Math.Fixed
 			result.Z = value1.Z - value2.Z;
 		}
 
-		#endregion
-
-		#region Public Static Operators
-
 		/// <summary>
 		/// Compares whether two <see cref="Vector3"/> instances are equal.
 		/// </summary>
@@ -921,7 +786,5 @@ namespace MoonWorks.Math.Fixed
 			value.Z *= factor;
 			return value;
 		}
-
-		#endregion
 	}
 }

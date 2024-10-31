@@ -1,7 +1,5 @@
-#region License
-
 /* MoonWorks - Game Development Framework
- * Copyright 2022 Evan Hemsley
+ * Copyright 2021-2024 Evan Hemsley
  */
 
 /* Derived from code by Ethan Lee (Copyright 2009-2021).
@@ -11,37 +9,24 @@
  * Derived from code by the Mono.Xna Team (Copyright 2006).
  * Released under the MIT License. See monoxna.LICENSE for details.
  */
-
-#endregion
-
-#region Using Statements
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-
-#endregion
 
 namespace MoonWorks.Math.Fixed
 {
 	/// <summary>
 	/// Describes a fixed point 2D-vector.
 	/// </summary>
-	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
-	[StructLayout(LayoutKind.Explicit)]
 	public struct Vector2 : IEquatable<Vector2>
 	{
-		#region Public Static Properties
-
 		/// <summary>
 		/// Returns a <see cref="Vector2"/> with components 0, 0.
 		/// </summary>
 		public static Vector2 Zero
 		{
-			get
-			{
-				return zeroVector;
-			}
+			get => new Vector2(0, 0);
 		}
 
 		/// <summary>
@@ -49,10 +34,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 One
 		{
-			get
-			{
-				return unitVector;
-			}
+			get => new Vector2(1, 1);
 		}
 
 		/// <summary>
@@ -60,10 +42,7 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 UnitX
 		{
-			get
-			{
-				return unitXVector;
-			}
+			get => new Vector2(1, 0);
 		}
 
 		/// <summary>
@@ -71,15 +50,8 @@ namespace MoonWorks.Math.Fixed
 		/// </summary>
 		public static Vector2 UnitY
 		{
-			get
-			{
-				return unitYVector;
-			}
+			get => new Vector2(0, 1);
 		}
-
-		#endregion
-
-		#region Internal Properties
 
 		internal string DebugDisplayString
 		{
@@ -92,34 +64,15 @@ namespace MoonWorks.Math.Fixed
 			}
 		}
 
-		#endregion
-
-		#region Public Fields
-
 		/// <summary>
 		/// The x coordinate of this <see cref="Vector2"/>.
 		/// </summary>
-		[FieldOffset(0)]
 		public Fix64 X;
 
 		/// <summary>
 		/// The y coordinate of this <see cref="Vector2"/>.
 		/// </summary>
-		[FieldOffset(8)]
 		public Fix64 Y;
-
-		#endregion
-
-		#region Private Static Fields
-
-		private static readonly Vector2 zeroVector = new Vector2(0, 0);
-		private static readonly Vector2 unitVector = new Vector2(1, 1);
-		private static readonly Vector2 unitXVector = new Vector2(1, 0);
-		private static readonly Vector2 unitYVector = new Vector2(0, 1);
-
-		#endregion
-
-		#region Public Constructors
 
 		/// <summary>
 		/// Constructs a 2d vector with X and Y from two values.
@@ -147,10 +100,6 @@ namespace MoonWorks.Math.Fixed
 			this.X = new Fix64(x);
 			this.Y = new Fix64(y);
 		}
-
-		#endregion
-
-		#region Public Methods
 
 		/// <summary>
 		/// Compares whether current instance is equal to specified <see cref="Object"/>.
@@ -244,10 +193,6 @@ namespace MoonWorks.Math.Fixed
 				"}"
 			);
 		}
-
-		#endregion
-
-		#region Public Static Methods
 
 		/// <summary>
 		/// Performs vector addition on <paramref name="value1"/> and <paramref name="value2"/>.
@@ -467,10 +412,6 @@ namespace MoonWorks.Math.Fixed
 			);
 		}
 
-		#endregion
-
-		#region Public Static Operators
-
 		/// <summary>
 		/// Inverts values in the specified <see cref="Vector2"/>.
 		/// </summary>
@@ -597,7 +538,5 @@ namespace MoonWorks.Math.Fixed
 			value1.Y *= factor;
 			return value1;
 		}
-
-		#endregion
 	}
 }
