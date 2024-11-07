@@ -140,18 +140,12 @@ public static class ShaderCross
 		}
 	}
 
-	public static bool Quit()
+	public static void Quit()
 	{
 		if (Initialized)
 		{
-			if (!SDL_ShaderCross.SDL_ShaderCross_Quit())
-			{
-				Logger.LogError("Failed to quit ShaderCross!");
-				return false;
-			}
+			SDL_ShaderCross.SDL_ShaderCross_Quit();
 		}
-
 		Initialized = false;
-		return true;
 	}
 }

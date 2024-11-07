@@ -1678,7 +1678,7 @@ internal static partial class SDL_ShaderCross
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_ShaderCross_Quit();
+	public static partial void SDL_ShaderCross_Quit();
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]

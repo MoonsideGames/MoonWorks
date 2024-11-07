@@ -45,7 +45,7 @@ public class GraphicsDevice : IDisposable
 	public TextureFormat SupportedDepthStencilFormat { get; private set; }
 
 	internal unsafe GraphicsDevice(
-		ShaderFormat shaderFormats, // TODO: replace with enum flags
+		ShaderFormat shaderFormats,
 		bool debugMode,
 		string backendName = null
 	) {
@@ -54,11 +54,33 @@ public class GraphicsDevice : IDisposable
 			throw new System.Exception("Need at least one shader format!");
 		}
 
-		Handle = SDL.SDL_CreateGPUDevice(
-			shaderFormats,
-			debugMode,
-			backendName
-		);
+		var properties = SDL3.SDL.SDL_CreateProperties();
+		SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.debugmode", debugMode);
+		SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.name", backendName);
+		SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.legacymode", true);
+
+		if ((shaderFormats & ShaderFormat.Private) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.private", true);
+		}
+		if ((shaderFormats & ShaderFormat.SPIRV) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.spirv", true);
+		}
+		if ((shaderFormats & ShaderFormat.DXBC) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.dxbc", true);
+		}
+		if ((shaderFormats & ShaderFormat.DXIL) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.dxil", true);
+		}
+		if ((shaderFormats & ShaderFormat.MSL) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.msl", true);
+		}
+		if ((shaderFormats & ShaderFormat.MetalLib) != 0) {
+			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.metallib", true);
+		}
+
+		Handle = SDL.SDL_CreateGPUDeviceWithProperties(properties);
+
+		SDL3.SDL.SDL_DestroyProperties(properties);
 
 		if (Handle == IntPtr.Zero)
 		{
