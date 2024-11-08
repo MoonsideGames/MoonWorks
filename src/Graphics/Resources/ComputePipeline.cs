@@ -104,41 +104,21 @@ public class ComputePipeline : SDLGPUResource
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		in ShaderCross.ComputePipelineCreateInfo createInfo
+		in ShaderCross.ComputeResourceInfo resourceInfo
 	) {
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
 
-		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
-		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-		var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
-		var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
-		buffer[byteCount] = 0;
-
-		INTERNAL_ComputePipelineCreateInfo pipelineCreateInfo;
-		pipelineCreateInfo.CodeSize = (nuint) stream.Length;
-		pipelineCreateInfo.Code = (byte*) bytecodeBuffer;
-		pipelineCreateInfo.EntryPoint = (byte*) entryPointBuffer;
-		pipelineCreateInfo.Format = ShaderFormat.Private; // this will be replaced
-		pipelineCreateInfo.NumSamplers = createInfo.NumSamplers;
-		pipelineCreateInfo.NumReadonlyStorageTextures = createInfo.NumReadonlyStorageTextures;
-		pipelineCreateInfo.NumReadonlyStorageBuffers = createInfo.NumReadonlyStorageBuffers;
-		pipelineCreateInfo.NumReadWriteStorageTextures = createInfo.NumReadWriteStorageTextures;
-		pipelineCreateInfo.NumReadWriteStorageBuffers = createInfo.NumReadWriteStorageBuffers;
-		pipelineCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
-		pipelineCreateInfo.ThreadCountX = createInfo.ThreadCountX;
-		pipelineCreateInfo.ThreadCountY = createInfo.ThreadCountY;
-		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
-		pipelineCreateInfo.Props = createInfo.Props;
-
 		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 			device.Handle,
-			pipelineCreateInfo
+			bytecodeSpan,
+			(nuint) stream.Length,
+			entryPoint,
+			resourceInfo.ToNative()
 		);
 
 		NativeMemory.Free(bytecodeBuffer);
-		NativeMemory.Free(entryPointBuffer);
 
 		if (computePipelineHandle == nint.Zero)
 		{
@@ -149,12 +129,12 @@ public class ComputePipeline : SDLGPUResource
 		var computePipeline = new ComputePipeline(device)
 		{
 			Handle = computePipelineHandle,
-			NumSamplers = pipelineCreateInfo.NumSamplers,
-			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
-			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
-			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+			NumSamplers = resourceInfo.NumSamplers,
+			NumReadOnlyStorageTextures = resourceInfo.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = resourceInfo.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = resourceInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = resourceInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = resourceInfo.NumUniformBuffers
 		};
 
 		return computePipeline;
@@ -167,43 +147,21 @@ public class ComputePipeline : SDLGPUResource
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		in ShaderCross.ComputePipelineCreateInfo createInfo
+		in ShaderCross.ComputeResourceInfo resourceInfo
 	) {
-		byte* bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
-		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
-		stream.ReadExactly(bytecodeSpan);
-		bytecodeBuffer[(int)stream.Length] = 0; // null-terminate
-
-		var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
-		var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-		var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
-		var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
-		buffer[byteCount] = 0;
-
-		INTERNAL_ComputePipelineCreateInfo pipelineCreateInfo;
-		pipelineCreateInfo.CodeSize = (nuint) stream.Length;
-		pipelineCreateInfo.Code = (byte*) bytecodeBuffer;
-		pipelineCreateInfo.EntryPoint = (byte*) entryPointBuffer;
-		pipelineCreateInfo.Format = ShaderFormat.Private; // this will be replaced
-		pipelineCreateInfo.NumSamplers = createInfo.NumSamplers;
-		pipelineCreateInfo.NumReadonlyStorageTextures = createInfo.NumReadonlyStorageTextures;
-		pipelineCreateInfo.NumReadonlyStorageBuffers = createInfo.NumReadonlyStorageBuffers;
-		pipelineCreateInfo.NumReadWriteStorageTextures = createInfo.NumReadWriteStorageTextures;
-		pipelineCreateInfo.NumReadWriteStorageBuffers = createInfo.NumReadWriteStorageBuffers;
-		pipelineCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
-		pipelineCreateInfo.ThreadCountX = createInfo.ThreadCountX;
-		pipelineCreateInfo.ThreadCountY = createInfo.ThreadCountY;
-		pipelineCreateInfo.ThreadCountZ = createInfo.ThreadCountZ;
-		pipelineCreateInfo.Props = createInfo.Props;
+		byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
+		var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
+		stream.ReadExactly(hlslSpan);
+		hlslBuffer[(int)stream.Length] = 0; // ensure null-terminated
 
 		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
 			device.Handle,
-			pipelineCreateInfo,
-			bytecodeSpan
+			hlslSpan,
+			entryPoint,
+			resourceInfo.ToNative()
 		);
 
-		NativeMemory.Free(bytecodeBuffer);
-		NativeMemory.Free(entryPointBuffer);
+		NativeMemory.Free(hlslBuffer);
 
 		if (computePipelineHandle == nint.Zero)
 		{
@@ -214,12 +172,12 @@ public class ComputePipeline : SDLGPUResource
 		var computePipeline = new ComputePipeline(device)
 		{
 			Handle = computePipelineHandle,
-			NumSamplers = pipelineCreateInfo.NumSamplers,
-			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
-			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
-			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+			NumSamplers = resourceInfo.NumSamplers,
+			NumReadOnlyStorageTextures = resourceInfo.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = resourceInfo.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = resourceInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = resourceInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = resourceInfo.NumUniformBuffers
 		};
 
 		return computePipeline;

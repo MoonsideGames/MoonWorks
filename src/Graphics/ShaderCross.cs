@@ -22,30 +22,40 @@ public static class ShaderCross
 		Six
 	}
 
-	public struct ShaderCreateInfo
-	{
-		public ShaderFormat Format;
-		public ShaderStage Stage;
-		public uint NumSamplers;
-		public uint NumStorageTextures;
-		public uint NumStorageBuffers;
-		public uint NumUniformBuffers;
-		public uint Props;
+	public readonly record struct ShaderResourceInfo(
+		uint NumSamplers,
+		uint NumStorageTextures,
+		uint NumStorageBuffers,
+		uint NumUniformBuffers
+	) {
+		internal SDL_ShaderCross.ShaderResourceInfo ToNative() => new(
+			NumSamplers,
+			NumStorageTextures,
+			NumStorageBuffers,
+			NumUniformBuffers);
 	}
 
-	public struct ComputePipelineCreateInfo
-	{
-		public ShaderFormat Format;
-		public uint NumSamplers;
-		public uint NumReadonlyStorageTextures;
-		public uint NumReadonlyStorageBuffers;
-		public uint NumReadWriteStorageTextures;
-		public uint NumReadWriteStorageBuffers;
-		public uint NumUniformBuffers;
-		public uint ThreadCountX;
-		public uint ThreadCountY;
-		public uint ThreadCountZ;
-		public uint Props;
+	public readonly record struct ComputeResourceInfo(
+		uint NumSamplers,
+		uint NumReadOnlyStorageTextures,
+		uint NumReadOnlyStorageBuffers,
+		uint NumReadWriteStorageTextures,
+		uint NumReadWriteStorageBuffers,
+		uint NumUniformBuffers,
+		uint ThreadCountX,
+		uint ThreadCountY,
+		uint ThreadCountZ
+	) {
+		internal SDL_ShaderCross.ComputeResourceInfo ToNative() => new(
+			NumSamplers,
+			NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers,
+			NumUniformBuffers,
+			ThreadCountX,
+			ThreadCountY,
+			ThreadCountZ);
 	}
 
 	public static Graphics.ShaderFormat SPIRVDestinationFormats => SDL_ShaderCross.SDL_ShaderCross_GetSPIRVShaderFormats();
@@ -72,14 +82,18 @@ public static class ShaderCross
 		GraphicsDevice device,
 		string filepath,
 		string entrypoint,
-		in ShaderCreateInfo shaderCreateInfo
+		ShaderFormat shaderFormat,
+		ShaderStage shaderStage,
+		in ShaderResourceInfo resourceInfo = new ShaderResourceInfo()
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
 		return Create(
 			device,
 			stream,
 			entrypoint,
-			shaderCreateInfo
+			shaderFormat,
+			shaderStage,
+			resourceInfo
 		);
 	}
 
@@ -87,15 +101,17 @@ public static class ShaderCross
 		GraphicsDevice device,
 		Stream stream,
 		string entrypoint,
-		in ShaderCreateInfo shaderCreateInfo
+		ShaderFormat shaderFormat,
+		ShaderStage shaderStage,
+		in ShaderResourceInfo resourceInfo = new ShaderResourceInfo()
 	) {
-		if (shaderCreateInfo.Format == ShaderFormat.SPIRV)
+		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return Shader.CreateFromSPIRV(device, stream, entrypoint, shaderCreateInfo);
+			return Shader.CreateFromSPIRV(device, stream, entrypoint, shaderStage, resourceInfo);
 		}
-		else if (shaderCreateInfo.Format == ShaderFormat.HLSL)
+		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return Shader.CreateFromHLSL(device, stream, entrypoint, shaderCreateInfo);
+			return Shader.CreateFromHLSL(device, stream, entrypoint, shaderStage, resourceInfo);
 		}
 		else
 		{
@@ -108,14 +124,16 @@ public static class ShaderCross
 		GraphicsDevice device,
 		string filepath,
 		string entrypoint,
-		in ComputePipelineCreateInfo pipelineCreateInfo
+		ShaderFormat shaderFormat,
+		in ComputeResourceInfo resourceInfo
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
 		return Create(
 			device,
 			stream,
 			entrypoint,
-			pipelineCreateInfo
+			shaderFormat,
+			resourceInfo
 		);
 	}
 
@@ -123,15 +141,16 @@ public static class ShaderCross
 		GraphicsDevice device,
 		Stream stream,
 		string entrypoint,
-		in ComputePipelineCreateInfo pipelineCreateInfo
+		ShaderFormat shaderFormat,
+		in ComputeResourceInfo resourceInfo
 	) {
-		if (pipelineCreateInfo.Format == ShaderFormat.SPIRV)
+		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return ComputePipeline.CreateFromSPIRV(device, stream, entrypoint, pipelineCreateInfo);
+			return ComputePipeline.CreateFromSPIRV(device, stream, entrypoint, resourceInfo);
 		}
-		else if (pipelineCreateInfo.Format == ShaderFormat.HLSL)
+		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, pipelineCreateInfo);
+			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, resourceInfo);
 		}
 		else
 		{

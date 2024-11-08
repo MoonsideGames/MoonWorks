@@ -103,37 +103,23 @@ namespace MoonWorks.Graphics
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			in ShaderCross.ShaderCreateInfo createInfo
+			ShaderStage shaderStage,
+			in ShaderCross.ShaderResourceInfo resourceInfo
 		) {
 			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
 
-			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
-			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
-			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
-			buffer[byteCount] = 0;
-
-			INTERNAL_ShaderCreateInfo shaderCreateInfo;
-			shaderCreateInfo.CodeSize = (nuint) stream.Length;
-			shaderCreateInfo.Code = (byte*) bytecodeBuffer;
-			shaderCreateInfo.EntryPoint = (byte*) entryPointBuffer;
-			shaderCreateInfo.Format = ShaderFormat.SPIRV;
-			shaderCreateInfo.Stage = createInfo.Stage;
-			shaderCreateInfo.NumSamplers = createInfo.NumSamplers;
-			shaderCreateInfo.NumStorageTextures = createInfo.NumStorageTextures;
-			shaderCreateInfo.NumStorageBuffers = createInfo.NumStorageBuffers;
-			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
-			shaderCreateInfo.Props = createInfo.Props;
-
 			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 				device.Handle,
-				shaderCreateInfo
+				bytecodeSpan,
+				(nuint) stream.Length,
+				entryPoint,
+				shaderStage,
+				resourceInfo.ToNative()
 			);
 
 			NativeMemory.Free(bytecodeBuffer);
-			NativeMemory.Free(entryPointBuffer);
 
 			if (shaderModule == nint.Zero)
 			{
@@ -144,10 +130,10 @@ namespace MoonWorks.Graphics
 			var shader = new Shader(device)
 			{
 				Handle = shaderModule,
-				NumSamplers = createInfo.NumSamplers,
-				NumStorageTextures = createInfo.NumStorageTextures,
-				NumStorageBuffers = createInfo.NumStorageBuffers,
-				NumUniformBuffers = createInfo.NumUniformBuffers
+				NumSamplers = resourceInfo.NumSamplers,
+				NumStorageTextures = resourceInfo.NumStorageTextures,
+				NumStorageBuffers = resourceInfo.NumStorageBuffers,
+				NumUniformBuffers = resourceInfo.NumUniformBuffers
 			};
 
 			return shader;
@@ -160,40 +146,23 @@ namespace MoonWorks.Graphics
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			in ShaderCross.ShaderCreateInfo createInfo
+			ShaderStage shaderStage,
+			in ShaderCross.ShaderResourceInfo resourceInfo
 		) {
-			byte* bytecodeBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
-			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
-			stream.ReadExactly(bytecodeSpan);
-			bytecodeBuffer[(int)stream.Length] = 0; // null-terminate
-
-			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
-			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
-			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
-			buffer[byteCount] = 0;
-
-			INTERNAL_ShaderCreateInfo shaderCreateInfo;
-			shaderCreateInfo.CodeSize = (nuint) stream.Length;
-			shaderCreateInfo.Code = (byte*) bytecodeBuffer;
-			shaderCreateInfo.EntryPoint = (byte*) entryPointBuffer;
-			shaderCreateInfo.Format = ShaderFormat.Private; // this gets replaced
-			shaderCreateInfo.Stage = createInfo.Stage;
-			shaderCreateInfo.NumSamplers = createInfo.NumSamplers;
-			shaderCreateInfo.NumStorageTextures = createInfo.NumStorageTextures;
-			shaderCreateInfo.NumStorageBuffers = createInfo.NumStorageBuffers;
-			shaderCreateInfo.NumUniformBuffers = createInfo.NumUniformBuffers;
-			shaderCreateInfo.Props = createInfo.Props;
+			byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
+			var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
+			stream.ReadExactly(hlslSpan);
+			hlslBuffer[(int)stream.Length] = 0; // ensure null-terminated
 
 			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
 				device.Handle,
-				shaderCreateInfo,
-				bytecodeSpan,
-				createInfo.Stage
+				hlslSpan,
+				entryPoint,
+				shaderStage,
+				resourceInfo.ToNative()
 			);
 
-			NativeMemory.Free(bytecodeBuffer);
-			NativeMemory.Free(entryPointBuffer);
+			NativeMemory.Free(hlslBuffer);
 
 			if (shaderModule == nint.Zero)
 			{
@@ -204,10 +173,10 @@ namespace MoonWorks.Graphics
 			var shader = new Shader(device)
 			{
 				Handle = shaderModule,
-				NumSamplers = createInfo.NumSamplers,
-				NumStorageTextures = createInfo.NumStorageTextures,
-				NumStorageBuffers = createInfo.NumStorageBuffers,
-				NumUniformBuffers = createInfo.NumUniformBuffers
+				NumSamplers = resourceInfo.NumSamplers,
+				NumStorageTextures = resourceInfo.NumStorageTextures,
+				NumStorageBuffers = resourceInfo.NumStorageBuffers,
+				NumUniformBuffers = resourceInfo.NumUniformBuffers
 			};
 
 			return shader;
