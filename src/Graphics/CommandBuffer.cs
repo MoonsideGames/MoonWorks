@@ -172,14 +172,14 @@ public class CommandBuffer
 	/// All render state, resource binding, and draw commands must be made within a render pass.
 	/// It is an error to call this during any kind of pass.
 	/// </summary>
-	/// <param name="colorTargetInfo">The color attachment to use in the render pass.</param>
+	/// <param name="colorTargetInfos">The color targets to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfo
+		params Span<ColorTargetInfo> colorTargetInfos
 	) {
 		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			[colorTargetInfo],
-			1,
+			colorTargetInfos,
+			(uint) colorTargetInfos.Length,
 			Unsafe.NullRef<DepthStencilTargetInfo>()
 		);
 
@@ -198,216 +198,26 @@ public class CommandBuffer
 	/// <summary>
 	/// Begins a render pass.
 	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo],
-			2,
-			Unsafe.NullRef<DepthStencilTargetInfo>()
-		);
-
-		if (renderPassHandle == IntPtr.Zero)
-		{
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			return null;
-		}
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo,
-		in ColorTargetInfo colorTargetInfoThree
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree],
-			3,
-			Unsafe.NullRef<DepthStencilTargetInfo>()
-		);
-
-		if (renderPassHandle == IntPtr.Zero)
-		{
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			return null;
-		}
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoFour">The four color attachment to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo,
-		in ColorTargetInfo colorTargetInfoThree,
-		in ColorTargetInfo colorTargetInfoFour
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree, colorTargetInfoFour],
-			4,
-			Unsafe.NullRef<DepthStencilTargetInfo>()
-		);
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
+	/// It is an error to call this during any kind of pass.
 	/// </summary>
 	/// <param name="depthStencilTargetInfo">The depth stencil target to use in the render pass.</param>
+	/// <param name="colorTargetInfos">The color targets to use in the render pass.</param>
 	public unsafe RenderPass BeginRenderPass(
-		in DepthStencilTargetInfo depthStencilTargetInfo
+		in DepthStencilTargetInfo depthStencilTargetInfo,
+		params Span<ColorTargetInfo> colorTargetInfos
 	) {
 		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
-			[],
-			0,
+			colorTargetInfos,
+			(uint) colorTargetInfos.Length,
 			depthStencilTargetInfo
 		);
 
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="depthStencilTargetInfo">The depth stencil target info to use in the render pass.</param>
-	/// <param name="colorTargetInfo">The color target info to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfo,
-		in DepthStencilTargetInfo depthStencilTargetInfo
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfo],
-			1,
-			depthStencilTargetInfo
-		);
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="depthStencilTargetInfo">The depth stencil target info to use in the render pass.</param>
-	/// <param name="colorTargetInfoOne">The first color target info to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color target info to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo,
-		in DepthStencilTargetInfo depthStencilTargetInfo
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo],
-			2,
-			depthStencilTargetInfo
-		);
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
-	/// <param name="depthStencilTargetInfo">The depth stencil attachment to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo,
-		in ColorTargetInfo colorTargetInfoThree,
-		in DepthStencilTargetInfo depthStencilTargetInfo
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree],
-			3,
-			depthStencilTargetInfo
-		);
-
-		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
-
-		return renderPass;
-	}
-
-	/// <summary>
-	/// Begins a render pass.
-	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this after calling BeginRenderPass but before calling EndRenderPass.
-	/// </summary>
-	/// <param name="colorTargetInfoOne">The first color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoTwo">The second color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoThree">The third color attachment to use in the render pass.</param>
-	/// <param name="colorTargetInfoFour">The four color attachment to use in the render pass.</param>
-	/// <param name="depthStencilTargetInfo">The depth stencil attachment to use in the render pass.</param>
-	public unsafe RenderPass BeginRenderPass(
-		in ColorTargetInfo colorTargetInfoOne,
-		in ColorTargetInfo colorTargetInfoTwo,
-		in ColorTargetInfo colorTargetInfoThree,
-		in ColorTargetInfo colorTargetInfoFour,
-		in DepthStencilTargetInfo depthStencilTargetInfo
-	) {
-		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
-			Handle,
-			[colorTargetInfoOne, colorTargetInfoTwo, colorTargetInfoThree, colorTargetInfoFour],
-			4,
-			depthStencilTargetInfo
-		);
+		if (renderPassHandle == IntPtr.Zero)
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
+		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
 		renderPass.SetHandle(renderPassHandle);

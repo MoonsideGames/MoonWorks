@@ -176,11 +176,11 @@ namespace MoonWorks.Graphics.Font
 			commandBuffer.PushVertexUniformData(transformMatrix);
 			commandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
 
-			renderPass.BindFragmentSampler(new TextureSamplerBinding(
+			renderPass.BindFragmentSamplers(new TextureSamplerBinding(
 				CurrentFont.Texture,
 				GraphicsDevice.LinearSampler
 			));
-			renderPass.BindVertexBuffer(VertexBuffer);
+			renderPass.BindVertexBuffers(VertexBuffer);
 			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
 
 			renderPass.DrawIndexedPrimitives(

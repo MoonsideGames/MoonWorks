@@ -1,4 +1,4 @@
-using SDL3;
+using System;
 
 namespace MoonWorks.Graphics;
 
@@ -51,19 +51,50 @@ public class RenderPass
 	/// <summary>
 	/// Binds vertex buffers to be used by subsequent draw calls.
 	/// </summary>
-	/// <param name="bufferBinding">Buffer to bind and associated offset.</param>
-	/// <param name="firstBinding">The index of the first vertex input binding whose state is updated by the command.</param>
-	public unsafe void BindVertexBuffer(
-		in BufferBinding bufferBinding,
-		uint firstBinding = 0
+	/// <param name="slot">The index of the first vertex input binding whose state is updated by the command.</param>
+	/// <param name="bufferBindings">Buffers to bind with associated offsets.</param>
+	public void BindVertexBuffers(
+		uint slot,
+		params Span<BufferBinding> bufferBindings
 	) {
 		SDL_GPU.SDL_BindGPUVertexBuffers(
 			Handle,
-			firstBinding,
-			[bufferBinding],
-			1
+			slot,
+			bufferBindings,
+			(uint) bufferBindings.Length
 		);
 	}
+
+	/// <summary>
+	/// Binds vertex buffers to be used by subsequent draw calls.
+	/// </summary>
+	/// <param name="slot">The index of the first vertex input binding whose state is updated by the command.</param>
+	/// <param name="bufferBindings">Buffers to bind with associated offsets.</param>
+	public void BindVertexBuffers(
+		uint slot,
+		params Span<Buffer> buffers
+	) {
+		Span<BufferBinding> bufferBindings = stackalloc BufferBinding[buffers.Length];
+
+		for (var i = 0; i < bufferBindings.Length; i += 1) {
+			bufferBindings[i].Buffer = buffers[i].Handle;
+			bufferBindings[i].Offset = 0;
+		}
+
+		BindVertexBuffers(0, bufferBindings);
+	}
+
+	/// <summary>
+	/// Binds vertex buffers starting at slot 0.
+	/// </summary>
+	/// <param name="bufferBindings">Buffers to bind with associated offsets.</param>
+	public void BindVertexBuffers(params Span<BufferBinding> bufferBindings) => BindVertexBuffers(0, bufferBindings);
+
+	/// <summary>
+	/// Binds vertex buffers starting at slot 0.
+	/// </summary>
+	/// <param name="bufferBindings">Buffers to bind with associated offsets.</param>
+	public void BindVertexBuffers(params Span<Buffer> buffers) => BindVertexBuffers(0, buffers);
 
 	/// <summary>
 	/// Binds an index buffer to be used by subsequent draw calls.
@@ -71,7 +102,7 @@ public class RenderPass
 	/// <param name="indexBuffer">The index buffer to bind.</param>
 	/// <param name="indexElementSize">The size in bytes of the index buffer elements.</param>
 	/// <param name="offset">The offset index for the buffer.</param>
-	public unsafe void BindIndexBuffer(
+	public void BindIndexBuffer(
 		BufferBinding bufferBinding,
 		IndexElementSize indexElementSize
 	) {
@@ -83,80 +114,166 @@ public class RenderPass
 	}
 
 	/// <summary>
-	/// Binds samplers to be used by the vertex shader.
+	/// Binds texture-sampler pairs to the vertex shader.
 	/// </summary>
-	/// <param name="textureSamplerBindings">The texture-sampler to bind.</param>
-	public unsafe void BindVertexSampler(
-		in TextureSamplerBinding textureSamplerBinding,
-		uint slot = 0
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+	public void BindVertexSamplers(
+		uint slot,
+		params Span<TextureSamplerBinding> textureSamplerBindings
 	) {
 		SDL_GPU.SDL_BindGPUVertexSamplers(
 			Handle,
 			slot,
-			[textureSamplerBinding],
-			1
+			textureSamplerBindings,
+			(uint) textureSamplerBindings.Length
 		);
 	}
 
-	public unsafe void BindVertexStorageTexture(
-		Texture texture,
-		uint slot = 0
+	/// <summary>
+	/// Binds texture-sampler pairs to the vertex shader starting at slot 0.
+	/// </summary>
+	/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+	public void BindVertexSamplers(params Span<TextureSamplerBinding> textureSamplerBindings) => BindVertexSamplers(0, textureSamplerBindings);
+
+	/// <summary>
+	/// Binds storage textures to the vertex shader.
+	/// </summary>
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="textures">The textures to bind.</param>
+	public void BindVertexStorageTextures(
+		uint slot,
+		params Span<Texture> textures
 	) {
+		Span<IntPtr> handlePtr = stackalloc nint[textures.Length];
+
+		for (var i = 0; i < textures.Length; i += 1) {
+			handlePtr[i] = textures[i].Handle;
+		}
+
 		SDL_GPU.SDL_BindGPUVertexStorageTextures(
 			Handle,
 			slot,
-			[texture.Handle],
-			1
+			handlePtr,
+			(uint) textures.Length
 		);
 	}
 
-	public unsafe void BindVertexStorageBuffer(
-		Buffer buffer,
-		uint slot = 0
+	/// <summary>
+	/// Binds storage textures to the vertex shader starting at slot 0.
+	/// </summary>
+	/// <param name="textures">The textures to bind.</param>
+	public void BindVertexStorageTextures(params Span<Texture> textures) => BindVertexStorageTextures(0, textures);
+
+	/// <summary>
+	/// Binds storage buffers to the vertex shader.
+	/// </summary>
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="buffers">The buffers to bind.</param>
+	public void BindVertexStorageBuffers(
+		uint slot,
+		params Span<Buffer> buffers
 	) {
+		Span<IntPtr> handlePtr = stackalloc nint[buffers.Length];
+
+		for (var i = 0; i < buffers.Length; i += 1) {
+			handlePtr[i] = buffers[i].Handle;
+		}
+
 		SDL_GPU.SDL_BindGPUVertexStorageBuffers(
 			Handle,
 			slot,
-			[buffer.Handle],
-			1
+			handlePtr,
+			(uint) buffers.Length
 		);
 	}
 
-	public unsafe void BindFragmentSampler(
-		in TextureSamplerBinding textureSamplerBinding,
-		uint slot = 0
+	/// <summary>
+	/// Binds storage buffers to the vertex shader starting at slot 0.
+	/// </summary>
+	/// <param name="buffers">The buffers to bind.</param>
+	public void BindVertexStorageBuffers(params Span<Buffer> buffers) => BindVertexStorageBuffers(0, buffers);
+
+	/// <summary>
+	/// Binds texture-sampler pairs to the fragment shader.
+	/// </summary>
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+	public void BindFragmentSamplers(
+		uint slot,
+		params Span<TextureSamplerBinding> textureSamplerBindings
 	) {
 		SDL_GPU.SDL_BindGPUFragmentSamplers(
 			Handle,
 			slot,
-			[textureSamplerBinding],
-			1
+			textureSamplerBindings,
+			(uint) textureSamplerBindings.Length
 		);
 	}
 
-	public unsafe void BindFragmentStorageTexture(
-		in Texture texture,
-		uint slot = 0
+	/// <summary>
+	/// Binds texture-sampler pairs to the fragment shader starting at slot 0.
+	/// </summary>
+	/// <param name="textureSamplerBindings">The texture-sampler pairs to bind.</param>
+	public void BindFragmentSamplers(params Span<TextureSamplerBinding> textureSamplerBindings) => BindFragmentSamplers(0, textureSamplerBindings);
+
+	/// <summary>
+	/// Binds storage textures to the fragment shader.
+	/// </summary>
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="textures">The textures to bind.</param>
+	public void BindFragmentStorageTextures(
+		uint slot,
+		params Span<Texture> textures
 	) {
+		Span<IntPtr> handlePtr = stackalloc nint[textures.Length];
+
+		for (var i = 0; i < textures.Length; i += 1) {
+			handlePtr[i] = textures[i].Handle;
+		}
+
 		SDL_GPU.SDL_BindGPUFragmentStorageTextures(
 			Handle,
 			slot,
-			[texture.Handle],
-			1
+			handlePtr,
+			(uint) textures.Length
 		);
 	}
 
-	public unsafe void BindFragmentStorageBuffer(
-		Buffer buffer,
-		uint slot = 0
+	/// <summary>
+	/// Binds storage textures to the fragment shader starting at slot 0.
+	/// </summary>
+	/// <param name="textures">The textures to bind.</param>
+	public void BindFragmentStorageTextures(params Span<Texture> textures) => BindFragmentStorageTextures(0, textures);
+
+	/// <summary>
+	/// Binds storage buffers to the fragment shader.
+	/// </summary>
+	/// <param name="slot">The first slot whose state is updated by the command.</param>
+	/// <param name="buffers">The buffers to bind.</param>
+	public void BindFragmentStorageBuffers(
+		uint slot,
+		params Span<Buffer> buffers
 	) {
+		Span<IntPtr> handlePtr = stackalloc nint[buffers.Length];
+
+		for (var i = 0; i < buffers.Length; i += 1) {
+			handlePtr[i] = buffers[i].Handle;
+		}
+
 		SDL_GPU.SDL_BindGPUFragmentStorageBuffers(
 			Handle,
 			slot,
-			[buffer.Handle],
-			1
+			handlePtr,
+			(uint) buffers.Length
 		);
 	}
+
+	/// <summary>
+	/// Binds storage buffers to the fragment shader starting at slot 0.
+	/// </summary>
+	/// <param name="buffers">The buffers to bind.</param>
+	public void BindFragmentStorageBuffers(params Span<Buffer> buffers) => BindFragmentStorageBuffers(buffers);
 
 	/// <summary>
 	/// Draws using a vertex buffer and an index buffer.

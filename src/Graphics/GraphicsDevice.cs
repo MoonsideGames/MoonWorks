@@ -57,7 +57,6 @@ public class GraphicsDevice : IDisposable
 		var properties = SDL3.SDL.SDL_CreateProperties();
 		SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.debugmode", debugMode);
 		SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.name", backendName);
-		SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.legacymode", true);
 
 		if ((shaderFormats & ShaderFormat.Private) != 0) {
 			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.private", true);
@@ -409,6 +408,22 @@ public class GraphicsDevice : IDisposable
 	}
 
 	/// <summary>
+	/// Cancels a command buffer. None of the enqueued commands are executed.
+	/// This must be called from the thread the command buffer was acquired on.
+	/// It is an error to call this function after a swapchain texture has been acquired.
+	/// </summary>
+	public void Cancel(CommandBuffer commandBuffer) {
+		bool result = SDL.SDL_CancelGPUCommandBuffer(commandBuffer.Handle);
+		if (!result)
+		{
+			// command buffer errors are not recoverable so let's just fail hard
+			throw new InvalidOperationException(SDL3.SDL.SDL_GetError());
+		}
+
+		CommandBufferPool.Return(commandBuffer);
+	}
+
+	/// <summary>
 	/// Wait for the graphics device to become idle.
 	/// </summary>
 	public void Wait()
@@ -436,7 +451,7 @@ public class GraphicsDevice : IDisposable
 	/// Wait for one or more fences to become signaled.
 	/// </summary>
 	/// <param name="waitAll">If true, will wait for all given fences to be signaled.</param>
-	public unsafe void WaitForFences(Span<Fence> fences, bool waitAll)
+	public unsafe void WaitForFences(bool waitAll, params Span<Fence> fences)
 	{
 		Span<IntPtr> handlePtr = stackalloc nint[fences.Length];
 

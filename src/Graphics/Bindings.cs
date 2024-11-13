@@ -1568,6 +1568,10 @@ internal static partial class SDL_GPU
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_CancelGPUCommandBuffer(IntPtr command_buffer);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool SDL_WaitForGPUIdle(IntPtr device);
 
 	[LibraryImport(nativeLibName)]
