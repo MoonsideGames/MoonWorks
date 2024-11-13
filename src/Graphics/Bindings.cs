@@ -1666,32 +1666,6 @@ internal static partial class SDL_ShaderCross
 		Compute
 	}
 
-	public enum ShaderModel
-	{
-		Invalid,
-		FivePointZero,
-		SixPointZero
-	}
-
-	public readonly record struct ShaderResourceInfo(
-		uint NumSamplers,
-		uint NumStorageTextures,
-		uint NumStorageBuffers,
-		uint NumUniformBuffers
-	);
-
-	public readonly record struct ComputeResourceInfo(
-		uint NumSamplers,
-		uint NumReadOnlyStorageTextures,
-		uint NumReadOnlyStorageBuffers,
-		uint NumReadWriteStorageTextures,
-		uint NumReadWriteStorageBuffers,
-		uint NumUniformBuffers,
-		uint ThreadCountX,
-		uint ThreadCountY,
-		uint ThreadCountZ
-	);
-
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool SDL_ShaderCross_Init();
@@ -1719,8 +1693,7 @@ internal static partial class SDL_ShaderCross
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
 		string entrypoint,
-		ShaderStage shaderStage,
-		ShaderModel shaderModel
+		ShaderStage shaderStage
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1750,8 +1723,7 @@ internal static partial class SDL_ShaderCross
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
 		string entrypoint,
-		Graphics.ShaderStage shaderStage,
-		in ShaderResourceInfo resourceInfo
+		Graphics.ShaderStage shaderStage
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1760,8 +1732,7 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
-		string entrypoint,
-		in ComputeResourceInfo resourceInfo
+		string entrypoint
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1773,6 +1744,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromHLSL(
 		string hlslSource,
 		string entrypoint,
+		string includeDir,
 		ShaderStage shaderStage,
 		out UIntPtr size
 	);
@@ -1782,6 +1754,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileDXILFromHLSL(
 		string hlslSource,
 		string entrypoint,
+		string includeDir,
 		ShaderStage shaderStage,
 		out UIntPtr size
 	);
@@ -1791,6 +1764,7 @@ internal static partial class SDL_ShaderCross
 	public static partial IntPtr SDL_ShaderCross_CompileSPIRVFromHLSL(
 		string hlslSource,
 		string entrypoint,
+		string includeDir,
 		ShaderStage shaderStage,
 		out UIntPtr size
 	);
@@ -1801,8 +1775,8 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		string hlslSource,
 		string entrypoint,
-		Graphics.ShaderStage shaderStage,
-		in ShaderResourceInfo resourceInfo
+		string includeDir,
+		Graphics.ShaderStage shaderStage
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1811,8 +1785,8 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		Span<byte> hlslSource,
 		string entrypoint,
-		Graphics.ShaderStage shaderStage,
-		in ShaderResourceInfo resourceInfo
+		string includeDir,
+		Graphics.ShaderStage shaderStage
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1821,7 +1795,7 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		string hlslSource,
 		string entrypoint,
-		in ComputeResourceInfo resourceInfo
+		string includeDir
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
@@ -1830,6 +1804,6 @@ internal static partial class SDL_ShaderCross
 		IntPtr device,
 		Span<byte> hlslSource,
 		string entrypoint,
-		in ComputeResourceInfo resourceInfo
+		string includeDir
 	);
 }

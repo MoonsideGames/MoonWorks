@@ -13,13 +13,6 @@ public class ComputePipeline : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUComputePipeline;
 
-	public uint NumSamplers { get; private init; }
-	public uint NumReadOnlyStorageTextures { get; private init; }
-	public uint NumReadOnlyStorageBuffers { get; private init; }
-	public uint NumReadWriteStorageTextures { get; private init; }
-	public uint NumReadWriteStorageBuffers { get; private init; }
-	public uint NumUniformBuffers { get; private init; }
-
 	private ComputePipeline(GraphicsDevice device) : base(device) { }
 
 	/// <summary>
@@ -85,13 +78,7 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle,
-			NumSamplers = pipelineCreateInfo.NumSamplers,
-			NumReadOnlyStorageTextures = pipelineCreateInfo.NumReadonlyStorageTextures,
-			NumReadOnlyStorageBuffers = pipelineCreateInfo.NumReadonlyStorageBuffers,
-			NumReadWriteStorageTextures = pipelineCreateInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = pipelineCreateInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = pipelineCreateInfo.NumUniformBuffers
+			Handle = computePipelineHandle
 		};
 
 		return computePipeline;
@@ -103,8 +90,7 @@ public class ComputePipeline : SDLGPUResource
 	internal static unsafe ComputePipeline CreateFromSPIRV(
 		GraphicsDevice device,
 		Stream stream,
-		string entryPoint,
-		in ShaderCross.ComputeResourceInfo resourceInfo
+		string entryPoint
 	) {
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
@@ -114,8 +100,7 @@ public class ComputePipeline : SDLGPUResource
 			device.Handle,
 			bytecodeSpan,
 			(nuint) stream.Length,
-			entryPoint,
-			resourceInfo.ToNative()
+			entryPoint
 		);
 
 		NativeMemory.Free(bytecodeBuffer);
@@ -128,13 +113,7 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle,
-			NumSamplers = resourceInfo.NumSamplers,
-			NumReadOnlyStorageTextures = resourceInfo.NumReadOnlyStorageTextures,
-			NumReadOnlyStorageBuffers = resourceInfo.NumReadOnlyStorageBuffers,
-			NumReadWriteStorageTextures = resourceInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = resourceInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = resourceInfo.NumUniformBuffers
+			Handle = computePipelineHandle
 		};
 
 		return computePipeline;
@@ -147,7 +126,7 @@ public class ComputePipeline : SDLGPUResource
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		in ShaderCross.ComputeResourceInfo resourceInfo
+		string includeDir
 	) {
 		byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 		var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
@@ -158,7 +137,7 @@ public class ComputePipeline : SDLGPUResource
 			device.Handle,
 			hlslSpan,
 			entryPoint,
-			resourceInfo.ToNative()
+			includeDir
 		);
 
 		NativeMemory.Free(hlslBuffer);
@@ -171,13 +150,7 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle,
-			NumSamplers = resourceInfo.NumSamplers,
-			NumReadOnlyStorageTextures = resourceInfo.NumReadOnlyStorageTextures,
-			NumReadOnlyStorageBuffers = resourceInfo.NumReadOnlyStorageBuffers,
-			NumReadWriteStorageTextures = resourceInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = resourceInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = resourceInfo.NumUniformBuffers
+			Handle = computePipelineHandle
 		};
 
 		return computePipeline;
