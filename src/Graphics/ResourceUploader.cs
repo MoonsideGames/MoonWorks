@@ -275,6 +275,8 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	private void Flush(bool wait = false)
 	{
+		if (TransferBuffer == null) { return; }
+
 		TransferBuffer.Unmap();
 		var commandBuffer = Device.AcquireCommandBuffer();
 		var copyPass = commandBuffer.BeginCopyPass();
@@ -390,7 +392,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		{
 			if (disposing)
 			{
-				TransferBuffer.Dispose();
+				TransferBuffer?.Dispose();
 			}
 		}
 		base.Dispose(disposing);
