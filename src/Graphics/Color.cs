@@ -52,6 +52,8 @@ namespace MoonWorks.Graphics
 			255
 		) { }
 
+		public Color(Vector4 vector) : this(vector.X, vector.Y, vector.Z, vector.W) { }
+
 		/// <summary>
 		/// Gets packed value of this <see cref="Color"/>.
 		/// </summary>
