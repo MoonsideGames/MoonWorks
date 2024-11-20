@@ -14,6 +14,11 @@ namespace MoonWorks.Graphics
 	{
 		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUShader;
 
+		public uint NumSamplers { get; init; }
+		public uint NumStorageTextures { get; init; }
+		public uint NumStorageBuffers { get; init; }
+		public uint NumUniformBuffers { get; init; }
+
 		private Shader(GraphicsDevice device) : base(device) { }
 
 		/// <summary>
@@ -81,7 +86,11 @@ namespace MoonWorks.Graphics
 
 			var shader = new Shader(device)
 			{
-				Handle = shaderModule
+				Handle = shaderModule,
+				NumSamplers = shaderCreateInfo.NumSamplers,
+				NumStorageTextures = shaderCreateInfo.NumStorageTextures,
+				NumStorageBuffers = shaderCreateInfo.NumStorageBuffers,
+				NumUniformBuffers = shaderCreateInfo.NumUniformBuffers
 			};
 
 			return shader;
@@ -105,7 +114,8 @@ namespace MoonWorks.Graphics
 				bytecodeSpan,
 				(nuint) stream.Length,
 				entryPoint,
-				shaderStage
+				shaderStage,
+				out var shaderInfo
 			);
 
 			NativeMemory.Free(bytecodeBuffer);
@@ -118,7 +128,11 @@ namespace MoonWorks.Graphics
 
 			var shader = new Shader(device)
 			{
-				Handle = shaderModule
+				Handle = shaderModule,
+				NumSamplers = shaderInfo.NumSamplers,
+				NumStorageTextures = shaderInfo.NumStorageTextures,
+				NumStorageBuffers = shaderInfo.NumStorageBuffers,
+				NumUniformBuffers = shaderInfo.NumUniformBuffers
 			};
 
 			return shader;
@@ -132,7 +146,8 @@ namespace MoonWorks.Graphics
 			Stream stream,
 			string entryPoint,
 			string includeDir, // can be NULL
-			ShaderStage shaderStage
+			ShaderStage shaderStage,
+			params Span<string> defines
 		) {
 			byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 			var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
@@ -144,7 +159,10 @@ namespace MoonWorks.Graphics
 				hlslSpan,
 				entryPoint,
 				includeDir,
-				shaderStage
+				defines,
+				(uint) defines.Length,
+				shaderStage,
+				out var shaderInfo
 			);
 
 			NativeMemory.Free(hlslBuffer);
@@ -157,7 +175,11 @@ namespace MoonWorks.Graphics
 
 			var shader = new Shader(device)
 			{
-				Handle = shaderModule
+				Handle = shaderModule,
+				NumSamplers = shaderInfo.NumSamplers,
+				NumStorageTextures = shaderInfo.NumStorageTextures,
+				NumStorageBuffers = shaderInfo.NumStorageBuffers,
+				NumUniformBuffers = shaderInfo.NumUniformBuffers
 			};
 
 			return shader;

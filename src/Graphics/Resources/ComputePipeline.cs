@@ -13,6 +13,16 @@ public class ComputePipeline : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUComputePipeline;
 
+	public uint NumSamplers { get; init; }
+	public uint NumReadOnlyStorageTextures { get; init; }
+	public uint NumReadOnlyStorageBuffers { get; init; }
+	public uint NumReadWriteStorageTextures { get; init; }
+	public uint NumReadWriteStorageBuffers { get; init; }
+	public uint NumUniformBuffers { get; init; }
+	public uint ThreadCountX { get; init; }
+	public uint ThreadCountY { get; init; }
+	public uint ThreadCountZ { get; init; }
+
 	private ComputePipeline(GraphicsDevice device) : base(device) { }
 
 	/// <summary>
@@ -78,7 +88,16 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle
+			Handle = computePipelineHandle,
+			NumSamplers = computePipelineCreateInfo.NumSamplers,
+			NumReadOnlyStorageTextures = computePipelineCreateInfo.NumReadonlyStorageTextures,
+			NumReadOnlyStorageBuffers = computePipelineCreateInfo.NumReadonlyStorageBuffers,
+			NumReadWriteStorageTextures = computePipelineCreateInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = computePipelineCreateInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = computePipelineCreateInfo.NumUniformBuffers,
+			ThreadCountX = computePipelineCreateInfo.ThreadCountX,
+			ThreadCountY = computePipelineCreateInfo.ThreadCountY,
+			ThreadCountZ = computePipelineCreateInfo.ThreadCountZ
 		};
 
 		return computePipeline;
@@ -100,7 +119,8 @@ public class ComputePipeline : SDLGPUResource
 			device.Handle,
 			bytecodeSpan,
 			(nuint) stream.Length,
-			entryPoint
+			entryPoint,
+			out var pipelineInfo
 		);
 
 		NativeMemory.Free(bytecodeBuffer);
@@ -113,7 +133,16 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle
+			Handle = computePipelineHandle,
+			NumSamplers = pipelineInfo.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineInfo.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineInfo.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineInfo.NumUniformBuffers,
+			ThreadCountX = pipelineInfo.ThreadCountX,
+			ThreadCountY = pipelineInfo.ThreadCountY,
+			ThreadCountZ = pipelineInfo.ThreadCountZ
 		};
 
 		return computePipeline;
@@ -126,7 +155,8 @@ public class ComputePipeline : SDLGPUResource
 		GraphicsDevice device,
 		Stream stream,
 		string entryPoint,
-		string includeDir
+		string includeDir,
+		params Span<string> defines
 	) {
 		byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 		var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
@@ -137,7 +167,10 @@ public class ComputePipeline : SDLGPUResource
 			device.Handle,
 			hlslSpan,
 			entryPoint,
-			includeDir
+			includeDir,
+			defines,
+			(uint) defines.Length,
+			out var pipelineInfo
 		);
 
 		NativeMemory.Free(hlslBuffer);
@@ -150,7 +183,16 @@ public class ComputePipeline : SDLGPUResource
 
 		var computePipeline = new ComputePipeline(device)
 		{
-			Handle = computePipelineHandle
+			Handle = computePipelineHandle,
+			NumSamplers = pipelineInfo.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineInfo.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineInfo.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineInfo.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineInfo.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineInfo.NumUniformBuffers,
+			ThreadCountX = pipelineInfo.ThreadCountX,
+			ThreadCountY = pipelineInfo.ThreadCountY,
+			ThreadCountZ = pipelineInfo.ThreadCountZ
 		};
 
 		return computePipeline;
