@@ -1851,4 +1851,20 @@ internal static partial class SDL_ShaderCross
 		uint numDefines,
 		out ComputePipelineInfo info
 	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_ShaderCross_ReflectGraphicsSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		out GraphicsShaderInfo info
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_ShaderCross_ReflectComputeSPIRV(
+		Span<byte> bytecode,
+		UIntPtr bytecodeSize,
+		out ComputePipelineInfo info
+	);
 }

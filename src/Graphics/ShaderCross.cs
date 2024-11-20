@@ -4,7 +4,8 @@ using SDL3;
 namespace MoonWorks.Graphics;
 
 /// <summary>
-/// A static class used for loading cross-platform shaders with SDL_gpu_shadercross.
+/// A static class used for loading cross-platform shaders with SDL_shadercross.
+/// It is recommended to only call these functions after SDL_Init has succeeded.
 /// </summary>
 public static class ShaderCross
 {
