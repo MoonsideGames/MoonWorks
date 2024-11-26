@@ -39,6 +39,7 @@ namespace MoonWorks
 		public string Title { get; private set;}
 
 		public bool RelativeMouseMode { get; private set; } = false;
+		public bool TextInputActive { get; private set; } = false;
 
 		private bool IsDisposed;
 
@@ -167,6 +168,24 @@ namespace MoonWorks
 			}
 
 			RelativeMouseMode = enabled;
+		}
+
+		public void StartTextInput()
+		{
+			if (!TextInputActive) 
+			{
+				SDL.SDL_StartTextInput(Handle);
+				TextInputActive = true;
+			}
+		}
+
+		public void StopTextInput()
+		{
+			if (TextInputActive) 
+			{
+				SDL.SDL_StopTextInput(Handle);
+				TextInputActive = false;
+			}
 		}
 
 		internal static Window Lookup(uint windowID)
