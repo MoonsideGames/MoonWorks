@@ -5,12 +5,8 @@ namespace MoonWorks.Graphics;
 
 public class ComputePass
 {
-	public nint Handle { get; private set; }
-
-	internal void SetHandle(nint handle)
-	{
-		Handle = handle;
-	}
+	public nint Handle { get; internal set; }
+	public CommandBuffer CommandBuffer { get; internal set;}
 
 	/// <summary>
 	/// Binds a compute pipeline so that compute work may be dispatched.

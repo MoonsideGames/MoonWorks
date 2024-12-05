@@ -411,16 +411,8 @@ public struct TextureTransferInfo
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct TransferBufferLocation
+public record struct TransferBufferLocation(IntPtr TransferBuffer, uint Offset = 0)
 {
-	public IntPtr TransferBuffer;
-	public uint Offset;
-
-	public TransferBufferLocation(TransferBuffer transferBuffer)
-	{
-		TransferBuffer = transferBuffer;
-	}
-
 	public static implicit operator TransferBufferLocation(TransferBuffer transferBuffer) => new()
 	{
 		TransferBuffer = transferBuffer,
@@ -1165,11 +1157,7 @@ public struct BlitInfo
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct BufferBinding
-{
-	public IntPtr Buffer;
-	public uint Offset;
-}
+public record struct BufferBinding(IntPtr Buffer, uint Offset = 0);
 
 [StructLayout(LayoutKind.Sequential)]
 public struct TextureSamplerBinding

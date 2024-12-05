@@ -190,7 +190,8 @@ public class CommandBuffer
 		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
+		renderPass.Handle = renderPassHandle;
+		renderPass.CommandBuffer = this;
 
 		return renderPass;
 	}
@@ -220,7 +221,8 @@ public class CommandBuffer
 		}
 
 		var renderPass = Device.RenderPassPool.Obtain();
-		renderPass.SetHandle(renderPassHandle);
+		renderPass.Handle = renderPassHandle;
+		renderPass.CommandBuffer = this;
 
 		return renderPass;
 	}
@@ -232,7 +234,8 @@ public class CommandBuffer
 	public void EndRenderPass(RenderPass renderPass)
 	{
 		SDL.SDL_EndGPURenderPass(renderPass.Handle);
-		renderPass.SetHandle(nint.Zero);
+		renderPass.Handle = IntPtr.Zero;
+		renderPass.CommandBuffer = null;
 		Device.RenderPassPool.Return(renderPass);
 	}
 
@@ -283,7 +286,8 @@ public class CommandBuffer
 		);
 
 		var computePass = Device.ComputePassPool.Obtain();
-		computePass.SetHandle(computePassHandle);
+		computePass.Handle = computePassHandle;
+		computePass.CommandBuffer = this;
 
 		return computePass;
 	}
@@ -301,7 +305,8 @@ public class CommandBuffer
 		);
 
 		var computePass = Device.ComputePassPool.Obtain();
-		computePass.SetHandle(computePassHandle);
+		computePass.Handle = computePassHandle;
+		computePass.CommandBuffer = this;
 
 		return computePass;
 	}
@@ -318,7 +323,8 @@ public class CommandBuffer
 		);
 
 		var computePass = Device.ComputePassPool.Obtain();
-		computePass.SetHandle(computePassHandle);
+		computePass.Handle = computePassHandle;
+		computePass.CommandBuffer = this;
 
 		return computePass;
 	}
@@ -335,7 +341,8 @@ public class CommandBuffer
 		);
 
 		var computePass = Device.ComputePassPool.Obtain();
-		computePass.SetHandle(computePassHandle);
+		computePass.Handle = computePassHandle;
+		computePass.CommandBuffer = this;
 
 		return computePass;
 	}
@@ -346,7 +353,8 @@ public class CommandBuffer
 			computePass.Handle
 		);
 
-		computePass.SetHandle(nint.Zero);
+		computePass.Handle = IntPtr.Zero;
+		computePass.CommandBuffer = null;
 		Device.ComputePassPool.Return(computePass);
 	}
 
@@ -362,7 +370,8 @@ public class CommandBuffer
 		var copyPassHandle = SDL.SDL_BeginGPUCopyPass(Handle);
 
 		var copyPass = Device.CopyPassPool.Obtain();
-		copyPass.SetHandle(copyPassHandle);
+		copyPass.Handle = copyPassHandle;
+		copyPass.CommandBuffer = this;
 
 		return copyPass;
 	}
@@ -370,7 +379,8 @@ public class CommandBuffer
 	public void EndCopyPass(CopyPass copyPass)
 	{
 		SDL.SDL_EndGPUCopyPass(copyPass.Handle);
-		copyPass.SetHandle(nint.Zero);
+		copyPass.Handle = IntPtr.Zero;
+		copyPass.CommandBuffer = null;
 		Device.CopyPassPool.Return(copyPass);
 	}
 

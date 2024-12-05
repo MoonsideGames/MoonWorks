@@ -169,12 +169,11 @@ namespace MoonWorks.Graphics.Font
 
 		// Call this AFTER binding your text pipeline!
 		public void Render(
-			CommandBuffer commandBuffer,
 			RenderPass renderPass,
 			System.Numerics.Matrix4x4 transformMatrix
 		) {
-			commandBuffer.PushVertexUniformData(transformMatrix);
-			commandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
+			renderPass.CommandBuffer.PushVertexUniformData(transformMatrix);
+			renderPass.CommandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
 
 			renderPass.BindFragmentSamplers(new TextureSamplerBinding(
 				CurrentFont.Texture,

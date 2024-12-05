@@ -8,11 +8,8 @@ namespace MoonWorks.Graphics;
 /// </summary>
 public class RenderPass
 {
-	public nint Handle { get; private set; }
-	internal void SetHandle(nint handle)
-	{
-		Handle = handle;
-	}
+	public nint Handle { get; internal set; }
+	public CommandBuffer CommandBuffer { get; internal set; }
 
 	/// <summary>
 	/// Binds a graphics pipeline so that rendering work may be performed.
