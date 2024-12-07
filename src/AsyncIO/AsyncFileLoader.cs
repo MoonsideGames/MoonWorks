@@ -10,10 +10,7 @@ public delegate void OnFileLoad(object Object, ReadOnlySpan<byte> buffer);
 
 /// <summary>
 /// A convenience structure for asynchronously loading data from a file.
-/// When the data becomes available, it executes a contextual action on a thread.
-/// Note that this object does not clean itself up as it executes.
-/// A good pattern is to issue load requests, wait for Idle to be true,
-/// and then call Dispose.
+/// When Submit is called, contextual actions are executed on a thread for every file load that is completed.
 /// </summary>
 public class AsyncFileLoader : IDisposable
 {
@@ -36,29 +33,22 @@ public class AsyncFileLoader : IDisposable
 	ResourceUploader ResourceUploader;
 
 	List<LoadData> LoadDatas = [];
-
-    public bool Idle => LoadDatas.Count == LoadsCompleted;
-
 	int LoadsCompleted = 0;
 
-    bool Running = false;
-	readonly Thread Thread;
+	public bool Complete { get; private set;}
+
+	Thread Thread;
     private bool IsDisposed;
 
     public AsyncFileLoader(GraphicsDevice graphicsDevice)
     {
 		GraphicsDevice = graphicsDevice;
 		ResourceUploader = new ResourceUploader(GraphicsDevice);
-
-        Running = true;
-        Thread = new Thread(ThreadMain);
-        Thread.Start();
     }
 
 	/// <summary>
 	/// Asynchronously load an arbitrary object from a file using a custom callback.
-	/// The ID is provided so you can contextually identify the object in the callback.
-	/// The callback will be called on a non-main thread.
+	/// On Submit, the callback will be called on a non-main thread.
 	/// </summary>
 	public bool EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
 	{
@@ -66,10 +56,9 @@ public class AsyncFileLoader : IDisposable
 		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 	}
 
-
 	/// <summary>
 	/// Asynchronously load a texture from a compressed image file.
-	/// Once the data is available, it will be uploaded to the GPU on a non-main thread.
+	/// On Submit, the data will be uploaded to the GPU on a non-main thread.
 	/// </summary>
 	public bool EnqueueCompressedImageLoad(string file, Texture texture)
 	{
@@ -79,7 +68,7 @@ public class AsyncFileLoader : IDisposable
 
 	/// <summary>
 	/// Asynchronously load an audio from a WAV file.
-	/// Once the data is available, it will be parsed and copied to the buffer on a non-main thread.
+	/// On Submit, the data will be parsed and copied to the buffer on a non-main thread.
 	/// </summary>
 	public bool EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
@@ -87,9 +76,20 @@ public class AsyncFileLoader : IDisposable
 		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 	}
 
+	/// <summary>
+	/// Execute load callbacks on a thread until all are complete.
+	/// </summary>
+	public void Submit()
+	{
+		Complete = false;
+		Thread = new Thread(ThreadMain);
+        Thread.Start();
+	}
+
+	// Execute load callbacks until all are complete.
     private unsafe void ThreadMain()
     {
-        while (Running)
+        while (LoadDatas.Count != LoadsCompleted)
         {
             if (LoadQueue.WaitResult(out var outcome, -1))
 			{
@@ -125,9 +125,14 @@ public class AsyncFileLoader : IDisposable
 				else if (outcome.Result == Result.Failure)
 				{
 					Logger.LogError(SDL3.SDL.SDL_GetError());
+					return;
 				}
 			}
         }
+
+		LoadDatas.Clear();
+		LoadsCompleted = 0;
+		Complete = true;
     }
 
 	private void LoadCompressedImage(Texture texture, ReadOnlySpan<byte> data)
@@ -152,9 +157,6 @@ public class AsyncFileLoader : IDisposable
         {
             if (disposing)
             {
-				Running = false;
-                LoadQueue.Signal();
-                Thread.Join();
                 LoadQueue.Destroy();
 				ResourceUploader.Dispose();
             }
