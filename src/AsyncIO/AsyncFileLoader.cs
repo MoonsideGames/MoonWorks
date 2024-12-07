@@ -1,44 +1,54 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 
 namespace MoonWorks.AsyncIO;
 
-internal enum LoadType
-{
-	CompressedImage,
-	AudioWav,
-	Custom
-}
+public delegate void OnFileLoad(object Object, ReadOnlySpan<byte> buffer);
 
-public delegate void OnFileLoad(int objectID, ReadOnlySpan<byte> buffer);
-internal readonly record struct LoadData(LoadType LoadType, int ObjectID, int AdditionalID);
-
-public class AsyncIOLoader : IDisposable
+/// <summary>
+/// A convenience structure for asynchronously loading data from a file.
+/// When the data becomes available, it executes a contextual action on a thread.
+/// Note that this object does not clean itself up as it executes.
+/// A good pattern is to issue load requests, wait for Idle to be true,
+/// and then call Dispose.
+/// </summary>
+public class AsyncFileLoader : IDisposable
 {
+	enum LoadType
+	{
+		CompressedImage,
+		AudioWav,
+		Custom
+	}
+
+	readonly record struct LoadData(
+		LoadType LoadType,
+		object Object,
+		OnFileLoad Callback // only used with LoadType.Custom
+	);
+
     readonly Queue LoadQueue = Queue.Create();
 
-	readonly CustomObjectLoader CustomObjectLoader;
-	readonly TextureLoader TextureLoader;
-	readonly WavLoader WavLoader;
+	GraphicsDevice GraphicsDevice;
+	ResourceUploader ResourceUploader;
 
-    public bool Idle =>
-		CustomObjectLoader.Idle &&
-		TextureLoader.Idle &&
-		WavLoader.Idle;
+	List<LoadData> LoadDatas = [];
+
+    public bool Idle => LoadDatas.Count == LoadsCompleted;
+
+	int LoadsCompleted = 0;
 
     bool Running = false;
 	readonly Thread Thread;
     private bool IsDisposed;
 
-    internal AsyncIOLoader(GraphicsDevice graphicsDevice)
+    public AsyncFileLoader(GraphicsDevice graphicsDevice)
     {
-		CustomObjectLoader = new CustomObjectLoader();
-		TextureLoader = new TextureLoader(graphicsDevice);
-		WavLoader = new WavLoader();
+		GraphicsDevice = graphicsDevice;
+		ResourceUploader = new ResourceUploader(GraphicsDevice);
 
         Running = true;
         Thread = new Thread(ThreadMain);
@@ -50,10 +60,12 @@ public class AsyncIOLoader : IDisposable
 	/// The ID is provided so you can contextually identify the object in the callback.
 	/// The callback will be called on a non-main thread.
 	/// </summary>
-	public bool EnqueueCustomObjectLoad(string file, OnFileLoad callback, int objectID)
+	public bool EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
 	{
-		return CustomObjectLoader.EnqueueLoad(LoadQueue, file, callback, objectID);
+		LoadDatas.Add(new LoadData(LoadType.Custom, callbackObject, callback));
+		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 	}
+
 
 	/// <summary>
 	/// Asynchronously load a texture from a compressed image file.
@@ -61,7 +73,8 @@ public class AsyncIOLoader : IDisposable
 	/// </summary>
 	public bool EnqueueCompressedImageLoad(string file, Texture texture)
 	{
-		return TextureLoader.EnqueueLoad(LoadQueue, file, texture);
+		LoadDatas.Add(new LoadData(LoadType.CompressedImage, texture, null));
+		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 	}
 
 	/// <summary>
@@ -70,7 +83,8 @@ public class AsyncIOLoader : IDisposable
 	/// </summary>
 	public bool EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
-		return WavLoader.EnqueueLoad(LoadQueue, file, buffer);
+		LoadDatas.Add(new LoadData(LoadType.AudioWav, buffer, null));
+		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 	}
 
     private unsafe void ThreadMain()
@@ -81,41 +95,56 @@ public class AsyncIOLoader : IDisposable
 			{
 				if (outcome.Result == Result.Complete)
 				{
-					var loadData = (LoadData*)outcome.UserData;
+					var loadData = LoadDatas[(int)outcome.UserData];
 					var span = new ReadOnlySpan<byte>((void*)outcome.Buffer, (int)outcome.BytesTransferred);
 
-					switch (loadData->LoadType)
+					switch (loadData.LoadType)
 					{
 						case LoadType.CompressedImage:
 						{
-							TextureLoader.PerformLoadCallback(loadData->ObjectID, span);
+							LoadCompressedImage((Texture) loadData.Object, span);
 							break;
 						}
 
 						case LoadType.AudioWav:
 						{
-							WavLoader.PerformLoadCallback(loadData->ObjectID, span);
+							LoadWavData((AudioBuffer) loadData.Object, span);
 							break;
 						}
 
 						case LoadType.Custom:
 						{
-							CustomObjectLoader.PerformLoadCallback(loadData->AdditionalID, loadData->ObjectID, span);
+							PerformLoadCallback(loadData.Callback, loadData.Object, span);
 							break;
 						}
 					}
 
 					SDL3.SDL.SDL_free(outcome.Buffer);
+					LoadsCompleted += 1;
 				}
 				else if (outcome.Result == Result.Failure)
 				{
 					Logger.LogError(SDL3.SDL.SDL_GetError());
 				}
-
-				NativeMemory.Free((void*) outcome.UserData);
 			}
         }
     }
+
+	private void LoadCompressedImage(Texture texture, ReadOnlySpan<byte> data)
+	{
+		ResourceUploader.SetTextureDataFromCompressed(new TextureRegion(texture), data);
+		ResourceUploader.Upload();
+	}
+
+	private void LoadWavData(AudioBuffer audioBuffer, ReadOnlySpan<byte> span)
+	{
+		AudioDataWav.SetDataFromWAV(audioBuffer, span);
+	}
+
+	private void PerformLoadCallback(OnFileLoad callback, object callbackObject, ReadOnlySpan<byte> span)
+	{
+		callback(callbackObject, span);
+	}
 
     protected virtual void Dispose(bool disposing)
     {
@@ -127,6 +156,7 @@ public class AsyncIOLoader : IDisposable
                 LoadQueue.Signal();
                 Thread.Join();
                 LoadQueue.Destroy();
+				ResourceUploader.Dispose();
             }
 
             IsDisposed = true;
