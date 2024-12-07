@@ -147,7 +147,9 @@ namespace MoonWorks.Audio
 				SampleRate = samplerate
 			};
 
-			return new AudioBuffer(device, format, (nint) buffer, bufferLengthInBytes, true);
+			var audioBuffer = AudioBuffer.Create(device, format);
+			audioBuffer.SetDataPointer((nint) buffer, bufferLengthInBytes, true);
+			return audioBuffer;
 		}
 
 		private static unsafe UInt64 ReverseEndianness(UInt64 value)

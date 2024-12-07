@@ -12,7 +12,7 @@ public static class ImageUtils
 	/// The returned pointer must be freed by calling FreePixelData.
 	/// </summary>
 	public static unsafe byte* GetPixelDataFromBytes(
-		Span<byte> data,
+		ReadOnlySpan<byte> data,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes

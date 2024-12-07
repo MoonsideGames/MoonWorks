@@ -182,6 +182,7 @@ namespace MoonWorks.Graphics
 			{
 				Type = TextureType.CubeArray,
 				Format = format,
+				Usage = usageFlags,
 				Width = size,
 				Height = size,
 				LayerCountOrDepth = arrayCount * 6,

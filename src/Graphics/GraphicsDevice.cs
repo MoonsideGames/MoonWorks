@@ -355,6 +355,30 @@ public class GraphicsDevice : IDisposable
 	}
 
 	/// <summary>
+	/// Configures the maximum allowed number of frames in flight.<br/><br/>
+	///
+	/// The default value when the device is created is 2.
+	/// This means that after you have submitted 2 frames for presentation, if the GPU has not finished working on the first frame, SDL_AcquireGPUSwapchainTexture() will block or return false depending on the present mode.<br/><br/>
+	///
+	/// Higher values increase throughput at the expense of visual latency.
+	/// Lower values decrease visual latency at the expense of throughput.<br/><br/>
+	///
+	/// Note that calling this function will stall and flush the command queue to prevent synchronization issues.<br/><br/>
+	///
+	/// The minimum value of allowed frames in flight is 1, and the maximum is 3.
+	/// </summary>
+	/// <param name="allowedFramesInFlight">The maximum number of frames that can be pending on the GPU before AcquireSwapchainTexture blocks or returns false.</param>
+	/// <returns>True on success or false on error.</returns>
+	public bool SetAllowedFramesInFlight(uint allowedFramesInFlight)
+	{
+		var result = SDL.SDL_SetGPUAllowedFramesInFlight(Handle, allowedFramesInFlight);
+		if (!result) {
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+		}
+		return result;
+	}
+
+	/// <summary>
 	/// Acquires a command buffer.
 	/// This is the start of your rendering process.
 	/// </summary>
