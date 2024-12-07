@@ -209,7 +209,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		return CreateTextureFromDDS(stream);
 	}
 
-	public void SetTextureDataFromCompressed(TextureRegion textureRegion, Span<byte> compressedImageData)
+	public void SetTextureDataFromCompressed(TextureRegion textureRegion, ReadOnlySpan<byte> compressedImageData)
 	{
 		var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
 		var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);

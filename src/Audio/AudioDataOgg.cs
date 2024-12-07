@@ -136,12 +136,9 @@ namespace MoonWorks.Audio
 				SampleRate = info.sample_rate
 			};
 
-			return new AudioBuffer(
-				device,
-				format,
-				(nint) buffer,
-				(uint) lengthInBytes,
-				true);
+			var audioBuffer = AudioBuffer.Create(device, format);
+			audioBuffer.SetDataPointer((nint) buffer, (uint) lengthInBytes, true);
+			return audioBuffer;
 		}
 	}
 }

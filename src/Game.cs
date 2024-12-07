@@ -1,4 +1,5 @@
 ﻿using SDL3;
+using MoonWorks.AsyncIO;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -38,6 +39,7 @@ namespace MoonWorks
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
+		public AsyncIOLoader AsyncIOLoader { get; }
 
 		/// <summary>
 		/// This Window is automatically created when your Game is instantiated.
@@ -99,6 +101,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing audio thread...");
 			AudioDevice = new AudioDevice();
+
+			Logger.LogInfo("Initializing async loader...");
+			AsyncIOLoader = new AsyncIOLoader(GraphicsDevice);
 		}
 
 		/// <summary>
@@ -129,6 +134,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
+
+			Logger.LogInfo("Closing async loader...");
+			AsyncIOLoader.Dispose();
 
 			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();

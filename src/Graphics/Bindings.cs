@@ -1540,6 +1540,10 @@ internal static partial class SDL_GPU
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial SDLBool SDL_SetGPUAllowedFramesInFlight(IntPtr device, uint allowedFramesInFlight);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial TextureFormat SDL_GetGPUSwapchainTextureFormat(IntPtr device, IntPtr window);
 
 	[LibraryImport(nativeLibName)]

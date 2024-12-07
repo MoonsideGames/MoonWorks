@@ -6,79 +6,65 @@ namespace MoonWorks.Audio
 {
 	public static class AudioDataWav
 	{
-		/// <summary>
-		/// Create an AudioBuffer containing all the WAV audio data in a file.
-		/// </summary>
-		/// <returns></returns>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		private ref struct ParseResult
 		{
-			// mostly borrowed from https://github.com/FNA-XNA/FNA/blob/b71b4a35ae59970ff0070dea6f8620856d8d4fec/src/Audio/SoundEffect.cs#L385
+			public Format Format;
+			public ReadOnlySpan<byte> Data;
 
-			// WaveFormatEx data
-			ushort wFormatTag;
-			ushort nChannels;
-			uint nSamplesPerSec;
-			uint nAvgBytesPerSec;
-			ushort nBlockAlign;
-			ushort wBitsPerSample;
+			public ParseResult(Format format, ReadOnlySpan<byte> data)
+			{
+				Format = format;
+				Data = data;
+			}
+		}
 
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			using var reader = new BinaryReader(stream);
+		private static ParseResult Parse(ReadOnlySpan<byte> span)
+		{
+			var stream = new ByteSpanStream(span);
 
 			// RIFF Signature
-			string signature = new string(reader.ReadChars(4));
-			if (signature != "RIFF")
+			if (stream.Read<byte>() != 'R' || stream.Read<byte>() != 'I' || stream.Read<byte>() != 'F' || stream.Read<byte>() != 'F')
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			reader.ReadUInt32(); // Riff Chunk Size
+			stream.Read<uint>(); // Riff chunk size
 
-			string wformat = new string(reader.ReadChars(4));
-			if (wformat != "WAVE")
+			if (stream.Read<byte>() != 'W' || stream.Read<byte>() != 'A' || stream.Read<byte>() != 'V' || stream.Read<byte>() != 'E')
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
 			// WAVE Header
-			string format_signature = new string(reader.ReadChars(4));
-			while (format_signature != "fmt ")
+			if (stream.Read<byte>() != 'f' || stream.Read<byte>() != 'm' || stream.Read<byte>() != 't' || stream.Read<byte>() != ' ')
 			{
-				reader.ReadBytes(reader.ReadInt32());
-				format_signature = new string(reader.ReadChars(4));
+				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int format_chunk_size = reader.ReadInt32();
+			int format_chunk_size = stream.Read<int>();
 
-			wFormatTag = reader.ReadUInt16();
-			nChannels = reader.ReadUInt16();
-			nSamplesPerSec = reader.ReadUInt32();
-			nAvgBytesPerSec = reader.ReadUInt32();
-			nBlockAlign = reader.ReadUInt16();
-			wBitsPerSample = reader.ReadUInt16();
+			// WaveFormatEx data
+			ushort wFormatTag = stream.Read<ushort>();
+			ushort nChannels = stream.Read<ushort>();
+			uint nSamplesPerSec = stream.Read<uint>();
+			uint nAvgBytesPerSec = stream.Read<uint>();
+			ushort nBlockAlign = stream.Read<ushort>();
+			ushort wBitsPerSample = stream.Read<ushort>();
 
 			// Reads residual bytes
 			if (format_chunk_size > 16)
 			{
-				reader.ReadBytes(format_chunk_size - 16);
+				stream.Advance(format_chunk_size - 16);
 			}
 
 			// data Signature
-			string data_signature = new string(reader.ReadChars(4));
-			while (data_signature.ToLowerInvariant() != "data")
+			if (stream.Read<byte>() != 'd' || stream.Read<byte>() != 'a' || stream.Read<byte>() != 't' || stream.Read<byte>() != 'a')
 			{
-				reader.ReadBytes(reader.ReadInt32());
-				data_signature = new string(reader.ReadChars(4));
-			}
-			if (data_signature != "data")
-			{
-				throw new NotSupportedException("Specified wave file is not supported.");
+				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int waveDataLength = reader.ReadInt32();
-			var waveDataBuffer = NativeMemory.Alloc((nuint) waveDataLength);
-			var waveDataSpan = new Span<byte>(waveDataBuffer, waveDataLength);
-			stream.ReadExactly(waveDataSpan);
+			int waveDataLength = stream.Read<int>();
+			var dataSpan = stream.SliceRemainder();
 
 			var format = new Format
 			{
@@ -88,13 +74,36 @@ namespace MoonWorks.Audio
 				SampleRate = nSamplesPerSec
 			};
 
-			return new AudioBuffer(
-				device,
-				format,
-				(nint) waveDataBuffer,
-				(uint) waveDataLength,
-				true
-			);
+			return new ParseResult(format, dataSpan);
+		}
+
+		/// <summary>
+		/// Sets an audio buffer from a span of raw WAV data.
+		/// </summary>
+		public static void SetDataFromWAV(AudioBuffer audioBuffer, ReadOnlySpan<byte> span)
+		{
+			var result = Parse(span);
+			audioBuffer.Format = result.Format;
+			audioBuffer.SetData(result.Data);
+		}
+
+		/// <summary>
+		/// Create an AudioBuffer containing all the WAV audio data in a file.
+		/// </summary>
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		{
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			var memory = NativeMemory.Alloc((nuint) stream.Length);
+			var span = new Span<byte>(memory, (int) stream.Length);
+			stream.ReadExactly(span);
+
+			var result = Parse(span);
+
+			var audioBuffer = AudioBuffer.Create(device, result.Format);
+			audioBuffer.SetData(result.Data);
+
+			NativeMemory.Free(memory);
+			return audioBuffer;
 		}
 	}
 }
