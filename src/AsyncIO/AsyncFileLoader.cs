@@ -8,6 +8,14 @@ namespace MoonWorks.AsyncIO;
 
 public delegate void OnFileLoad(object Object, ReadOnlySpan<byte> buffer);
 
+public enum AsyncFileLoaderStatus
+{
+	Idle,
+	Running,
+	Complete,
+	Failed
+}
+
 /// <summary>
 /// A convenience structure for asynchronously loading data from a file.
 /// When Submit is called, contextual actions are executed on a thread for every file load that is completed.
@@ -35,7 +43,7 @@ public class AsyncFileLoader : IDisposable
 	List<LoadData> LoadDatas = [];
 	int LoadsCompleted = 0;
 
-	public bool Complete { get; private set;}
+	public AsyncFileLoaderStatus Status { get; private set; }
 
 	Thread Thread;
     private bool IsDisposed;
@@ -44,36 +52,49 @@ public class AsyncFileLoader : IDisposable
     {
 		GraphicsDevice = graphicsDevice;
 		ResourceUploader = new ResourceUploader(GraphicsDevice);
+		Thread = new Thread(ThreadMain);
     }
 
 	/// <summary>
 	/// Asynchronously load an arbitrary object from a file using a custom callback.
 	/// On Submit, the callback will be called on a non-main thread.
 	/// </summary>
-	public bool EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
+	public void EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
 	{
 		LoadDatas.Add(new LoadData(LoadType.Custom, callbackObject, callback));
-		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
 	}
 
 	/// <summary>
 	/// Asynchronously load a texture from a compressed image file.
 	/// On Submit, the data will be uploaded to the GPU on a non-main thread.
 	/// </summary>
-	public bool EnqueueCompressedImageLoad(string file, Texture texture)
+	public void EnqueueCompressedImageLoad(string file, Texture texture)
 	{
 		LoadDatas.Add(new LoadData(LoadType.CompressedImage, texture, null));
-		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
 	}
 
 	/// <summary>
 	/// Asynchronously load an audio from a WAV file.
 	/// On Submit, the data will be parsed and copied to the buffer on a non-main thread.
 	/// </summary>
-	public bool EnqueueWavLoad(string file, AudioBuffer buffer)
+	public void EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
 		LoadDatas.Add(new LoadData(LoadType.AudioWav, buffer, null));
-		return LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
 	}
 
 	/// <summary>
@@ -81,9 +102,20 @@ public class AsyncFileLoader : IDisposable
 	/// </summary>
 	public void Submit()
 	{
-		Complete = false;
-		Thread = new Thread(ThreadMain);
+		if (Status == AsyncFileLoaderStatus.Failed)
+		{
+			Logger.LogError("Async operation already failed, call Reset and re-submit to continue");
+			return;
+		}
+
+		Status = AsyncFileLoaderStatus.Running;
         Thread.Start();
+	}
+
+	public void Reset()
+	{
+		LoadDatas.Clear();
+		LoadsCompleted = 0;
 	}
 
 	// Execute load callbacks until all are complete.
@@ -124,15 +156,15 @@ public class AsyncFileLoader : IDisposable
 				}
 				else if (outcome.Result == Result.Failure)
 				{
+					Status = AsyncFileLoaderStatus.Failed;
 					Logger.LogError(SDL3.SDL.SDL_GetError());
 					return;
 				}
 			}
         }
 
-		LoadDatas.Clear();
-		LoadsCompleted = 0;
-		Complete = true;
+		Status = AsyncFileLoaderStatus.Complete;
+		Reset();
     }
 
 	private void LoadCompressedImage(Texture texture, ReadOnlySpan<byte> data)
