@@ -64,6 +64,7 @@ namespace MoonWorks.Graphics.Font
 			Texture = texture;
 			PixelsPerEm = pixelsPerEm;
 			DistanceRange = distanceRange;
+			Name = "Font";
 
 			StringBytesLength = 32;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);

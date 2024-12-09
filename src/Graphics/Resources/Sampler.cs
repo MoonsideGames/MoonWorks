@@ -29,5 +29,8 @@ public class Sampler : SDLGPUResource
 		};
 	}
 
-	private Sampler(GraphicsDevice device) : base(device) { }
+	private Sampler(GraphicsDevice device) : base(device)
+	{
+		Name = "Sampler";
+	}
 }

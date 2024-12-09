@@ -23,7 +23,10 @@ public class ComputePipeline : SDLGPUResource
 	public uint ThreadCountY { get; init; }
 	public uint ThreadCountZ { get; init; }
 
-	private ComputePipeline(GraphicsDevice device) : base(device) { }
+	private ComputePipeline(GraphicsDevice device) : base(device)
+	{
+		Name = "ComputePipeline";
+	}
 
 	/// <summary>
 	/// Creates a compute pipeline using a specified shader format.

@@ -10,6 +10,7 @@ public abstract class GraphicsResource : IDisposable
 	private GCHandle SelfReference;
 
 	public bool IsDisposed { get; private set; }
+	public virtual string Name { get; set; } = "GraphicsResource";
 
 	protected GraphicsResource(GraphicsDevice device)
 	{
@@ -38,7 +39,7 @@ public abstract class GraphicsResource : IDisposable
 		#if DEBUG
 		// If you see this log message, you leaked a graphics resource without disposing it!
 		// We'll try to clean it up for you but you really should fix this.
-		Logger.LogWarn($"A resource of type {GetType().Name} was not Disposed.");
+		Logger.LogWarn($"A resource named {Name} of type {GetType().Name} was not Disposed.");
 		#endif
 
 		Dispose(false);

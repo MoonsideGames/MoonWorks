@@ -28,6 +28,7 @@ namespace MoonWorks.Graphics.Font
 		{
 			GraphicsDevice = device;
 			Handle = Wellspring.Wellspring_CreateTextBatch();
+			Name = "TextBatch";
 
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);

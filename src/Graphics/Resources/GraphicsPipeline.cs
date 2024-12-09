@@ -92,5 +92,8 @@ public class GraphicsPipeline : SDLGPUResource
 		};
 	}
 
-	private GraphicsPipeline(GraphicsDevice device) : base(device) { }
+	private GraphicsPipeline(GraphicsDevice device) : base(device)
+	{
+		Name = "GraphicsPipeline";
+	}
 }

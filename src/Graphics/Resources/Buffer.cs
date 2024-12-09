@@ -18,8 +18,8 @@ public class Buffer : SDLGPUResource
 	/// </summary>
 	public uint Size { get; private init; }
 
-	private string name;
-	public string Name
+	private string name = "Buffer";
+	public override string Name
 	{
 		get => name;
 

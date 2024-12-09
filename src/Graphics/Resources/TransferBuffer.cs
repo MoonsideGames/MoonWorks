@@ -56,7 +56,10 @@ public class TransferBuffer : SDLGPUResource
 		};
 	}
 
-	private TransferBuffer(GraphicsDevice device) : base(device) { }
+	private TransferBuffer(GraphicsDevice device) : base(device)
+	{
+		Name = "TransferBuffer";
+	}
 
 	/// <summary>
 	/// Maps the transfer buffer into application address space.

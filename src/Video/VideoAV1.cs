@@ -63,6 +63,7 @@ namespace MoonWorks.Video
 			FramesPerSecond = framesPerSecond;
 
 			Filename = filename;
+			Name = "VideoAV1";
 		}
 	}
 }

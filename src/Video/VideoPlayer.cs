@@ -33,6 +33,7 @@ namespace MoonWorks.Video
 
 		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
+			Name = "VideoPlayer";
 			Stream = new VideoAV1Stream(device);
 
 			LinearSampler = Sampler.Create(device, SamplerCreateInfo.LinearClamp);

@@ -19,7 +19,10 @@ namespace MoonWorks.Graphics
 		public uint NumStorageBuffers { get; init; }
 		public uint NumUniformBuffers { get; init; }
 
-		private Shader(GraphicsDevice device) : base(device) { }
+		private Shader(GraphicsDevice device) : base(device)
+		{
+			Name = "Shader";
+		}
 
 		/// <summary>
 		/// Creates a shader using a specified shader format.

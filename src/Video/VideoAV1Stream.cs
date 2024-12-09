@@ -33,6 +33,7 @@ namespace MoonWorks.Video
 		public VideoAV1Stream(GraphicsDevice device) : base(device)
 		{
 			handle = IntPtr.Zero;
+			Name = "VideoAV1Stream";
 
 			Running = true;
 

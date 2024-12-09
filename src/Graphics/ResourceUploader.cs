@@ -30,6 +30,8 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public ResourceUploader(GraphicsDevice device, uint size = 0) : base(device)
 	{
+		Name = "ResourceUploader";
+
 		if (size != 0)
 		{
 			TransferBuffer = TransferBuffer.Create<byte>(device, TransferBufferUsage.Upload, size);

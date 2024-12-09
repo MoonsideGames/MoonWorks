@@ -18,8 +18,8 @@ namespace MoonWorks.Graphics
 		public TextureUsageFlags UsageFlags { get; private init; }
 		public uint Size { get; private init; }
 
-		private string name;
-		public string Name
+		private string name = "Texture";
+		public override string Name
 		{
 			get => name;
 
