@@ -35,6 +35,8 @@ public unsafe class ResourceUploader : GraphicsResource
 		if (size != 0)
 		{
 			TransferBuffer = TransferBuffer.Create<byte>(device, TransferBufferUsage.Upload, size);
+			TransferBuffer.Name = "ResourceUploader TransferBuffer";
+
 			TransferBuffer.Map(false);
 		}
 	}
@@ -365,6 +367,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		if (TransferBuffer == null)
 		{
 			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
+			TransferBuffer.Name = "ResourceUploader TransferBuffer";
 			TransferBuffer.Map(false);
 		}
 		else if (dataLengthInBytes > TransferBuffer.Size)
@@ -374,6 +377,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			TransferBuffer.Unmap();
 			TransferBuffer.Dispose();
 			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
+			TransferBuffer.Name = "ResourceUploader TransferBuffer";
 			TransferBuffer.Map(false);
 		}
 	}
