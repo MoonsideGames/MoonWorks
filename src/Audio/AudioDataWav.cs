@@ -80,7 +80,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Sets an audio buffer from a span of raw WAV data.
 		/// </summary>
-		public static void SetDataFromWAV(AudioBuffer audioBuffer, ReadOnlySpan<byte> span)
+		public static void SetData(AudioBuffer audioBuffer, ReadOnlySpan<byte> span)
 		{
 			var result = Parse(span);
 			audioBuffer.Format = result.Format;

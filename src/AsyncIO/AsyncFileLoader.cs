@@ -26,6 +26,10 @@ public class AsyncFileLoader : IDisposable
 	{
 		CompressedImage,
 		AudioWav,
+		AudioOggStatic,
+		AudioOggStreaming,
+		AudioQoaStatic,
+		AudioQoaStreaming,
 		Custom
 	}
 
@@ -84,12 +88,63 @@ public class AsyncFileLoader : IDisposable
 	}
 
 	/// <summary>
-	/// Asynchronously load an audio from a WAV file.
-	/// On Submit, the data will be parsed and copied to the buffer on a non-main thread.
+	/// Asynchronously load audio from a WAV file.
 	/// </summary>
 	public void EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
 		LoadDatas.Add(new LoadData(LoadType.AudioWav, buffer, null));
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
+	}
+
+	/// <summary>
+	/// Asynchronously load and decode an file into an audio buffer.
+	/// </summary>
+	public void EnqueueOggStaticLoad(string file, AudioBuffer audioBuffer)
+	{
+		LoadDatas.Add(new LoadData(LoadType.AudioOggStatic, audioBuffer, null));
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
+	}
+
+	/// <summary>
+	/// Asynchronously load an OGG file into memory.
+	/// </summary>
+	public void EnqueueOggStreamingLoad(string file, AudioDataOgg audioDataOgg)
+	{
+		LoadDatas.Add(new LoadData(LoadType.AudioOggStreaming, audioDataOgg, null));
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
+	}
+
+	/// <summary>
+	/// Asynchronously load and decode a QOA file into an audio buffer.
+	/// </summary>
+	public void EnqueueQoaStaticLoad(string file, AudioBuffer audioBuffer)
+	{
+		LoadDatas.Add(new LoadData(LoadType.AudioQoaStatic, audioBuffer, null));
+		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
+		if (!result)
+		{
+			Status = AsyncFileLoaderStatus.Failed;
+		}
+	}
+
+	/// <summary>
+	/// Asynchronously load a QOA file into memory.
+	/// </summary>
+	public void EnqueueQoaStreamingLoad(string file, AudioDataQoa audioDataQoa)
+	{
+		LoadDatas.Add(new LoadData(LoadType.AudioQoaStreaming, audioDataQoa, null));
 		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
 		if (!result)
 		{
@@ -144,6 +199,30 @@ public class AsyncFileLoader : IDisposable
 							break;
 						}
 
+						case LoadType.AudioOggStatic:
+						{
+							LoadOggStaticData((AudioBuffer) loadData.Object, span);
+							break;
+						}
+
+						case LoadType.AudioOggStreaming:
+						{
+							LoadOggStreamingData((AudioDataOgg) loadData.Object, span);
+							break;
+						}
+
+						case LoadType.AudioQoaStatic:
+						{
+							LoadQoaStaticData((AudioBuffer) loadData.Object, span);
+							break;
+						}
+
+						case LoadType.AudioQoaStreaming:
+						{
+							LoadQoaStreamingData((AudioDataQoa) loadData.Object, span);
+							break;
+						}
+
 						case LoadType.Custom:
 						{
 							PerformLoadCallback(loadData.Callback, loadData.Object, span);
@@ -173,14 +252,34 @@ public class AsyncFileLoader : IDisposable
 		ResourceUploader.Upload();
 	}
 
-	private void LoadWavData(AudioBuffer audioBuffer, ReadOnlySpan<byte> span)
+	private void LoadWavData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
 	{
-		AudioDataWav.SetDataFromWAV(audioBuffer, span);
+		AudioDataWav.SetData(audioBuffer, data);
 	}
 
-	private void PerformLoadCallback(OnFileLoad callback, object callbackObject, ReadOnlySpan<byte> span)
+	private void LoadOggStaticData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
 	{
-		callback(callbackObject, span);
+		AudioDataOgg.SetData(audioBuffer, data);
+	}
+
+	private void LoadOggStreamingData(AudioDataOgg audioDataOgg, ReadOnlySpan<byte> data)
+	{
+		audioDataOgg.Open(data);
+	}
+
+	private void LoadQoaStaticData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
+	{
+		AudioDataQoa.SetData(audioBuffer, data);
+	}
+
+	private void LoadQoaStreamingData(AudioDataQoa audioDataQoa, ReadOnlySpan<byte> data)
+	{
+		audioDataQoa.Open(data);
+	}
+
+	private void PerformLoadCallback(OnFileLoad callback, object callbackObject, ReadOnlySpan<byte> data)
+	{
+		callback(callbackObject, data);
 	}
 
     protected virtual void Dispose(bool disposing)

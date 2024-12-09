@@ -9,37 +9,19 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public class AudioDataOgg : AudioDataStreamable
 	{
-		private IntPtr FileDataPtr = IntPtr.Zero;
 		private IntPtr VorbisHandle = IntPtr.Zero;
-
-		private string FilePath;
+		private IntPtr BufferDataPtr = IntPtr.Zero;
+		private uint BufferDataLength = 0;
 
 		public override bool Loaded => VorbisHandle != IntPtr.Zero;
 		public override uint DecodeBufferSize => 32768;
 
-		public AudioDataOgg(AudioDevice device, string filePath) : base(device)
+		public static AudioDataOgg Create(AudioDevice device)
 		{
-			FilePath = filePath;
-
-			var handle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
-
-			if (error != 0)
-			{
-				throw new InvalidOperationException("Error loading file!");
-			}
-
-			var info = FAudio.stb_vorbis_get_info(handle);
-
-			Format = new Format
-			{
-				Tag = FormatTag.IEEE_FLOAT,
-				BitsPerSample = 32,
-				Channels = (ushort) info.channels,
-				SampleRate = info.sample_rate
-			};
-
-			FAudio.stb_vorbis_close(handle);
+			return new AudioDataOgg(device);
 		}
+
+		private AudioDataOgg(AudioDevice device) : base(device) { }
 
 		public override unsafe void Decode(void* buffer, int bufferLengthInBytes, out int filledLengthInBytes, out bool reachedEnd)
 		{
@@ -61,25 +43,41 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Prepares the Ogg data for streaming.
 		/// </summary>
-		public override unsafe void Load()
+		public override unsafe void Open(ReadOnlySpan<byte> data)
 		{
-			if (!Loaded)
+			if (Loaded)
 			{
-				var fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
-				FileDataPtr = (nint) NativeMemory.Alloc((nuint) fileStream.Length);
-				var fileDataSpan = new Span<byte>((void*) FileDataPtr, (int) fileStream.Length);
-				fileStream.ReadExactly(fileDataSpan);
-				fileStream.Close();
-
-				VorbisHandle = FAudio.stb_vorbis_open_memory(FileDataPtr, fileDataSpan.Length, out int error, IntPtr.Zero);
-				if (error != 0)
-				{
-					NativeMemory.Free((void*) FileDataPtr);
-					Logger.LogError("Error opening OGG file!");
-					Logger.LogError("Error: " + error);
-					throw new InvalidOperationException("Error opening OGG file!");
-				}
+				Close();
 			}
+
+			BufferDataPtr = (nint) NativeMemory.Alloc((nuint) data.Length);
+			BufferDataLength = (uint) data.Length;
+
+			fixed (void *ptr = data)
+			{
+				NativeMemory.Copy(ptr, (void*) BufferDataPtr, BufferDataLength);
+			}
+
+			VorbisHandle = FAudio.stb_vorbis_open_memory(BufferDataPtr, (int) BufferDataLength, out int error, IntPtr.Zero);
+			if (error != 0)
+			{
+				NativeMemory.Free((void*) BufferDataPtr);
+				BufferDataPtr = IntPtr.Zero;
+				BufferDataLength = 0;
+				throw new InvalidOperationException("Error opening OGG file!");
+			}
+
+			var format = new Format
+			{
+				Tag = FormatTag.IEEE_FLOAT,
+				BitsPerSample = 32
+			};
+
+			var info = FAudio.stb_vorbis_get_info(VorbisHandle);
+			format.Channels = (ushort) info.channels;
+			format.SampleRate = info.sample_rate;
+
+			Format = format;
 		}
 
 		public override void Seek(uint sampleFrame)
@@ -90,54 +88,97 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Unloads the Ogg data, freeing resources.
 		/// </summary>
-		public override unsafe void Unload()
+		public override unsafe void Close()
 		{
 			if (Loaded)
 			{
 				FAudio.stb_vorbis_close(VorbisHandle);
-				NativeMemory.Free((void*) FileDataPtr);
+				NativeMemory.Free((void*) BufferDataPtr);
 
 				VorbisHandle = IntPtr.Zero;
-				FileDataPtr = IntPtr.Zero;
+				BufferDataPtr = IntPtr.Zero;
 			}
 		}
 
-		/// <summary>
-		/// Loads an entire ogg file into an AudioBuffer. Useful for static audio.
-		/// </summary>
-		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		private ref struct LoadResult
 		{
-			var filePointer = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
+			public Format Format;
+			public IntPtr DataPtr;
+			public uint Length;
 
-			if (error != 0)
+			public LoadResult(Format format, IntPtr dataPtr, uint length)
 			{
-				throw new InvalidOperationException("Error loading file!");
+				Format = format;
+				DataPtr = dataPtr;
+				Length = length;
 			}
-			var info = FAudio.stb_vorbis_get_info(filePointer);
-			var lengthInFloats =
-				FAudio.stb_vorbis_stream_length_in_samples(filePointer) * info.channels;
-			var lengthInBytes = lengthInFloats * Marshal.SizeOf<float>();
-			var buffer = NativeMemory.Alloc((nuint) lengthInBytes);
+		}
 
-			FAudio.stb_vorbis_get_samples_float_interleaved(
-				filePointer,
-				info.channels,
-				(nint) buffer,
-				(int) lengthInFloats
-			);
-
-			FAudio.stb_vorbis_close(filePointer);
+		private unsafe static LoadResult Load(ReadOnlySpan<byte> data)
+		{
+			IntPtr buffer;
+			uint lengthInBytes;
 
 			var format = new Format
 			{
 				Tag = FormatTag.IEEE_FLOAT,
-				BitsPerSample = 32,
-				Channels = (ushort) info.channels,
-				SampleRate = info.sample_rate
+				BitsPerSample = 32
 			};
 
-			var audioBuffer = AudioBuffer.Create(device, format);
-			audioBuffer.SetDataPointer((nint) buffer, (uint) lengthInBytes, true);
+			fixed (void* ptr = data)
+			{
+				nint filePointer = FAudio.stb_vorbis_open_memory((nint) ptr, data.Length, out var error, IntPtr.Zero);
+				if (error != 0)
+				{
+					throw new InvalidOperationException("Error loading file!");
+				}
+				var info = FAudio.stb_vorbis_get_info(filePointer);
+				var lengthInFloats =
+					FAudio.stb_vorbis_stream_length_in_samples(filePointer) * info.channels;
+				lengthInBytes = (uint) (lengthInFloats * Marshal.SizeOf<float>());
+				buffer = (nint) NativeMemory.Alloc((nuint) lengthInBytes);
+
+				FAudio.stb_vorbis_get_samples_float_interleaved(
+					filePointer,
+					info.channels,
+					buffer,
+					(int) lengthInFloats
+				);
+
+				FAudio.stb_vorbis_close(filePointer);
+
+				format.Channels = (ushort) info.channels;
+				format.SampleRate = info.sample_rate;
+			}
+
+			return new LoadResult(format, buffer, lengthInBytes);
+		}
+
+		/// <summary>
+		/// Decodes an entire OGG data buffer into an AudioBuffer.
+		/// </summary>
+		public static void SetData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
+		{
+			var result = Load(data);
+			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
+		}
+
+		/// <summary>
+		/// Decodes an entire OGG file into an AudioBuffer.
+		/// </summary>
+		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		{
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			var fileMemory = NativeMemory.Alloc((nuint) stream.Length);
+			var fileSpan = new Span<byte>(fileMemory, (int) stream.Length);
+			stream.ReadExactly(fileSpan);
+
+			var result = Load(fileSpan);
+
+			var audioBuffer = AudioBuffer.Create(device, result.Format);
+			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
+
+			NativeMemory.Free(fileMemory);
 			return audioBuffer;
 		}
 	}

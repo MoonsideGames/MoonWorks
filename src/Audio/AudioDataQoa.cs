@@ -9,52 +9,23 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public class AudioDataQoa : AudioDataStreamable
 	{
-		private IntPtr QoaHandle = IntPtr.Zero;
-		private IntPtr FileDataPtr = IntPtr.Zero;
-
-		private string FilePath;
-
 		private const uint QOA_MAGIC = 0x716f6166; /* 'qoaf' */
+
+		private IntPtr QoaHandle = IntPtr.Zero;
+		private IntPtr BufferDataPtr = IntPtr.Zero;
+		private uint BufferDataLength = 0;
 
 		public override bool Loaded => QoaHandle != IntPtr.Zero;
 
 		private uint decodeBufferSize;
 		public override uint DecodeBufferSize => decodeBufferSize;
 
-		public AudioDataQoa(AudioDevice device, string filePath) : base(device)
+		public static AudioDataQoa Create(AudioDevice device)
 		{
-			FilePath = filePath;
-
-			using var stream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
-			using var reader = new BinaryReader(stream);
-
-			UInt64 fileHeader = ReverseEndianness(reader.ReadUInt64());
-			if ((fileHeader >> 32) != QOA_MAGIC)
-			{
-				throw new InvalidOperationException("Specified file is not a QOA file.");
-			}
-
-			uint totalSamplesPerChannel = (uint) (fileHeader & (0xFFFFFFFF));
-			if (totalSamplesPerChannel == 0)
-			{
-				throw new InvalidOperationException("Specified file is not a valid QOA file.");
-			}
-
-			UInt64 frameHeader = ReverseEndianness(reader.ReadUInt64());
-			uint channels = (uint) ((frameHeader >> 56) & 0x0000FF);
-			uint samplerate = (uint) ((frameHeader >> 32) & 0xFFFFFF);
-			uint samplesPerChannelPerFrame = (uint) ((frameHeader >> 16) & 0x00FFFF);
-
-			Format = new Format
-			{
-				Tag = FormatTag.PCM,
-				BitsPerSample = 16,
-				Channels = (ushort) channels,
-				SampleRate = samplerate
-			};
-
-			decodeBufferSize = channels * samplesPerChannelPerFrame * sizeof(short);
+			return new AudioDataQoa(device);
 		}
+
+		private AudioDataQoa(AudioDevice device) : base(device) { }
 
 		public override unsafe void Decode(void* buffer, int bufferLengthInBytes, out int filledLengthInBytes, out bool reachedEnd)
 		{
@@ -71,24 +42,46 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Prepares qoa data for streaming.
 		/// </summary>
-		public override unsafe void Load()
+		public override unsafe void Open(ReadOnlySpan<byte> data)
 		{
-			if (!Loaded)
+			if (Loaded)
 			{
-				var fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
-				FileDataPtr = (nint) NativeMemory.Alloc((nuint) fileStream.Length);
-				var fileDataSpan = new Span<byte>((void*) FileDataPtr, (int) fileStream.Length);
-				fileStream.ReadExactly(fileDataSpan);
-				fileStream.Close();
-
-				QoaHandle = FAudio.qoa_open_from_memory((char*) FileDataPtr, (uint) fileDataSpan.Length, 0);
-				if (QoaHandle == IntPtr.Zero)
-				{
-					NativeMemory.Free((void*) FileDataPtr);
-					Logger.LogError("Error opening QOA file!");
-					throw new InvalidOperationException("Error opening QOA file!");
-				}
+				Close();
 			}
+
+			BufferDataPtr = (nint) NativeMemory.Alloc((nuint) data.Length);
+			BufferDataLength = (uint) data.Length;
+
+			fixed (void *ptr = data)
+			{
+				NativeMemory.Copy(ptr, (void*) BufferDataPtr, BufferDataLength);
+			}
+
+			QoaHandle = FAudio.qoa_open_from_memory((char*) BufferDataPtr, BufferDataLength, 0);
+			if (QoaHandle == IntPtr.Zero)
+			{
+				NativeMemory.Free((void*) BufferDataPtr);
+				BufferDataPtr = IntPtr.Zero;
+				BufferDataLength = 0;
+				throw new InvalidOperationException("Error opening QOA file!");
+			}
+
+			var format = new Format
+			{
+				Tag = FormatTag.PCM,
+				BitsPerSample = 16
+			};
+			FAudio.qoa_attributes(
+				QoaHandle,
+				out var channels,
+				out format.SampleRate,
+				out var samplesPerChannelPerFrame,
+				out var total_samples_per_channel
+			);
+			format.Channels = (ushort) channels;
+			Format = format;
+
+			decodeBufferSize = channels * samplesPerChannelPerFrame * sizeof(short);
 		}
 
 		public override void Seek(uint sampleFrame)
@@ -99,68 +92,92 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Unloads the qoa data, freeing resources.
 		/// </summary>
-		public override unsafe void Unload()
+		public override unsafe void Close()
 		{
 			if (Loaded)
 			{
 				FAudio.qoa_close(QoaHandle);
-				NativeMemory.Free((void*) FileDataPtr);
+				NativeMemory.Free((void*) BufferDataPtr);
 
 				QoaHandle = IntPtr.Zero;
-				FileDataPtr = IntPtr.Zero;
+				BufferDataPtr = IntPtr.Zero;
+				BufferDataLength = 0;
 			}
 		}
 
-		/// <summary>
-		/// Loads the entire qoa file into an AudioBuffer. Useful for static audio.
-		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		private ref struct LoadResult
 		{
-			using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var fileDataPtr = NativeMemory.Alloc((nuint) fileStream.Length);
-			var fileDataSpan = new Span<byte>(fileDataPtr, (int) fileStream.Length);
-			fileStream.ReadExactly(fileDataSpan);
-			fileStream.Close();
+			public Format Format;
+			public IntPtr DataPtr;
+			public uint Length;
 
-			var qoaHandle = FAudio.qoa_open_from_memory((char*) fileDataPtr, (uint) fileDataSpan.Length, 0);
-			if (qoaHandle == 0)
+			public LoadResult(Format format, IntPtr dataPtr, uint length)
 			{
-				NativeMemory.Free(fileDataPtr);
-				Logger.LogError("Error opening QOA file!");
-				throw new InvalidOperationException("Error opening QOA file!");
+				Format = format;
+				DataPtr = dataPtr;
+				Length = length;
 			}
+		}
 
-			FAudio.qoa_attributes(qoaHandle, out var channels, out var samplerate, out var samples_per_channel_per_frame, out var total_samples_per_channel);
-
-			var bufferLengthInBytes = total_samples_per_channel * channels * sizeof(short);
-			var buffer = NativeMemory.Alloc(bufferLengthInBytes);
-			FAudio.qoa_decode_entire(qoaHandle, (short*) buffer);
-
-			FAudio.qoa_close(qoaHandle);
-			NativeMemory.Free(fileDataPtr);
+		private unsafe static LoadResult Load(ReadOnlySpan<byte> data)
+		{
+			IntPtr buffer;
+			uint lengthInBytes;
 
 			var format = new Format
 			{
 				Tag = FormatTag.PCM,
-				BitsPerSample = 16,
-				Channels = (ushort) channels,
-				SampleRate = samplerate
+				BitsPerSample = 16
 			};
 
-			var audioBuffer = AudioBuffer.Create(device, format);
-			audioBuffer.SetDataPointer((nint) buffer, bufferLengthInBytes, true);
-			return audioBuffer;
+			fixed (void* ptr = data)
+			{
+				var qoaHandle = FAudio.qoa_open_from_memory((char*) ptr, (uint) data.Length, 0);
+				if (qoaHandle == IntPtr.Zero)
+				{
+					throw new InvalidOperationException("Error opening QOA file!");
+				}
+
+				FAudio.qoa_attributes(qoaHandle, out var channels, out var samplerate, out var samples_per_channel_per_frame, out var total_samples_per_channel);
+
+				lengthInBytes = total_samples_per_channel * channels * sizeof(short);
+				buffer = (nint) NativeMemory.Alloc(lengthInBytes);
+				FAudio.qoa_decode_entire(qoaHandle, (short*) buffer);
+				FAudio.qoa_close(qoaHandle);
+
+				format.Channels = (ushort) channels;
+				format.SampleRate = samplerate;
+			}
+
+			return new LoadResult(format, buffer, lengthInBytes);
 		}
 
-		private static unsafe UInt64 ReverseEndianness(UInt64 value)
+		/// <summary>
+		/// Decodes an entire QOA data buffer into an AudioBuffer.
+		/// </summary>
+		public static void SetData(AudioBuffer audioBuffer, ReadOnlySpan<byte> data)
 		{
-			byte* bytes = (byte*) &value;
+			var result = Load(data);
+			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
+		}
 
-			return
-				((UInt64)(bytes[0]) << 56) | ((UInt64)(bytes[1]) << 48) |
-				((UInt64)(bytes[2]) << 40) | ((UInt64)(bytes[3]) << 32) |
-				((UInt64)(bytes[4]) << 24) | ((UInt64)(bytes[5]) << 16) |
-				((UInt64)(bytes[6]) <<  8) | ((UInt64)(bytes[7]) <<  0);
+		/// <summary>
+		/// Decodes an entire QOA file into an AudioBuffer.
+		/// </summary>
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		{
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			var fileMemory = NativeMemory.Alloc((nuint) stream.Length);
+			var fileSpan = new Span<byte>(fileMemory, (int) stream.Length);
+			stream.ReadExactly(fileSpan);
+
+			var result = Load(fileSpan);
+
+			var audioBuffer = AudioBuffer.Create(device, result.Format);
+			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
+
+			NativeMemory.Free(fileMemory);
+			return audioBuffer;
 		}
 	}
 }

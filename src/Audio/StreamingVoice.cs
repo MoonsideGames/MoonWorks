@@ -29,7 +29,7 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Loads and prepares an AudioDataStreamable for streaming playback.
-		/// This automatically calls Load on the given AudioDataStreamable.
+		/// The streamable data must already be loaded.
 		/// </summary>
 		public void Load(AudioDataStreamable data)
 		{
@@ -37,12 +37,16 @@ namespace MoonWorks.Audio
 			{
 				if (AudioData != null)
 				{
-					AudioData.Unload();
+					Unload();
 				}
 
-				data.Load();
-				AudioData = data;
+				if (!data.Loaded)
+				{
+					Logger.LogError("Streamable data not loaded!");
+					return;
+				}
 
+				AudioData = data;
 				InitializeBuffers();
 				QueueBuffers();
 			}
@@ -50,7 +54,6 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Unloads AudioDataStreamable from this voice.
-		/// This automatically calls Unload on the given AudioDataStreamable.
 		/// </summary>
 		public void Unload()
 		{
@@ -59,7 +62,6 @@ namespace MoonWorks.Audio
 				if (AudioData != null)
 				{
 					Stop();
-					AudioData.Unload();
 					AudioData = null;
 				}
 			}
@@ -142,7 +144,7 @@ namespace MoonWorks.Audio
 					NativeMemory.Free((void*) buffers[i]);
 				}
 
-				buffers[i] = (IntPtr) NativeMemory.Alloc(BufferSize);
+				buffers[i] = (IntPtr) NativeMemory.AllocZeroed(BufferSize);
 			}
 		}
 

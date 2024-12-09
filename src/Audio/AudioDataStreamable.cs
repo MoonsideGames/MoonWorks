@@ -1,3 +1,5 @@
+using System;
+
 namespace MoonWorks.Audio
 {
 	/// <summary>
@@ -14,14 +16,14 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Loads the raw audio data into memory to prepare it for stream decoding.
+		/// Loads raw audio data into memory to prepare it for stream decoding.
 		/// </summary>
-		public abstract void Load();
+		public abstract void Open(ReadOnlySpan<byte> data);
 
 		/// <summary>
 		/// Unloads the raw audio data from memory.
 		/// </summary>
-		public abstract void Unload();
+		public abstract void Close();
 
 		/// <summary>
 		/// Seeks to the given sample frame.
@@ -41,7 +43,7 @@ namespace MoonWorks.Audio
 		{
 			if (!IsDisposed)
 			{
-				Unload();
+				Close();
 			}
 			base.Dispose(disposing);
 		}
