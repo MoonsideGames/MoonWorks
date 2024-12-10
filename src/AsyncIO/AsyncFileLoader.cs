@@ -6,19 +6,10 @@ using MoonWorks.Graphics;
 
 namespace MoonWorks.AsyncIO;
 
-public delegate void OnFileLoad(object Object, ReadOnlySpan<byte> buffer);
-
-public enum AsyncFileLoaderStatus
-{
-	Idle,
-	Running,
-	Complete,
-	Failed
-}
-
 /// <summary>
-/// A convenience structure for asynchronously loading data from a file.
-/// When Submit is called, contextual actions are executed on a thread for every file load that is completed.
+/// A convenience structure for asynchronously loading data from files.
+/// When Submit is called, file loads are performed asynchronously and 
+/// contextual actions are executed on a thread for every file load that is completed.
 /// </summary>
 public class AsyncFileLoader : IDisposable
 {
@@ -34,17 +25,18 @@ public class AsyncFileLoader : IDisposable
 	}
 
 	readonly record struct LoadData(
+		string File,
 		LoadType LoadType,
 		object Object,
 		OnFileLoad Callback // only used with LoadType.Custom
 	);
 
-    readonly Queue LoadQueue = Queue.Create();
+    Queue LoadQueue = Queue.Create();
 
 	GraphicsDevice GraphicsDevice;
 	ResourceUploader ResourceUploader;
 
-	List<LoadData> LoadDatas = [];
+	List<LoadData> PendingLoads = [];
 	int LoadsCompleted = 0;
 
 	public AsyncFileLoaderStatus Status { get; private set; }
@@ -61,30 +53,28 @@ public class AsyncFileLoader : IDisposable
 
 	/// <summary>
 	/// Asynchronously load an arbitrary object from a file using a custom callback.
-	/// On Submit, the callback will be called on a non-main thread.
 	/// </summary>
 	public void EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
 	{
-		LoadDatas.Add(new LoadData(LoadType.Custom, callbackObject, callback));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.Custom, callbackObject, callback));
 	}
 
 	/// <summary>
 	/// Asynchronously load a texture from a compressed image file.
-	/// On Submit, the data will be uploaded to the GPU on a non-main thread.
 	/// </summary>
 	public void EnqueueCompressedImageLoad(string file, Texture texture)
 	{
-		LoadDatas.Add(new LoadData(LoadType.CompressedImage, texture, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.CompressedImage, texture, null));
 	}
 
 	/// <summary>
@@ -92,25 +82,25 @@ public class AsyncFileLoader : IDisposable
 	/// </summary>
 	public void EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
-		LoadDatas.Add(new LoadData(LoadType.AudioWav, buffer, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.AudioWav, buffer, null));
 	}
 
 	/// <summary>
-	/// Asynchronously load and decode an file into an audio buffer.
+	/// Asynchronously load and decode an OGG file into an audio buffer.
 	/// </summary>
 	public void EnqueueOggStaticLoad(string file, AudioBuffer audioBuffer)
 	{
-		LoadDatas.Add(new LoadData(LoadType.AudioOggStatic, audioBuffer, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.AudioOggStatic, audioBuffer, null));
 	}
 
 	/// <summary>
@@ -118,12 +108,12 @@ public class AsyncFileLoader : IDisposable
 	/// </summary>
 	public void EnqueueOggStreamingLoad(string file, AudioDataOgg audioDataOgg)
 	{
-		LoadDatas.Add(new LoadData(LoadType.AudioOggStreaming, audioDataOgg, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.AudioOggStreaming, audioDataOgg, null));
 	}
 
 	/// <summary>
@@ -131,12 +121,12 @@ public class AsyncFileLoader : IDisposable
 	/// </summary>
 	public void EnqueueQoaStaticLoad(string file, AudioBuffer audioBuffer)
 	{
-		LoadDatas.Add(new LoadData(LoadType.AudioQoaStatic, audioBuffer, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.AudioQoaStatic, audioBuffer, null));
 	}
 
 	/// <summary>
@@ -144,45 +134,50 @@ public class AsyncFileLoader : IDisposable
 	/// </summary>
 	public void EnqueueQoaStreamingLoad(string file, AudioDataQoa audioDataQoa)
 	{
-		LoadDatas.Add(new LoadData(LoadType.AudioQoaStreaming, audioDataQoa, null));
-		var result = LoadQueue.LoadFileAsync(file, LoadDatas.Count - 1);
-		if (!result)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Status = AsyncFileLoaderStatus.Failed;
+			Logger.LogError("AsyncFileLoader already running!");
+			return;
 		}
+		PendingLoads.Add(new LoadData(file, LoadType.AudioQoaStreaming, audioDataQoa, null));
 	}
 
 	/// <summary>
-	/// Execute load callbacks on a thread until all are complete.
+	/// Submit async file loads and execute load callbacks on a thread until all are complete.
 	/// </summary>
 	public void Submit()
 	{
-		if (Status == AsyncFileLoaderStatus.Failed)
+		if (Status == AsyncFileLoaderStatus.Running)
 		{
-			Logger.LogError("Async operation already failed, call Reset and re-submit to continue");
+			Logger.LogError("AsyncFileLoader already running!");
 			return;
+		}
+
+		for (var i = 0; i < PendingLoads.Count; i += 1)
+		{
+			if (!LoadQueue.LoadFileAsync(PendingLoads[i].File, i))
+			{
+				Status = AsyncFileLoaderStatus.Failed;
+				Logger.LogError("Async file open failed!");
+				RecreateQueue();
+				return;
+			}
 		}
 
 		Status = AsyncFileLoaderStatus.Running;
         Thread.Start();
 	}
 
-	public void Reset()
-	{
-		LoadDatas.Clear();
-		LoadsCompleted = 0;
-	}
-
 	// Execute load callbacks until all are complete.
     private unsafe void ThreadMain()
     {
-        while (LoadDatas.Count != LoadsCompleted)
+        while (PendingLoads.Count != LoadsCompleted)
         {
             if (LoadQueue.WaitResult(out var outcome, -1))
 			{
 				if (outcome.Result == Result.Complete)
 				{
-					var loadData = LoadDatas[(int)outcome.UserData];
+					var loadData = PendingLoads[(int)outcome.UserData];
 					var span = new ReadOnlySpan<byte>((void*)outcome.Buffer, (int)outcome.BytesTransferred);
 
 					switch (loadData.LoadType)
@@ -236,7 +231,8 @@ public class AsyncFileLoader : IDisposable
 				else if (outcome.Result == Result.Failure)
 				{
 					Status = AsyncFileLoaderStatus.Failed;
-					Logger.LogError(SDL3.SDL.SDL_GetError());
+					Logger.LogError("Async file load failed: " + SDL3.SDL.SDL_GetError());
+					RecreateQueue();
 					return;
 				}
 			}
@@ -245,6 +241,20 @@ public class AsyncFileLoader : IDisposable
 		Status = AsyncFileLoaderStatus.Complete;
 		Reset();
     }
+
+	private void Reset()
+	{
+		PendingLoads.Clear();
+		LoadsCompleted = 0;
+	}
+
+	// on failure, we recreate queue to finish waiting on already-submitted operations
+	private void RecreateQueue()
+	{
+		Reset();
+		LoadQueue.Destroy();
+		LoadQueue = Queue.Create();
+	}
 
 	private void LoadCompressedImage(Texture texture, ReadOnlySpan<byte> data)
 	{
@@ -302,4 +312,36 @@ public class AsyncFileLoader : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>
+/// A custom callback that can be used by AsyncFileLoader.
+/// </summary>
+public delegate void OnFileLoad(object Object, ReadOnlySpan<byte> buffer);
+
+/// <summary>
+/// The status of an AsyncFileLoader.
+/// </summary>
+public enum AsyncFileLoaderStatus
+{
+	/// <summary>
+	/// The AsyncFileLoader is idle.
+	/// Operations may be enqueued and submitted.
+	/// </summary>
+	Idle,
+	/// <summary>
+	/// The AsyncFileLoader is running submissions. 
+	/// No operations can be enqueued and Submit cannot be called.
+	/// </summary>
+	Running,
+	/// <summary>
+	/// The AsyncFileLoader has completed its submissions succesfully.
+	/// Operations may be enqueued and submitted.
+	/// </summary>
+	Complete,
+	/// <summary>
+	/// A submission has failed. 
+	/// Operations may be enqueued and submitted.
+	/// </summary>
+	Failed
 }
