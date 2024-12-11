@@ -13,23 +13,66 @@ namespace MoonWorks.Audio
 		uint BufferDataLength;
 		private bool OwnsBufferData;
 
-		public Format Format { get; }
+		public Format Format { get; set; }
 
 		/// <summary>
-		/// Create a new AudioBuffer.
+		/// Create a new empty AudioBuffer of a specified format.
 		/// </summary>
-		/// <param name="ownsBufferData">If true, the buffer data will be destroyed when this AudioBuffer is destroyed.</param>
-		public AudioBuffer(
-			AudioDevice device,
-			Format format,
-			IntPtr bufferPtr,
-			uint bufferLengthInBytes,
-			bool ownsBufferData) : base(device)
+		public static AudioBuffer Create(AudioDevice device, Format format)
+		{
+			return new AudioBuffer(device, format);
+		}
+
+		/// <summary>
+		/// Create a new empty AudioBuffer with a format to be specified later.
+		/// </summary>
+		public static AudioBuffer Create(AudioDevice device)
+		{
+			return new AudioBuffer(device);
+		}
+
+		private AudioBuffer(AudioDevice device, Format format) : base(device)
 		{
 			Format = format;
-			BufferDataPtr = bufferPtr;
-			BufferDataLength = bufferLengthInBytes;
-			OwnsBufferData = ownsBufferData;
+		}
+
+		private AudioBuffer(AudioDevice device) : base(device) { }
+
+		/// <summary>
+		/// Copies data from a ReadOnlySpan into the AudioBuffer.
+		/// The AudioBuffer is then considered to own the data.
+		/// </summary>
+		/// <param name="offset">The offset of the AudioBuffer to copy data into.</param>
+		public unsafe void SetData(ReadOnlySpan<byte> span, uint offset = 0)
+		{
+			OwnsBufferData = true;
+
+			if (BufferDataLength < offset + span.Length)
+			{
+				BufferDataPtr = (nint) NativeMemory.Realloc((void*) BufferDataPtr, (nuint) (offset + span.Length));
+				BufferDataLength = (uint) span.Length;
+			}
+
+			fixed (void* ptr = span)
+			{
+				NativeMemory.Copy(ptr, (void*)(BufferDataPtr + offset), (nuint)span.Length);
+			}
+		}
+
+		/// <summary>
+		/// Assigns a pointer to the AudioBuffer.
+		/// If the AudioBuffer already owned data, it is freed.
+		/// </summary>
+		public unsafe void SetDataPointer(IntPtr bufferDataPtr, uint bufferDataLength, bool owns)
+		{
+			if (OwnsBufferData)
+			{
+				FreeBufferData();
+			}
+
+			OwnsBufferData = owns;
+			BufferDataPtr = bufferDataPtr;
+			BufferDataLength = bufferDataLength;
 		}
 
 		/// <summary>
@@ -41,7 +84,9 @@ namespace MoonWorks.Audio
 		/// <returns></returns>
 		public AudioBuffer Slice(int offset, uint length)
 		{
-			return new AudioBuffer(Device, Format, BufferDataPtr + offset, length, false);
+			var audioBuffer = Create(Device, Format);
+			audioBuffer.SetDataPointer(BufferDataPtr + offset, length, false);
+			return audioBuffer;
 		}
 
 		/// <summary>
@@ -64,13 +109,18 @@ namespace MoonWorks.Audio
 			};
 		}
 
+		private unsafe void FreeBufferData()
+		{
+			NativeMemory.Free((void*) BufferDataPtr);
+		}
+
 		protected override unsafe void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
 				if (OwnsBufferData)
 				{
-					NativeMemory.Free((void*) BufferDataPtr);
+					FreeBufferData();
 				}
 			}
 			base.Dispose(disposing);

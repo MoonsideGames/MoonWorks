@@ -11,7 +11,7 @@ public class Buffer : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUBuffer;
 
-	public BufferUsageFlags UsageFlags { get; }
+	public BufferUsageFlags UsageFlags { get; private init;  }
 
 	/// <summary>
 	/// Size in bytes.
@@ -72,7 +72,8 @@ public class Buffer : SDLGPUResource
 		return new Buffer(device)
 		{
 			Handle = handle,
-			Size = createInfo.Size
+			Size = createInfo.Size,
+			UsageFlags = createInfo.Usage
 		};
 	}
 
