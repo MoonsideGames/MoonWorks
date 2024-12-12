@@ -66,6 +66,41 @@ public class CommandBuffer
 	}
 
 	/// <summary>
+	/// Blocks until a swapchain texture is available and then acquires a swapchain texture.
+	/// This texture will be presented to the given window when the command buffer is submitted.
+	/// It is an error to acquire two swapchain textures from the same window in one command buffer.
+	/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
+	/// </summary>
+	public Texture WaitAndAcquireSwapchainTexture(
+		Window window
+	) {
+		if (!SDL.SDL_WaitAndAcquireGPUSwapchainTexture(
+			Handle,
+			window.Handle,
+			out var texturePtr,
+			out var width,
+			out var height
+		)) {
+			// FIXME: should we throw?
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return null;
+		}
+
+		if (texturePtr == IntPtr.Zero)
+		{
+			return null;
+		}
+
+		// Override the texture properties to avoid allocating a new texture instance!
+		window.SwapchainTexture.Handle = texturePtr;
+		window.SwapchainTexture.Width = width;
+		window.SwapchainTexture.Height = height;
+		window.SwapchainTexture.Format = window.SwapchainFormat;
+
+		return window.SwapchainTexture;
+	}
+
+	/// <summary>
 	/// Pushes data to a vertex uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
 	/// It is legal to push uniforms during a render or compute pass.

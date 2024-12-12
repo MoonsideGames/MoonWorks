@@ -459,6 +459,18 @@ public class GraphicsDevice : IDisposable
 	}
 
 	/// <summary>
+	/// Waits for the swapchain to become available.
+	/// Useful for latency-optimized workflows.
+	/// </summary>
+	public void WaitForSwapchain(Window window)
+	{
+		if (!SDL.SDL_WaitForGPUSwapchain(Handle, window.Handle))
+		{
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+		}
+	}
+
+	/// <summary>
 	/// Waits for the given fence to become signaled.
 	/// </summary>
 	public unsafe void WaitForFence(Fence fence)

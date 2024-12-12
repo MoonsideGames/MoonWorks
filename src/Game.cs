@@ -19,7 +19,7 @@ namespace MoonWorks
 	public abstract class Game
 	{
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
-		public TimeSpan Timestep { get; private set; }
+		public FramePacingSettings FramePacingSettings { get; private set; }
 
 		private bool quit = false;
 		private Stopwatch gameTimer;
@@ -32,9 +32,6 @@ namespace MoonWorks
 		private TimeSpan[] previousSleepTimes = new TimeSpan[PREVIOUS_SLEEP_TIME_COUNT];
 		private int sleepTimeIndex = 0;
 		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
-
-		private bool FramerateCapped = false;
-		private TimeSpan FramerateCapTimeSpan = TimeSpan.Zero;
 
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
@@ -55,17 +52,15 @@ namespace MoonWorks
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
 			WindowCreateInfo windowCreateInfo,
-			FrameLimiterSettings frameLimiterSettings,
+			FramePacingSettings framePacingSettings,
 			ShaderFormat availableShaderFormats,
-			int targetTimestep = 60,
 			bool debugMode = false
 		) {
 			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
-			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / targetTimestep);
 			gameTimer = Stopwatch.StartNew();
 
-			SetFrameLimiter(frameLimiterSettings);
+			FramePacingSettings = framePacingSettings;
 
 			for (int i = 0; i < previousSleepTimes.Length; i += 1)
 			{
@@ -138,20 +133,11 @@ namespace MoonWorks
 		}
 
 		/// <summary>
-		/// Updates the frame limiter settings.
+		/// Updates the frame pacing settings.
 		/// </summary>
-		public void SetFrameLimiter(FrameLimiterSettings settings)
+		public void SetFramePacingSettings(FramePacingSettings settings)
 		{
-			FramerateCapped = settings.Mode == FrameLimiterMode.Capped;
-
-			if (FramerateCapped)
-			{
-				FramerateCapTimeSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / settings.Cap);
-			}
-			else
-			{
-				FramerateCapTimeSpan = TimeSpan.Zero;
-			}
+			FramePacingSettings = settings;
 		}
 
 		/// <summary>
@@ -197,14 +183,17 @@ namespace MoonWorks
 		{
 			AdvanceElapsedTime();
 
-			if (FramerateCapped)
+			if (FramePacingSettings.Mode != FramePacingMode.Uncapped)
 			{
+				// If we are in latency-optimized mode, we use the game timestep. Otherwise, we use the framerate cap.
+				var capTimespan = FramePacingSettings.Mode == FramePacingMode.Capped ? FramePacingSettings.FramerateCapTimestep : FramePacingSettings.Timestep;
+
 				/* We want to wait until the framerate cap,
 				* but we don't want to oversleep. Requesting repeated 1ms sleeps and
 				* seeing how long we actually slept for lets us estimate the worst case
 				* sleep precision so we don't oversleep the next frame.
 				*/
-				while (accumulatedDrawTime + worstCaseSleepPrecision < FramerateCapTimeSpan)
+				while (accumulatedDrawTime + worstCaseSleepPrecision < capTimespan)
 				{
 					System.Threading.Thread.Sleep(1);
 					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
@@ -216,11 +205,17 @@ namespace MoonWorks
 				* SpinWait(1) works by pausing the thread for very short intervals, so it is
 				* an efficient and time-accurate way to wait out the rest of the time.
 				*/
-				while (accumulatedDrawTime < FramerateCapTimeSpan)
+				while (accumulatedDrawTime < capTimespan)
 				{
 					System.Threading.Thread.SpinWait(1);
 					AdvanceElapsedTime();
 				}
+			}
+
+			if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
+			{
+				// Block on the swapchain before event processing for latency optimization.
+				GraphicsDevice.WaitForSwapchain(MainWindow);
 			}
 
 			// Now that we are going to perform an update, let's handle SDL events.
@@ -234,19 +229,23 @@ namespace MoonWorks
 
 			if (!quit)
 			{
-				while (accumulatedUpdateTime >= Timestep)
+				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 				{
 					Inputs.Update();
-					Update(Timestep);
+					Update(FramePacingSettings.Timestep);
 					AudioDevice.WakeThread();
 
-					accumulatedUpdateTime -= Timestep;
+					accumulatedUpdateTime -= FramePacingSettings.Timestep;
 				}
 
-				var alpha = accumulatedUpdateTime / Timestep;
+				// Timestep alpha should be 0 if we are in latency-optimized mode.
+				var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
+					0 :
+					(accumulatedUpdateTime / FramePacingSettings.Timestep);
+
 
 				Draw(alpha);
-				accumulatedDrawTime -= FramerateCapTimeSpan;
+				accumulatedDrawTime -= FramePacingSettings.FramerateCapTimestep;
 			}
 		}
 
