@@ -105,6 +105,30 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		/// <summary>
+		/// Get audio format data without decoding the entire file.
+		/// </summary>
+		public static Format GetFormat(string filePath)
+		{
+			var handle = FAudio.qoa_open_from_filename(filePath);
+			if (handle == IntPtr.Zero)
+			{
+				throw new InvalidOperationException("Error loading QOA file!");
+			}
+
+			FAudio.qoa_attributes(handle, out var channels, out var samplerate, out var _, out var _);
+			var format = new Format
+			{
+				Tag = FormatTag.PCM,
+				BitsPerSample = 16,
+				Channels = (ushort) channels,
+				SampleRate = samplerate
+			};
+
+			FAudio.qoa_close(handle);
+			return format;
+		}
+
 		private ref struct LoadResult
 		{
 			public Format Format;

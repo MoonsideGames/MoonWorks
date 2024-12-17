@@ -123,5 +123,58 @@ namespace MoonWorks.Audio
 			NativeMemory.Free(memory);
 			return audioBuffer;
 		}
+
+		/// <summary>
+		/// Get audio format data without reading the entire file.
+		/// </summary>
+		public static Format GetFormat(string filePath)
+		{
+			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+			using var reader = new BinaryReader(stream);
+
+			// RIFF Signature
+			if (reader.ReadInt32() != MAGIC_RIFF)
+			{
+				throw new NotSupportedException("Specified stream is not a wave file.");
+			}
+
+			reader.ReadUInt32(); // Riff chunk size
+
+			// WAVE Header
+			if (reader.ReadInt32() != MAGIC_WAVE)
+			{
+				throw new NotSupportedException("Specified stream is not a wave file.");
+			}
+
+			// Skip over non-format chunks
+			while (stream.Position + 4 < stream.Length && reader.ReadInt32() != MAGIC_FMT)
+			{
+				var chunkSize = reader.ReadUInt32();
+				stream.Position += chunkSize;
+			}
+
+			if (stream.Position + 4 >= stream.Length)
+			{
+				throw new NotSupportedException("Specified stream is not a wave file.");
+			}
+
+			uint formatChunkSize = reader.ReadUInt32();
+
+			// WaveFormatEx data
+			ushort wFormatTag = reader.ReadUInt16();
+			ushort nChannels = reader.ReadUInt16();
+			uint nSamplesPerSec = reader.ReadUInt32();
+			uint nAvgBytesPerSec = reader.ReadUInt32();
+			ushort nBlockAlign = reader.ReadUInt16();
+			ushort wBitsPerSample = reader.ReadUInt16();
+
+			return new Format
+			{
+				Tag = (FormatTag) wFormatTag,
+				BitsPerSample = wBitsPerSample,
+				Channels = nChannels,
+				SampleRate = nSamplesPerSec
+			};
+		}
 	}
 }

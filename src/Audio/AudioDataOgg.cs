@@ -100,6 +100,30 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		/// <summary>
+		/// Get audio format data without decoding the entire file.
+		/// </summary>
+		public static Format GetFormat(string filePath)
+		{
+			var handle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
+			if (error != 0)
+			{
+				throw new InvalidOperationException("Error loading file: " + error);
+			}
+
+			var info = FAudio.stb_vorbis_get_info(handle);
+			var format = new Format
+			{
+				Tag = FormatTag.IEEE_FLOAT,
+				BitsPerSample = 32,
+				Channels = (ushort) info.channels,
+				SampleRate = info.sample_rate
+			};
+
+			FAudio.stb_vorbis_close(handle);
+			return format;
+		}
+
 		private ref struct LoadResult
 		{
 			public Format Format;
