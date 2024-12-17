@@ -28,9 +28,9 @@ internal ref struct ByteSpanStream
 		return MemoryMarshal.Read<T>(Span[Index..]);
 	}
 
-	public void Advance(int offset)
+	public void Advance(uint offset)
 	{
-		Index += offset;
+		Index += (int) offset;
 	}
 
 	public ReadOnlySpan<byte> SliceRemainder() => Span[Index..];

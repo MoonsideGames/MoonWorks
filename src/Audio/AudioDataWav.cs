@@ -35,18 +35,25 @@ namespace MoonWorks.Audio
 
 			stream.Read<uint>(); // Riff chunk size
 
+			// WAVE Header
 			if (stream.Read<int>() != MAGIC_WAVE)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			// WAVE Header
-			if (stream.Read<int>() != MAGIC_FMT)
+			// Skip over non-format chunks
+			while (stream.Remaining >= 4 && stream.Read<int>() != MAGIC_FMT)
+			{
+				var chunkSize = stream.Read<uint>();
+				stream.Advance(chunkSize);
+			}
+
+			if (stream.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int format_chunk_size = stream.Read<int>();
+			uint format_chunk_size = stream.Read<uint>();
 
 			// WaveFormatEx data
 			ushort wFormatTag = stream.Read<ushort>();
@@ -62,10 +69,11 @@ namespace MoonWorks.Audio
 				stream.Advance(format_chunk_size - 16);
 			}
 
-			// data Signature
-			while (stream.Remaining > 4 && stream.Peek<int>() != MAGIC_DATA)
+			// Skip over non-data chunks
+			while (stream.Remaining > 4 && stream.Read<int>() != MAGIC_DATA)
 			{
-				stream.Advance(1);
+				var chunkSize = stream.Read<uint>();
+				stream.Advance(chunkSize);
 			}
 
 			if (stream.Remaining < 4)
