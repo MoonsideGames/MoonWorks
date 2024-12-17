@@ -6,6 +6,11 @@ namespace MoonWorks.Audio
 {
 	public static class AudioDataWav
 	{
+		const int MAGIC_RIFF = 0x46464952;
+		const int MAGIC_WAVE = 0x45564157;
+		const int MAGIC_FMT  = 0x20746d66;
+		const int MAGIC_DATA = 0x61746164;
+
 		private ref struct ParseResult
 		{
 			public Format Format;
@@ -23,20 +28,20 @@ namespace MoonWorks.Audio
 			var stream = new ByteSpanStream(span);
 
 			// RIFF Signature
-			if (stream.Read<byte>() != 'R' || stream.Read<byte>() != 'I' || stream.Read<byte>() != 'F' || stream.Read<byte>() != 'F')
+			if (stream.Read<int>() != MAGIC_RIFF)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
 			stream.Read<uint>(); // Riff chunk size
 
-			if (stream.Read<byte>() != 'W' || stream.Read<byte>() != 'A' || stream.Read<byte>() != 'V' || stream.Read<byte>() != 'E')
+			if (stream.Read<int>() != MAGIC_WAVE)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
 			// WAVE Header
-			if (stream.Read<byte>() != 'f' || stream.Read<byte>() != 'm' || stream.Read<byte>() != 't' || stream.Read<byte>() != ' ')
+			if (stream.Read<int>() != MAGIC_FMT)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
@@ -58,7 +63,12 @@ namespace MoonWorks.Audio
 			}
 
 			// data Signature
-			if (stream.Read<byte>() != 'd' || stream.Read<byte>() != 'a' || stream.Read<byte>() != 't' || stream.Read<byte>() != 'a')
+			while (stream.Remaining > 4 && stream.Peek<int>() != MAGIC_DATA)
+			{
+				stream.Advance(1);
+			}
+
+			if (stream.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}

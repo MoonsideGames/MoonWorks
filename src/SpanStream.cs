@@ -8,6 +8,8 @@ internal ref struct ByteSpanStream
 	public ReadOnlySpan<byte> Span;
 	public int Index;
 
+	public int Remaining => Span.Length - Index;
+
 	public ByteSpanStream(ReadOnlySpan<byte> span)
 	{
 		Span = span;
@@ -19,6 +21,11 @@ internal ref struct ByteSpanStream
 		var result = MemoryMarshal.Read<T>(Span[Index..]);
 		Index += sizeof(T);
 		return result;
+	}
+
+	public unsafe T Peek<T>() where T : unmanaged
+	{
+		return MemoryMarshal.Read<T>(Span[Index..]);
 	}
 
 	public void Advance(int offset)
