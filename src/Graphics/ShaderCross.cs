@@ -1,5 +1,5 @@
+using System;
 using System.IO;
-using SDL3;
 
 namespace MoonWorks.Graphics;
 
@@ -16,6 +16,8 @@ public static class ShaderCross
 		HLSL
 	}
 
+	public readonly record struct HLSLDefine(string Name, string Value);
+
 	public static Graphics.ShaderFormat SPIRVDestinationFormats => SDL_ShaderCross.SDL_ShaderCross_GetSPIRVShaderFormats();
 	public static Graphics.ShaderFormat HLSLDestinationFormats => SDL_ShaderCross.SDL_ShaderCross_GetHLSLShaderFormats();
 
@@ -29,6 +31,7 @@ public static class ShaderCross
 		if (!SDL_ShaderCross.SDL_ShaderCross_Init())
 		{
 			Logger.LogError("Failed to initialize ShaderCross!");
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return false;
 		}
 
@@ -42,7 +45,10 @@ public static class ShaderCross
 		string entrypoint,
 		ShaderFormat shaderFormat,
 		ShaderStage shaderStage,
-		string includeDir = null // Only used for HLSL
+		bool enableDebug = false,
+		string name = null,
+		string includeDir = null,       // Only used by HLSL
+		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
 		return Create(
@@ -51,7 +57,10 @@ public static class ShaderCross
 			entrypoint,
 			shaderFormat,
 			shaderStage,
-			includeDir
+			enableDebug,
+			name,
+			includeDir,
+			defines
 		);
 	}
 
@@ -61,15 +70,18 @@ public static class ShaderCross
 		string entrypoint,
 		ShaderFormat shaderFormat,
 		ShaderStage shaderStage,
-		string includeDir = null // Only used for HLSL
+		bool enableDebug = false,
+		string name = null,
+		string includeDir = null,        // Only used for HLSL
+		params Span<HLSLDefine> defines  // Only used by HLSL
 	) {
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return Shader.CreateFromSPIRV(device, stream, entrypoint, shaderStage);
+			return Shader.CreateFromSPIRV(device, stream, entrypoint, shaderStage, enableDebug, name);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return Shader.CreateFromHLSL(device, stream, entrypoint, includeDir, shaderStage);
+			return Shader.CreateFromHLSL(device, stream, entrypoint, includeDir, shaderStage, enableDebug, name, defines);
 		}
 		else
 		{
@@ -83,7 +95,10 @@ public static class ShaderCross
 		string filepath,
 		string entrypoint,
 		ShaderFormat shaderFormat,
-		string includeDir = null // Only used for HLSL
+		bool enableDebug = false,
+		string name = null,
+		string includeDir = null,       // Only used for HLSL
+		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
 		return Create(
@@ -91,7 +106,10 @@ public static class ShaderCross
 			stream,
 			entrypoint,
 			shaderFormat,
-			includeDir
+			enableDebug,
+			name,
+			includeDir,
+			defines
 		);
 	}
 
@@ -100,15 +118,18 @@ public static class ShaderCross
 		Stream stream,
 		string entrypoint,
 		ShaderFormat shaderFormat,
-		string includeDir = null // Only used for HLSL
+		bool enableDebug = false,
+		string name = null,
+		string includeDir = null,       // Only used for HLSL
+		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return ComputePipeline.CreateFromSPIRV(device, stream, entrypoint);
+			return ComputePipeline.CreateFromSPIRV(device, stream, entrypoint, enableDebug, name);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, includeDir);
+			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, includeDir, enableDebug, name, defines);
 		}
 		else
 		{

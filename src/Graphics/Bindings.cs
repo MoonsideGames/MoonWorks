@@ -1670,7 +1670,7 @@ internal static partial class SDL_ShaderCross
 		Compute
 	}
 
-	public struct GraphicsShaderInfo
+	public struct GraphicsShaderMetadata
 	{
 		public uint NumSamplers;
 		public uint NumStorageTextures;
@@ -1678,7 +1678,7 @@ internal static partial class SDL_ShaderCross
 		public uint NumUniformBuffers;
 	};
 
-	public struct ComputePipelineInfo
+	public struct ComputePipelineMetadata
 	{
 		public uint NumSamplers;
 		public uint NumReadOnlyStorageTextures;
@@ -1690,6 +1690,35 @@ internal static partial class SDL_ShaderCross
 		public uint ThreadCountY;
 		public uint ThreadCountZ;
 	};
+
+	public unsafe struct INTERNAL_SPIRVInfo
+	{
+		public byte* Bytecode;
+		public UIntPtr BytecodeSize;
+		public byte* EntryPoint;
+		public ShaderStage ShaderStage;
+		public SDLBool EnableDebug;
+		public byte* Name;
+		public uint Props;
+	};
+
+	public unsafe struct INTERNAL_HLSLDefine
+	{
+		public byte* Name;
+		public byte* Value;
+	};
+
+	public unsafe struct INTERNAL_HLSLInfo
+	{
+		public byte* Source;
+		public byte* EntryPoint;
+		public byte* IncludeDir;
+		public INTERNAL_HLSLDefine* Defines;
+		public ShaderStage ShaderStage;
+		public SDLBool EnableDebug;
+		public byte* Name;
+		public uint Props;
+	}
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
@@ -1703,63 +1732,46 @@ internal static partial class SDL_ShaderCross
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial ShaderFormat SDL_ShaderCross_GetSPIRVShaderFormats();
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_TranspileMSLFromSPIRV(
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		ShaderStage shaderStage
+		in INTERNAL_SPIRVInfo info
 	);
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_TranspileHLSLFromSPIRV(
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		ShaderStage shaderStage
+		in INTERNAL_SPIRVInfo info
 	);
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromSPIRV(
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		ShaderStage shaderStage,
+		in INTERNAL_SPIRVInfo info,
 		out UIntPtr size
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileDXILFromSPIRV(
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		ShaderStage shaderStage,
+		in INTERNAL_SPIRVInfo info,
 		out UIntPtr size
 	);
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 		IntPtr device,
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		Graphics.ShaderStage shaderStage,
-		out GraphicsShaderInfo info
+		in INTERNAL_SPIRVInfo info,
+		out GraphicsShaderMetadata metadata
 	);
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 		IntPtr device,
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		string entrypoint,
-		out ComputePipelineInfo info
+		in INTERNAL_SPIRVInfo info,
+		out ComputePipelineMetadata metadata
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1769,36 +1781,21 @@ internal static partial class SDL_ShaderCross
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileDXBCFromHLSL(
-		string hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		ShaderStage shaderStage,
+		in INTERNAL_HLSLInfo info,
 		out UIntPtr size
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileDXILFromHLSL(
-		string hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		ShaderStage shaderStage,
+		in INTERNAL_HLSLInfo info,
 		out UIntPtr size
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileSPIRVFromHLSL(
-		string hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		ShaderStage shaderStage,
+		in INTERNAL_HLSLInfo info,
 		out UIntPtr size
 	);
 
@@ -1806,50 +1803,16 @@ internal static partial class SDL_ShaderCross
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
 		IntPtr device,
-		string hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		Graphics.ShaderStage shaderStage,
-		out GraphicsShaderInfo info
-	);
-
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
-	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-		IntPtr device,
-		Span<byte> hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		Graphics.ShaderStage shaderStage,
-		out GraphicsShaderInfo info
+		in INTERNAL_HLSLInfo info,
+		out GraphicsShaderMetadata metadata
 	);
 
 	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
 		IntPtr device,
-		string hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		out ComputePipelineInfo info
-	);
-
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
-	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
-		IntPtr device,
-		Span<byte> hlslSource,
-		string entrypoint,
-		string includeDir,
-		Span<string> defines,
-		uint numDefines,
-		out ComputePipelineInfo info
+		in INTERNAL_HLSLInfo info,
+		out ComputePipelineMetadata metadata
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1857,7 +1820,7 @@ internal static partial class SDL_ShaderCross
 	public static partial SDLBool SDL_ShaderCross_ReflectGraphicsSPIRV(
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
-		out GraphicsShaderInfo info
+		out GraphicsShaderMetadata info
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1865,6 +1828,6 @@ internal static partial class SDL_ShaderCross
 	public static partial SDLBool SDL_ShaderCross_ReflectComputeSPIRV(
 		Span<byte> bytecode,
 		UIntPtr bytecodeSize,
-		out ComputePipelineInfo info
+		out ComputePipelineMetadata info
 	);
 }

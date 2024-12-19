@@ -55,11 +55,7 @@ namespace MoonWorks.Graphics
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
 
-			var entryPointLength = Encoding.UTF8.GetByteCount(entryPoint) + 1;
-			var entryPointBuffer = NativeMemory.Alloc((nuint) entryPointLength);
-			var buffer = new Span<byte>(entryPointBuffer, entryPointLength);
-			var byteCount = Encoding.UTF8.GetBytes(entryPoint, buffer);
-			buffer[byteCount] = 0;
+			var entryPointBuffer = MarshalString(entryPoint);
 
 			INTERNAL_ShaderCreateInfo createInfo;
 			createInfo.CodeSize = (nuint) stream.Length;
@@ -84,6 +80,7 @@ namespace MoonWorks.Graphics
 			if (shaderModule == nint.Zero)
 			{
 				Logger.LogError("Failed to compile shader!");
+				Logger.LogError(SDL3.SDL.SDL_GetError());
 				return null;
 			}
 
@@ -106,36 +103,50 @@ namespace MoonWorks.Graphics
 			GraphicsDevice device,
 			Stream stream,
 			string entryPoint,
-			ShaderStage shaderStage
+			ShaderStage shaderStage,
+			bool enableDebug,
+			string name // can be null
 		) {
 			var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 			var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 			stream.ReadExactly(bytecodeSpan);
 
+			var entryPointBuffer = MarshalString(entryPoint);
+			var nameBuffer = MarshalString(name);
+
+			SDL_ShaderCross.INTERNAL_SPIRVInfo spirvInfo;
+			spirvInfo.Bytecode = (byte*) bytecodeBuffer;
+			spirvInfo.BytecodeSize = (nuint) stream.Length;
+			spirvInfo.EntryPoint = entryPointBuffer;
+			spirvInfo.ShaderStage = (SDL_ShaderCross.ShaderStage) shaderStage;
+			spirvInfo.EnableDebug = enableDebug;
+			spirvInfo.Name = nameBuffer;
+			spirvInfo.Props = 0;
+
 			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 				device.Handle,
-				bytecodeSpan,
-				(nuint) stream.Length,
-				entryPoint,
-				shaderStage,
-				out var shaderInfo
+				spirvInfo,
+				out var shaderMetadata
 			);
 
 			NativeMemory.Free(bytecodeBuffer);
+			NativeMemory.Free(entryPointBuffer);
+			NativeMemory.Free(nameBuffer);
 
 			if (shaderModule == nint.Zero)
 			{
 				Logger.LogError("Failed to compile shader!");
+				Logger.LogError(SDL3.SDL.SDL_GetError());
 				return null;
 			}
 
 			var shader = new Shader(device)
 			{
 				Handle = shaderModule,
-				NumSamplers = shaderInfo.NumSamplers,
-				NumStorageTextures = shaderInfo.NumStorageTextures,
-				NumStorageBuffers = shaderInfo.NumStorageBuffers,
-				NumUniformBuffers = shaderInfo.NumUniformBuffers
+				NumSamplers = shaderMetadata.NumSamplers,
+				NumStorageTextures = shaderMetadata.NumStorageTextures,
+				NumStorageBuffers = shaderMetadata.NumStorageBuffers,
+				NumUniformBuffers = shaderMetadata.NumUniformBuffers
 			};
 
 			return shader;
@@ -150,42 +161,90 @@ namespace MoonWorks.Graphics
 			string entryPoint,
 			string includeDir, // can be NULL
 			ShaderStage shaderStage,
-			params Span<string> defines
+			bool enableDebug,
+			string name, // can be NULL
+			params Span<ShaderCross.HLSLDefine> defines
 		) {
 			byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 			var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
 			stream.ReadExactly(hlslSpan);
 			hlslBuffer[(int)stream.Length] = 0; // ensure null-terminated
 
+			var entryPointBuffer = MarshalString(entryPoint);
+			var includeDirBuffer = MarshalString(includeDir);
+			var nameBuffer = MarshalString(name);
+
+			SDL_ShaderCross.INTERNAL_HLSLDefine* definesBuffer = null;
+			if (defines.Length > 0) {
+				definesBuffer = (SDL_ShaderCross.INTERNAL_HLSLDefine*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_ShaderCross.INTERNAL_HLSLDefine>() * (defines.Length + 1)));
+				for (var i = 0; i < defines.Length; i += 1)
+				{
+					definesBuffer[i].Name = MarshalString(defines[i].Name);
+					definesBuffer[i].Value = MarshalString(defines[i].Value);
+				}
+				// Null-terminate the array
+				definesBuffer[defines.Length].Name = null;
+				definesBuffer[defines.Length].Value = null;
+			}
+
+			SDL_ShaderCross.INTERNAL_HLSLInfo hlslInfo;
+			hlslInfo.Source = hlslBuffer;
+			hlslInfo.EntryPoint = entryPointBuffer;
+			hlslInfo.IncludeDir = includeDirBuffer;
+			hlslInfo.Defines = definesBuffer;
+			hlslInfo.ShaderStage = (SDL_ShaderCross.ShaderStage) shaderStage;
+			hlslInfo.EnableDebug = enableDebug;
+			hlslInfo.Name = nameBuffer;
+			hlslInfo.Props = 0;
+
 			var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
 				device.Handle,
-				hlslSpan,
-				entryPoint,
-				includeDir,
-				defines,
-				(uint) defines.Length,
-				shaderStage,
-				out var shaderInfo
+				hlslInfo,
+				out var shaderMetadata
 			);
 
 			NativeMemory.Free(hlslBuffer);
+			NativeMemory.Free(entryPointBuffer);
+			NativeMemory.Free(includeDirBuffer);
+			for (var i = 0; i < defines.Length; i += 1)
+			{
+				NativeMemory.Free(definesBuffer[i].Name);
+				NativeMemory.Free(definesBuffer[i].Value);
+			}
+			NativeMemory.Free(definesBuffer);
+			NativeMemory.Free(nameBuffer);
 
 			if (shaderModule == nint.Zero)
 			{
 				Logger.LogError("Failed to compile shader!");
+				Logger.LogError(SDL3.SDL.SDL_GetError());
 				return null;
 			}
 
 			var shader = new Shader(device)
 			{
 				Handle = shaderModule,
-				NumSamplers = shaderInfo.NumSamplers,
-				NumStorageTextures = shaderInfo.NumStorageTextures,
-				NumStorageBuffers = shaderInfo.NumStorageBuffers,
-				NumUniformBuffers = shaderInfo.NumUniformBuffers
+				NumSamplers = shaderMetadata.NumSamplers,
+				NumStorageTextures = shaderMetadata.NumStorageTextures,
+				NumStorageBuffers = shaderMetadata.NumStorageBuffers,
+				NumUniformBuffers = shaderMetadata.NumUniformBuffers
 			};
 
 			return shader;
+		}
+
+		// MUST call NativeMemory.Free on the result eventually!
+		private static unsafe byte* MarshalString(string s)
+		{
+			if (s == null) { return null; }
+
+			var length = Encoding.UTF8.GetByteCount(s) + 1;
+			var buffer = (byte*) NativeMemory.Alloc((nuint) length);
+			var span = new Span<byte>(buffer, length);
+			var byteCount = Encoding.UTF8.GetBytes(s, span);
+			span[byteCount] = 0;
+
+			return buffer;
 		}
 	}
 }

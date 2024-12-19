@@ -112,40 +112,55 @@ public class ComputePipeline : SDLGPUResource
 	internal static unsafe ComputePipeline CreateFromSPIRV(
 		GraphicsDevice device,
 		Stream stream,
-		string entryPoint
+		string entryPoint,
+		bool enableDebug,
+		string name // can be null
 	) {
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
 		stream.ReadExactly(bytecodeSpan);
 
+		var entryPointBuffer = MarshalString(entryPoint);
+		var nameBuffer = MarshalString(name);
+
+		SDL_ShaderCross.INTERNAL_SPIRVInfo spirvInfo;
+		spirvInfo.Bytecode = (byte*) bytecodeBuffer;
+		spirvInfo.BytecodeSize = (nuint) stream.Length;
+		spirvInfo.EntryPoint = entryPointBuffer;
+		spirvInfo.ShaderStage = SDL_ShaderCross.ShaderStage.Compute;
+		spirvInfo.EnableDebug = enableDebug;
+		spirvInfo.Name = nameBuffer;
+		spirvInfo.Props = 0;
+
 		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 			device.Handle,
-			bytecodeSpan,
-			(nuint) stream.Length,
-			entryPoint,
-			out var pipelineInfo
+			spirvInfo,
+			out var pipelineMetadata
 		);
 
 		NativeMemory.Free(bytecodeBuffer);
+		NativeMemory.Free(entryPointBuffer);
+		NativeMemory.Free(nameBuffer);
 
 		if (computePipelineHandle == nint.Zero)
 		{
 			Logger.LogError("Failed to create compute pipeline!");
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
 		}
 
 		var computePipeline = new ComputePipeline(device)
 		{
 			Handle = computePipelineHandle,
-			NumSamplers = pipelineInfo.NumSamplers,
-			NumReadOnlyStorageTextures = pipelineInfo.NumReadOnlyStorageTextures,
-			NumReadOnlyStorageBuffers = pipelineInfo.NumReadOnlyStorageBuffers,
-			NumReadWriteStorageTextures = pipelineInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = pipelineInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = pipelineInfo.NumUniformBuffers,
-			ThreadCountX = pipelineInfo.ThreadCountX,
-			ThreadCountY = pipelineInfo.ThreadCountY,
-			ThreadCountZ = pipelineInfo.ThreadCountZ
+			NumSamplers = pipelineMetadata.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineMetadata.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineMetadata.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineMetadata.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineMetadata.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
+			ThreadCountX = pipelineMetadata.ThreadCountX,
+			ThreadCountY = pipelineMetadata.ThreadCountY,
+			ThreadCountZ = pipelineMetadata.ThreadCountZ
 		};
 
 		return computePipeline;
@@ -159,45 +174,95 @@ public class ComputePipeline : SDLGPUResource
 		Stream stream,
 		string entryPoint,
 		string includeDir,
-		params Span<string> defines
+		bool enableDebug,
+		string name, // can be null
+		params Span<ShaderCross.HLSLDefine> defines
 	) {
 		byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
 		var hlslSpan = new Span<byte>(hlslBuffer, (int) stream.Length);
 		stream.ReadExactly(hlslSpan);
 		hlslBuffer[(int)stream.Length] = 0; // ensure null-terminated
 
+		var entryPointBuffer = MarshalString(entryPoint);
+		var includeDirBuffer = MarshalString(includeDir);
+		var nameBuffer = MarshalString(name);
+
+		SDL_ShaderCross.INTERNAL_HLSLDefine* definesBuffer = null;
+
+		if (defines.Length > 0) {
+			definesBuffer = (SDL_ShaderCross.INTERNAL_HLSLDefine*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_ShaderCross.INTERNAL_HLSLDefine>() * (defines.Length + 1)));
+			for (var i = 0; i < defines.Length; i += 1)
+			{
+				definesBuffer[i].Name = MarshalString(defines[i].Name);
+				definesBuffer[i].Value = MarshalString(defines[i].Value);
+			}
+			// Null-terminate the array
+			definesBuffer[defines.Length].Name = null;
+			definesBuffer[defines.Length].Value = null;
+		}
+
+		SDL_ShaderCross.INTERNAL_HLSLInfo hlslInfo;
+		hlslInfo.Source = hlslBuffer;
+		hlslInfo.EntryPoint = entryPointBuffer;
+		hlslInfo.IncludeDir = includeDirBuffer;
+		hlslInfo.Defines = definesBuffer;
+		hlslInfo.ShaderStage = SDL_ShaderCross.ShaderStage.Compute;
+		hlslInfo.EnableDebug = enableDebug;
+		hlslInfo.Name = nameBuffer;
+		hlslInfo.Props = 0;
+
 		var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
 			device.Handle,
-			hlslSpan,
-			entryPoint,
-			includeDir,
-			defines,
-			(uint) defines.Length,
-			out var pipelineInfo
+			hlslInfo,
+			out var pipelineMetadata
 		);
 
 		NativeMemory.Free(hlslBuffer);
+		NativeMemory.Free(entryPointBuffer);
+		NativeMemory.Free(includeDirBuffer);
+		for (var i = 0; i < defines.Length; i += 1)
+		{
+			NativeMemory.Free(definesBuffer[i].Name);
+			NativeMemory.Free(definesBuffer[i].Value);
+		}
+		NativeMemory.Free(definesBuffer);
+		NativeMemory.Free(nameBuffer);
 
 		if (computePipelineHandle == nint.Zero)
 		{
 			Logger.LogError("Failed to create compute pipeline!");
+			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
 		}
 
 		var computePipeline = new ComputePipeline(device)
 		{
 			Handle = computePipelineHandle,
-			NumSamplers = pipelineInfo.NumSamplers,
-			NumReadOnlyStorageTextures = pipelineInfo.NumReadOnlyStorageTextures,
-			NumReadOnlyStorageBuffers = pipelineInfo.NumReadOnlyStorageBuffers,
-			NumReadWriteStorageTextures = pipelineInfo.NumReadWriteStorageTextures,
-			NumReadWriteStorageBuffers = pipelineInfo.NumReadWriteStorageBuffers,
-			NumUniformBuffers = pipelineInfo.NumUniformBuffers,
-			ThreadCountX = pipelineInfo.ThreadCountX,
-			ThreadCountY = pipelineInfo.ThreadCountY,
-			ThreadCountZ = pipelineInfo.ThreadCountZ
+			NumSamplers = pipelineMetadata.NumSamplers,
+			NumReadOnlyStorageTextures = pipelineMetadata.NumReadOnlyStorageTextures,
+			NumReadOnlyStorageBuffers = pipelineMetadata.NumReadOnlyStorageBuffers,
+			NumReadWriteStorageTextures = pipelineMetadata.NumReadWriteStorageTextures,
+			NumReadWriteStorageBuffers = pipelineMetadata.NumReadWriteStorageBuffers,
+			NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
+			ThreadCountX = pipelineMetadata.ThreadCountX,
+			ThreadCountY = pipelineMetadata.ThreadCountY,
+			ThreadCountZ = pipelineMetadata.ThreadCountZ
 		};
 
 		return computePipeline;
+	}
+
+	// MUST call NativeMemory.Free on the result eventually!
+	private static unsafe byte* MarshalString(string s)
+	{
+		if (s == null) { return null; }
+
+		var length = Encoding.UTF8.GetByteCount(s) + 1;
+		var buffer = (byte*) NativeMemory.Alloc((nuint) length);
+		var span = new Span<byte>(buffer, length);
+		var byteCount = Encoding.UTF8.GetBytes(s, span);
+		span[byteCount] = 0;
+
+		return buffer;
 	}
 }
