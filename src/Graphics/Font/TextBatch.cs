@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using WellspringCS;
 
@@ -15,9 +16,12 @@ namespace MoonWorks.Graphics.Font
 
 		public Buffer VertexBuffer { get; protected set; } = null;
 		public Buffer IndexBuffer { get; protected set; } = null;
+		public Buffer InstanceBuffer { get; protected set; } = null;
 		public uint PrimitiveCount { get; protected set; }
+		private int InstanceIndex = 0;
 
-		private TransferBuffer TransferBuffer;
+		private TransferBuffer VertexTransferBuffer;
+		private TransferBuffer InstanceTransferBuffer;
 
 		public Font CurrentFont { get; private set; }
 
@@ -33,11 +37,15 @@ namespace MoonWorks.Graphics.Font
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
 
-			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
+			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex | BufferUsageFlags.ComputeStorageWrite, INITIAL_VERTEX_COUNT);
 			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+			InstanceBuffer = Buffer.Create<ComputeInstanceData>(GraphicsDevice, BufferUsageFlags.ComputeStorageRead, INITIAL_CHAR_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
-			TransferBuffer.Name = "TextBatch TransferBuffer";
+			VertexTransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
+			VertexTransferBuffer.Name = "TextBatch VertexTransferBuffer";
+
+			InstanceTransferBuffer = TransferBuffer.Create<ComputeInstanceData>(GraphicsDevice, TransferBufferUsage.Upload, INITIAL_CHAR_COUNT);
+			InstanceTransferBuffer.Name = "TextBatch InstanceTransferBuffer";
 		}
 
 		// Call this to initialize or reset the batch.
@@ -46,12 +54,17 @@ namespace MoonWorks.Graphics.Font
 			Wellspring.Wellspring_StartTextBatch(Handle, font.Handle);
 			CurrentFont = font;
 			PrimitiveCount = 0;
+			InstanceIndex = 0;
+			InstanceTransferBuffer.Map(true);
 		}
 
 		// Add text with size and color to the batch
 		public unsafe bool Add(
 			string text,
 			int pixelSize,
+			Vector3 position,
+			Vector3 rotation,
+			Vector2 scale,
 			Color color,
 			HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
 			VerticalAlignment verticalAlignment = VerticalAlignment.Baseline
@@ -84,12 +97,20 @@ namespace MoonWorks.Graphics.Font
 				}
 			}
 
+			var instanceDatas = InstanceTransferBuffer.MappedSpan<ComputeInstanceData>();
+			instanceDatas[InstanceIndex].Translation = position;
+			instanceDatas[InstanceIndex].Rotation = rotation;
+			instanceDatas[InstanceIndex].Scale = scale;
+			InstanceIndex += 1;
+
 			return true;
 		}
 
 		// Call this after you have made all the Add calls you want, but before beginning a render pass.
 		public unsafe void UploadBufferData(CommandBuffer commandBuffer)
 		{
+			InstanceTransferBuffer.Unmap();
+
 			Wellspring.Wellspring_GetBufferData(
 				Handle,
 				out uint vertexCount,
@@ -120,26 +141,26 @@ namespace MoonWorks.Graphics.Font
 
 			if (newTransferBufferNeeded)
 			{
-				TransferBuffer.Dispose();
-				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
-				TransferBuffer.Name = "TextBatch TransferBuffer";
+				VertexTransferBuffer.Dispose();
+				VertexTransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
+				VertexTransferBuffer.Name = "TextBatch TransferBuffer";
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
 			{
-				var transferVertexSpan = TransferBuffer.Map<byte>(true);
+				var transferVertexSpan = VertexTransferBuffer.Map<byte>(true);
 				var transferIndexSpan = transferVertexSpan[vertexSpan.Length..];
 
 				vertexSpan.CopyTo(transferVertexSpan);
 				indexSpan.CopyTo(transferIndexSpan);
 
-				TransferBuffer.Unmap();
+				VertexTransferBuffer.Unmap();
 
 				var copyPass = commandBuffer.BeginCopyPass();
 				copyPass.UploadToBuffer(
 					new TransferBufferLocation
 					{
-						TransferBuffer = TransferBuffer.Handle,
+						TransferBuffer = VertexTransferBuffer.Handle,
 						Offset = 0
 					},
 					new BufferRegion
@@ -153,7 +174,7 @@ namespace MoonWorks.Graphics.Font
 				copyPass.UploadToBuffer(
 					new TransferBufferLocation
 					{
-						TransferBuffer = TransferBuffer.Handle,
+						TransferBuffer = VertexTransferBuffer.Handle,
 						Offset = (uint) vertexSpan.Length
 					},
 					new BufferRegion
@@ -164,7 +185,20 @@ namespace MoonWorks.Graphics.Font
 					},
 					true
 				);
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation(InstanceTransferBuffer),
+					new BufferRegion(InstanceBuffer),
+					true
+				);
 				commandBuffer.EndCopyPass(copyPass);
+
+				var computePass = commandBuffer.BeginComputePass(
+					TransformedVertexBuffer,
+					InstanceBuffer
+				);
+
+
+				commandBuffer.EndComputePass(computePass);
 			}
 
 			PrimitiveCount = vertexCount / 2;
@@ -172,8 +206,7 @@ namespace MoonWorks.Graphics.Font
 
 		// Call this AFTER binding your text pipeline!
 		public void Render(
-			RenderPass renderPass,
-			System.Numerics.Matrix4x4 transformMatrix
+			RenderPass renderPass
 		) {
 			renderPass.CommandBuffer.PushVertexUniformData(transformMatrix);
 			renderPass.CommandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
@@ -202,13 +235,26 @@ namespace MoonWorks.Graphics.Font
 				{
 					VertexBuffer.Dispose();
 					IndexBuffer.Dispose();
-					TransferBuffer.Dispose();
+					InstanceBuffer.Dispose();
+					VertexTransferBuffer.Dispose();
+					InstanceTransferBuffer.Dispose();
 				}
 
 				NativeMemory.Free(StringBytes);
 				Wellspring.Wellspring_DestroyTextBatch(Handle);
 			}
 			base.Dispose(disposing);
+		}
+
+		[StructLayout(LayoutKind.Explicit, Size = 40)]
+		record struct ComputeInstanceData
+		{
+			[FieldOffset(0)]
+			public Vector3 Translation;
+			[FieldOffset(16)]
+			public Vector3 Rotation;
+			[FieldOffset(32)]
+			public Vector2 Scale;
 		}
 	}
 }
