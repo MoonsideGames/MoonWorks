@@ -51,6 +51,7 @@ public static class ShaderCross
 		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+		name ??= Path.GetFileName(filepath); // if name is not provided, just use the filename
 		return Create(
 			device,
 			stream,
@@ -77,11 +78,27 @@ public static class ShaderCross
 	) {
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return Shader.CreateFromSPIRV(device, stream, entrypoint, shaderStage, enableDebug, name);
+			return Shader.CreateFromSPIRV(
+				device,
+				stream,
+				entrypoint,
+				shaderStage,
+				enableDebug,
+				name
+			);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return Shader.CreateFromHLSL(device, stream, entrypoint, includeDir, shaderStage, enableDebug, name, defines);
+			return Shader.CreateFromHLSL(
+				device,
+				stream,
+				entrypoint,
+				includeDir,
+				shaderStage,
+				enableDebug,
+				name,
+				defines
+			);
 		}
 		else
 		{
@@ -101,6 +118,7 @@ public static class ShaderCross
 		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+		name ??= Path.GetFileName(filepath); // if name not provided, just use filename
 		return Create(
 			device,
 			stream,
@@ -120,16 +138,28 @@ public static class ShaderCross
 		ShaderFormat shaderFormat,
 		bool enableDebug = false,
 		string name = null,
-		string includeDir = null,       // Only used for HLSL
+		string includeDir = null,       // Only used by HLSL
 		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return ComputePipeline.CreateFromSPIRV(device, stream, entrypoint, enableDebug, name);
+			return ComputePipeline.CreateFromSPIRV(
+				device,
+				stream,
+				entrypoint,
+				enableDebug,
+				name);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return ComputePipeline.CreateFromHLSL(device, stream, entrypoint, includeDir, enableDebug, name, defines);
+			return ComputePipeline.CreateFromHLSL(
+				device,
+				stream,
+				entrypoint,
+				includeDir,
+				enableDebug,
+				name,
+				defines);
 		}
 		else
 		{
