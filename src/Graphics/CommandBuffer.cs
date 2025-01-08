@@ -1,19 +1,24 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
 
 /// <summary>
-/// A structure that buffers commands to be submitted to the GPU.
+/// A class that buffers commands to be submitted to the GPU.
+/// 
 /// These commands include operations like copying data, draw calls, and compute dispatches.
 /// Commands only begin executing once the command buffer is submitted.
 /// If you need to know when the command buffer is done, use GraphicsDevice.SubmitAndAcquireFence
 /// </summary>
 public class CommandBuffer
 {
+	/// <summary>Gets the <see cref="GraphicsDevice"/> the command buffer is bound to.</summary>
 	public GraphicsDevice Device { get; }
+
+	/// <summary>Gets the pointer value to the command buffer.</summary>
 	public IntPtr Handle { get; internal set; }
 
 	// called from CommandBufferPool
@@ -29,23 +34,29 @@ public class CommandBuffer
 	}
 
 	/// <summary>
-	/// Acquires a swapchain texture.
+	/// Acquires a swapchain texture for a given <see cref="Window"/> instance that has been claimed.
 	/// This texture will be presented to the given window when the command buffer is submitted.
-	/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
+	///
+	/// Return <see cref="null"/> if the swapchain is unavailable. The user should *ALWAYS* handle the case where this occurs.
 	/// If null is returned, presentation will not occur.
+	/// </summary>
+	/// <param name="window">The claimed window instance.</param>
+	/// <remarks>
 	/// It is an error to acquire two swapchain textures from the same window in one command buffer.
 	/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
-	/// </summary>
+	/// </remarks>
 	public Texture AcquireSwapchainTexture(
 		Window window
-	) {
+	)
+	{
 		if (!SDL.SDL_AcquireGPUSwapchainTexture(
 			Handle,
 			window.Handle,
 			out var texturePtr,
 			out var width,
 			out var height
-		)) {
+		))
+		{
 			// FIXME: should we throw?
 			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
@@ -66,21 +77,27 @@ public class CommandBuffer
 	}
 
 	/// <summary>
-	/// Blocks until a swapchain texture is available and then acquires a swapchain texture.
-	/// This texture will be presented to the given window when the command buffer is submitted.
+	/// Blocks until a swapchain texture is available and then acquires a swapchain texture for a
+	/// claimed <see cref="Window"/> instance. This texture will be presented to the given window
+	/// when the command buffer is submitted.
+	/// </summary>
+	/// <param name="window">The claimed window instance.</param>
+	/// <remarks>
 	/// It is an error to acquire two swapchain textures from the same window in one command buffer.
 	/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
-	/// </summary>
+	/// </remarks>
 	public Texture WaitAndAcquireSwapchainTexture(
 		Window window
-	) {
+	)
+	{
 		if (!SDL.SDL_WaitAndAcquireGPUSwapchainTexture(
 			Handle,
 			window.Handle,
 			out var texturePtr,
 			out var width,
 			out var height
-		)) {
+		))
+		{
 			// FIXME: should we throw?
 			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
@@ -103,13 +120,17 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a vertex uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a render or compute pass.
 	/// </summary>
+	/// <param name="uniformsPtr">Pointer to the data to push to the GPU.</param>
+	/// <param name="size">The size of the uniform data in bytes.</param>
+	/// <param name="slot">The vertex uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a render or compute pass.</remarks>
 	public unsafe void PushVertexUniformData(
 		void* uniformsPtr,
 		uint size,
 		uint slot = 0
-	) {
+	)
+	{
 		SDL.SDL_PushGPUVertexUniformData(
 			Handle,
 			slot,
@@ -121,8 +142,11 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a vertex uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a render or compute pass.
 	/// </summary>
+	/// <typeparam name="T">An unmanaged data type.</typeparam>
+	/// <param name="uniforms">Data of an unmanaged type to be pushed to the GPU.</param>
+	/// <param name="slot">The vertex uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a render or compute pass.</remarks>
 	public unsafe void PushVertexUniformData<T>(
 		in T uniforms,
 		uint slot = 0
@@ -137,13 +161,17 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a fragment uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a pass.
 	/// </summary>
+	/// <param name="uniformsPtr">Pointer to the data to push to the GPU.</param>
+	/// <param name="size">The size of the uniform data in bytes.</param>
+	/// <param name="slot">The fragment uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a pass.</remarks>
 	public unsafe void PushFragmentUniformData(
 		void* uniformsPtr,
 		uint size,
 		uint slot = 0
-	) {
+	)
+	{
 		SDL.SDL_PushGPUFragmentUniformData(
 			Handle,
 			slot,
@@ -155,8 +183,11 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a fragment uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a pass.
 	/// </summary>
+	/// <typeparam name="T">An unmanaged data type.</typeparam>
+	/// <param name="uniforms">Data of an unmanaged type to be pushed to the GPU.</param>
+	/// <param name="slot">The fragment uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a pass.</remarks>
 	public unsafe void PushFragmentUniformData<T>(
 		in T uniforms,
 		uint slot = 0
@@ -171,13 +202,17 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a compute uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a pass.
 	/// </summary>
+	/// <param name="uniformsPtr">Pointer to the data to push to the GPU.</param>
+	/// <param name="size">The size of the uniform data in bytes.</param>
+	/// <param name="slot">The uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a pass.</remarks>
 	public unsafe void PushComputeUniformData(
 		void* uniformsPtr,
 		uint size,
 		uint slot = 0
-	) {
+	)
+	{
 		SDL.SDL_PushGPUComputeUniformData(
 			Handle,
 			slot,
@@ -189,8 +224,11 @@ public class CommandBuffer
 	/// <summary>
 	/// Pushes data to a compute uniform slot on the command buffer.
 	/// Subsequent draw calls will use this uniform data.
-	/// It is legal to push uniforms during a pass.
 	/// </summary>
+	/// <typeparam name="T">An unmanaged data type.</typeparam>
+	/// <param name="uniforms">Data of an unmanaged type to be pushed to the GPU.</param>
+	/// <param name="slot">The uniform slot to push the data to.</param>
+	/// <remarks>It is legal to push uniforms during a pass.</remarks>
 	public unsafe void PushComputeUniformData<T>(
 		in T uniforms,
 		uint slot = 0
@@ -205,12 +243,14 @@ public class CommandBuffer
 	/// <summary>
 	/// Begins a render pass.
 	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this during any kind of pass.
 	/// </summary>
-	/// <param name="colorTargetInfos">The color targets to use in the render pass.</param>
+	/// <param name="colorTargetInfos">A variadic amount of color targets to use in the render pass.</param>
+	/// <returns>A <see cref="RenderPass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public unsafe RenderPass BeginRenderPass(
 		params Span<ColorTargetInfo> colorTargetInfos
-	) {
+	)
+	{
 		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
 			colorTargetInfos,
@@ -234,14 +274,16 @@ public class CommandBuffer
 	/// <summary>
 	/// Begins a render pass.
 	/// All render state, resource binding, and draw commands must be made within a render pass.
-	/// It is an error to call this during any kind of pass.
 	/// </summary>
 	/// <param name="depthStencilTargetInfo">The depth stencil target to use in the render pass.</param>
-	/// <param name="colorTargetInfos">The color targets to use in the render pass.</param>
+	/// <param name="colorTargetInfos">A variadic amount of color targets to use in the render pass.</param>
+	/// <returns>A <see cref="RenderPass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public unsafe RenderPass BeginRenderPass(
 		in DepthStencilTargetInfo depthStencilTargetInfo,
 		params Span<ColorTargetInfo> colorTargetInfos
-	) {
+	)
+	{
 		var renderPassHandle = SDL.SDL_BeginGPURenderPass(
 			Handle,
 			colorTargetInfos,
@@ -264,8 +306,9 @@ public class CommandBuffer
 
 	/// <summary>
 	/// Ends the current render pass.
-	/// This must be called before beginning another render pass or submitting the command buffer.
 	/// </summary>
+	/// <param name="renderPass">The current render pass to end.</param>
+	/// <remarks>This must be called before beginning another render pass or submitting the command buffer.</remarks>
 	public void EndRenderPass(RenderPass renderPass)
 	{
 		SDL.SDL_EndGPURenderPass(renderPass.Handle);
@@ -278,6 +321,7 @@ public class CommandBuffer
 	/// Blits a texture to another texture.
 	/// This operation cannot be performed inside any pass.
 	/// </summary>
+	/// <param name="blitInfo">Parameter data used for the blit operation.</param>
 	public void Blit(in BlitInfo blitInfo)
 	{
 		SDL.SDL_BlitGPUTexture(Handle, blitInfo);
@@ -286,6 +330,10 @@ public class CommandBuffer
 	/// <summary>
 	/// Convenience method that blits a 2D texture to a 2D texture.
 	/// </summary>
+	/// <param name="source">The texture to use as the source region.</param>
+	/// <param name="destination">The texture to use as the destination region.</param>
+	/// <param name="filter">Indicates the filter mode to use when blitting.</param>
+	/// <param name="cycle">Indicates if the destination texture is to be cycled when already bound.</param>
 	public void Blit(Texture source, Texture destination, Filter filter, bool cycle = false)
 	{
 		SDL.SDL_BlitGPUTexture(Handle, new BlitInfo
@@ -308,10 +356,19 @@ public class CommandBuffer
 		});
 	}
 
+	/// <summary>
+	/// Begins a compute pass.
+	/// All compute commands must be made within a compute pass.
+	/// </summary>
+	/// <param name="readWriteTextureBindings">Variadic amount parameter data describing the storage textures to bind to the compute pass.</param>
+	/// <param name="readWriteBufferBindings">Variadic amount parameter data describing the storage buffers to bind to the compute pass.</param>
+	/// <returns>A <see cref="ComputePass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public ComputePass BeginComputePass(
 		Span<StorageTextureReadWriteBinding> readWriteTextureBindings,
 		Span<StorageBufferReadWriteBinding> readWriteBufferBindings
-	) {
+	)
+	{
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			readWriteTextureBindings,
@@ -327,10 +384,19 @@ public class CommandBuffer
 		return computePass;
 	}
 
+	/// <summary>
+	/// Begins a compute pass.
+	/// All compute commands must be made within a compute pass.
+	/// </summary>
+	/// <param name="readWriteTextureBinding">Parameter data describing the storage textures to bind to the compute pass.</param>
+	/// <param name="readWriteBufferBinding">Parameter data describing the storage buffers to bind to the compute pass.</param>
+	/// <returns>A <see cref="ComputePass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public ComputePass BeginComputePass(
 		in StorageTextureReadWriteBinding readWriteTextureBinding,
 		in StorageBufferReadWriteBinding readWriteBufferBinding
-	) {
+	)
+	{
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			[readWriteTextureBinding],
@@ -346,9 +412,17 @@ public class CommandBuffer
 		return computePass;
 	}
 
+	/// <summary>
+	/// Begins a compute pass.
+	/// All compute commands must be made within a compute pass.
+	/// </summary>
+	/// <param name="readWriteTextureBinding">Parameter data describing the storage textures to bind to the compute pass.</param>
+	/// <returns>A <see cref="ComputePass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public ComputePass BeginComputePass(
 		in StorageTextureReadWriteBinding readWriteTextureBinding
-	) {
+	)
+	{
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			[readWriteTextureBinding],
@@ -364,9 +438,17 @@ public class CommandBuffer
 		return computePass;
 	}
 
+	/// <summary>
+	/// Begins a compute pass.
+	/// All compute commands must be made within a compute pass.
+	/// </summary>
+	/// <param name="readWriteBufferBinding">Parameter data describing the storage buffers to bind to the compute pass.</param>
+	/// <returns>A <see cref="ComputePass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public ComputePass BeginComputePass(
 		in StorageBufferReadWriteBinding readWriteBufferBinding
-	) {
+	)
+	{
 		var computePassHandle = SDL.SDL_BeginGPUComputePass(
 			Handle,
 			[],
@@ -382,6 +464,11 @@ public class CommandBuffer
 		return computePass;
 	}
 
+	/// <summary>
+	/// Ends the current compute pass.
+	/// </summary>
+	/// <param name="computePass">The current compute pass to end.</param>
+	/// <remarks>This must be called before beginning another render pass or submitting the command buffer.</remarks>
 	public void EndComputePass(ComputePass computePass)
 	{
 		SDL.SDL_EndGPUComputePass(
@@ -398,8 +485,9 @@ public class CommandBuffer
 	/// <summary>
 	/// Begins a copy pass.
 	/// All copy commands must be made within a copy pass.
-	/// It is an error to call this during any kind of pass.
 	/// </summary>
+	/// <returns>A <see cref="CopyPass"/> instance representing the pass that has begun.</returns>
+	/// <remarks>It is an error to call this during any kind of pass.</remarks>
 	public CopyPass BeginCopyPass()
 	{
 		var copyPassHandle = SDL.SDL_BeginGPUCopyPass(Handle);
@@ -411,6 +499,11 @@ public class CommandBuffer
 		return copyPass;
 	}
 
+	/// <summary>
+	/// Ends the current copy pass.
+	/// </summary>
+	/// <param name="copyPass">The current copy pass to end.</param>
+	/// <remarks>This must be called before beginning another render pass or submitting the command buffer.</remarks>
 	public void EndCopyPass(CopyPass copyPass)
 	{
 		SDL.SDL_EndGPUCopyPass(copyPass.Handle);
