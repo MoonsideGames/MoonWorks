@@ -74,6 +74,18 @@ public class GraphicsPipeline : SDLGPUResource
 
 		createInfo.Props = graphicsPipelineCreateInfo.Props;
 
+		var cleanProps = false;
+		if (graphicsPipelineCreateInfo.Name != null)
+		{
+			if (createInfo.Props == 0)
+			{
+				createInfo.Props = SDL3.SDL.SDL_CreateProperties();
+				cleanProps = true;
+			}
+
+			SDL3.SDL.SDL_SetStringProperty(createInfo.Props, SDL3.SDL.SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, graphicsPipelineCreateInfo.Name);
+		}
+
 		var handle = SDL.SDL_CreateGPUGraphicsPipeline(device.Handle, createInfo);
 
 		NativeMemory.Free(vertexAttributes);
@@ -84,12 +96,20 @@ public class GraphicsPipeline : SDLGPUResource
 			throw new Exception("Could not create graphics pipeline!");
 		}
 
-		return new GraphicsPipeline(device)
+		var result = new GraphicsPipeline(device)
 		{
 			Handle = handle,
 			VertexShader = graphicsPipelineCreateInfo.VertexShader,
 			FragmentShader = graphicsPipelineCreateInfo.FragmentShader,
+			Name = SDL3.SDL.SDL_GetStringProperty(createInfo.Props, SDL3.SDL.SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, "Graphics Pipeline")
 		};
+
+		if (cleanProps)
+		{
+			SDL3.SDL.SDL_DestroyProperties(createInfo.Props);
+		}
+
+		return result;
 	}
 
 	private GraphicsPipeline(GraphicsDevice device) : base(device)

@@ -18,19 +18,43 @@ public class Sampler : SDLGPUResource
 			device.Handle,
 			samplerCreateInfo
 		);
+
 		if (handle == IntPtr.Zero)
 		{
 			Logger.LogError(SDL3.SDL.SDL_GetError());
 			return null;
 		}
+
 		return new Sampler(device)
 		{
-			Handle = handle
+			Handle = handle,
+			Name = SDL3.SDL.SDL_GetStringProperty(samplerCreateInfo.Props, SDL3.SDL.SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING, "Sampler")
 		};
 	}
 
-	private Sampler(GraphicsDevice device) : base(device)
-	{
-		Name = "Sampler";
+	public static Sampler Create(
+		GraphicsDevice device,
+		string name,
+		SamplerCreateInfo samplerCreateInfo
+	) {
+		var cleanProps = false;
+		if (samplerCreateInfo.Props == 0)
+		{
+			samplerCreateInfo.Props = SDL3.SDL.SDL_CreateProperties();
+			cleanProps = true;
+		}
+
+		SDL3.SDL.SDL_SetStringProperty(samplerCreateInfo.Props, SDL3.SDL.SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING, name);
+
+		var result = Create(device, samplerCreateInfo);
+
+		if (cleanProps)
+		{
+			SDL3.SDL.SDL_DestroyProperties(samplerCreateInfo.Props);
+		}
+
+		return result;
 	}
+
+	private Sampler(GraphicsDevice device) : base(device) { }
 }

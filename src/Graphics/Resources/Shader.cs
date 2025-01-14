@@ -146,7 +146,8 @@ namespace MoonWorks.Graphics
 				NumSamplers = shaderMetadata.NumSamplers,
 				NumStorageTextures = shaderMetadata.NumStorageTextures,
 				NumStorageBuffers = shaderMetadata.NumStorageBuffers,
-				NumUniformBuffers = shaderMetadata.NumUniformBuffers
+				NumUniformBuffers = shaderMetadata.NumUniformBuffers,
+				Name = name ?? "Shader"
 			};
 
 			return shader;
@@ -227,7 +228,8 @@ namespace MoonWorks.Graphics
 				NumSamplers = shaderMetadata.NumSamplers,
 				NumStorageTextures = shaderMetadata.NumStorageTextures,
 				NumStorageBuffers = shaderMetadata.NumStorageBuffers,
-				NumUniformBuffers = shaderMetadata.NumUniformBuffers
+				NumUniformBuffers = shaderMetadata.NumUniformBuffers,
+				Name = name ?? "Shader"
 			};
 
 			return shader;

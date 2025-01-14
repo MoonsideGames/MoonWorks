@@ -34,8 +34,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 		if (size != 0)
 		{
-			TransferBuffer = TransferBuffer.Create<byte>(device, TransferBufferUsage.Upload, size);
-			TransferBuffer.Name = "ResourceUploader TransferBuffer";
+			TransferBuffer = TransferBuffer.Create<byte>(device, "ResourceUploader TransferBuffer", TransferBufferUsage.Upload, size);
 
 			TransferBuffer.Map(false);
 		}
@@ -49,6 +48,16 @@ public unsafe class ResourceUploader : GraphicsResource
 	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
 	{
 		var buffer = Buffer.Create<T>(Device, usageFlags, (uint) data.Length);
+		SetBufferData(buffer, 0, data, false);
+		return buffer;
+	}
+
+	/// <summary>
+	/// Creates a named Buffer with data to be uploaded.
+	/// </summary>
+	public Buffer CreateBuffer<T>(string name, Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
+	{
+		var buffer = Buffer.Create<T>(Device, name, usageFlags, (uint) data.Length);
 		SetBufferData(buffer, 0, data, false);
 		return buffer;
 	}
@@ -366,8 +375,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	{
 		if (TransferBuffer == null)
 		{
-			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
-			TransferBuffer.Name = "ResourceUploader TransferBuffer";
+			TransferBuffer = TransferBuffer.Create<byte>(Device, "ResourceUploader TransferBuffer", TransferBufferUsage.Upload, dataLengthInBytes);
 			TransferBuffer.Map(false);
 		}
 		else if (dataLengthInBytes > TransferBuffer.Size)
@@ -376,8 +384,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			Flush();
 			TransferBuffer.Unmap();
 			TransferBuffer.Dispose();
-			TransferBuffer = TransferBuffer.Create<byte>(Device, TransferBufferUsage.Upload, dataLengthInBytes);
-			TransferBuffer.Name = "ResourceUploader TransferBuffer";
+			TransferBuffer = TransferBuffer.Create<byte>(Device, "ResourceUploader TransferBuffer", TransferBufferUsage.Upload, dataLengthInBytes);
 			TransferBuffer.Map(false);
 		}
 	}

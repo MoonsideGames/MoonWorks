@@ -36,8 +36,7 @@ namespace MoonWorks.Graphics.Font
 			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
 			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
-			TransferBuffer.Name = "TextBatch TransferBuffer";
+			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 		}
 
 		// Call this to initialize or reset the batch.
@@ -121,8 +120,7 @@ namespace MoonWorks.Graphics.Font
 			if (newTransferBufferNeeded)
 			{
 				TransferBuffer.Dispose();
-				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
-				TransferBuffer.Name = "TextBatch TransferBuffer";
+				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
 			}
 
 			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)

@@ -145,20 +145,20 @@ public static class ShaderCross
 		{
 			return ComputePipeline.CreateFromSPIRV(
 				device,
+				name,
 				stream,
 				entrypoint,
-				enableDebug,
-				name);
+				enableDebug);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
 			return ComputePipeline.CreateFromHLSL(
 				device,
+				name,
 				stream,
 				entrypoint,
 				includeDir,
 				enableDebug,
-				name,
 				defines);
 		}
 		else
