@@ -52,12 +52,12 @@ namespace MoonWorks.Graphics.Font
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
 
-			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, MAX_VERTEX_COUNT);
-			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, MAX_INDEX_COUNT);
-			ChunkDataBuffer = Buffer.Create<ChunkData>(GraphicsDevice, BufferUsageFlags.GraphicsStorageRead, MAX_CHUNK_COUNT);
+			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, "TextBatch Vertex Buffer", BufferUsageFlags.Vertex, MAX_VERTEX_COUNT);
+			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, "TextBatch Index Buffer", BufferUsageFlags.Index, MAX_INDEX_COUNT);
+			ChunkDataBuffer = Buffer.Create<ChunkData>(GraphicsDevice, "TextBatch Chunk Data Buffer", BufferUsageFlags.GraphicsStorageRead, MAX_CHUNK_COUNT);
 
 			VertexTransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size);
-			ChunkDataTransferBuffer = TransferBuffer.Create<ChunkData>(GraphicsDevice, TransferBufferUsage.Upload, MAX_CHUNK_COUNT);
+			ChunkDataTransferBuffer = TransferBuffer.Create<ChunkData>(GraphicsDevice, "TextBatch Chunk TransferBuffer", TransferBufferUsage.Upload, MAX_CHUNK_COUNT);
 
 			TransferBuffer spriteIndexTransferBuffer = TransferBuffer.Create<uint>(
 				GraphicsDevice,
