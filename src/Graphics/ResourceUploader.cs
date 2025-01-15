@@ -43,16 +43,6 @@ public unsafe class ResourceUploader : GraphicsResource
 	// Buffers
 
 	/// <summary>
-	/// Creates a Buffer with data to be uploaded.
-	/// </summary>
-	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
-	{
-		var buffer = Buffer.Create<T>(Device, usageFlags, (uint) data.Length);
-		SetBufferData(buffer, 0, data, false);
-		return buffer;
-	}
-
-	/// <summary>
 	/// Creates a named Buffer with data to be uploaded.
 	/// </summary>
 	public Buffer CreateBuffer<T>(string name, Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
@@ -61,6 +51,12 @@ public unsafe class ResourceUploader : GraphicsResource
 		SetBufferData(buffer, 0, data, false);
 		return buffer;
 	}
+
+	/// <summary>
+	/// Creates a Buffer with data to be uploaded.
+	/// </summary>
+	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged =>
+		CreateBuffer(null, data, usageFlags);
 
 	/// <summary>
 	/// Prepares upload of data into a Buffer.
@@ -91,9 +87,9 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	// Textures
 
-	public Texture CreateTexture2D<T>(Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged
+	public Texture CreateTexture2D<T>(string name, Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged
 	{
-		var texture = Texture.Create2D(Device, width, height, format, usage);
+		var texture = Texture.Create2D(Device, name, width, height, format, usage);
 		SetTextureData(
 			new TextureRegion
 			{
@@ -108,13 +104,16 @@ public unsafe class ResourceUploader : GraphicsResource
 		return texture;
 	}
 
+	public Texture CreateTexture2D<T>(Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged =>
+		CreateTexture2D(null, pixelData, format, usage, width, height);
+
 	/// <summary>
-	/// Creates a 2D Texture from compressed image data to be uploaded.
+	/// Creates a named 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
 	{
 		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
-		var texture = Texture.Create2D(Device, width, height, format, usage);
+		var texture = Texture.Create2D(Device, name, width, height, format, usage);
 		SetTextureDataFromCompressed(
 			new TextureRegion
 			{
@@ -129,16 +128,22 @@ public unsafe class ResourceUploader : GraphicsResource
 	}
 
 	/// <summary>
-	/// Creates a 2D Texture from a compressed image stream to be uploaded.
+	/// Creates a 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Stream compressedImageStream, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(null, compressedImageData, format, usage);
+
+	/// <summary>
+	/// Creates a named 2D Texture from a compressed image stream to be uploaded.
+	/// </summary>
+	public Texture CreateTexture2DFromCompressed(string name, Stream compressedImageStream, TextureFormat format, TextureUsageFlags usage)
 	{
 		var length = compressedImageStream.Length;
 		var buffer = NativeMemory.Alloc((nuint) length);
 		var span = new Span<byte>(buffer, (int) length);
 		compressedImageStream.ReadExactly(span);
 
-		var texture = CreateTexture2DFromCompressed(span, format, usage);
+		var texture = CreateTexture2DFromCompressed(name, span, format, usage);
 
 		NativeMemory.Free(buffer);
 
@@ -146,18 +151,31 @@ public unsafe class ResourceUploader : GraphicsResource
 	}
 
 	/// <summary>
+	/// Creates a 2D Texture from a compressed image stream to be uploaded.
+	/// </summary>
+	public Texture CreateTexture2DFromCompressed(Stream compressedImageStream, TextureFormat format, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(null, compressedImageStream, format, usage);
+
+	/// <summary>
+	/// Creates a named 2D Texture from a compressed image file to be uploaded.
+	/// </summary>
+	public Texture CreateTexture2DFromCompressed(string name, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
+	{
+		using var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
+		return CreateTexture2DFromCompressed(name, fileStream, format, usage);
+	}
+
+	/// <summary>
 	/// Creates a 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
-	{
-		var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-		return CreateTexture2DFromCompressed(fileStream, format, usage);
-	}
+	public Texture CreateTexture2DFromCompressed(string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(Path.GetFileNameWithoutExtension(compressedImageFilePath), compressedImageFilePath, format, usage);
+
 
 	/// <summary>
 	/// Creates a texture from a DDS stream.
 	/// </summary>
-	public Texture CreateTextureFromDDS(Stream stream)
+	public Texture CreateTextureFromDDS(string name, Stream stream)
 	{
 		using var reader = new BinaryReader(stream);
 		Texture texture;
@@ -166,12 +184,12 @@ public unsafe class ResourceUploader : GraphicsResource
 
 		if (isCube)
 		{
-			texture = Texture.CreateCube(Device, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
+			texture = Texture.CreateCube(Device, name, (uint) width, format, TextureUsageFlags.Sampler, (uint) levels);
 			faces = 6;
 		}
 		else
 		{
-			texture = Texture.Create2D(Device, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
+			texture = Texture.Create2D(Device, name, (uint) width, (uint) height, format, TextureUsageFlags.Sampler, (uint) levels);
 			faces = 1;
 		}
 
@@ -209,14 +227,20 @@ public unsafe class ResourceUploader : GraphicsResource
 		return texture;
 	}
 
+	public Texture CreateTextureFromDDS(Stream stream) =>
+		CreateTextureFromDDS(null, stream);
+
 	/// <summary>
 	/// Creates a texture from a DDS file.
 	/// </summary>
-	public Texture CreateTextureFromDDS(string path)
+	public Texture CreateTextureFromDDS(string name, string path)
 	{
-		var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return CreateTextureFromDDS(stream);
+		using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+		return CreateTextureFromDDS(name, stream);
 	}
+
+	public Texture CreateTextureFromDDS(string path) =>
+		CreateTextureFromDDS(Path.GetFileNameWithoutExtension(path), path);
 
 	public void SetTextureDataFromCompressed(TextureRegion textureRegion, ReadOnlySpan<byte> compressedImageData)
 	{
@@ -240,7 +264,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	public void SetTextureDataFromCompressed(TextureRegion textureRegion, string compressedImageFilePath)
 	{
-		var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
+		using var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
 		SetTextureDataFromCompressed(textureRegion, fileStream);
 	}
 

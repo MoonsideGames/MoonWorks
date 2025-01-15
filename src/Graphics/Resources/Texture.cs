@@ -22,41 +22,6 @@ namespace MoonWorks.Graphics
 		protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUTexture;
 
 		/// <summary>
-		/// Creates a 2D texture.
-		/// </summary>
-		/// <param name="device">An initialized GraphicsDevice.</param>
-		/// <param name="width">The width of the texture.</param>
-		/// <param name="height">The height of the texture.</param>
-		/// <param name="format">The format of the texture.</param>
-		/// <param name="usageFlags">Specifies how the texture will be used.</param>
-		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		/// <param name="sampleCount">The sample count of the texture.</param>
-		public static Texture Create2D(
-			GraphicsDevice device,
-			uint width,
-			uint height,
-			TextureFormat format,
-			TextureUsageFlags usageFlags,
-			uint levelCount = 1,
-			SampleCount sampleCount = SampleCount.One
-		) {
-			var textureCreateInfo = new TextureCreateInfo
-			{
-				Type = TextureType.TwoDimensional,
-				Format = format,
-				Usage = usageFlags,
-				Width = width,
-				Height = height,
-				LayerCountOrDepth = 1,
-				NumLevels = levelCount,
-				SampleCount = sampleCount,
-				Props = 0
-			};
-
-			return Create(device, textureCreateInfo);
-		}
-
-		/// <summary>
 		/// Creates a named 2D texture.
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
@@ -100,39 +65,24 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Creates a 2D texture array.
+		/// Creates a 2D texture.
 		/// </summary>
 		/// <param name="device">An initialized GraphicsDevice.</param>
 		/// <param name="width">The width of the texture.</param>
 		/// <param name="height">The height of the texture.</param>
-		/// <param name="layerCount">The layer count of the texture.</param>
 		/// <param name="format">The format of the texture.</param>
 		/// <param name="usageFlags">Specifies how the texture will be used.</param>
 		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		public static Texture Create2DArray(
+		/// <param name="sampleCount">The sample count of the texture.</param>
+		public static Texture Create2D(
 			GraphicsDevice device,
 			uint width,
 			uint height,
-			uint layerCount,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			uint levelCount = 1
-		) {
-			var textureCreateInfo = new TextureCreateInfo
-			{
-				Type = TextureType.TwoDimensionalArray,
-				Format = format,
-				Usage = usageFlags,
-				Width = width,
-				Height = height,
-				LayerCountOrDepth = layerCount,
-				NumLevels = levelCount,
-				SampleCount = SampleCount.One,
-				Props = 0
-			};
-
-			return Create(device, textureCreateInfo);
-		}
+			uint levelCount = 1,
+			SampleCount sampleCount = SampleCount.One
+		) => Create2D(device, null, width, height, format, usageFlags, levelCount, sampleCount);
 
 		/// <summary>
 		/// Creates a named 2D texture array.
@@ -178,33 +128,24 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Creates a 3D texture.
-		/// Note that the width, height and depth all form one slice and cannot be subdivided in a texture slice.
+		/// Creates a 2D texture array.
 		/// </summary>
-		public static Texture Create3D(
+		/// <param name="device">An initialized GraphicsDevice.</param>
+		/// <param name="width">The width of the texture.</param>
+		/// <param name="height">The height of the texture.</param>
+		/// <param name="layerCount">The layer count of the texture.</param>
+		/// <param name="format">The format of the texture.</param>
+		/// <param name="usageFlags">Specifies how the texture will be used.</param>
+		/// <param name="levelCount">Specifies the number of mip levels.</param>
+		public static Texture Create2DArray(
 			GraphicsDevice device,
 			uint width,
 			uint height,
-			uint depth,
+			uint layerCount,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
 			uint levelCount = 1
-		) {
-			var textureCreateInfo = new TextureCreateInfo
-			{
-				Type = TextureType.ThreeDimensional,
-				Format = format,
-				Usage = usageFlags,
-				Width = width,
-				Height = height,
-				LayerCountOrDepth = depth,
-				NumLevels = levelCount,
-				SampleCount = SampleCount.One,
-				Props = 0
-			};
-
-			return Create(device, textureCreateInfo);
-		}
+		) => Create2DArray(device, null, width, height, layerCount, format, usageFlags, levelCount);
 
 		/// <summary>
 		/// Creates a named 3D texture.
@@ -243,35 +184,18 @@ namespace MoonWorks.Graphics
 		}
 
 		/// <summary>
-		/// Creates a cube texture.
+		/// Creates a 3D texture.
+		/// Note that the width, height and depth all form one slice and cannot be subdivided in a texture slice.
 		/// </summary>
-		/// <param name="device">An initialized GraphicsDevice.</param>
-		/// <param name="size">The length of one side of the cube.</param>
-		/// <param name="format">The format of the texture.</param>
-		/// <param name="usageFlags">Specifies how the texture will be used.</param>
-		/// <param name="levelCount">Specifies the number of mip levels.</param>
-		public static Texture CreateCube(
+		public static Texture Create3D(
 			GraphicsDevice device,
-			uint size,
+			uint width,
+			uint height,
+			uint depth,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
 			uint levelCount = 1
-		) {
-			var textureCreateInfo = new TextureCreateInfo
-			{
-				Type = TextureType.Cube,
-				Format = format,
-				Usage = usageFlags,
-				Width = size,
-				Height = size,
-				LayerCountOrDepth = 6,
-				NumLevels = levelCount,
-				SampleCount = SampleCount.One,
-				Props = 0
-			};
-
-			return Create(device, textureCreateInfo);
-		}
+		) => Create3D(device, null, width, height, depth, format, usageFlags, levelCount);
 
 		/// <summary>
 		/// Creates a named cube texture.
@@ -312,29 +236,21 @@ namespace MoonWorks.Graphics
 			return result;
 		}
 
-		public static Texture CreateCubeArray(
+		/// <summary>
+		/// Creates a cube texture.
+		/// </summary>
+		/// <param name="device">An initialized GraphicsDevice.</param>
+		/// <param name="size">The length of one side of the cube.</param>
+		/// <param name="format">The format of the texture.</param>
+		/// <param name="usageFlags">Specifies how the texture will be used.</param>
+		/// <param name="levelCount">Specifies the number of mip levels.</param>
+		public static Texture CreateCube(
 			GraphicsDevice device,
 			uint size,
 			TextureFormat format,
 			TextureUsageFlags usageFlags,
-			uint arrayCount,
 			uint levelCount = 1
-		) {
-			var textureCreateInfo = new TextureCreateInfo
-			{
-				Type = TextureType.CubeArray,
-				Format = format,
-				Usage = usageFlags,
-				Width = size,
-				Height = size,
-				LayerCountOrDepth = arrayCount * 6,
-				NumLevels = levelCount,
-				SampleCount = SampleCount.One,
-				Props = 0
-			};
-
-			return Create(device, textureCreateInfo);
-		}
+		) => CreateCube(device, null, size, format, usageFlags, levelCount);
 
 		public static Texture CreateCubeArray(
 			GraphicsDevice device,
@@ -366,6 +282,15 @@ namespace MoonWorks.Graphics
 			SDL3.SDL.SDL_DestroyProperties(props);
 			return result;
 		}
+
+		public static Texture CreateCubeArray(
+			GraphicsDevice device,
+			uint size,
+			TextureFormat format,
+			TextureUsageFlags usageFlags,
+			uint arrayCount,
+			uint levelCount = 1
+		) => CreateCubeArray(device, null, size, format, usageFlags, arrayCount, levelCount);
 
 		public static Texture Create(
 			GraphicsDevice device,

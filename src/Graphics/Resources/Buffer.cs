@@ -19,29 +19,6 @@ public class Buffer : SDLGPUResource
 	public uint Size { get; private init; }
 
 	/// <summary>
-	/// Creates a buffer of appropriate size given a type and element count.
-	/// </summary>
-	/// <typeparam name="T">The type that the buffer will contain.</typeparam>
-	/// <param name="device">The GraphicsDevice.</param>
-	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
-	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
-	/// <returns></returns>
-	public static Buffer Create<T>(
-		GraphicsDevice device,
-		BufferUsageFlags usageFlags,
-		uint elementCount
-	) where T : unmanaged
-	{
-		var result = Create(device, new BufferCreateInfo
-		{
-			Usage = usageFlags,
-			Size = (uint) Marshal.SizeOf<T>() * elementCount
-		});
-
-		return result;
-	}
-
-	/// <summary>
 	/// Creates a named buffer of appropriate size given a type and element count.
 	/// </summary>
 	/// <typeparam name="T">The type that the buffer will contain.</typeparam>
@@ -71,6 +48,23 @@ public class Buffer : SDLGPUResource
 		return result;
 	}
 
+	/// <summary>
+	/// Creates a buffer of appropriate size given a type and element count.
+	/// </summary>
+	/// <typeparam name="T">The type that the buffer will contain.</typeparam>
+	/// <param name="device">The GraphicsDevice.</param>
+	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
+	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
+	/// <returns></returns>
+	public static Buffer Create<T>(
+		GraphicsDevice device,
+		BufferUsageFlags usageFlags,
+		uint elementCount
+	) where T : unmanaged => Create<T>(device, null, usageFlags, elementCount);
+
+	/// <summary>
+	/// Creates a buffer given a BufferCreateInfo struct.
+	/// </summary>
 	public static Buffer Create(
 		GraphicsDevice device,
 		in BufferCreateInfo createInfo
