@@ -44,6 +44,8 @@ public class GraphicsDevice : IDisposable
 	public TextureFormat SupportedDepthFormat { get; private set; }
 	public TextureFormat SupportedDepthStencilFormat { get; private set; }
 
+	internal Texture DummyTexture;
+
 	internal unsafe GraphicsDevice(
 		ShaderFormat shaderFormats,
 		bool debugMode,
@@ -170,6 +172,7 @@ public class GraphicsDevice : IDisposable
 				{
 					Stage = ShaderStage.Vertex,
 					Format = ShaderFormat.Private,
+					NumStorageBuffers = 1,
 					NumUniformBuffers = 1
 				}
 			);
@@ -182,8 +185,7 @@ public class GraphicsDevice : IDisposable
 				{
 					Stage = ShaderStage.Fragment,
 					Format = ShaderFormat.Private,
-					NumSamplers = 1,
-					NumUniformBuffers = 1
+					NumSamplers = 4
 				}
 			);
 		}
@@ -201,6 +203,7 @@ public class GraphicsDevice : IDisposable
 				new ShaderCreateInfo
 				{
 					Stage = ShaderStage.Vertex,
+					NumStorageBuffers = 1,
 					NumUniformBuffers = 1
 				}
 			);
@@ -211,8 +214,7 @@ public class GraphicsDevice : IDisposable
 				new ShaderCreateInfo
 				{
 					Stage = ShaderStage.Fragment,
-					NumSamplers = 1,
-					NumUniformBuffers = 1
+					NumSamplers = 4
 				}
 			);
 		}
@@ -249,6 +251,8 @@ public class GraphicsDevice : IDisposable
 
 		PointSampler = Sampler.Create(this, SamplerCreateInfo.PointClamp);
 		LinearSampler = Sampler.Create(this, SamplerCreateInfo.LinearClamp);
+
+		DummyTexture = Texture.Create2D(this, "Dummy Texture", 1, 1, TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.Sampler);
 
 		FencePool = new FencePool(this);
 		CommandBufferPool = new CommandBufferPool(this);

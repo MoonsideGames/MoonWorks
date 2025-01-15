@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using WellspringCS;
 
@@ -6,23 +8,40 @@ namespace MoonWorks.Graphics.Font
 {
 	public unsafe class TextBatch : GraphicsResource
 	{
-		public const int INITIAL_CHAR_COUNT = 64;
-		public const int INITIAL_VERTEX_COUNT = INITIAL_CHAR_COUNT * 4;
-		public const int INITIAL_INDEX_COUNT = INITIAL_CHAR_COUNT * 6;
+		public const int MAX_CHAR_COUNT = 8192;
+		public const int MAX_VERTEX_COUNT = MAX_CHAR_COUNT * 4;
+		public const int MAX_INDEX_COUNT = MAX_CHAR_COUNT * 6;
+		public const int MAX_CHUNK_COUNT = 128;
 
 		private GraphicsDevice GraphicsDevice { get; }
 		public IntPtr Handle { get; }
 
-		public Buffer VertexBuffer { get; protected set; } = null;
-		public Buffer IndexBuffer { get; protected set; } = null;
-		public uint PrimitiveCount { get; protected set; }
+		public Buffer VertexBuffer { get; protected init; } = null;
+		public Buffer IndexBuffer { get; protected init; } = null;
+		public Buffer ChunkDataBuffer { get; protected init; }
+		public uint VertexCount { get; protected set; }
 
-		private TransferBuffer TransferBuffer;
+		private TransferBuffer VertexTransferBuffer;
+		private TransferBuffer ChunkDataTransferBuffer;
+		private int ChunkCount = 0;
 
-		public Font CurrentFont { get; private set; }
+		private int VertexSize;
+		private int ChunkDataSize;
 
 		private byte* StringBytes;
 		private int StringBytesLength;
+
+		private TextureSamplerBinding[] FontTextureBindings = new TextureSamplerBinding[4];
+		private readonly Dictionary<Font, uint> FontIndices = new Dictionary<Font, uint>();
+		private uint CurrentFontIndex = 0;
+
+		private record struct ChunkData(
+			Matrix4x4 Transform,
+			Vector4 Color,
+			float DistanceRange,
+			uint FontIndex,
+			Vector2 Padding
+		);
 
 		public TextBatch(GraphicsDevice device) : base(device)
 		{
@@ -33,28 +52,79 @@ namespace MoonWorks.Graphics.Font
 			StringBytesLength = 128;
 			StringBytes = (byte*) NativeMemory.Alloc((nuint) StringBytesLength);
 
-			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, INITIAL_VERTEX_COUNT);
-			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, INITIAL_INDEX_COUNT);
+			VertexBuffer = Buffer.Create<Vertex>(GraphicsDevice, BufferUsageFlags.Vertex, MAX_VERTEX_COUNT);
+			IndexBuffer = Buffer.Create<uint>(GraphicsDevice, BufferUsageFlags.Index, MAX_INDEX_COUNT);
+			ChunkDataBuffer = Buffer.Create<ChunkData>(GraphicsDevice, BufferUsageFlags.GraphicsStorageRead, MAX_CHUNK_COUNT);
 
-			TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
+			VertexTransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size);
+			ChunkDataTransferBuffer = TransferBuffer.Create<ChunkData>(GraphicsDevice, TransferBufferUsage.Upload, MAX_CHUNK_COUNT);
+
+			TransferBuffer spriteIndexTransferBuffer = TransferBuffer.Create<uint>(
+				GraphicsDevice,
+				"SpriteIndex TransferBuffer",
+				TransferBufferUsage.Upload,
+				MAX_CHAR_COUNT * 6
+			);
+
+			var indexSpan = spriteIndexTransferBuffer.Map<uint>(false);
+
+			for (int i = 0, j = 0; i < MAX_INDEX_COUNT; i += 6, j += 4)
+			{
+				indexSpan[i]     =  (uint) j;
+				indexSpan[i + 1] =  (uint) j + 1;
+				indexSpan[i + 2] =  (uint) j + 2;
+				indexSpan[i + 3] =  (uint) j + 3;
+				indexSpan[i + 4] =  (uint) j + 2;
+				indexSpan[i + 5] =  (uint) j + 1;
+			}
+			spriteIndexTransferBuffer.Unmap();
+
+			var cmdbuf = GraphicsDevice.AcquireCommandBuffer();
+			var copyPass = cmdbuf.BeginCopyPass();
+			copyPass.UploadToBuffer(spriteIndexTransferBuffer, IndexBuffer, false);
+			cmdbuf.EndCopyPass(copyPass);
+			GraphicsDevice.Submit(cmdbuf);
+
+			VertexSize = Marshal.SizeOf<Wellspring.Vertex>();
+			ChunkDataSize = Marshal.SizeOf<ChunkData>();
 		}
 
 		// Call this to initialize or reset the batch.
-		public void Start(Font font)
+		public void Start()
 		{
-			Wellspring.Wellspring_StartTextBatch(Handle, font.Handle);
-			CurrentFont = font;
-			PrimitiveCount = 0;
+			Wellspring.Wellspring_StartTextBatch(Handle);
+			VertexCount = 0;
+
+			for (var i = 0; i < 4; i += 1)
+			{
+				FontTextureBindings[i].Texture = GraphicsDevice.DummyTexture;
+				FontTextureBindings[i].Sampler = GraphicsDevice.LinearSampler;
+			}
+			FontIndices.Clear();
+			CurrentFontIndex = 0;
+
+			ChunkDataTransferBuffer.Map(true);
+			ChunkCount = 0;
 		}
 
-		// Add text with size and color to the batch
+		// Add a chunk of text to the batch
 		public unsafe bool Add(
+			Font font,
 			string text,
 			int pixelSize,
+			Matrix4x4 transform,
 			Color color,
 			HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left,
 			VerticalAlignment verticalAlignment = VerticalAlignment.Baseline
 		) {
+			if (!FontIndices.TryGetValue(font, out uint fontIndex))
+			{
+				fontIndex = CurrentFontIndex;
+				FontTextureBindings[fontIndex].Texture = font.Texture;
+				FontIndices.Add(font, fontIndex);
+				CurrentFontIndex += 1;
+			}
+
 			var byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
 
 			if (StringBytesLength < byteCount)
@@ -66,10 +136,10 @@ namespace MoonWorks.Graphics.Font
 			{
 				System.Text.Encoding.UTF8.GetBytes(chars, text.Length, StringBytes, byteCount);
 
-				var result = Wellspring.Wellspring_AddToTextBatch(
+				var result = Wellspring.Wellspring_AddChunkToTextBatch(
 					Handle,
+					font.Handle,
 					pixelSize,
-					new Wellspring.Color { R = color.R, G = color.G, B = color.B, A = color.A },
 					(Wellspring.HorizontalAlignment) horizontalAlignment,
 					(Wellspring.VerticalAlignment) verticalAlignment,
 					(IntPtr) StringBytes,
@@ -83,108 +153,81 @@ namespace MoonWorks.Graphics.Font
 				}
 			}
 
+			var chunkDatas = ChunkDataTransferBuffer.MappedSpan<ChunkData>();
+			chunkDatas[ChunkCount].Transform = transform;
+			chunkDatas[ChunkCount].Color = color.ToVector4();
+			chunkDatas[ChunkCount].DistanceRange = font.DistanceRange;
+			chunkDatas[ChunkCount].FontIndex = fontIndex;
+			ChunkCount += 1;
+
 			return true;
 		}
 
 		// Call this after you have made all the Add calls you want, but before beginning a render pass.
 		public unsafe void UploadBufferData(CommandBuffer commandBuffer)
 		{
+			ChunkDataTransferBuffer.Unmap();
+
 			Wellspring.Wellspring_GetBufferData(
 				Handle,
-				out uint vertexCount,
-				out IntPtr vertexDataPointer,
-				out uint vertexDataLengthInBytes,
-				out IntPtr indexDataPointer,
-				out uint indexDataLengthInBytes
+				out var vertexSpan
 			);
 
-			var vertexSpan = new Span<byte>((void*) vertexDataPointer, (int) vertexDataLengthInBytes);
-			var indexSpan = new Span<byte>((void*) indexDataPointer, (int) indexDataLengthInBytes);
-
-			var newTransferBufferNeeded = false;
-
-			if (VertexBuffer.Size < vertexDataLengthInBytes)
+			if (vertexSpan.Length > 0)
 			{
-				VertexBuffer.Dispose();
-				VertexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Vertex, vertexDataLengthInBytes);
-				newTransferBufferNeeded = true;
-			}
-
-			if (IndexBuffer.Size < indexDataLengthInBytes)
-			{
-				IndexBuffer.Dispose();
-				IndexBuffer = Buffer.Create<byte>(GraphicsDevice, BufferUsageFlags.Index, vertexDataLengthInBytes);
-				newTransferBufferNeeded = true;
-			}
-
-			if (newTransferBufferNeeded)
-			{
-				TransferBuffer.Dispose();
-				TransferBuffer = TransferBuffer.Create<byte>(GraphicsDevice, "TextBatch TransferBuffer", TransferBufferUsage.Upload, VertexBuffer.Size + IndexBuffer.Size);
-			}
-
-			if (vertexDataLengthInBytes > 0 && indexDataLengthInBytes > 0)
-			{
-				var transferVertexSpan = TransferBuffer.Map<byte>(true);
-				var transferIndexSpan = transferVertexSpan[vertexSpan.Length..];
-
+				var transferVertexSpan = VertexTransferBuffer.Map<Wellspring.Vertex>(true);
 				vertexSpan.CopyTo(transferVertexSpan);
-				indexSpan.CopyTo(transferIndexSpan);
-
-				TransferBuffer.Unmap();
+				VertexTransferBuffer.Unmap();
 
 				var copyPass = commandBuffer.BeginCopyPass();
 				copyPass.UploadToBuffer(
 					new TransferBufferLocation
 					{
-						TransferBuffer = TransferBuffer.Handle,
+						TransferBuffer = ChunkDataTransferBuffer.Handle,
+						Offset = 0
+					},
+					new BufferRegion
+					{
+						Buffer = ChunkDataBuffer.Handle,
+						Offset = 0,
+						Size = (uint)(ChunkCount * ChunkDataSize)
+					},
+					true
+				);
+				copyPass.UploadToBuffer(
+					new TransferBufferLocation
+					{
+						TransferBuffer = VertexTransferBuffer.Handle,
 						Offset = 0
 					},
 					new BufferRegion
 					{
 						Buffer = VertexBuffer.Handle,
 						Offset = 0,
-						Size = (uint) vertexSpan.Length
-					},
-					true
-				);
-				copyPass.UploadToBuffer(
-					new TransferBufferLocation
-					{
-						TransferBuffer = TransferBuffer.Handle,
-						Offset = (uint) vertexSpan.Length
-					},
-					new BufferRegion
-					{
-						Buffer = IndexBuffer.Handle,
-						Offset = 0,
-						Size = (uint) indexSpan.Length
+						Size = (uint) (vertexSpan.Length * VertexSize)
 					},
 					true
 				);
 				commandBuffer.EndCopyPass(copyPass);
 			}
 
-			PrimitiveCount = vertexCount / 2;
+			VertexCount = (uint) vertexSpan.Length;
 		}
 
 		// Call this AFTER binding your text pipeline!
 		public void Render(
 			RenderPass renderPass,
-			System.Numerics.Matrix4x4 transformMatrix
+			Matrix4x4 viewProjectionMatrix
 		) {
-			renderPass.CommandBuffer.PushVertexUniformData(transformMatrix);
-			renderPass.CommandBuffer.PushFragmentUniformData(CurrentFont.DistanceRange);
+			renderPass.CommandBuffer.PushVertexUniformData(viewProjectionMatrix);
 
-			renderPass.BindFragmentSamplers(new TextureSamplerBinding(
-				CurrentFont.Texture,
-				GraphicsDevice.LinearSampler
-			));
+			renderPass.BindFragmentSamplers(FontTextureBindings);
 			renderPass.BindVertexBuffers(VertexBuffer);
 			renderPass.BindIndexBuffer(IndexBuffer, IndexElementSize.ThirtyTwo);
+			renderPass.BindVertexStorageBuffers(ChunkDataBuffer);
 
 			renderPass.DrawIndexedPrimitives(
-				PrimitiveCount * 3,
+				(VertexCount / 2) * 3,
 				1,
 				0,
 				0,
@@ -200,7 +243,9 @@ namespace MoonWorks.Graphics.Font
 				{
 					VertexBuffer.Dispose();
 					IndexBuffer.Dispose();
-					TransferBuffer.Dispose();
+					ChunkDataBuffer.Dispose();
+					VertexTransferBuffer.Dispose();
+					ChunkDataTransferBuffer.Dispose();
 				}
 
 				NativeMemory.Free(StringBytes);
