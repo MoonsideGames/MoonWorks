@@ -192,11 +192,6 @@ public class GraphicsDevice : IDisposable
 		else
 		{
 			// use defaults
-			var assembly = typeof(GraphicsDevice).Assembly;
-
-			using var vertStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextTransform.vert.spv");
-			using var fragStream = assembly.GetManifestResourceStream("MoonWorks.Graphics.StockShaders.TextMSDF.frag.spv");
-
 			textVertShader = LoadShaderFromManifest(
 				Backend,
 				"TextTransform.vert",
