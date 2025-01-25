@@ -34,9 +34,37 @@ public class TransferBuffer : SDLGPUResource
 		return Create(device, new TransferBufferCreateInfo
 		{
 			Usage = usage,
-			Size = (uint) (Marshal.SizeOf<T>() * elementCount),
-			Props = 0
+			Size = (uint) (Marshal.SizeOf<T>() * elementCount)
 		});
+	}
+
+	/// <summary>
+	/// Creates a buffer of requested size given a type and element count.
+	/// </summary>
+	/// <typeparam name="T">The type that the buffer will contain.</typeparam>
+	/// <param name="device">The GraphicsDevice.</param>
+	/// <param name="name">The name of the buffer.</param>
+	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
+	/// <returns></returns>
+	public static TransferBuffer Create<T>(
+		GraphicsDevice device,
+		string name,
+		TransferBufferUsage usage,
+		uint elementCount
+	) where T : unmanaged
+	{
+		var props = SDL3.SDL.SDL_CreateProperties();
+		SDL3.SDL.SDL_SetStringProperty(props, SDL3.SDL.SDL_PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING, name);
+
+		var result = Create(device, new TransferBufferCreateInfo
+		{
+			Usage = usage,
+			Size = (uint) (Marshal.SizeOf<T>() * elementCount),
+			Props = props
+		});
+
+		SDL3.SDL.SDL_DestroyProperties(props);
+		return result;
 	}
 
 	public static TransferBuffer Create(
@@ -52,14 +80,12 @@ public class TransferBuffer : SDLGPUResource
 		return new TransferBuffer(device)
 		{
 			Handle = handle,
-			Size = createInfo.Size
+			Size = createInfo.Size,
+			Name = SDL3.SDL.SDL_GetStringProperty(createInfo.Props, SDL3.SDL.SDL_PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING, "TransferBuffer")
 		};
 	}
 
-	private TransferBuffer(GraphicsDevice device) : base(device)
-	{
-		Name = "TransferBuffer";
-	}
+	private TransferBuffer(GraphicsDevice device) : base(device) { }
 
 	/// <summary>
 	/// Maps the transfer buffer into application address space.

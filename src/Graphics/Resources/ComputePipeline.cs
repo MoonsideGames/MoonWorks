@@ -76,6 +76,18 @@ public class ComputePipeline : SDLGPUResource
 		pipelineCreateInfo.ThreadCountZ = computePipelineCreateInfo.ThreadCountZ;
 		pipelineCreateInfo.Props = computePipelineCreateInfo.Props;
 
+		var cleanProps = false;
+		if (computePipelineCreateInfo.Name != null)
+		{
+			if (pipelineCreateInfo.Props == 0)
+			{
+				pipelineCreateInfo.Props = SDL3.SDL.SDL_CreateProperties();
+				cleanProps = true;
+			}
+
+			SDL3.SDL.SDL_SetStringProperty(pipelineCreateInfo.Props, SDL3.SDL.SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING, computePipelineCreateInfo.Name);
+		}
+
 		var computePipelineHandle = SDL.SDL_CreateGPUComputePipeline(
 			device.Handle,
 			pipelineCreateInfo
@@ -100,8 +112,14 @@ public class ComputePipeline : SDLGPUResource
 			NumUniformBuffers = computePipelineCreateInfo.NumUniformBuffers,
 			ThreadCountX = computePipelineCreateInfo.ThreadCountX,
 			ThreadCountY = computePipelineCreateInfo.ThreadCountY,
-			ThreadCountZ = computePipelineCreateInfo.ThreadCountZ
+			ThreadCountZ = computePipelineCreateInfo.ThreadCountZ,
+			Name = SDL3.SDL.SDL_GetStringProperty(pipelineCreateInfo.Props, SDL3.SDL.SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING, "Compute Pipeline")
 		};
+
+		if (cleanProps)
+		{
+			SDL3.SDL.SDL_DestroyProperties(pipelineCreateInfo.Props);
+		}
 
 		return computePipeline;
 	}
@@ -111,10 +129,10 @@ public class ComputePipeline : SDLGPUResource
 	/// </summary>
 	internal static unsafe ComputePipeline CreateFromSPIRV(
 		GraphicsDevice device,
+		string name, // can be null
 		Stream stream,
 		string entryPoint,
-		bool enableDebug,
-		string name // can be null
+		bool enableDebug
 	) {
 		var bytecodeBuffer = NativeMemory.Alloc((nuint) stream.Length);
 		var bytecodeSpan = new Span<byte>(bytecodeBuffer, (int) stream.Length);
@@ -160,7 +178,8 @@ public class ComputePipeline : SDLGPUResource
 			NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
 			ThreadCountX = pipelineMetadata.ThreadCountX,
 			ThreadCountY = pipelineMetadata.ThreadCountY,
-			ThreadCountZ = pipelineMetadata.ThreadCountZ
+			ThreadCountZ = pipelineMetadata.ThreadCountZ,
+			Name = name ?? "ComputePipeline"
 		};
 
 		return computePipeline;
@@ -171,11 +190,11 @@ public class ComputePipeline : SDLGPUResource
 	/// </summary>
 	internal static unsafe ComputePipeline CreateFromHLSL(
 		GraphicsDevice device,
+		string name, // can be null
 		Stream stream,
 		string entryPoint,
 		string includeDir,
 		bool enableDebug,
-		string name, // can be null
 		params Span<ShaderCross.HLSLDefine> defines
 	) {
 		byte* hlslBuffer = (byte*) NativeMemory.Alloc((nuint) stream.Length + 1);
@@ -246,7 +265,8 @@ public class ComputePipeline : SDLGPUResource
 			NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
 			ThreadCountX = pipelineMetadata.ThreadCountX,
 			ThreadCountY = pipelineMetadata.ThreadCountY,
-			ThreadCountZ = pipelineMetadata.ThreadCountZ
+			ThreadCountZ = pipelineMetadata.ThreadCountZ,
+			Name = name ?? "ComputePipeline"
 		};
 
 		return computePipeline;

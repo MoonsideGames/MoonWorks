@@ -63,7 +63,7 @@
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\text_msdf.frag.dxbc">
 			<LogicalName>MoonWorks.Graphics.StockShaders.TextMSDF.frag.dxbc</LogicalName>
 		</EmbeddedResource>
-		<!-- Embedded HLSL SM 6.0 shaders -->
+		<!-- Embedded DXIL shaders -->
 		<EmbeddedResource Include="src\Graphics\StockShaders\Binary\fullscreen.vert.dxil">
 			<LogicalName>MoonWorks.Graphics.StockShaders.Fullscreen.vert.dxil</LogicalName>
 		</EmbeddedResource>

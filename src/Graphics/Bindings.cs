@@ -1012,6 +1012,7 @@ public struct GraphicsPipelineCreateInfo
 	public MultisampleState MultisampleState;
 	public DepthStencilState DepthStencilState;
 	public GraphicsPipelineTargetInfo TargetInfo;
+	public string Name;
 	public uint Props;
 }
 
@@ -1041,6 +1042,7 @@ public struct ComputePipelineCreateInfo
 	public uint ThreadCountX;
 	public uint ThreadCountY;
 	public uint ThreadCountZ;
+	public string Name;
 	public uint Props;
 }
 

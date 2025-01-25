@@ -10,7 +10,7 @@ public abstract class GraphicsResource : IDisposable
 	private GCHandle SelfReference;
 
 	public bool IsDisposed { get; private set; }
-	public virtual string Name { get; set; } = "GraphicsResource";
+	public string Name { get; protected set; }
 
 	protected GraphicsResource(GraphicsDevice device)
 	{
