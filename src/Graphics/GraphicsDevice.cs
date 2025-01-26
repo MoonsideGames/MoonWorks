@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
 using SDL = MoonWorks.Graphics.SDL_GPU;
@@ -95,21 +94,22 @@ public class GraphicsDevice : IDisposable
 		Backend = SDL.SDL_GetGPUDeviceDriver(Handle);
 
 		// Check for replacement stock shaders
-		string basePath = System.AppContext.BaseDirectory;
+		string fullscreenVertPath = "fullscreen.vert.private";
 
-		string fullscreenVertPath = Path.Combine(basePath, "fullscreen.vert.private");
+		string textVertPath = "text_transform.vert.private";
+		string textFragPath = "text_msdf.frag.private";
 
-		string textVertPath = Path.Combine(basePath, "text_transform.vert.private");
-		string textFragPath = Path.Combine(basePath, "text_msdf.frag.private");
-
-		string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.private");
+		string videoFragPath = "video_yuv2rgba.frag.private";
 
 		Shader textVertShader;
 		Shader textFragShader;
 
 		Shader videoFragShader;
 
-		if (File.Exists(fullscreenVertPath))
+		var titleStorage = new TitleStorage();
+		titleStorage.Open();
+
+		if (titleStorage.Exists(fullscreenVertPath))
 		{
 			FullscreenVertexShader = Shader.Create(
 				this,
@@ -134,7 +134,7 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (File.Exists(videoFragPath))
+		if (titleStorage.Exists(videoFragPath))
 		{
 			videoFragShader = Shader.Create(
 				this,
@@ -162,7 +162,7 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (File.Exists(textVertPath) && File.Exists(textFragPath))
+		if (titleStorage.Exists(textVertPath) && titleStorage.Exists(textFragPath))
 		{
 			textVertShader = Shader.Create(
 				this,
@@ -213,6 +213,8 @@ public class GraphicsDevice : IDisposable
 				}
 			);
 		}
+
+		titleStorage.Close();
 
 		VideoPipeline = GraphicsPipeline.Create(
 			this,
