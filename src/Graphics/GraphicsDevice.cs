@@ -113,6 +113,7 @@ public class GraphicsDevice : IDisposable
 		{
 			FullscreenVertexShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				fullscreenVertPath,
 				"main",
 				new ShaderCreateInfo
@@ -138,6 +139,7 @@ public class GraphicsDevice : IDisposable
 		{
 			videoFragShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				videoFragPath,
 				"main",
 				new ShaderCreateInfo
@@ -166,6 +168,7 @@ public class GraphicsDevice : IDisposable
 		{
 			textVertShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				textVertPath,
 				"main",
 				new ShaderCreateInfo
@@ -179,6 +182,7 @@ public class GraphicsDevice : IDisposable
 
 			textFragShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				textFragPath,
 				"main",
 				new ShaderCreateInfo
@@ -531,7 +535,7 @@ public class GraphicsDevice : IDisposable
 		return (TextureFormat) SDL.SDL_GetGPUSwapchainTextureFormat(Handle, window.Handle);
 	}
 
-	private Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
+	private unsafe Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
 	{
 		ShaderFormat shaderFormat;
 		string extension;
@@ -570,12 +574,21 @@ public class GraphicsDevice : IDisposable
 		var path = $"MoonWorks.Graphics.StockShaders.{name}.{extension}";
 		var assembly = typeof(GraphicsDevice).Assembly;
 		using var stream = assembly.GetManifestResourceStream(path);
-		return Shader.Create(
+
+		var buffer = NativeMemory.Alloc((nuint) stream.Length);
+		var span = new Span<byte>(buffer, (int) stream.Length);
+		stream.ReadExactly(span);
+
+		var result = Shader.Create(
 			this,
-			stream,
+			span,
 			entryPointName,
 			createInfoWithFormat
 		);
+
+		NativeMemory.Free(buffer);
+
+		return result;
 	}
 
 	internal void AddResourceReference(GCHandle resourceReference)

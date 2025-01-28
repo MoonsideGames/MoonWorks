@@ -1,5 +1,6 @@
 using System;
-using System.IO;
+using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Graphics;
 
@@ -39,8 +40,9 @@ public static class ShaderCross
 		return true;
 	}
 
-	public static Shader Create(
+	public static unsafe Shader Create(
 		GraphicsDevice device,
+		IStorage storage,
 		string filepath,
 		string entrypoint,
 		ShaderFormat shaderFormat,
@@ -50,65 +52,73 @@ public static class ShaderCross
 		string includeDir = null,       // Only used by HLSL
 		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
-		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-		name ??= Path.GetFileName(filepath); // if name is not provided, just use the filename
-		return Create(
-			device,
-			stream,
-			entrypoint,
-			shaderFormat,
-			shaderStage,
-			enableDebug,
-			name,
-			includeDir,
-			defines
-		);
-	}
+		name ??= System.IO.Path.GetFileName(filepath); // if name not provided, just use filename
 
-	public static Shader Create(
-		GraphicsDevice device,
-		Stream stream,
-		string entrypoint,
-		ShaderFormat shaderFormat,
-		ShaderStage shaderStage,
-		bool enableDebug = false,
-		string name = null,
-		string includeDir = null,        // Only used for HLSL
-		params Span<HLSLDefine> defines  // Only used by HLSL
-	) {
+		Shader shader;
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return Shader.CreateFromSPIRV(
+			var buffer = storage.ReadFile(filepath, out var size);
+			if (buffer == null)
+			{
+				return null;
+			}
+
+			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			shader = Shader.CreateFromSPIRV(
 				device,
-				stream,
+				name,
+				span,
 				entrypoint,
 				shaderStage,
-				enableDebug,
-				name
+				enableDebug
 			);
+
+			NativeMemory.Free(buffer);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return Shader.CreateFromHLSL(
+			// HLSL data is a string so we need to add a null byte, lol
+			if (!storage.GetFileSize(filepath, out var size))
+			{
+				return null;
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) (size + 1));
+			var fileSpan = new ReadOnlySpan<byte>(buffer, (int) size);
+
+			if (!storage.ReadFile(filepath, fileSpan))
+			{
+				return null;
+			}
+
+			var bufferSpan = new Span<byte>(buffer, (int) (size + 1));
+			bufferSpan[^1] = 0;
+
+			shader = Shader.CreateFromHLSL(
 				device,
-				stream,
+				name,
+				bufferSpan,
 				entrypoint,
 				includeDir,
 				shaderStage,
 				enableDebug,
-				name,
 				defines
 			);
+
+			NativeMemory.Free(buffer);
 		}
 		else
 		{
 			Logger.LogError("Invalid shader format!");
 			return null;
 		}
+
+		return shader;
 	}
 
-	public static ComputePipeline Create(
+	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
+		IStorage storage,
 		string filepath,
 		string entrypoint,
 		ShaderFormat shaderFormat,
@@ -117,55 +127,66 @@ public static class ShaderCross
 		string includeDir = null,       // Only used for HLSL
 		params Span<HLSLDefine> defines // Only used by HLSL
 	) {
-		using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-		name ??= Path.GetFileName(filepath); // if name not provided, just use filename
-		return Create(
-			device,
-			stream,
-			entrypoint,
-			shaderFormat,
-			enableDebug,
-			name,
-			includeDir,
-			defines
-		);
-	}
+		name ??= System.IO.Path.GetFileName(filepath); // if name not provided, just use filename
 
-	public static ComputePipeline Create(
-		GraphicsDevice device,
-		Stream stream,
-		string entrypoint,
-		ShaderFormat shaderFormat,
-		bool enableDebug = false,
-		string name = null,
-		string includeDir = null,       // Only used by HLSL
-		params Span<HLSLDefine> defines // Only used by HLSL
-	) {
+		ComputePipeline pipeline;
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			return ComputePipeline.CreateFromSPIRV(
+			var buffer = storage.ReadFile(filepath, out var size);
+			if (buffer == null)
+			{
+				return null;
+			}
+
+			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			pipeline = ComputePipeline.CreateFromSPIRV(
 				device,
 				name,
-				stream,
+				span,
 				entrypoint,
-				enableDebug);
+				enableDebug
+			);
+
+			NativeMemory.Free(buffer);
 		}
 		else if (shaderFormat == ShaderFormat.HLSL)
 		{
-			return ComputePipeline.CreateFromHLSL(
+			// HLSL data is a string so we need to add a null byte, lol
+			if (!storage.GetFileSize(filepath, out var size))
+			{
+				return null;
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) (size + 1));
+			var fileSpan = new ReadOnlySpan<byte>(buffer, (int) size);
+
+			if (!storage.ReadFile(filepath, fileSpan))
+			{
+				return null;
+			}
+
+			var bufferSpan = new Span<byte>(buffer, (int) (size + 1));
+			bufferSpan[^1] = 0;
+
+			pipeline = ComputePipeline.CreateFromHLSL(
 				device,
 				name,
-				stream,
+				bufferSpan,
 				entrypoint,
 				includeDir,
 				enableDebug,
-				defines);
+				defines
+			);
+
+			NativeMemory.Free(buffer);
 		}
 		else
 		{
 			Logger.LogError("Invalid shader format!");
 			return null;
 		}
+
+		return pipeline;
 	}
 
 	public static void Quit()

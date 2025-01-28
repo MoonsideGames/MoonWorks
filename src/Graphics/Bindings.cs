@@ -764,6 +764,7 @@ public struct ShaderCreateInfo
 	public uint NumStorageTextures;
 	public uint NumStorageBuffers;
 	public uint NumUniformBuffers;
+	public string Name; // optional
 	public uint Props;
 }
 
@@ -1029,7 +1030,7 @@ public struct ComputePipelineCreateInfo
 	public uint ThreadCountX;
 	public uint ThreadCountY;
 	public uint ThreadCountZ;
-	public string Name;
+	public string Name; // optional
 	public uint Props;
 }
 

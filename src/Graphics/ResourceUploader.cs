@@ -163,11 +163,13 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a texture from a DDS stream.
 	/// </summary>
-	private Texture CreateTextureFromDDS(string name, ByteSpanStream stream)
+	private Texture CreateTextureFromDDS(string name, ReadOnlySpan<byte> span)
 	{
 		Texture texture;
 		int faces;
-		if (!ImageUtils.ParseDDS(stream, out var format, out var width, out var height, out var levels, out var isCube))
+		var stream = new ByteSpanStream(span);
+
+		if (!ImageUtils.ParseDDS(ref stream, out var format, out var width, out var height, out var levels, out var isCube))
 		{
 			return null;
 		}
@@ -225,8 +227,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		}
 
 		var span = new ReadOnlySpan<byte>(buffer, (int) size);
-		var stream = new ByteSpanStream(span);
-		var result = CreateTextureFromDDS(name, stream);
+		var result = CreateTextureFromDDS(name, span);
 
 		NativeMemory.Free(buffer);
 

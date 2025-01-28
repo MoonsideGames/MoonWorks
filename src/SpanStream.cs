@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace MoonWorks;
 
+/// <summary>
+/// Note that this is a struct, so if you want it to retain state you have to pass it by ref.
+/// </summary>
 internal ref struct ByteSpanStream
 {
 	public ReadOnlySpan<byte> Span;
