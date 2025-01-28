@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Graphics;
 
@@ -37,41 +38,22 @@ public static class ImageUtils
 	}
 
 	/// <summary>
-	/// Gets pointer to pixel data from a compressed image stream.
-	///
-	/// The returned pointer must be freed by calling FreePixelData.
-	/// </summary>
-	public static unsafe byte* GetPixelDataFromStream(
-		Stream stream,
-		out uint width,
-		out uint height,
-		out uint sizeInBytes
-	) {
-		var length = stream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		stream.ReadExactly(span);
-
-		var pixelData = GetPixelDataFromBytes(span, out width, out height, out sizeInBytes);
-
-		NativeMemory.Free(buffer);
-
-		return pixelData;
-	}
-
-	/// <summary>
 	/// Gets pointer to pixel data from a compressed image file.
 	///
 	/// The returned pointer must be freed by calling FreePixelData.
 	/// </summary>
 	public static unsafe byte* GetPixelDataFromFile(
+		IStorage storage,
 		string path,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return GetPixelDataFromStream(fileStream, out width, out height, out sizeInBytes);
+		var buffer = storage.ReadFile(path, out var size);
+		var span = new ReadOnlySpan<byte>(buffer, (int) size);
+		var result = GetPixelDataFromBytes(span, out width, out height, out sizeInBytes);
+		NativeMemory.Free(buffer);
+		return result;
 	}
 
 	/// <summary>
@@ -103,37 +85,20 @@ public static class ImageUtils
 	}
 
 	/// <summary>
-	/// Get metadata from a compressed image stream.
-	/// </summary>
-	public static unsafe bool ImageInfoFromStream(
-		Stream stream,
-		out uint width,
-		out uint height,
-		out uint sizeInBytes
-	) {
-		var length = stream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		stream.ReadExactly(span);
-
-		var result = ImageInfoFromBytes(span, out width, out height, out sizeInBytes);
-
-		NativeMemory.Free(buffer);
-
-		return result;
-	}
-
-	/// <summary>
 	/// Get metadata from a compressed image file.
 	/// </summary>
-	public static bool ImageInfoFromFile(
+	public static unsafe bool ImageInfoFromFile(
+		IStorage storage,
 		string path,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return ImageInfoFromStream(fileStream, out width, out height, out sizeInBytes);
+		var buffer = storage.ReadFile(path, out var size);
+		var span = new ReadOnlySpan<byte>(buffer, (int) size);
+		var result = ImageInfoFromBytes(span, out width, out height, out sizeInBytes);
+		NativeMemory.Free(buffer);
+		return result;
 	}
 
 	/// <summary>
