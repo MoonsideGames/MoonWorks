@@ -167,9 +167,9 @@ public unsafe class ResourceUploader : GraphicsResource
 	{
 		Texture texture;
 		int faces;
-		var stream = new ByteSpanStream(span);
+		var reader = new ByteSpanReader(span);
 
-		if (!ImageUtils.ParseDDS(ref stream, out var format, out var width, out var height, out var levels, out var isCube))
+		if (!ImageUtils.ParseDDS(ref reader, out var format, out var width, out var height, out var levels, out var isCube))
 		{
 			return null;
 		}
@@ -207,7 +207,7 @@ public unsafe class ResourceUploader : GraphicsResource
 					D = 1
 				};
 
-				SetTextureData(textureRegion, stream.SliceRemainder(levelSize), false);
+				SetTextureData(textureRegion, reader.SliceRemainder(levelSize), false);
 			}
 		}
 

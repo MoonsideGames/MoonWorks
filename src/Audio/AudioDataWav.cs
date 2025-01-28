@@ -23,64 +23,64 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private static Format ParseFormat(ref ByteSpanStream stream)
+		private static Format ParseFormat(ref ByteSpanReader reader)
 		{
 			// RIFF Signature
-			if (stream.Read<int>() != MAGIC_RIFF)
+			if (reader.Read<int>() != MAGIC_RIFF)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			stream.Read<uint>(); // Riff chunk size
+			reader.Read<uint>(); // Riff chunk size
 
 			// WAVE Header
-			if (stream.Read<int>() != MAGIC_WAVE)
+			if (reader.Read<int>() != MAGIC_WAVE)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
 			// Skip over non-format chunks
-			while (stream.Remaining >= 4 && stream.Read<int>() != MAGIC_FMT)
+			while (reader.Remaining >= 4 && reader.Read<int>() != MAGIC_FMT)
 			{
-				var chunkSize = stream.Read<uint>();
-				stream.Advance(chunkSize);
+				var chunkSize = reader.Read<uint>();
+				reader.Advance(chunkSize);
 			}
 
-			if (stream.Remaining < 4)
+			if (reader.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			uint format_chunk_size = stream.Read<uint>();
+			uint format_chunk_size = reader.Read<uint>();
 
 			// WaveFormatEx data
-			ushort wFormatTag = stream.Read<ushort>();
-			ushort nChannels = stream.Read<ushort>();
-			uint nSamplesPerSec = stream.Read<uint>();
-			uint nAvgBytesPerSec = stream.Read<uint>();
-			ushort nBlockAlign = stream.Read<ushort>();
-			ushort wBitsPerSample = stream.Read<ushort>();
+			ushort wFormatTag = reader.Read<ushort>();
+			ushort nChannels = reader.Read<ushort>();
+			uint nSamplesPerSec = reader.Read<uint>();
+			uint nAvgBytesPerSec = reader.Read<uint>();
+			ushort nBlockAlign = reader.Read<ushort>();
+			ushort wBitsPerSample = reader.Read<ushort>();
 
 			// Reads residual bytes
 			if (format_chunk_size > 16)
 			{
-				stream.Advance(format_chunk_size - 16);
+				reader.Advance(format_chunk_size - 16);
 			}
 
 			// Skip over non-data chunks
-			while (stream.Remaining > 4 && stream.Read<int>() != MAGIC_DATA)
+			while (reader.Remaining > 4 && reader.Read<int>() != MAGIC_DATA)
 			{
-				var chunkSize = stream.Read<uint>();
-				stream.Advance(chunkSize);
+				var chunkSize = reader.Read<uint>();
+				reader.Advance(chunkSize);
 			}
 
-			if (stream.Remaining < 4)
+			if (reader.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int waveDataLength = stream.Read<int>();
-			var dataSpan = stream.SliceRemainder();
+			int waveDataLength = reader.Read<int>();
+			var dataSpan = reader.SliceRemainder();
 
 			var format = new Format
 			{
@@ -95,7 +95,7 @@ namespace MoonWorks.Audio
 
 		private static ParseResult Parse(ReadOnlySpan<byte> span)
 		{
-			var stream = new ByteSpanStream(span);
+			var stream = new ByteSpanReader(span);
 
 			var format = ParseFormat(ref stream);
 
@@ -147,7 +147,7 @@ namespace MoonWorks.Audio
 				return new Format();
 			}
 			var span = new ReadOnlySpan<byte>(buffer, (int) size);
-			var reader = new ByteSpanStream(span);
+			var reader = new ByteSpanReader(span);
 			var format = ParseFormat(ref reader);
 
 			NativeMemory.Free(buffer);

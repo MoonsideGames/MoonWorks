@@ -221,7 +221,7 @@ public static class ImageUtils
 	// DDS loading extension, based on MojoDDS
 	// Taken from https://github.com/FNA-XNA/FNA/blob/1e49f868f595f62bc6385db45949a03186a7cd7f/src/Graphics/Texture.cs#L194
 	internal static bool ParseDDS(
-		ref ByteSpanStream stream,
+		ref ByteSpanReader reader,
 		out TextureFormat format,
 		out int width,
 		out int height,
@@ -260,20 +260,20 @@ public static class ImageUtils
 		isCube = false;
 
 		// File should start with 'DDS '
-		if (stream.Read<uint>() != DDS_MAGIC)
+		if (reader.Read<uint>() != DDS_MAGIC)
 		{
 			Logger.LogError("Not a DDS!");
 			return false;
 		}
 
 		// Texture info
-		uint size = stream.Read<uint>();
+		uint size = reader.Read<uint>();
 		if (size != DDS_HEADERSIZE)
 		{
 			Logger.LogError("Invalid DDS header!");
 			return false;
 		}
-		uint flags = stream.Read<uint>();
+		uint flags = reader.Read<uint>();
 		if ((flags & DDSD_REQ) != DDSD_REQ)
 		{
 			Logger.LogError("Invalid DDS flags!");
@@ -284,32 +284,32 @@ public static class ImageUtils
 			Logger.LogError("Invalid DDS flags!");
 			return false;
 		}
-		height = stream.Read<int>();
-		width = stream.Read<int>();
-		stream.Read<uint>(); // dwPitchOrLinearSize, unused
-		stream.Read<uint>(); // dwDepth, unused
-		levels = stream.Read<int>();
+		height = reader.Read<int>();
+		width = reader.Read<int>();
+		reader.Read<uint>(); // dwPitchOrLinearSize, unused
+		reader.Read<uint>(); // dwDepth, unused
+		levels = reader.Read<int>();
 
 		// "Reserved"
-		stream.Advance(4 * 11);
+		reader.Advance(4 * 11);
 
 		// Format info
-		uint formatSize = stream.Read<uint>();
+		uint formatSize = reader.Read<uint>();
 		if (formatSize != DDS_PIXFMTSIZE)
 		{
 			Logger.LogError("Bogus PIXFMTSIZE!");
 			return false;
 		}
-		uint formatFlags = stream.Read<uint>();
-		uint formatFourCC = stream.Read<uint>();
-		uint formatRGBBitCount = stream.Read<uint>();
-		uint formatRBitMask = stream.Read<uint>();
-		uint formatGBitMask = stream.Read<uint>();
-		uint formatBBitMask = stream.Read<uint>();
-		uint formatABitMask = stream.Read<uint>();
+		uint formatFlags = reader.Read<uint>();
+		uint formatFourCC = reader.Read<uint>();
+		uint formatRGBBitCount = reader.Read<uint>();
+		uint formatRBitMask = reader.Read<uint>();
+		uint formatGBitMask = reader.Read<uint>();
+		uint formatBBitMask = reader.Read<uint>();
+		uint formatABitMask = reader.Read<uint>();
 
 		// dwCaps "stuff"
-		uint caps = stream.Read<uint>();
+		uint caps = reader.Read<uint>();
 		if ((caps & DDSCAPS_TEXTURE) == 0)
 		{
 			Logger.LogError("Not a texture!");
@@ -318,7 +318,7 @@ public static class ImageUtils
 
 		isCube = false;
 
-		uint caps2 = stream.Read<uint>();
+		uint caps2 = reader.Read<uint>();
 		if (caps2 != 0)
 		{
 			if ((caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
@@ -332,11 +332,11 @@ public static class ImageUtils
 			}
 		}
 
-		stream.Read<uint>(); // dwCaps3, unused
-		stream.Read<uint>(); // dwCaps4, unused
+		reader.Read<uint>(); // dwCaps3, unused
+		reader.Read<uint>(); // dwCaps4, unused
 
 		// "Reserved"
-		stream.Read<uint>();
+		reader.Read<uint>();
 
 		// Mipmap sanity check
 		if ((caps & DDSCAPS_MIPMAP) != DDSCAPS_MIPMAP)
@@ -366,7 +366,7 @@ public static class ImageUtils
 					break;
 				case FOURCC_DX10:
 					// If the fourCC is DX10, there is an extra header with additional format information.
-					uint dxgiFormat = stream.Read<uint>();
+					uint dxgiFormat = reader.Read<uint>();
 
 					// These values are taken from the DXGI_FORMAT enum.
 					switch (dxgiFormat)
@@ -400,7 +400,7 @@ public static class ImageUtils
 							return false;
 					}
 
-					uint resourceDimension = stream.Read<uint>();
+					uint resourceDimension = reader.Read<uint>();
 
 					// These values are taken from the D3D10_RESOURCE_DIMENSION enum.
 					switch (resourceDimension)
@@ -417,13 +417,13 @@ public static class ImageUtils
 					 * This flag seemingly only indicates if the texture is a cube map.
 					 * This is already determined above. Cool!
 					 */
-					uint miscFlag = stream.Read<uint>();
+					uint miscFlag = reader.Read<uint>();
 
 					/*
 					 * Indicates the number of elements in the texture array.
 					 * We don't support texture arrays so just return false if it's greater than 1.
 					 */
-					uint arraySize = stream.Read<uint>();
+					uint arraySize = reader.Read<uint>();
 
 					if (arraySize > 1)
 					{
@@ -431,7 +431,7 @@ public static class ImageUtils
 						return false;
 					}
 
-					stream.Read<uint>(); // reserved
+					reader.Read<uint>(); // reserved
 
 					break;
 				default:
