@@ -1,5 +1,4 @@
 ﻿using SDL3;
-using MoonWorks.AsyncIO;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -7,6 +6,7 @@ using System.Text;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks
 {
@@ -36,6 +36,11 @@ namespace MoonWorks
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public Inputs Inputs { get; }
+
+		/// <summary>
+		/// Automatically opens on startup and automatically closes on shutdown.
+		/// </summary>
+		public TitleStorage RootTitleStorage { get; }
 
 		/// <summary>
 		/// This Window is automatically created when your Game is instantiated.
@@ -76,11 +81,15 @@ namespace MoonWorks
 
 			Logger.InitSDLLogging();
 
+			Logger.LogInfo("Initializing title storage...");
+			RootTitleStorage = new TitleStorage();
+
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
+				RootTitleStorage,
 				availableShaderFormats,
 				debugMode
 			);
@@ -126,6 +135,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
+
+			Logger.LogInfo("Disposing title storage...");
+			RootTitleStorage.Dispose();
 
 			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();

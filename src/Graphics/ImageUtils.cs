@@ -78,7 +78,7 @@ public static class ImageUtils
 	/// Get metadata from compressed image bytes.
 	/// </summary>
 	public static unsafe bool ImageInfoFromBytes(
-		Span<byte> data,
+		ReadOnlySpan<byte> data,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
@@ -220,8 +220,8 @@ public static class ImageUtils
 
 	// DDS loading extension, based on MojoDDS
 	// Taken from https://github.com/FNA-XNA/FNA/blob/1e49f868f595f62bc6385db45949a03186a7cd7f/src/Graphics/Texture.cs#L194
-	public static void ParseDDS(
-		BinaryReader reader,
+	internal static bool ParseDDS(
+		ByteSpanStream stream,
 		out TextureFormat format,
 		out int width,
 		out int height,
@@ -252,60 +252,73 @@ public static class ImageUtils
 			DDSD_PITCH | DDSD_LINEARSIZE
 		);
 
+		// Assign defaults
+		format = TextureFormat.Invalid;
+		height = 0;
+		width = 0;
+		levels = 0;
+		isCube = false;
+
 		// File should start with 'DDS '
-		if (reader.ReadUInt32() != DDS_MAGIC)
+		if (stream.Read<uint>() != DDS_MAGIC)
 		{
-			throw new NotSupportedException("Not a DDS!");
+			Logger.LogError("Not a DDS!");
+			return false;
 		}
 
 		// Texture info
-		uint size = reader.ReadUInt32();
+		uint size = stream.Read<uint>();
 		if (size != DDS_HEADERSIZE)
 		{
-			throw new NotSupportedException("Invalid DDS header!");
+			Logger.LogError("Invalid DDS header!");
+			return false;
 		}
-		uint flags = reader.ReadUInt32();
+		uint flags = stream.Read<uint>();
 		if ((flags & DDSD_REQ) != DDSD_REQ)
 		{
-			throw new NotSupportedException("Invalid DDS flags!");
+			Logger.LogError("Invalid DDS flags!");
+			return false;
 		}
 		if ((flags & pitchAndLinear) == pitchAndLinear)
 		{
-			throw new NotSupportedException("Invalid DDS flags!");
+			Logger.LogError("Invalid DDS flags!");
+			return false;
 		}
-		height = reader.ReadInt32();
-		width = reader.ReadInt32();
-		reader.ReadUInt32(); // dwPitchOrLinearSize, unused
-		reader.ReadUInt32(); // dwDepth, unused
-		levels = reader.ReadInt32();
+		height = stream.Read<int>();
+		width = stream.Read<int>();
+		stream.Read<uint>(); // dwPitchOrLinearSize, unused
+		stream.Read<uint>(); // dwDepth, unused
+		levels = stream.Read<int>();
 
 		// "Reserved"
-		reader.ReadBytes(4 * 11);
+		stream.Advance(4 * 11);
 
 		// Format info
-		uint formatSize = reader.ReadUInt32();
+		uint formatSize = stream.Read<uint>();
 		if (formatSize != DDS_PIXFMTSIZE)
 		{
-			throw new NotSupportedException("Bogus PIXFMTSIZE!");
+			Logger.LogError("Bogus PIXFMTSIZE!");
+			return false;
 		}
-		uint formatFlags = reader.ReadUInt32();
-		uint formatFourCC = reader.ReadUInt32();
-		uint formatRGBBitCount = reader.ReadUInt32();
-		uint formatRBitMask = reader.ReadUInt32();
-		uint formatGBitMask = reader.ReadUInt32();
-		uint formatBBitMask = reader.ReadUInt32();
-		uint formatABitMask = reader.ReadUInt32();
+		uint formatFlags = stream.Read<uint>();
+		uint formatFourCC = stream.Read<uint>();
+		uint formatRGBBitCount = stream.Read<uint>();
+		uint formatRBitMask = stream.Read<uint>();
+		uint formatGBitMask = stream.Read<uint>();
+		uint formatBBitMask = stream.Read<uint>();
+		uint formatABitMask = stream.Read<uint>();
 
 		// dwCaps "stuff"
-		uint caps = reader.ReadUInt32();
+		uint caps = stream.Read<uint>();
 		if ((caps & DDSCAPS_TEXTURE) == 0)
 		{
-			throw new NotSupportedException("Not a texture!");
+			Logger.LogError("Not a texture!");
+			return false;
 		}
 
 		isCube = false;
 
-		uint caps2 = reader.ReadUInt32();
+		uint caps2 = stream.Read<uint>();
 		if (caps2 != 0)
 		{
 			if ((caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
@@ -314,15 +327,16 @@ public static class ImageUtils
 			}
 			else
 			{
-				throw new NotSupportedException("Invalid caps2!");
+				Logger.LogError("Invalid caps2!");
+				return false;
 			}
 		}
 
-		reader.ReadUInt32(); // dwCaps3, unused
-		reader.ReadUInt32(); // dwCaps4, unused
+		stream.Read<uint>(); // dwCaps3, unused
+		stream.Read<uint>(); // dwCaps4, unused
 
 		// "Reserved"
-		reader.ReadUInt32();
+		stream.Read<uint>();
 
 		// Mipmap sanity check
 		if ((caps & DDSCAPS_MIPMAP) != DDSCAPS_MIPMAP)
@@ -352,7 +366,7 @@ public static class ImageUtils
 					break;
 				case FOURCC_DX10:
 					// If the fourCC is DX10, there is an extra header with additional format information.
-					uint dxgiFormat = reader.ReadUInt32();
+					uint dxgiFormat = stream.Read<uint>();
 
 					// These values are taken from the DXGI_FORMAT enum.
 					switch (dxgiFormat)
@@ -382,21 +396,19 @@ public static class ImageUtils
 							break;
 
 						default:
-							throw new NotSupportedException(
-								"Unsupported DDS texture format"
-							);
+							Logger.LogError("Unsupported DDS texture format");
+							return false;
 					}
 
-					uint resourceDimension = reader.ReadUInt32();
+					uint resourceDimension = stream.Read<uint>();
 
 					// These values are taken from the D3D10_RESOURCE_DIMENSION enum.
 					switch (resourceDimension)
 					{
 						case 0: // Unknown
 						case 1: // Buffer
-							throw new NotSupportedException(
-								"Unsupported DDS texture format"
-							);
+							Logger.LogError("Unsupported DDS texture format");
+							return false;
 						default:
 							break;
 					}
@@ -405,28 +417,26 @@ public static class ImageUtils
 					 * This flag seemingly only indicates if the texture is a cube map.
 					 * This is already determined above. Cool!
 					 */
-					uint miscFlag = reader.ReadUInt32();
+					uint miscFlag = stream.Read<uint>();
 
 					/*
 					 * Indicates the number of elements in the texture array.
-					 * We don't support texture arrays so just throw if it's greater than 1.
+					 * We don't support texture arrays so just return false if it's greater than 1.
 					 */
-					uint arraySize = reader.ReadUInt32();
+					uint arraySize = stream.Read<uint>();
 
 					if (arraySize > 1)
 					{
-						throw new NotSupportedException(
-							"Unsupported DDS texture format"
-						);
+						Logger.LogError("Unsupported DDS texture format");
+						return false;
 					}
 
-					reader.ReadUInt32(); // reserved
+					stream.Read<uint>(); // reserved
 
 					break;
 				default:
-					throw new NotSupportedException(
-						"Unsupported DDS texture format"
-					);
+					Logger.LogError("Unsupported DDS texture format");
+					return false;
 			}
 		}
 		else if ((formatFlags & DDPF_RGB) == DDPF_RGB)
@@ -437,19 +447,19 @@ public static class ImageUtils
 				formatBBitMask != 0x000000FF ||
 				formatABitMask != 0xFF000000	)
 			{
-				throw new NotSupportedException(
-					"Unsupported DDS texture format"
-				);
+				Logger.LogError("Unsupported DDS texture format");
+				return false;
 			}
 
 			format = TextureFormat.B8G8R8A8Unorm;
 		}
 		else
 		{
-			throw new NotSupportedException(
-				"Unsupported DDS texture format"
-			);
+			Logger.LogError("Unsupported DDS texture format");
+			return false;
 		}
+
+		return true;
 	}
 
 	public static int CalculateDDSLevelSize(

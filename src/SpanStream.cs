@@ -34,4 +34,12 @@ internal ref struct ByteSpanStream
 	}
 
 	public ReadOnlySpan<byte> SliceRemainder() => Span[Index..];
+
+	public ReadOnlySpan<byte> SliceRemainder(int length) => Span.Slice(Index, length);
+
+	public void CopyTo(Span<byte> other)
+	{
+		Span[Index..].CopyTo(other);
+		Index += other.Length;
+	}
 }

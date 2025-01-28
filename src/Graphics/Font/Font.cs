@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 using WellspringCS;
 
 namespace MoonWorks.Graphics.Font
@@ -17,43 +17,63 @@ namespace MoonWorks.Graphics.Font
 		private int StringBytesLength;
 
 		/// <summary>
-		/// Loads a TTF or OTF font from a path for use in MSDF rendering.
+		/// Loads a TTF or OTF font from a storage path for use in MSDF rendering.
 		/// Note that there must be an msdf-atlas-gen JSON and image file alongside.
 		/// </summary>
 		/// <returns></returns>
 		public unsafe static Font Load(
 			GraphicsDevice graphicsDevice,
+			IStorage storage,
 			string fontPath
 		) {
-			var fontFileStream = new FileStream(fontPath, FileMode.Open, FileAccess.Read);
-			var fontFileByteBuffer = NativeMemory.Alloc((nuint) fontFileStream.Length);
-			var fontFileByteSpan = new Span<byte>(fontFileByteBuffer, (int) fontFileStream.Length);
-			fontFileStream.ReadExactly(fontFileByteSpan);
-			fontFileStream.Close();
+			if (!storage.GetFileSize(fontPath, out var fontBytesLength))
+			{
+				return null;
+			}
+			var fontBytes = NativeMemory.Alloc((nuint) fontBytesLength);
+			var fontSpan = new ReadOnlySpan<byte>(fontBytes, (int) fontBytesLength);
 
-			var atlasFileStream = new FileStream(Path.ChangeExtension(fontPath, ".json"), FileMode.Open, FileAccess.Read);
-			var atlasFileByteBuffer = NativeMemory.Alloc((nuint) atlasFileStream.Length);
-			var atlasFileByteSpan = new Span<byte>(atlasFileByteBuffer, (int) atlasFileStream.Length);
-			atlasFileStream.ReadExactly(atlasFileByteSpan);
-			atlasFileStream.Close();
+			var atlasPath = System.IO.Path.ChangeExtension(fontPath, ".json");
+			if (!storage.GetFileSize(atlasPath, out var atlasBytesLength))
+			{
+				NativeMemory.Free(fontBytes);
+				return null;
+			}
+
+			var atlasBytes = NativeMemory.Alloc((nuint) atlasBytesLength);
+			var atlasSpan = new ReadOnlySpan<byte>(atlasBytes, (int) atlasBytesLength);
+
+			if (!storage.ReadFile(fontPath, fontSpan))
+			{
+				NativeMemory.Free(fontBytes);
+				NativeMemory.Free(atlasBytes);
+				return null;
+			}
+
+			if (!storage.ReadFile(atlasPath, atlasSpan))
+			{
+				NativeMemory.Free(fontBytes);
+				NativeMemory.Free(atlasBytes);
+				return null;
+			}
 
 			var handle = Wellspring.Wellspring_CreateFont(
-				(IntPtr) fontFileByteBuffer,
-				(uint) fontFileByteSpan.Length,
-				(IntPtr) atlasFileByteBuffer,
-				(uint) atlasFileByteSpan.Length,
+				(IntPtr) fontBytes,
+				(uint) fontBytesLength,
+				(IntPtr) atlasBytes,
+				(uint) atlasBytesLength,
 				out float pixelsPerEm,
 				out float distanceRange
 			);
 
-			var imagePath = Path.ChangeExtension(fontPath, ".png");
+			var imagePath = System.IO.Path.ChangeExtension(fontPath, ".png");
 			var uploader = new ResourceUploader(graphicsDevice);
-			var texture = uploader.CreateTexture2DFromCompressed(imagePath, TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.Sampler);
+			var texture = uploader.CreateTexture2DFromCompressed(storage, imagePath, TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.Sampler);
 			uploader.Upload();
 			uploader.Dispose();
 
-			NativeMemory.Free(fontFileByteBuffer);
-			NativeMemory.Free(atlasFileByteBuffer);
+			NativeMemory.Free(fontBytes);
+			NativeMemory.Free(atlasBytes);
 
 			return new Font(graphicsDevice, handle, texture, pixelsPerEm, distanceRange);
 		}

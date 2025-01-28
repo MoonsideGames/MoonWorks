@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using MoonWorks.Video;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
+using MoonWorks.Storage;
+
 namespace MoonWorks.Graphics;
 
 /// <summary>
@@ -46,6 +48,7 @@ public class GraphicsDevice : IDisposable
 	internal Texture DummyTexture;
 
 	internal unsafe GraphicsDevice(
+		TitleStorage rootTitleStorage,
 		ShaderFormat shaderFormats,
 		bool debugMode,
 		string backendName = null
@@ -106,10 +109,7 @@ public class GraphicsDevice : IDisposable
 
 		Shader videoFragShader;
 
-		var titleStorage = new TitleStorage();
-		titleStorage.Open();
-
-		if (titleStorage.Exists(fullscreenVertPath))
+		if (rootTitleStorage.Exists(fullscreenVertPath))
 		{
 			FullscreenVertexShader = Shader.Create(
 				this,
@@ -134,7 +134,7 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (titleStorage.Exists(videoFragPath))
+		if (rootTitleStorage.Exists(videoFragPath))
 		{
 			videoFragShader = Shader.Create(
 				this,
@@ -162,7 +162,7 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (titleStorage.Exists(textVertPath) && titleStorage.Exists(textFragPath))
+		if (rootTitleStorage.Exists(textVertPath) && rootTitleStorage.Exists(textFragPath))
 		{
 			textVertShader = Shader.Create(
 				this,
@@ -213,8 +213,6 @@ public class GraphicsDevice : IDisposable
 				}
 			);
 		}
-
-		titleStorage.Close();
 
 		VideoPipeline = GraphicsPipeline.Create(
 			this,
