@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Audio
 {
@@ -103,12 +103,20 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without decoding the entire file.
 		/// </summary>
-		public static Format GetFormat(string filePath)
+		public static unsafe Format GetFormat(IStorage storage, string path)
 		{
-			var handle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
+			var buffer = storage.ReadFile(path, out var size);
+			if (buffer == null)
+			{
+				return new Format();
+			}
+
+			var handle = FAudio.stb_vorbis_open_memory((nint) buffer, (int) size, out var error, IntPtr.Zero);
 			if (error != 0)
 			{
-				throw new InvalidOperationException("Error loading file: " + error);
+				Logger.LogError("Error loading file: " + error);
+				NativeMemory.Free(buffer);
+				return new Format();
 			}
 
 			var info = FAudio.stb_vorbis_get_info(handle);
@@ -121,6 +129,7 @@ namespace MoonWorks.Audio
 			};
 
 			FAudio.stb_vorbis_close(handle);
+			NativeMemory.Free(buffer);
 			return format;
 		}
 
@@ -190,19 +199,21 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Decodes an entire OGG file into an AudioBuffer.
 		/// </summary>
-		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, IStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var fileMemory = NativeMemory.Alloc((nuint) stream.Length);
-			var fileSpan = new Span<byte>(fileMemory, (int) stream.Length);
-			stream.ReadExactly(fileSpan);
+			var fileBuffer = storage.ReadFile(path, out var size);
+			if (fileBuffer == null)
+			{
+				return null;
+			}
 
+			var fileSpan = new ReadOnlySpan<byte>(fileBuffer, (int) size);
 			var result = Load(fileSpan);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
 
-			NativeMemory.Free(fileMemory);
+			NativeMemory.Free(fileBuffer);
 			return audioBuffer;
 		}
 	}

@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Audio
 {
@@ -23,10 +23,8 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private static ParseResult Parse(ReadOnlySpan<byte> span)
+		private static Format ParseFormat(ByteSpanStream stream)
 		{
-			var stream = new ByteSpanStream(span);
-
 			// RIFF Signature
 			if (stream.Read<int>() != MAGIC_RIFF)
 			{
@@ -92,6 +90,18 @@ namespace MoonWorks.Audio
 				SampleRate = nSamplesPerSec
 			};
 
+			return format;
+		}
+
+		private static ParseResult Parse(ReadOnlySpan<byte> span)
+		{
+			var stream = new ByteSpanStream(span);
+
+			var format = ParseFormat(stream);
+
+			int waveDataLength = stream.Read<int>();
+			var dataSpan = stream.SliceRemainder(waveDataLength);
+
 			return new ParseResult(format, dataSpan);
 		}
 
@@ -108,73 +118,41 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Create an AudioBuffer containing all the WAV audio data in a file.
 		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, IStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var memory = NativeMemory.Alloc((nuint) stream.Length);
-			var span = new Span<byte>(memory, (int) stream.Length);
-			stream.ReadExactly(span);
+			var fileBuffer = storage.ReadFile(path, out var size);
+			if (fileBuffer == null)
+			{
+				return null;
+			}
 
+			var span = new Span<byte>(fileBuffer, (int) size);
 			var result = Parse(span);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetData(result.Data);
 
-			NativeMemory.Free(memory);
+			NativeMemory.Free(fileBuffer);
 			return audioBuffer;
 		}
 
 		/// <summary>
 		/// Get audio format data without reading the entire file.
 		/// </summary>
-		public static Format GetFormat(string filePath)
+		public static unsafe Format GetFormat(IStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			using var reader = new BinaryReader(stream);
-
-			// RIFF Signature
-			if (reader.ReadInt32() != MAGIC_RIFF)
+			var buffer = storage.ReadFile(path, out var size);
+			if (buffer == null)
 			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
+				return new Format();
 			}
+			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			var reader = new ByteSpanStream(span);
+			var format = ParseFormat(reader);
 
-			reader.ReadUInt32(); // Riff chunk size
+			NativeMemory.Free(buffer);
 
-			// WAVE Header
-			if (reader.ReadInt32() != MAGIC_WAVE)
-			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
-			}
-
-			// Skip over non-format chunks
-			while (stream.Position + 4 < stream.Length && reader.ReadInt32() != MAGIC_FMT)
-			{
-				var chunkSize = reader.ReadUInt32();
-				stream.Position += chunkSize;
-			}
-
-			if (stream.Position + 4 >= stream.Length)
-			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
-			}
-
-			uint formatChunkSize = reader.ReadUInt32();
-
-			// WaveFormatEx data
-			ushort wFormatTag = reader.ReadUInt16();
-			ushort nChannels = reader.ReadUInt16();
-			uint nSamplesPerSec = reader.ReadUInt32();
-			uint nAvgBytesPerSec = reader.ReadUInt32();
-			ushort nBlockAlign = reader.ReadUInt16();
-			ushort wBitsPerSample = reader.ReadUInt16();
-
-			return new Format
-			{
-				Tag = (FormatTag) wFormatTag,
-				BitsPerSample = wBitsPerSample,
-				Channels = nChannels,
-				SampleRate = nSamplesPerSec
-			};
+			return format;
 		}
 	}
 }
