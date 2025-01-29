@@ -91,6 +91,7 @@ public class UserStorage : IDisposable
 				}
 			}
 
+			commandBuffer.Commands.Clear();
 			CommandBufferPool.Return(commandBuffer);
 		}
 	}
@@ -109,7 +110,7 @@ public class UserStorage : IDisposable
 			case CommandType.GetFileSize:
 			{
 				// FIXME: Can SDL3-CS just take a byte* overload for strings to avoid this silly round trip?
-				var str = Encoding.UTF8.GetString((byte*) command.GetFileSizeCommand.Path, command.GetFileSizeCommand.PathLength);
+				var str = InteropUtilities.DecodeFromUTF8Buffer((byte*) command.WriteFileCommand.Path, command.WriteFileCommand.PathLength);
 				NativeMemory.Free((void*) command.GetFileSizeCommand.Path);
 
 				var success = SDL.SDL_GetStorageFileSize(handle, str, out command.ResultToken.Size);
@@ -120,7 +121,7 @@ public class UserStorage : IDisposable
 			case CommandType.ReadFile:
 			{
 				// FIXME: Can SDL3-CS just take a byte* overload for strings to avoid this silly round trip?
-				var str = Encoding.UTF8.GetString((byte*) command.ReadFileCommand.Path, command.ReadFileCommand.PathLength);
+				var str = InteropUtilities.DecodeFromUTF8Buffer((byte*) command.WriteFileCommand.Path, command.WriteFileCommand.PathLength);
 				NativeMemory.Free((void*) command.ReadFileCommand.Path);
 
 				command.ResultToken.Buffer = ReadFile(handle, str, out command.ResultToken.Size);
@@ -131,11 +132,10 @@ public class UserStorage : IDisposable
 			case CommandType.WriteFile:
 			{
 				// FIXME: Can SDL3-CS just take a byte* overload for strings to avoid this silly round trip?
-				var str = Encoding.UTF8.GetString((byte*) command.WriteFileCommand.Path, command.WriteFileCommand.PathLength);
+				var str = InteropUtilities.DecodeFromUTF8Buffer((byte*) command.WriteFileCommand.Path, command.WriteFileCommand.PathLength);
 				NativeMemory.Free((void*) command.WriteFileCommand.Path);
 
 				var success = WriteFile(handle, str, command.WriteFileCommand.Buffer, command.WriteFileCommand.Size);
-				NativeMemory.Free((void*) command.WriteFileCommand.Buffer);
 				command.ResultToken.Result = success ? Result.Success : Result.Failure;
 				return;
 			}

@@ -139,23 +139,23 @@ public static class ImageUtils
 	}
 
 	/// <summary>
-	/// Saves Color data to a PNG file in user storage.
+	/// Encodes pixel data to a PNG buffer.
+	/// You must call FreePNGBuffer when you are done with the data.
 	/// </summary>
-	public static unsafe ResultToken SavePNG(
+	public static unsafe IntPtr EncodePNGBuffer(
 		UserStorage userStorage,
-		string path,
 		Span<Color> pixels,
 		uint width,
 		uint height,
-		bool bgra
+		bool bgra,
+		out int size
 	) {
-		ResultToken token;
-		var commandBuffer = userStorage.AcquireCommandBuffer();
+		IntPtr pngBuffer;
 
 		if (bgra)
 		{
 			var bgraPtr = NativeMemory.Alloc(width * height * 4);
-			Span<Color> bgraColors = new Span<Color>(bgraPtr, (int) (width * height * 4));
+			var bgraColors = new Span<Color>(bgraPtr, (int) (width * height * 4));
 			for (var i = 0; i < width * height; i += 1)
 			{
 				bgraColors[i].R = pixels[i].B;
@@ -164,23 +164,23 @@ public static class ImageUtils
 				bgraColors[i].A = pixels[i].A;
 			}
 
-			var pngBuffer = IRO.IRO_EncodePNG((nint) bgraPtr, width, height, out var size);
-			token = commandBuffer.WriteFile(path, pngBuffer, (ulong) size);
-			SDL.SDL_free(pngBuffer);
-
+			pngBuffer = IRO.IRO_EncodePNG((nint) bgraPtr, width, height, out size);
+			NativeMemory.Free(bgraPtr);
 		}
 		else
 		{
 			fixed (Color* pixelPtr = pixels)
 			{
-				var pngBuffer = IRO.IRO_EncodePNG((nint) pixelPtr, width, height, out var size);
-				token = commandBuffer.WriteFile(path, pngBuffer, (ulong) size);
-				SDL.SDL_free(pngBuffer);
+				pngBuffer = IRO.IRO_EncodePNG((nint) pixelPtr, width, height, out size);
 			}
 		}
 
-		userStorage.Submit(commandBuffer);
-		return token;
+		return pngBuffer;
+	}
+
+	public static unsafe void FreePNGBuffer(IntPtr buffer)
+	{
+		SDL.SDL_free(buffer);
 	}
 
 	// DDS loading extension, based on MojoDDS

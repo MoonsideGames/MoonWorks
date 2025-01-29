@@ -40,7 +40,7 @@ public class CommandBuffer
 	public unsafe ResultToken GetFileSize(string path)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
-		var pathBuffer = InteropUtilities.MarshalString(path, out var length);
+		var pathBuffer = InteropUtilities.EncodeToUTF8Buffer(path, out var length);
 
 		Commands.Add(new Command
 		{
@@ -59,7 +59,7 @@ public class CommandBuffer
 	public unsafe ResultToken ReadFile(string path)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
-		var pathBuffer = InteropUtilities.MarshalString(path, out var length);
+		var pathBuffer = InteropUtilities.EncodeToUTF8Buffer(path, out var length);
 
 		Commands.Add(new Command
 		{
@@ -76,7 +76,7 @@ public class CommandBuffer
 	}
 
 	/// <summary>
-	/// The command buffer copies the buffer data when this is called.
+	/// The buffer MUST remain alive until the operation is complete.
 	/// </summary>
 	/// <param name="path"></param>
 	/// <param name="buffer"></param>
@@ -85,10 +85,7 @@ public class CommandBuffer
 	public unsafe ResultToken WriteFile(string path, IntPtr buffer, ulong size)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
-		var pathBuffer = InteropUtilities.MarshalString(path, out var length);
-
-		var copy = NativeMemory.Alloc((nuint) size);
-		NativeMemory.Copy((void*) buffer, copy, (nuint) size);
+		var pathBuffer = InteropUtilities.EncodeToUTF8Buffer(path, out var length);
 
 		Commands.Add(new Command
 		{
@@ -98,7 +95,7 @@ public class CommandBuffer
 			{
 				Path = (nint) pathBuffer,
 				PathLength = length,
-				Buffer = (nint) copy,
+				Buffer = buffer,
 				Size = size
 			}
 		});

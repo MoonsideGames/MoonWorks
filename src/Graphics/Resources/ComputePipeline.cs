@@ -64,7 +64,7 @@ public class ComputePipeline : SDLGPUResource
 		string entryPoint,
 		in ComputePipelineCreateInfo computePipelineCreateInfo
 	) {
-		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
+		var entryPointBuffer = InteropUtilities.EncodeToUTF8Buffer(entryPoint);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -143,8 +143,8 @@ public class ComputePipeline : SDLGPUResource
 		string entryPoint,
 		bool enableDebug
 	) {
-		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
-		var nameBuffer = InteropUtilities.MarshalString(name);
+		var entryPointBuffer = InteropUtilities.EncodeToUTF8Buffer(entryPoint);
+		var nameBuffer = InteropUtilities.EncodeToUTF8Buffer(name);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -204,9 +204,9 @@ public class ComputePipeline : SDLGPUResource
 		bool enableDebug,
 		params Span<ShaderCross.HLSLDefine> defines
 	) {
-		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
-		var includeDirBuffer = InteropUtilities.MarshalString(includeDir);
-		var nameBuffer = InteropUtilities.MarshalString(name);
+		var entryPointBuffer = InteropUtilities.EncodeToUTF8Buffer(entryPoint);
+		var includeDirBuffer = InteropUtilities.EncodeToUTF8Buffer(includeDir);
+		var nameBuffer = InteropUtilities.EncodeToUTF8Buffer(name);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -217,8 +217,8 @@ public class ComputePipeline : SDLGPUResource
 				definesBuffer = (SDL_ShaderCross.INTERNAL_HLSLDefine*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_ShaderCross.INTERNAL_HLSLDefine>() * (defines.Length + 1)));
 				for (var i = 0; i < defines.Length; i += 1)
 				{
-					definesBuffer[i].Name = InteropUtilities.MarshalString(defines[i].Name);
-					definesBuffer[i].Value = InteropUtilities.MarshalString(defines[i].Value);
+					definesBuffer[i].Name = InteropUtilities.EncodeToUTF8Buffer(defines[i].Name);
+					definesBuffer[i].Value = InteropUtilities.EncodeToUTF8Buffer(defines[i].Value);
 				}
 				// Null-terminate the array
 				definesBuffer[defines.Length].Name = null;
