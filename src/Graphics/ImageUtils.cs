@@ -1,7 +1,7 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Storage;
+using SDL3;
 
 namespace MoonWorks.Graphics;
 
@@ -43,7 +43,7 @@ public static class ImageUtils
 	/// The returned pointer must be freed by calling FreePixelData.
 	/// </summary>
 	public static unsafe byte* GetPixelDataFromFile(
-		IStorage storage,
+		TitleStorage storage,
 		string path,
 		out uint width,
 		out uint height,
@@ -88,7 +88,7 @@ public static class ImageUtils
 	/// Get metadata from a compressed image file.
 	/// </summary>
 	public static unsafe bool ImageInfoFromFile(
-		IStorage storage,
+		TitleStorage storage,
 		string path,
 		out uint width,
 		out uint height,
@@ -109,40 +109,19 @@ public static class ImageUtils
 		IRO.IRO_FreeImage((nint) pixels);
 	}
 
-	private static int writeGlobal = 0;
-	private static System.Collections.Generic.Dictionary<IntPtr, Stream> writeStreams =
-		new System.Collections.Generic.Dictionary<IntPtr, Stream>();
-
-	private unsafe static void INTERNAL_Write(
-		IntPtr context,
-		IntPtr data,
-		int size
-	) {
-		Stream stream;
-		lock (writeStreams)
-		{
-			stream = writeStreams[context];
-		}
-		stream.Write(new Span<byte>((void*) data, size));
-	}
-
 	/// <summary>
-	/// Saves Color data to a PNG file.
+	/// Saves Color data to a PNG file in user storage.
 	/// </summary>
-	public static unsafe void SavePNG(
+	public static unsafe ResultToken SavePNG(
+		UserStorage userStorage,
 		string path,
 		Span<Color> pixels,
 		uint width,
 		uint height,
 		bool bgra
 	) {
-		IntPtr context;
-		Stream stream = new FileStream(path, FileMode.Create, FileAccess.Write);
-		lock (writeStreams)
-		{
-			context = writeGlobal++;
-			writeStreams.Add(context, stream);
-		}
+		ResultToken token;
+		var commandBuffer = userStorage.AcquireCommandBuffer();
 
 		if (bgra)
 		{
@@ -156,31 +135,23 @@ public static class ImageUtils
 				bgraColors[i].A = pixels[i].A;
 			}
 
-			IRO.IRO_EncodePNG(
-				INTERNAL_Write,
-				context,
-				bgraColors,
-				width,
-				height
-			);
+			var pngBuffer = IRO.IRO_EncodePNG((nint) bgraPtr, width, height, out var size);
+			token = commandBuffer.WriteFile(path, pngBuffer, (ulong) size);
+			SDL.SDL_free(pngBuffer);
 
-			NativeMemory.Free(bgraPtr);
 		}
 		else
 		{
-			IRO.IRO_EncodePNG(
-				INTERNAL_Write,
-				context,
-				pixels,
-				width,
-				height
-			);
+			fixed (Color* pixelPtr = pixels)
+			{
+				var pngBuffer = IRO.IRO_EncodePNG((nint) pixelPtr, width, height, out var size);
+				token = commandBuffer.WriteFile(path, pngBuffer, (ulong) size);
+				SDL.SDL_free(pngBuffer);
+			}
 		}
 
-		lock (writeStreams)
-		{
-			writeStreams.Remove(context);
-		}
+		userStorage.Submit(commandBuffer);
+		return token;
 	}
 
 	// DDS loading extension, based on MojoDDS

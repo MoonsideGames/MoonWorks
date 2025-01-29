@@ -118,7 +118,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Create an AudioBuffer containing all the WAV audio data in a file.
 		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, IStorage storage, string path)
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
 			var fileBuffer = storage.ReadFile(path, out var size);
 			if (fileBuffer == null)
@@ -139,7 +139,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without reading the entire file.
 		/// </summary>
-		public static unsafe Format GetFormat(IStorage storage, string path)
+		public static unsafe Format GetFormat(TitleStorage storage, string path)
 		{
 			var buffer = storage.ReadFile(path, out var size);
 			if (buffer == null)

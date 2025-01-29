@@ -9,7 +9,7 @@ namespace MoonWorks.Video
 	/// </summary>
 	public unsafe class VideoAV1 : GraphicsResource
 	{
-		internal IStorage Storage { get; private init; }
+		internal TitleStorage Storage { get; private init; }
 		internal string Path { get; private init; }
 
 		public int Width { get; private init; }
@@ -22,7 +22,7 @@ namespace MoonWorks.Video
 		/// <summary>
 		/// Opens an AV1 file so it can be loaded by VideoPlayer. You must also provide a playback framerate.
 		/// </summary>
-		public static VideoAV1 Create(GraphicsDevice device, IStorage storage, string path, double framesPerSecond)
+		public static VideoAV1 Create(GraphicsDevice device, TitleStorage storage, string path, double framesPerSecond)
 		{
 			var videoBytes = storage.ReadFile(path, out var size);
 			if (videoBytes == null)

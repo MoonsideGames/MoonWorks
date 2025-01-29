@@ -23,7 +23,7 @@ namespace MoonWorks.Graphics.Font
 		/// <returns></returns>
 		public unsafe static Font Load(
 			GraphicsDevice graphicsDevice,
-			IStorage storage,
+			TitleStorage storage,
 			string fontPath
 		) {
 			if (!storage.GetFileSize(fontPath, out var fontBytesLength))

@@ -136,7 +136,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a named 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, IStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
 	{
 		var buffer = storage.ReadFile(compressedImageFilePath, out var size);
 		if (buffer == null)
@@ -156,7 +156,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(IStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
+	public Texture CreateTexture2DFromCompressed(TitleStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
 		CreateTexture2DFromCompressed(System.IO.Path.GetFileNameWithoutExtension(compressedImageFilePath), storage, compressedImageFilePath, format, usage);
 
 
@@ -217,7 +217,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a texture from a DDS file.
 	/// </summary>
-	public Texture CreateTextureFromDDS(string name, IStorage storage, string path)
+	public Texture CreateTextureFromDDS(string name, TitleStorage storage, string path)
 	{
 		var buffer = storage.ReadFile(path, out var size);
 		if (buffer == null)
@@ -234,7 +234,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		return result;
 	}
 
-	public Texture CreateTextureFromDDS(IStorage storage, string path) =>
+	public Texture CreateTextureFromDDS(TitleStorage storage, string path) =>
 		CreateTextureFromDDS(System.IO.Path.GetFileNameWithoutExtension(path), storage, path);
 
 	public void SetTextureDataFromCompressed(TextureRegion textureRegion, ReadOnlySpan<byte> compressedImageData)
@@ -247,7 +247,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		ImageUtils.FreePixelData(pixelData);
 	}
 
-	public void SetTextureDataFromCompressed(IStorage storage, string path, TextureRegion textureRegion)
+	public void SetTextureDataFromCompressed(TitleStorage storage, string path, TextureRegion textureRegion)
 	{
 		var buffer = storage.ReadFile(path, out var size);
 		if (size == 0)

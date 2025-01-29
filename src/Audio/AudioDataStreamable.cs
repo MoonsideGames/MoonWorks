@@ -25,7 +25,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Loads raw audio data from a file into memory to prepare it for stream decoding.
 		/// </summary>
-		public unsafe void Open(IStorage storage, string filePath)
+		public unsafe void Open(TitleStorage storage, string filePath)
 		{
 			var buffer = storage.ReadFile(filePath, out var size);
 			var span = new Span<byte>(buffer, (int) size);

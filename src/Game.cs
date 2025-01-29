@@ -18,6 +18,8 @@ namespace MoonWorks
 	/// </summary>
 	public abstract class Game
 	{
+		public AppInfo AppInfo { get; }
+
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 		public FramePacingSettings FramePacingSettings { get; private set; }
 
@@ -42,6 +44,8 @@ namespace MoonWorks
 		/// </summary>
 		public TitleStorage RootTitleStorage { get; }
 
+		public UserStorage UserStorage { get; }
+
 		/// <summary>
 		/// This Window is automatically created when your Game is instantiated.
 		/// </summary>
@@ -56,11 +60,14 @@ namespace MoonWorks
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
+			AppInfo appInfo,
 			WindowCreateInfo windowCreateInfo,
 			FramePacingSettings framePacingSettings,
 			ShaderFormat availableShaderFormats,
 			bool debugMode = false
 		) {
+			AppInfo = appInfo;
+
 			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
 			gameTimer = Stopwatch.StartNew();
@@ -83,6 +90,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing title storage...");
 			RootTitleStorage = new TitleStorage();
+
+			Logger.LogInfo("Initializing user storage...");
+			UserStorage = new UserStorage(AppInfo);
 
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
@@ -138,6 +148,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Disposing title storage...");
 			RootTitleStorage.Dispose();
+
+			Logger.LogInfo("Disposing user storage...");
+			UserStorage.Dispose();
 
 			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();

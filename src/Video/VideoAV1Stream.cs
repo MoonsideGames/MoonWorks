@@ -61,7 +61,7 @@ namespace MoonWorks.Video
 			}
 		}
 
-		public void Load(IStorage storage, string filename)
+		public void Load(TitleStorage storage, string filename)
 		{
 			Actions.Add(() => LoadHelper(storage, filename));
 		}
@@ -81,7 +81,7 @@ namespace MoonWorks.Video
 			Actions.Add(UnloadHelper);
 		}
 
-		private unsafe void LoadHelper(IStorage storage, string path)
+		private unsafe void LoadHelper(TitleStorage storage, string path)
 		{
 			if (!Loaded)
 			{

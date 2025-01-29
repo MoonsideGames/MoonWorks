@@ -108,7 +108,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without decoding the entire file.
 		/// </summary>
-		public static unsafe Format GetFormat(IStorage storage, string filePath)
+		public static unsafe Format GetFormat(TitleStorage storage, string filePath)
 		{
 			var buffer = storage.ReadFile(filePath, out var size);
 			var handle = FAudio.qoa_open_from_memory((nint) buffer, (uint) size, 0);
@@ -191,7 +191,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Decodes an entire QOA file into an AudioBuffer.
 		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, IStorage storage, string path)
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
 			var fileBuffer = storage.ReadFile(path, out var size);
 			if (fileBuffer == null)

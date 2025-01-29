@@ -103,7 +103,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without decoding the entire file.
 		/// </summary>
-		public static unsafe Format GetFormat(IStorage storage, string path)
+		public static unsafe Format GetFormat(TitleStorage storage, string path)
 		{
 			var buffer = storage.ReadFile(path, out var size);
 			if (buffer == null)
@@ -199,7 +199,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Decodes an entire OGG file into an AudioBuffer.
 		/// </summary>
-		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, IStorage storage, string path)
+		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
 			var fileBuffer = storage.ReadFile(path, out var size);
 			if (fileBuffer == null)

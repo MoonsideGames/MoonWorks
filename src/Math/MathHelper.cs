@@ -160,12 +160,12 @@ public static class MathHelper
 
 	public static float Quantize(float value, float step)
 	{
-		return System.MathF.Round(value / step) * step;
+		return System.MathF.Floor(value / step) * step;
 	}
 
 	public static Fixed.Fix64 Quantize(Fixed.Fix64 value, Fixed.Fix64 step)
 	{
-		return Fixed.Fix64.Round(value / step) * step;
+		return Fixed.Fix64.Floor(value / step) * step;
 	}
 
 	/// <summary>

@@ -42,7 +42,7 @@ public static class ShaderCross
 
 	public static unsafe Shader Create(
 		GraphicsDevice device,
-		IStorage storage,
+		TitleStorage storage,
 		string filepath,
 		string entrypoint,
 		ShaderFormat shaderFormat,
@@ -118,7 +118,7 @@ public static class ShaderCross
 
 	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
-		IStorage storage,
+		TitleStorage storage,
 		string filepath,
 		string entrypoint,
 		ShaderFormat shaderFormat,

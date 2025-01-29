@@ -9,14 +9,26 @@ namespace MoonWorks.Storage;
 /// Use this instead of System.IO for maximum portability.
 /// This is NOT thread-safe.
 /// </summary>
-public class TitleStorage : IStorage, IDisposable
+public class TitleStorage : IDisposable
 {
     public IntPtr Handle { get; private set; }
 
 	private bool IsDisposed;
 
+	/// <summary>
+	/// Opens a read-only container for the application's filesystem.
+	/// Note that RootTitleStorage is provided by the Game class - you don't have to create one.
+	/// If you do create a TitleStorage, make sure to Dispose it when you don't need it anymore.
+	/// </summary>
+	/// <param name="overrideRoot">A path to override the default root. Null will use the default root.</param>
+	/// <param name="propertiesID">An optional property list that may contain backend-specific information.</param>
+    public TitleStorage(string overrideRoot = null, uint propertiesID = 0)
+	{
+		Open(overrideRoot, propertiesID);
+	}
+
     /// <summary>
-    /// Check if the file exists or not.
+    /// Check if a file exists or not.
     /// </summary>
     /// <param name="path">A path relative to the title root.</param>
     /// <returns>True if the file exists, false otherwise.</returns>
@@ -111,18 +123,6 @@ public class TitleStorage : IStorage, IDisposable
 	}
 
 	/// <summary>
-	/// Opens a read-only container for the application's filesystem.
-	/// Note that RootTitleStorage is provided by the Game class - you don't have to create one.
-	/// If you do create a TitleStorage, make sure to Dispose it when you don't need it anymore.
-	/// </summary>
-	/// <param name="overrideRoot">A path to override the default root. Null will use the default root.</param>
-	/// <param name="propertiesID">An optional property list that may contain backend-specific information.</param>
-    public TitleStorage(string overrideRoot = null, uint propertiesID = 0)
-	{
-		Open(overrideRoot, propertiesID);
-	}
-
-	/// <summary>
 	/// Opens up a read-only container for the application's filesystem.
 	/// </summary>
 	/// <param name="overrideRoot">A path to override the default root. Null will use the default root.</param>
@@ -144,19 +144,18 @@ public class TitleStorage : IStorage, IDisposable
         }
 
         Handle = handle;
+
+		// Wait for the title storage to actually be ready
+		while (!SDL.SDL_StorageReady(Handle))
+		{
+			SDL.SDL_Delay(1);
+		}
+
         return true;
     }
 
     /// <summary>
-    /// Opens up a read-only container for the application's filesystem.
-    /// It's OK to leave this open long term but make sure to close it on shutdown.
-    /// </summary>
-    /// <param name="propertiesID">An optional property list that may contain backend-specific information.</param>
-    /// <returns></returns>
-    private bool Open(uint propertiesID = 0) => Open(null, propertiesID);
-
-    /// <summary>
-    /// Closes the storage container and frees associated memory.
+    /// Closes the storage container.
     /// </summary>
     private void Close()
     {

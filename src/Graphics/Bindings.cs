@@ -1634,6 +1634,15 @@ internal static partial class IRO
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial void IRO_FreeImage(IntPtr mem);
 
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr IRO_EncodePNG(
+		IntPtr data,
+		uint w,
+		uint h,
+		out int size
+	);
+
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void IRO_WriteFunc(
 		IntPtr context,
@@ -1643,7 +1652,7 @@ internal static partial class IRO
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool IRO_EncodePNG(
+	public static partial SDLBool IRO_WritePNG(
 		IRO_WriteFunc writeFunc,
 		IntPtr context,
 		IntPtr data,
@@ -1653,7 +1662,7 @@ internal static partial class IRO
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool IRO_EncodePNG(
+	public static partial SDLBool IRO_WritePNG(
 		IRO_WriteFunc writeFunc,
 		IntPtr context,
 		Span<Color> data,

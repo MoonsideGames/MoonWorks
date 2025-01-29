@@ -33,7 +33,7 @@ public class ComputePipeline : SDLGPUResource
 	/// </summary>
 	public static unsafe ComputePipeline Create(
 		GraphicsDevice device,
-		IStorage storage,
+		TitleStorage storage,
 		string filePath,
 		string entryPoint,
 		in ComputePipelineCreateInfo computePipelineCreateInfo
@@ -54,7 +54,7 @@ public class ComputePipeline : SDLGPUResource
 		string entryPoint,
 		in ComputePipelineCreateInfo computePipelineCreateInfo
 	) {
-		var entryPointBuffer = MarshalString(entryPoint);
+		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -133,8 +133,8 @@ public class ComputePipeline : SDLGPUResource
 		string entryPoint,
 		bool enableDebug
 	) {
-		var entryPointBuffer = MarshalString(entryPoint);
-		var nameBuffer = MarshalString(name);
+		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
+		var nameBuffer = InteropUtilities.MarshalString(name);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -194,9 +194,9 @@ public class ComputePipeline : SDLGPUResource
 		bool enableDebug,
 		params Span<ShaderCross.HLSLDefine> defines
 	) {
-		var entryPointBuffer = MarshalString(entryPoint);
-		var includeDirBuffer = MarshalString(includeDir);
-		var nameBuffer = MarshalString(name);
+		var entryPointBuffer = InteropUtilities.MarshalString(entryPoint);
+		var includeDirBuffer = InteropUtilities.MarshalString(includeDir);
+		var nameBuffer = InteropUtilities.MarshalString(name);
 
 		fixed (byte* spanPtr = span)
 		{
@@ -207,8 +207,8 @@ public class ComputePipeline : SDLGPUResource
 				definesBuffer = (SDL_ShaderCross.INTERNAL_HLSLDefine*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_ShaderCross.INTERNAL_HLSLDefine>() * (defines.Length + 1)));
 				for (var i = 0; i < defines.Length; i += 1)
 				{
-					definesBuffer[i].Name = MarshalString(defines[i].Name);
-					definesBuffer[i].Value = MarshalString(defines[i].Value);
+					definesBuffer[i].Name = InteropUtilities.MarshalString(defines[i].Name);
+					definesBuffer[i].Value = InteropUtilities.MarshalString(defines[i].Value);
 				}
 				// Null-terminate the array
 				definesBuffer[defines.Length].Name = null;
@@ -265,19 +265,5 @@ public class ComputePipeline : SDLGPUResource
 
 			return computePipeline;
 		}
-	}
-
-	// MUST call NativeMemory.Free on the result eventually!
-	private static unsafe byte* MarshalString(string s)
-	{
-		if (s == null) { return null; }
-
-		var length = Encoding.UTF8.GetByteCount(s) + 1;
-		var buffer = (byte*) NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, length);
-		var byteCount = Encoding.UTF8.GetBytes(s, span);
-		span[byteCount] = 0;
-
-		return buffer;
 	}
 }
