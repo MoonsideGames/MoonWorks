@@ -136,18 +136,23 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a named 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string path, TextureFormat format, TextureUsageFlags usage)
 	{
-		var buffer = storage.ReadFile(compressedImageFilePath, out var size);
-		if (buffer == null)
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+
+		if (!storage.ReadFile(path, span))
 		{
 			Logger.LogError("CreateTexture2DFromCompressed failed: Could not read file!");
 			return null;
 		}
 
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
 		var result = CreateTexture2DFromCompressed(name, span, format, usage);
-
 		NativeMemory.Free(buffer);
 
 		return result;
@@ -219,18 +224,22 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public Texture CreateTextureFromDDS(string name, TitleStorage storage, string path)
 	{
-		var buffer = storage.ReadFile(path, out var size);
-		if (buffer == null)
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+
+		if (!storage.ReadFile(path, span))
 		{
 			Logger.LogError("CreateTextureFromDDS failed: Could not load file!");
 			return null;
 		}
 
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
 		var result = CreateTextureFromDDS(name, span);
-
 		NativeMemory.Free(buffer);
-
 		return result;
 	}
 
@@ -249,16 +258,20 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	public void SetTextureDataFromCompressed(TitleStorage storage, string path, TextureRegion textureRegion)
 	{
-		var buffer = storage.ReadFile(path, out var size);
-		if (size == 0)
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
 		{
 			Logger.LogError("SetTextureDataFromCompressed failed: Could not read file!");
 			return;
 		}
 
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
 		SetTextureDataFromCompressed(textureRegion, span);
-
 		NativeMemory.Free(buffer);
 	}
 

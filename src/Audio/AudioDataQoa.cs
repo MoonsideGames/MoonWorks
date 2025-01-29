@@ -110,7 +110,18 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public static unsafe Format GetFormat(TitleStorage storage, string filePath)
 		{
-			var buffer = storage.ReadFile(filePath, out var size);
+			if (!storage.GetFileSize(filePath, out var size))
+			{
+				return new Format();
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(filePath, span))
+			{
+				return new Format();
+			}
+
 			var handle = FAudio.qoa_open_from_memory((nint) buffer, (uint) size, 0);
 			if (handle == IntPtr.Zero)
 			{
@@ -193,18 +204,25 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
-			var fileBuffer = storage.ReadFile(path, out var size);
-			if (fileBuffer == null)
+			if (!storage.GetFileSize(path, out var size))
 			{
 				return null;
 			}
 
-			var span = new Span<byte>(fileBuffer, (int) size);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
+
 			var result = Load(span);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
-			NativeMemory.Free(fileBuffer);
+			NativeMemory.Free(buffer);
+
 			return audioBuffer;
 		}
 	}

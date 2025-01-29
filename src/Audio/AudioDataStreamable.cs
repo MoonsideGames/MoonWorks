@@ -27,7 +27,12 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public unsafe void Open(TitleStorage storage, string filePath)
 		{
-			var buffer = storage.ReadFile(filePath, out var size);
+			if (!storage.GetFileSize(filePath, out var size))
+			{
+				return;
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
 			var span = new Span<byte>(buffer, (int) size);
 			Open(span);
 			NativeMemory.Free(buffer);

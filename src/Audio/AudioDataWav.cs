@@ -120,19 +120,24 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
-			var fileBuffer = storage.ReadFile(path, out var size);
-			if (fileBuffer == null)
+			if (!storage.GetFileSize(path, out var size))
 			{
 				return null;
 			}
 
-			var span = new Span<byte>(fileBuffer, (int) size);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
+
 			var result = Parse(span);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetData(result.Data);
+			NativeMemory.Free(buffer);
 
-			NativeMemory.Free(fileBuffer);
 			return audioBuffer;
 		}
 
@@ -141,15 +146,20 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public static unsafe Format GetFormat(TitleStorage storage, string path)
 		{
-			var buffer = storage.ReadFile(path, out var size);
-			if (buffer == null)
+			if (!storage.GetFileSize(path, out var size))
 			{
 				return new Format();
 			}
-			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return new Format();
+			}
+
 			var reader = new ByteSpanReader(span);
 			var format = ParseFormat(ref reader);
-
 			NativeMemory.Free(buffer);
 
 			return format;

@@ -34,8 +34,18 @@ namespace MoonWorks.Graphics
 			string entryPoint,
 			in ShaderCreateInfo shaderCreateInfo
 		) {
-			var buffer = storage.ReadFile(filePath, out var size);
-			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			if (!storage.GetFileSize(filePath, out var size))
+			{
+				return null;
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(filePath, span))
+			{
+				return null;
+			}
+
 			var pipeline = Create(device, span, entryPoint, shaderCreateInfo);
 			NativeMemory.Free(buffer);
 			return pipeline;

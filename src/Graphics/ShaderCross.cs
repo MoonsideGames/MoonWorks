@@ -57,13 +57,18 @@ public static class ShaderCross
 		Shader shader;
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			var buffer = storage.ReadFile(filepath, out var size);
-			if (buffer == null)
+			if (!storage.GetFileSize(filepath, out var size))
 			{
 				return null;
 			}
 
-			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(filepath, span))
+			{
+				return null;
+			}
+
 			shader = Shader.CreateFromSPIRV(
 				device,
 				name,
@@ -84,7 +89,7 @@ public static class ShaderCross
 			}
 
 			var buffer = NativeMemory.Alloc((nuint) (size + 1));
-			var fileSpan = new ReadOnlySpan<byte>(buffer, (int) size);
+			var fileSpan = new Span<byte>(buffer, (int) size);
 
 			if (!storage.ReadFile(filepath, fileSpan))
 			{
@@ -132,13 +137,18 @@ public static class ShaderCross
 		ComputePipeline pipeline;
 		if (shaderFormat == ShaderFormat.SPIRV)
 		{
-			var buffer = storage.ReadFile(filepath, out var size);
-			if (buffer == null)
+			if (!storage.GetFileSize(filepath, out var size))
 			{
 				return null;
 			}
 
-			var span = new ReadOnlySpan<byte>(buffer, (int) size);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(filepath, span))
+			{
+				return null;
+			}
+
 			pipeline = ComputePipeline.CreateFromSPIRV(
 				device,
 				name,
@@ -158,7 +168,7 @@ public static class ShaderCross
 			}
 
 			var buffer = NativeMemory.Alloc((nuint) (size + 1));
-			var fileSpan = new ReadOnlySpan<byte>(buffer, (int) size);
+			var fileSpan = new Span<byte>(buffer, (int) size);
 
 			if (!storage.ReadFile(filepath, fileSpan))
 			{

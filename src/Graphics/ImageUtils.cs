@@ -49,8 +49,22 @@ public static class ImageUtils
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var buffer = storage.ReadFile(path, out var size);
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
+		width = 0;
+		height = 0;
+		sizeInBytes = 0;
+
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
+		{
+			return null;
+		}
+
 		var result = GetPixelDataFromBytes(span, out width, out height, out sizeInBytes);
 		NativeMemory.Free(buffer);
 		return result;
@@ -94,10 +108,25 @@ public static class ImageUtils
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var buffer = storage.ReadFile(path, out var size);
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
+		width = 0;
+		height = 0;
+		sizeInBytes = 0;
+
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return false;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
+		{
+			return false;
+		}
+
 		var result = ImageInfoFromBytes(span, out width, out height, out sizeInBytes);
 		NativeMemory.Free(buffer);
+
 		return result;
 	}
 

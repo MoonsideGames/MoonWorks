@@ -85,7 +85,18 @@ namespace MoonWorks.Video
 		{
 			if (!Loaded)
 			{
-				ByteBuffer = (nint) storage.ReadFile(path, out var size);
+				if (!storage.GetFileSize(path, out var size))
+				{
+					return;
+				}
+
+				ByteBuffer = (nint) NativeMemory.Alloc((nuint) size);
+				var span = new Span<byte>((void*) ByteBuffer, (int) size);
+				if (!storage.ReadFile(path, span))
+				{
+					return;
+				}
+
 				if (Dav1dfile.df_open_from_memory(ByteBuffer, (uint) size, out handle) == 0)
 				{
 					Logger.LogError("Failed to load video file: " + path);

@@ -48,7 +48,7 @@ public class TitleStorage : IDisposable
     {
         if (!SDL.SDL_GetStorageFileSize(Handle, path, out size))
         {
-            Logger.LogError(SDL.SDL_GetError());
+            Logger.LogError($"File at {path} failed to load: {SDL.SDL_GetError()}");
             return false;
         }
 
@@ -56,70 +56,23 @@ public class TitleStorage : IDisposable
     }
 
 	/// <summary>
-	/// Synchronously read a file and return the contents in a ReadOnlySpan.
-	/// TitleStorage will allocate the file memory for you.
-	/// You MUST call NativeMemory.Free when you are done with the memory.
-	/// </summary>
-    /// <param name="path">The relative path from the title root.</param>
-	/// <param name="size">The size of the file in bytes.</param>
-	/// <returns>A buffer of the file size on success, null on failure.</returns>
-	public unsafe byte* ReadFile(string path, out ulong size)
-	{
-		if (!GetFileSize(path, out size))
-		{
-			return null;
-		}
-
-		byte* buffer = (byte*) NativeMemory.Alloc((nuint) size);
-		var span = new ReadOnlySpan<byte>(buffer, (int) size);
-		if (!ReadFile(path, span))
-		{
-			return null;
-		}
-
-		return buffer;
-	}
-
-	/// <summary>
 	/// Synchronously read a file into a client-provided Span.
 	/// The span must be the same length as the file size.
 	/// </summary>
     /// <param name="path">The relative path from the title root.</param>
 	/// <returns>True on success, false on failure.</returns>
-	public unsafe bool ReadFile(string path, ReadOnlySpan<byte> span)
+	public unsafe bool ReadFile(string path, Span<byte> span)
 	{
 		fixed (byte* ptr = span)
 		{
 			if (!SDL.SDL_ReadStorageFile(Handle, path, (nint) ptr, (ulong) span.Length))
 			{
-				Logger.LogError(SDL.SDL_GetError());
+            	Logger.LogError($"File at {path} failed to load: {SDL.SDL_GetError()}");
 				return false;
 			}
 		}
 
 		return true;
-	}
-
-	/// <summary>
-	/// Synchronously read a file and return the contents in a managed array.
-	/// Calling this will cause GC pressure, use one of the ReadFile methods to avoid that.
-	/// </summary>
-    /// <param name="path">The relative path from the title root.</param>
-	/// <returns>An array of the file data on success, a zero-length array on failure.</returns>
-	public byte[] ReadFileManaged(string path)
-	{
-		if (!GetFileSize(path, out var size))
-		{
-			return [];
-		}
-
-		var array = new byte[size];
-		var span = new ReadOnlySpan<byte>(array);
-		if (!ReadFile(path, span))
-		{
-			return [];
-		}
-		return array;
 	}
 
 	/// <summary>

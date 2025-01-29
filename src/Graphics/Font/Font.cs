@@ -31,7 +31,7 @@ namespace MoonWorks.Graphics.Font
 				return null;
 			}
 			var fontBytes = NativeMemory.Alloc((nuint) fontBytesLength);
-			var fontSpan = new ReadOnlySpan<byte>(fontBytes, (int) fontBytesLength);
+			var fontSpan = new Span<byte>(fontBytes, (int) fontBytesLength);
 
 			var atlasPath = System.IO.Path.ChangeExtension(fontPath, ".json");
 			if (!storage.GetFileSize(atlasPath, out var atlasBytesLength))
@@ -41,7 +41,7 @@ namespace MoonWorks.Graphics.Font
 			}
 
 			var atlasBytes = NativeMemory.Alloc((nuint) atlasBytesLength);
-			var atlasSpan = new ReadOnlySpan<byte>(atlasBytes, (int) atlasBytesLength);
+			var atlasSpan = new Span<byte>(atlasBytes, (int) atlasBytesLength);
 
 			if (!storage.ReadFile(fontPath, fontSpan))
 			{

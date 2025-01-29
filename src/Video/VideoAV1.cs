@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
@@ -24,14 +25,19 @@ namespace MoonWorks.Video
 		/// </summary>
 		public static VideoAV1 Create(GraphicsDevice device, TitleStorage storage, string path, double framesPerSecond)
 		{
-			var videoBytes = storage.ReadFile(path, out var size);
-			if (videoBytes == null)
+			if (!storage.GetFileSize(path, out var size))
 			{
-				Logger.LogError("Video file not found!");
 				return null;
 			}
 
-			if (Dav1dfile.df_open_from_memory((nint) videoBytes, (uint) size, out var handle) == 0)
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
+
+			if (Dav1dfile.df_open_from_memory((nint) buffer, (uint) size, out var handle) == 0)
 			{
 				Logger.LogError("Failed to open video file!");
 				return null;
@@ -40,7 +46,7 @@ namespace MoonWorks.Video
 			Dav1dfile.df_videoinfo(handle, out var width, out var height, out var pixelLayout);
 			Dav1dfile.df_close(handle);
 
-			NativeMemory.Free(videoBytes);
+			NativeMemory.Free(buffer);
 
 			int uvWidth;
 			int uvHeight;
