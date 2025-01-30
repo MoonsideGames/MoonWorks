@@ -43,7 +43,7 @@ namespace MoonWorks
 
 		private bool IsDisposed;
 
-		private static Dictionary<uint, Window> idLookup = new Dictionary<uint, Window>();
+		internal static Dictionary<uint, Window> IDToWindow = new Dictionary<uint, Window>();
 
 		private System.Action<uint, uint> SizeChangeCallback = null;
 
@@ -81,7 +81,10 @@ namespace MoonWorks
 			Width = (uint) width;
 			Height = (uint) height;
 
-			idLookup.Add(SDL.SDL_GetWindowID(Handle), this);
+			lock (IDToWindow)
+			{
+				IDToWindow.Add(SDL.SDL_GetWindowID(Handle), this);
+			}
 		}
 
 		/// <summary>
@@ -172,7 +175,7 @@ namespace MoonWorks
 
 		public void StartTextInput()
 		{
-			if (!TextInputActive) 
+			if (!TextInputActive)
 			{
 				SDL.SDL_StartTextInput(Handle);
 				TextInputActive = true;
@@ -181,7 +184,7 @@ namespace MoonWorks
 
 		public void StopTextInput()
 		{
-			if (TextInputActive) 
+			if (TextInputActive)
 			{
 				SDL.SDL_StopTextInput(Handle);
 				TextInputActive = false;
@@ -190,7 +193,10 @@ namespace MoonWorks
 
 		internal static Window Lookup(uint windowID)
 		{
-			return idLookup.ContainsKey(windowID) ? idLookup[windowID] : null;
+			lock (IDToWindow)
+			{
+				return IDToWindow.TryGetValue(windowID, out Window value) ? value : null;
+			}
 		}
 
 		internal void Show()
@@ -233,7 +239,10 @@ namespace MoonWorks
 					// dispose managed state (managed objects)
 				}
 
-				idLookup.Remove(SDL.SDL_GetWindowID(Handle));
+				lock (IDToWindow)
+				{
+					IDToWindow.Remove(SDL.SDL_GetWindowID(Handle));
+				}
 				SDL.SDL_DestroyWindow(Handle);
 
 				IsDisposed = true;

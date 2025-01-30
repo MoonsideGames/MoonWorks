@@ -114,11 +114,12 @@ namespace MoonWorks
 			Logger.LogInfo("Cleaning up game...");
 			Destroy();
 
-			Logger.LogInfo("Unclaiming window...");
-			GraphicsDevice.UnclaimWindow(MainWindow);
-
-			Logger.LogInfo("Disposing window...");
-			MainWindow.Dispose();
+			Logger.LogInfo($"Unclaiming and disposing windows...");
+			foreach (var (id, window) in Window.IDToWindow)
+			{
+				GraphicsDevice.UnclaimWindow(window);
+				window.Dispose();
+			}
 
 			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
@@ -307,8 +308,18 @@ namespace MoonWorks
 		private void HandleWindowCloseRequestedEvent(SDL.SDL_WindowEvent evt)
 		{
 			var window = Window.Lookup(evt.windowID);
-			GraphicsDevice.UnclaimWindow(window);
-			window.Dispose();
+
+			if (window.Handle == MainWindow.Handle)
+			{
+				// If the main window is closing, close the app.
+				Quit();
+			}
+			else
+			{
+				// Otherwise, unclaim and dispose.
+				GraphicsDevice.UnclaimWindow(window);
+				window.Dispose();
+			}
 		}
 
 		private void HandleTextInput(SDL.SDL_TextInputEvent evt)
