@@ -371,7 +371,7 @@ namespace MoonWorks.Video
 
 		private void InitializeDav1dStream()
 		{
-			Stream.Load(Video.Filename);
+			Stream.Load(Video.Storage, Video.Path);
 			currentFrame = -1;
 		}
 

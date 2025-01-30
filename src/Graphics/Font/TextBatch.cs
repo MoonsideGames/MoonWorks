@@ -87,6 +87,8 @@ namespace MoonWorks.Graphics.Font
 
 			VertexSize = Marshal.SizeOf<Wellspring.Vertex>();
 			ChunkDataSize = Marshal.SizeOf<ChunkData>();
+
+			spriteIndexTransferBuffer.Dispose();
 		}
 
 		// Call this to initialize or reset the batch.

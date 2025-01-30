@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
 using SDL = MoonWorks.Graphics.SDL_GPU;
+
+using MoonWorks.Storage;
 
 namespace MoonWorks.Graphics;
 
@@ -47,6 +48,7 @@ public class GraphicsDevice : IDisposable
 	internal Texture DummyTexture;
 
 	internal unsafe GraphicsDevice(
+		TitleStorage rootTitleStorage,
 		ShaderFormat shaderFormats,
 		bool debugMode,
 		string backendName = null
@@ -95,24 +97,23 @@ public class GraphicsDevice : IDisposable
 		Backend = SDL.SDL_GetGPUDeviceDriver(Handle);
 
 		// Check for replacement stock shaders
-		string basePath = System.AppContext.BaseDirectory;
+		string fullscreenVertPath = "fullscreen.vert.private";
 
-		string fullscreenVertPath = Path.Combine(basePath, "fullscreen.vert.private");
+		string textVertPath = "text_transform.vert.private";
+		string textFragPath = "text_msdf.frag.private";
 
-		string textVertPath = Path.Combine(basePath, "text_transform.vert.private");
-		string textFragPath = Path.Combine(basePath, "text_msdf.frag.private");
-
-		string videoFragPath = Path.Combine(basePath, "video_yuv2rgba.frag.private");
+		string videoFragPath = "video_yuv2rgba.frag.private";
 
 		Shader textVertShader;
 		Shader textFragShader;
 
 		Shader videoFragShader;
 
-		if (File.Exists(fullscreenVertPath))
+		if (rootTitleStorage.Exists(fullscreenVertPath))
 		{
 			FullscreenVertexShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				fullscreenVertPath,
 				"main",
 				new ShaderCreateInfo
@@ -134,10 +135,11 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (File.Exists(videoFragPath))
+		if (rootTitleStorage.Exists(videoFragPath))
 		{
 			videoFragShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				videoFragPath,
 				"main",
 				new ShaderCreateInfo
@@ -162,10 +164,11 @@ public class GraphicsDevice : IDisposable
 			);
 		}
 
-		if (File.Exists(textVertPath) && File.Exists(textFragPath))
+		if (rootTitleStorage.Exists(textVertPath) && rootTitleStorage.Exists(textFragPath))
 		{
 			textVertShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				textVertPath,
 				"main",
 				new ShaderCreateInfo
@@ -179,6 +182,7 @@ public class GraphicsDevice : IDisposable
 
 			textFragShader = Shader.Create(
 				this,
+				rootTitleStorage,
 				textFragPath,
 				"main",
 				new ShaderCreateInfo
@@ -531,7 +535,7 @@ public class GraphicsDevice : IDisposable
 		return (TextureFormat) SDL.SDL_GetGPUSwapchainTextureFormat(Handle, window.Handle);
 	}
 
-	private Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
+	private unsafe Shader LoadShaderFromManifest(string backend, string name, ShaderCreateInfo createInfo)
 	{
 		ShaderFormat shaderFormat;
 		string extension;
@@ -570,12 +574,21 @@ public class GraphicsDevice : IDisposable
 		var path = $"MoonWorks.Graphics.StockShaders.{name}.{extension}";
 		var assembly = typeof(GraphicsDevice).Assembly;
 		using var stream = assembly.GetManifestResourceStream(path);
-		return Shader.Create(
+
+		var buffer = NativeMemory.Alloc((nuint) stream.Length);
+		var span = new Span<byte>(buffer, (int) stream.Length);
+		stream.ReadExactly(span);
+
+		var result = Shader.Create(
 			this,
-			stream,
+			span,
 			entryPointName,
 			createInfoWithFormat
 		);
+
+		NativeMemory.Free(buffer);
+
+		return result;
 	}
 
 	internal void AddResourceReference(GCHandle resourceReference)

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Graphics;
 
@@ -45,7 +45,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a named Buffer with data to be uploaded.
 	/// </summary>
-	public Buffer CreateBuffer<T>(string name, Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged
+	public Buffer CreateBuffer<T>(string name, ReadOnlySpan<T> data, BufferUsageFlags usageFlags) where T : unmanaged
 	{
 		var buffer = Buffer.Create<T>(Device, name, usageFlags, (uint) data.Length);
 		SetBufferData(buffer, 0, data, false);
@@ -55,13 +55,13 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a Buffer with data to be uploaded.
 	/// </summary>
-	public Buffer CreateBuffer<T>(Span<T> data, BufferUsageFlags usageFlags) where T : unmanaged =>
+	public Buffer CreateBuffer<T>(ReadOnlySpan<T> data, BufferUsageFlags usageFlags) where T : unmanaged =>
 		CreateBuffer(null, data, usageFlags);
 
 	/// <summary>
 	/// Prepares upload of data into a Buffer.
 	/// </summary>
-	public void SetBufferData<T>(Buffer buffer, uint bufferOffsetInElements, Span<T> data, bool cycle) where T : unmanaged
+	public void SetBufferData<T>(Buffer buffer, uint bufferOffsetInElements, ReadOnlySpan<T> data, bool cycle) where T : unmanaged
 	{
 		uint elementSize = (uint) Marshal.SizeOf<T>();
 		uint offsetInBytes = elementSize * bufferOffsetInElements;
@@ -87,7 +87,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	// Textures
 
-	public Texture CreateTexture2D<T>(string name, Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged
+	public Texture CreateTexture2D<T>(string name, ReadOnlySpan<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged
 	{
 		var texture = Texture.Create2D(Device, name, width, height, format, usage);
 		SetTextureData(
@@ -104,13 +104,13 @@ public unsafe class ResourceUploader : GraphicsResource
 		return texture;
 	}
 
-	public Texture CreateTexture2D<T>(Span<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged =>
+	public Texture CreateTexture2D<T>(ReadOnlySpan<T> pixelData, TextureFormat format, TextureUsageFlags usage, uint width, uint height) where T : unmanaged =>
 		CreateTexture2D(null, pixelData, format, usage, width, height);
 
 	/// <summary>
 	/// Creates a named 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, ReadOnlySpan<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
 	{
 		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
 		var texture = Texture.Create2D(Device, name, width, height, format, usage);
@@ -130,57 +130,54 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Span<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage) =>
+	public Texture CreateTexture2DFromCompressed(ReadOnlySpan<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage) =>
 		CreateTexture2DFromCompressed(null, compressedImageData, format, usage);
-
-	/// <summary>
-	/// Creates a named 2D Texture from a compressed image stream to be uploaded.
-	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, Stream compressedImageStream, TextureFormat format, TextureUsageFlags usage)
-	{
-		var length = compressedImageStream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		compressedImageStream.ReadExactly(span);
-
-		var texture = CreateTexture2DFromCompressed(name, span, format, usage);
-
-		NativeMemory.Free(buffer);
-
-		return texture;
-	}
-
-	/// <summary>
-	/// Creates a 2D Texture from a compressed image stream to be uploaded.
-	/// </summary>
-	public Texture CreateTexture2DFromCompressed(Stream compressedImageStream, TextureFormat format, TextureUsageFlags usage) =>
-		CreateTexture2DFromCompressed(null, compressedImageStream, format, usage);
 
 	/// <summary>
 	/// Creates a named 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string path, TextureFormat format, TextureUsageFlags usage)
 	{
-		using var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-		return CreateTexture2DFromCompressed(name, fileStream, format, usage);
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+
+		if (!storage.ReadFile(path, span))
+		{
+			Logger.LogError("CreateTexture2DFromCompressed failed: Could not read file!");
+			return null;
+		}
+
+		var result = CreateTexture2DFromCompressed(name, span, format, usage);
+		NativeMemory.Free(buffer);
+
+		return result;
 	}
 
 	/// <summary>
 	/// Creates a 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
-		CreateTexture2DFromCompressed(Path.GetFileNameWithoutExtension(compressedImageFilePath), compressedImageFilePath, format, usage);
+	public Texture CreateTexture2DFromCompressed(TitleStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(System.IO.Path.GetFileNameWithoutExtension(compressedImageFilePath), storage, compressedImageFilePath, format, usage);
 
 
 	/// <summary>
 	/// Creates a texture from a DDS stream.
 	/// </summary>
-	public Texture CreateTextureFromDDS(string name, Stream stream)
+	private Texture CreateTextureFromDDS(string name, ReadOnlySpan<byte> span)
 	{
-		using var reader = new BinaryReader(stream);
 		Texture texture;
 		int faces;
-		ImageUtils.ParseDDS(reader, out var format, out var width, out var height, out var levels, out var isCube);
+		var reader = new ByteSpanReader(span);
+
+		if (!ImageUtils.ParseDDS(ref reader, out var format, out var width, out var height, out var levels, out var isCube))
+		{
+			return null;
+		}
 
 		if (isCube)
 		{
@@ -201,9 +198,6 @@ public unsafe class ResourceUploader : GraphicsResource
 				var levelHeight = height >> level;
 
 				var levelSize = ImageUtils.CalculateDDSLevelSize(levelWidth, levelHeight, format);
-				var byteBuffer = NativeMemory.Alloc((nuint) levelSize);
-				var byteSpan = new Span<byte>(byteBuffer, levelSize);
-				stream.ReadExactly(byteSpan);
 
 				var textureRegion = new TextureRegion
 				{
@@ -218,60 +212,73 @@ public unsafe class ResourceUploader : GraphicsResource
 					D = 1
 				};
 
-				SetTextureData(textureRegion, byteSpan, false);
-
-				NativeMemory.Free(byteBuffer);
+				SetTextureData(textureRegion, reader.SliceRemainder(levelSize), false);
 			}
 		}
 
 		return texture;
 	}
 
-	public Texture CreateTextureFromDDS(Stream stream) =>
-		CreateTextureFromDDS(null, stream);
-
 	/// <summary>
 	/// Creates a texture from a DDS file.
 	/// </summary>
-	public Texture CreateTextureFromDDS(string name, string path)
+	public Texture CreateTextureFromDDS(string name, TitleStorage storage, string path)
 	{
-		using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return CreateTextureFromDDS(name, stream);
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+
+		if (!storage.ReadFile(path, span))
+		{
+			Logger.LogError("CreateTextureFromDDS failed: Could not load file!");
+			return null;
+		}
+
+		var result = CreateTextureFromDDS(name, span);
+		NativeMemory.Free(buffer);
+		return result;
 	}
 
-	public Texture CreateTextureFromDDS(string path) =>
-		CreateTextureFromDDS(Path.GetFileNameWithoutExtension(path), path);
+	public Texture CreateTextureFromDDS(TitleStorage storage, string path) =>
+		CreateTextureFromDDS(System.IO.Path.GetFileNameWithoutExtension(path), storage, path);
 
 	public void SetTextureDataFromCompressed(TextureRegion textureRegion, ReadOnlySpan<byte> compressedImageData)
 	{
 		var pixelData = ImageUtils.GetPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
-		var pixelSpan = new Span<byte>((void*) pixelData, (int) sizeInBytes);
+		var pixelSpan = new ReadOnlySpan<byte>((void*) pixelData, (int) sizeInBytes);
 
 		SetTextureData(textureRegion, pixelSpan, false);
 
 		ImageUtils.FreePixelData(pixelData);
 	}
 
-	public void SetTextureDataFromCompressed(TextureRegion textureRegion, Stream compressedImageStream)
+	public void SetTextureDataFromCompressed(TitleStorage storage, string path, TextureRegion textureRegion)
 	{
-		var length = compressedImageStream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		compressedImageStream.ReadExactly(span);
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
+		{
+			Logger.LogError("SetTextureDataFromCompressed failed: Could not read file!");
+			return;
+		}
+
 		SetTextureDataFromCompressed(textureRegion, span);
 		NativeMemory.Free(buffer);
-	}
-
-	public void SetTextureDataFromCompressed(TextureRegion textureRegion, string compressedImageFilePath)
-	{
-		using var fileStream = new FileStream(compressedImageFilePath, FileMode.Open, FileAccess.Read);
-		SetTextureDataFromCompressed(textureRegion, fileStream);
 	}
 
 	/// <summary>
 	/// Prepares upload of pixel data into a TextureSlice.
 	/// </summary>
-	public void SetTextureData<T>(TextureRegion textureRegion, Span<T> data, bool cycle) where T : unmanaged
+	public void SetTextureData<T>(TextureRegion textureRegion, ReadOnlySpan<T> data, bool cycle) where T : unmanaged
 	{
 		var elementSize = Marshal.SizeOf<T>();
 		var dataLengthInBytes = (uint) (elementSize * data.Length);
@@ -360,7 +367,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		TextureUploads.Clear();
 	}
 
-	private uint CopyBufferData<T>(Span<T> span) where T : unmanaged
+	private uint CopyBufferData<T>(ReadOnlySpan<T> span) where T : unmanaged
 	{
 		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
 		CheckAndResizeTransferBuffer(lengthInBytes);
@@ -377,7 +384,7 @@ public unsafe class ResourceUploader : GraphicsResource
 		return resourceOffset;
 	}
 
-	private uint CopyTextureData<T>(Span<T> span, uint alignment) where T : unmanaged
+	private uint CopyTextureData<T>(ReadOnlySpan<T> span, uint alignment) where T : unmanaged
 	{
 		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
 		CheckAndResizeTransferBuffer(lengthInBytes);
