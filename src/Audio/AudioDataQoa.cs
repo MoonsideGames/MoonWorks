@@ -57,7 +57,7 @@ namespace MoonWorks.Audio
 				NativeMemory.Copy(ptr, (void*) BufferDataPtr, BufferDataLength);
 			}
 
-			QoaHandle = FAudio.qoa_open_from_memory((char*) BufferDataPtr, BufferDataLength, 0);
+			QoaHandle = FAudio.qoa_open_from_memory(BufferDataPtr, BufferDataLength, 0);
 			if (QoaHandle == IntPtr.Zero)
 			{
 				NativeMemory.Free((void*) BufferDataPtr);
@@ -156,7 +156,7 @@ namespace MoonWorks.Audio
 
 			fixed (void* ptr = data)
 			{
-				var qoaHandle = FAudio.qoa_open_from_memory((char*) ptr, (uint) data.Length, 0);
+				var qoaHandle = FAudio.qoa_open_from_memory((nint) ptr, (uint) data.Length, 0);
 				if (qoaHandle == IntPtr.Zero)
 				{
 					throw new InvalidOperationException("Error opening QOA file!");
