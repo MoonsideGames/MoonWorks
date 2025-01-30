@@ -809,11 +809,27 @@ public struct TextureCreateInfo
 	public uint Props;
 }
 
+/// <summary>
+/// Parameter data used to create a <see cref="Buffer"/> instance.
+/// Reflects SDL_GPUBufferCreateInfo from SDL3.
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct BufferCreateInfo
 {
+	/// <summary>
+	/// The intended use of the buffer.
+	/// </summary>
 	public BufferUsageFlags Usage;
+
+	/// <summary>
+	/// The size of the buffer in bytes.
+	/// </summary>
 	public uint Size;
+
+	/// <summary>
+	/// A property identification for extensions.
+	/// Should be 0 if no extensions are needed.
+	/// </summary>
 	public uint Props;
 }
 

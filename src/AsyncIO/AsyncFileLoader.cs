@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 
@@ -8,12 +9,12 @@ namespace MoonWorks.AsyncIO;
 
 /// <summary>
 /// A convenience structure for asynchronously loading data from files.
-/// When Submit is called, file loads are performed asynchronously and 
+/// When <see cref="AsyncFileLoader.Submit"/> is called, file loads are performed asynchronously and 
 /// contextual actions are executed on a thread for every file load that is completed.
 /// </summary>
 public class AsyncFileLoader : IDisposable
 {
-	enum LoadType
+	private enum LoadType
 	{
 		CompressedImage,
 		AudioWav,
@@ -24,36 +25,46 @@ public class AsyncFileLoader : IDisposable
 		Custom
 	}
 
-	readonly record struct LoadData(
+	private readonly record struct LoadData(
 		string File,
 		LoadType LoadType,
 		object Object,
 		OnFileLoad Callback // only used with LoadType.Custom
 	);
 
-    Queue LoadQueue = Queue.Create();
+	private Queue LoadQueue = Queue.Create();
 
-	GraphicsDevice GraphicsDevice;
-	ResourceUploader ResourceUploader;
+	private GraphicsDevice GraphicsDevice;
+	private ResourceUploader ResourceUploader;
 
-	List<LoadData> PendingLoads = [];
-	int LoadsCompleted = 0;
+	private List<LoadData> PendingLoads = [];
+	private int LoadsCompleted = 0;
 
+	private Thread Thread;
+	private bool IsDisposed;
+
+	/// <summary>
+	/// Gets a value indicating the current status of the asyncronous file loading.
+	/// </summary>
 	public AsyncFileLoaderStatus Status { get; private set; }
 
-	Thread Thread;
-    private bool IsDisposed;
-
-    public AsyncFileLoader(GraphicsDevice graphicsDevice)
-    {
+	/// <summary>
+	/// Create a new instance of the <see cref="AsyncFileLoader"/> class.
+	/// </summary>
+	/// <param name="graphicsDevice">The graphics device to load to.</param>
+	public AsyncFileLoader(GraphicsDevice graphicsDevice)
+	{
 		GraphicsDevice = graphicsDevice;
 		ResourceUploader = new ResourceUploader(GraphicsDevice);
 		Thread = new Thread(ThreadMain);
-    }
+	}
 
 	/// <summary>
 	/// Asynchronously load an arbitrary object from a file using a custom callback.
 	/// </summary>
+	/// <param name="file">The absolute path to the arbitrary object file to asynchronously load from.</param>
+	/// <param name="callback">The custom file reading method to invoke.</param>
+	/// <param name="callbackObject">The associated object to store the data in.</param>
 	public void EnqueueCustomObjectLoad(string file, OnFileLoad callback, object callbackObject)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -67,6 +78,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load a texture from a compressed image file.
 	/// </summary>
+	/// <param name="file">The absolute path to the texture file to asynchronously load from.</param>
+	/// <param name="texture">The associated texture to store the data in.</param>
 	public void EnqueueCompressedImageLoad(string file, Texture texture)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -80,6 +93,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load audio from a WAV file.
 	/// </summary>
+	/// <param name="file">The absolute path to the WAV file to asynchronously load from.</param>
+	/// <param name="buffer">The associated audio buffer to store the data in.</param>
 	public void EnqueueWavLoad(string file, AudioBuffer buffer)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -93,6 +108,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load and decode an OGG file into an audio buffer.
 	/// </summary>
+	/// <param name="file">The absolute path to the OGG file to asynchronously load from.</param>
+	/// <param name="audioBuffer">The associated audio buffer to store the data in.</param>
 	public void EnqueueOggStaticLoad(string file, AudioBuffer audioBuffer)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -106,6 +123,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load an OGG file into memory.
 	/// </summary>
+	/// <param name="file">The absolute path to the OGG file to asynchronously load from.</param>
+	/// <param name="audioDataOgg">The associated instance in memory to store the data in.</param>
 	public void EnqueueOggStreamingLoad(string file, AudioDataOgg audioDataOgg)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -119,6 +138,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load and decode a QOA file into an audio buffer.
 	/// </summary>
+	/// <param name="file">The absolute path to the QOA file to asynchronously load from.</param>
+	/// <param name="audioBuffer">The associated audio buffer to store the data in.</param>
 	public void EnqueueQoaStaticLoad(string file, AudioBuffer audioBuffer)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -132,6 +153,8 @@ public class AsyncFileLoader : IDisposable
 	/// <summary>
 	/// Asynchronously load a QOA file into memory.
 	/// </summary>
+	/// <param name="file">The absolute path to the QOA file to asynchronously load from.</param>
+	/// <param name="audioDataQoa">The associated instance in memory to store the data in.</param>
 	public void EnqueueQoaStreamingLoad(string file, AudioDataQoa audioDataQoa)
 	{
 		if (Status == AsyncFileLoaderStatus.Running)
@@ -143,7 +166,7 @@ public class AsyncFileLoader : IDisposable
 	}
 
 	/// <summary>
-	/// Submit async file loads and execute load callbacks on a thread until all are complete.
+	/// Submit asynchronous file loads and execute load callbacks on a thread until all are complete.
 	/// </summary>
 	public void Submit()
 	{
@@ -165,15 +188,15 @@ public class AsyncFileLoader : IDisposable
 		}
 
 		Status = AsyncFileLoaderStatus.Running;
-        Thread.Start();
+		Thread.Start();
 	}
 
 	// Execute load callbacks until all are complete.
-    private unsafe void ThreadMain()
-    {
-        while (PendingLoads.Count != LoadsCompleted)
-        {
-            if (LoadQueue.WaitResult(out var outcome, -1))
+	private unsafe void ThreadMain()
+	{
+		while (PendingLoads.Count != LoadsCompleted)
+		{
+			if (LoadQueue.WaitResult(out var outcome, -1))
 			{
 				if (outcome.Result == Result.Complete)
 				{
@@ -236,11 +259,11 @@ public class AsyncFileLoader : IDisposable
 					return;
 				}
 			}
-        }
+		}
 
 		Status = AsyncFileLoaderStatus.Complete;
 		Reset();
-    }
+	}
 
 	private void Reset()
 	{
@@ -292,26 +315,27 @@ public class AsyncFileLoader : IDisposable
 		callback(callbackObject, data);
 	}
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!IsDisposed)
-        {
-            if (disposing)
-            {
-                LoadQueue.Destroy();
+	protected virtual void Dispose(bool disposing)
+	{
+		if (!IsDisposed)
+		{
+			if (disposing)
+			{
+				LoadQueue.Destroy();
 				ResourceUploader.Dispose();
-            }
+			}
 
-            IsDisposed = true;
-        }
-    }
+			IsDisposed = true;
+		}
+	}
 
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
+	/// <inheritdoc/>
+	public void Dispose()
+	{
+		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
 }
 
 /// <summary>

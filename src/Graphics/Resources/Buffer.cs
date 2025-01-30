@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
+
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
@@ -11,10 +12,13 @@ public class Buffer : SDLGPUResource
 {
 	protected override Action<IntPtr, IntPtr> ReleaseFunction => SDL.SDL_ReleaseGPUBuffer;
 
+	/// <summary>
+	/// Gets the flags indicating the intended use of the GPU Buffer.
+	/// </summary>
 	public BufferUsageFlags UsageFlags { get; private init;  }
 
 	/// <summary>
-	/// Size in bytes.
+	/// Gets the buffer size in bytes.
 	/// </summary>
 	public uint Size { get; private init; }
 
@@ -25,7 +29,7 @@ public class Buffer : SDLGPUResource
 	/// <param name="device">The GraphicsDevice.</param>
 	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
-	/// <returns></returns>
+	/// <returns>A newly created <see cref="Buffer"/> instance.</returns>
 	public static Buffer Create<T>(
 		GraphicsDevice device,
 		string name,
@@ -55,7 +59,7 @@ public class Buffer : SDLGPUResource
 	/// <param name="device">The GraphicsDevice.</param>
 	/// <param name="usageFlags">Specifies how the buffer will be used.</param>
 	/// <param name="elementCount">How many elements of type T the buffer will contain.</param>
-	/// <returns></returns>
+	/// <returns>A newly created <see cref="Buffer"/> instance.</returns>
 	public static Buffer Create<T>(
 		GraphicsDevice device,
 		BufferUsageFlags usageFlags,
@@ -63,8 +67,10 @@ public class Buffer : SDLGPUResource
 	) where T : unmanaged => Create<T>(device, null, usageFlags, elementCount);
 
 	/// <summary>
-	/// Creates a buffer given a BufferCreateInfo struct.
+	/// Creates a buffer given a <see cref="BufferCreateInfo"/> struct.
 	/// </summary>
+	/// <param name="device">The graphics device to allocate the buffer on.</param>
+	/// <param name="createInfo">Parameter data used to create the buffer.</param>
 	public static Buffer Create(
 		GraphicsDevice device,
 		in BufferCreateInfo createInfo
@@ -86,6 +92,11 @@ public class Buffer : SDLGPUResource
 
 	private Buffer(GraphicsDevice device) : base(device) { }
 
+	/// <summary>
+	/// An implicition conversion of <see cref="Buffer"/> to <see cref="BufferBinding"/>.
+	/// <see cref="BufferBinding.Buffer"/> is set to the value of the buffer's handle.
+	/// </summary>
+	/// <param name="b">The <see cref="Buffer"/> instance to implicitly convert into </param>
 	public static implicit operator BufferBinding(Buffer b)
 	{
 		return new BufferBinding
