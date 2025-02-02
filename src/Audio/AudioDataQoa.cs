@@ -87,6 +87,7 @@ namespace MoonWorks.Audio
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
 			OutOfData = false;
+			QueueBuffers(); // to avoid stutter when seeking before playback
 		}
 
 		protected override unsafe FAudio.FAudioBuffer OnBufferNeeded()
@@ -138,12 +139,17 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Unloads the qoa data, freeing resources.
+		/// Unloads the QOA data, freeing resources.
 		/// </summary>
 		public override unsafe void Close()
 		{
 			if (Loaded)
 			{
+				if (SendVoice != null)
+				{
+					Disconnect();
+				}
+
 				FAudio.qoa_close(QoaHandle);
 				NativeMemory.Free((void*) BufferDataPtr);
 

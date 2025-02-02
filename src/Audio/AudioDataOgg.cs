@@ -140,6 +140,11 @@ namespace MoonWorks.Audio
 		{
 			if (Loaded)
 			{
+				if (SendVoice != null)
+				{
+					Disconnect();
+				}
+
 				FAudio.stb_vorbis_close(VorbisHandle);
 				NativeMemory.Free((void*) BufferDataPtr);
 

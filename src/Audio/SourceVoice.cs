@@ -10,8 +10,6 @@ namespace MoonWorks.Audio
 		private Format format;
 		public Format Format => format;
 
-		protected bool PlaybackInitiated;
-
 		/// <summary>
 		/// The number of buffers queued in the voice.
 		/// This includes the currently playing voice!
@@ -194,7 +192,6 @@ namespace MoonWorks.Audio
 		public override void Reset()
 		{
 			Stop();
-			PlaybackInitiated = false;
 			base.Reset();
 		}
 	}

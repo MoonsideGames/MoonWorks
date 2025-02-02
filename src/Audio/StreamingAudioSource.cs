@@ -8,7 +8,7 @@ namespace MoonWorks.Audio;
 public abstract class StreamingAudioSource : AudioResource
 {
 	protected const int BUFFER_COUNT = 3;
-	private SourceVoice SendVoice;
+	protected SourceVoice SendVoice;
 
 	/// <summary>
 	/// Indicates that all available audio data from the source has been consumed.
@@ -29,6 +29,15 @@ public abstract class StreamingAudioSource : AudioResource
 	}
 
 	/// <summary>
+	/// Disconnect from the source voice.
+	/// </summary>
+	public void Disconnect()
+	{
+		SendVoice.Stop();
+		SendVoice = null;
+	}
+
+	/// <summary>
 	/// Called on the audio thread when the voice needs another buffer.
 	/// The subclass must then provide an audio buffer.
 	/// This method should set OutOfData when there is no data left.
@@ -42,18 +51,21 @@ public abstract class StreamingAudioSource : AudioResource
 			SendVoice != null &&
 			!OutOfData &&
 			SendVoice.State == SoundState.Playing &&
-			SendVoice.BuffersQueued == 3
+			SendVoice.BuffersQueued < BUFFER_COUNT
 		) {
 			QueueBuffers();
 		}
 	}
 
-	private void QueueBuffers()
+	protected void QueueBuffers()
 	{
-		int buffersNeeded = BUFFER_COUNT - (int) SendVoice.BuffersQueued; // don't get got by uint underflow!
-		for (int i = 0; i < buffersNeeded; i += 1)
+		if (SendVoice != null)
 		{
-			AddBuffer();
+			int buffersNeeded = BUFFER_COUNT - (int) SendVoice.BuffersQueued; // don't get got by uint underflow!
+			for (int i = 0; i < buffersNeeded; i += 1)
+			{
+				AddBuffer();
+			}
 		}
 	}
 
@@ -72,7 +84,7 @@ public abstract class StreamingAudioSource : AudioResource
 		{
 			if (disposing)
 			{
-				SendVoice.Stop();
+				SendVoice?.Stop();
 			}
 		}
 
