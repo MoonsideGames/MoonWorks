@@ -30,24 +30,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private SoundState state = SoundState.Stopped;
-		public SoundState State
-		{
-			get
-			{
-				if (BuffersQueued == 0)
-				{
-					Stop();
-				}
-
-				return state;
-			}
-
-			internal set
-			{
-				state = value;
-			}
-		}
+		public SoundState State { get; protected set; }
 
 		protected object StateLock = new object();
 
@@ -142,6 +125,23 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
+		/// Adds an FAudio buffer to the voice queue.
+		/// The voice processes and plays back the buffers in its queue in the order that they were submitted.
+		/// </summary>
+		/// <param name="buffer">The buffer to submit to the voice.</param>
+		public void Submit(FAudio.FAudioBuffer buffer)
+		{
+			lock (StateLock)
+			{
+				FAudio.FAudioSourceVoice_SubmitSourceBuffer(
+					Handle,
+					ref buffer,
+					IntPtr.Zero
+				);
+			}
+		}
+
+		/// <summary>
 		/// Calculates positional sound. This must be called continuously to update positional sound.
 		/// </summary>
 		/// <param name="listener"></param>
@@ -189,23 +189,6 @@ namespace MoonWorks.Audio
 		{
 			Stop();
 			Device.Return(this);
-		}
-
-		/// <summary>
-		/// Adds an FAudio buffer to the voice queue.
-		/// The voice processes and plays back the buffers in its queue in the order that they were submitted.
-		/// </summary>
-		/// <param name="buffer">The buffer to submit to the voice.</param>
-		protected void Submit(FAudio.FAudioBuffer buffer)
-		{
-			lock (StateLock)
-			{
-				FAudio.FAudioSourceVoice_SubmitSourceBuffer(
-					Handle,
-					ref buffer,
-					IntPtr.Zero
-				);
-			}
 		}
 
 		public override void Reset()

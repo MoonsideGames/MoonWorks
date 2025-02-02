@@ -11,10 +11,16 @@ namespace MoonWorks.Audio
 	{
 		private IntPtr VorbisHandle = IntPtr.Zero;
 		private IntPtr BufferDataPtr = IntPtr.Zero;
-		private uint BufferDataLength = 0;
 
-		public override bool Loaded => VorbisHandle != IntPtr.Zero;
-		public override uint DecodeBufferSize => 32768;
+		private const uint AUDIO_BUFFER_SIZE = 32768;
+		private IntPtr[] AudioBuffers = new IntPtr[BUFFER_COUNT];
+		private int NextBufferIndex = 0;
+
+		public Format Format { get; private set; }
+
+		public bool Loaded => VorbisHandle != IntPtr.Zero;
+
+		public bool Loop { get; set; }
 
 		public static AudioDataOgg Create(AudioDevice device)
 		{
@@ -22,23 +28,6 @@ namespace MoonWorks.Audio
 		}
 
 		private AudioDataOgg(AudioDevice device) : base(device) { }
-
-		public override unsafe void Decode(void* buffer, int bufferLengthInBytes, out int filledLengthInBytes, out bool reachedEnd)
-		{
-			var lengthInFloats = bufferLengthInBytes / sizeof(float);
-
-			/* NOTE: this function returns samples per channel, not total samples */
-			var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
-				VorbisHandle,
-				Format.Channels,
-				(IntPtr) buffer,
-				lengthInFloats
-			);
-
-			var sampleCount = samples * Format.Channels;
-			reachedEnd = sampleCount < lengthInFloats;
-			filledLengthInBytes = sampleCount * sizeof(float);
-		}
 
 		/// <summary>
 		/// Prepares the Ogg data for streaming.
@@ -51,19 +40,17 @@ namespace MoonWorks.Audio
 			}
 
 			BufferDataPtr = (nint) NativeMemory.Alloc((nuint) data.Length);
-			BufferDataLength = (uint) data.Length;
 
 			fixed (void *ptr = data)
 			{
-				NativeMemory.Copy(ptr, (void*) BufferDataPtr, BufferDataLength);
+				NativeMemory.Copy(ptr, (void*) BufferDataPtr, (nuint) data.Length);
 			}
 
-			VorbisHandle = FAudio.stb_vorbis_open_memory(BufferDataPtr, (int) BufferDataLength, out int error, IntPtr.Zero);
+			VorbisHandle = FAudio.stb_vorbis_open_memory(BufferDataPtr, data.Length, out int error, IntPtr.Zero);
 			if (error != 0)
 			{
 				NativeMemory.Free((void*) BufferDataPtr);
 				BufferDataPtr = IntPtr.Zero;
-				BufferDataLength = 0;
 				throw new InvalidOperationException("Error opening OGG file!");
 			}
 
@@ -78,11 +65,72 @@ namespace MoonWorks.Audio
 			format.SampleRate = info.sample_rate;
 
 			Format = format;
+
+			for (int i = 0; i < BUFFER_COUNT; i += 1)
+			{
+				AudioBuffers[i] = (nint) NativeMemory.Alloc(32768);
+			}
+
+			OutOfData = false;
 		}
 
 		public override void Seek(uint sampleFrame)
 		{
 			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
+			OutOfData = false;
+		}
+
+		protected override FAudio.FAudioBuffer OnBufferNeeded()
+		{
+			if (!Loaded)
+			{
+				OutOfData = true;
+				return new FAudio.FAudioBuffer();
+			}
+
+			var buffer = AudioBuffers[NextBufferIndex];
+			NextBufferIndex = (NextBufferIndex + 1) % BUFFER_COUNT;
+
+			var requestedLengthInFloats = AUDIO_BUFFER_SIZE / sizeof(float);
+
+			/* NOTE: this function returns samples per channel, not total samples */
+			var samples = FAudio.stb_vorbis_get_samples_float_interleaved(
+				VorbisHandle,
+				Format.Channels,
+				buffer,
+				(int) requestedLengthInFloats
+			);
+
+			var sampleCount = samples * Format.Channels;
+			var filledLengthInBytes = (uint) (sampleCount * sizeof(float));
+
+			if (sampleCount < requestedLengthInFloats)
+			{
+				if (Loop)
+				{
+					Seek(0);
+				}
+				else
+				{
+					OutOfData = true;
+				}
+			}
+
+			if (filledLengthInBytes > 0)
+			{
+				return new FAudio.FAudioBuffer
+				{
+					AudioBytes = filledLengthInBytes,
+					pAudioData = buffer,
+					PlayLength = (
+						filledLengthInBytes /
+						Format.Channels /
+						(uint) (Format.BitsPerSample / 8)
+					)
+				};
+			}
+
+			return new FAudio.FAudioBuffer(); // no data, return zeroed struct
 		}
 
 		/// <summary>
@@ -97,6 +145,12 @@ namespace MoonWorks.Audio
 
 				VorbisHandle = IntPtr.Zero;
 				BufferDataPtr = IntPtr.Zero;
+
+				for (int i = 0; i < BUFFER_COUNT; i += 1)
+				{
+					NativeMemory.Free((void*) AudioBuffers[i]);
+					AudioBuffers[i] = IntPtr.Zero;
+				}
 			}
 		}
 
