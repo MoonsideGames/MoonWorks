@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using SDL3;
 
@@ -35,16 +34,29 @@ public class UserStorage : IDisposable
 		Thread.Start();
 	}
 
+	/// <summary>
+	/// Acquires a command buffer.
+	/// All user storage operations must be requested via command buffer.
+	/// All operations are deferred until the command buffer is submitted.
+	/// </summary>
 	public CommandBuffer AcquireCommandBuffer()
 	{
 		return CommandBufferPool.Obtain();
 	}
 
+	/// <summary>
+	/// Submits a storage command buffer for processing.
+	/// </summary>
+	/// <param name="commandBuffer"></param>
 	public void Submit(CommandBuffer commandBuffer)
 	{
 		PendingCommandBuffers.Add(commandBuffer);
 	}
 
+	/// <summary>
+	/// Releases a ResultToken so it can be reused later.
+	/// You must call this or you will cause GC pressure.
+	/// </summary>
 	public void ReleaseToken(ResultToken token)
 	{
 		ResultTokenPool.Return(token);

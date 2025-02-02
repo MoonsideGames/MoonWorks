@@ -34,7 +34,7 @@ public class ResultToken
 	/// <summary>
 	/// The buffer result of a ReadFile operation.
 	/// </summary>
-	public IntPtr Buffer; // only used by ReadFile
+	public IntPtr Buffer;
 
 	/// <summary>
 	/// The size result of a GetSpaceRemaining or GetFileSize operation.

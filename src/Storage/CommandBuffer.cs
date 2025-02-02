@@ -23,6 +23,9 @@ public class CommandBuffer
 		UserStorage = userStorage;
 	}
 
+	/// <summary>
+	/// Gets the amount of space remaining in storage in bytes.
+	/// </summary>
 	public ResultToken GetSpaceRemaining()
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
@@ -37,6 +40,9 @@ public class CommandBuffer
 		return resultToken;
 	}
 
+	/// <summary>
+	/// Gets the size of a file in storage in bytes.
+	/// </summary>
 	public unsafe ResultToken GetFileSize(string path)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
@@ -56,6 +62,10 @@ public class CommandBuffer
 		return resultToken;
 	}
 
+	/// <summary>
+	/// Reads the entire contents of a file in storage into a buffer.
+	/// The buffer must stay alive until this operation is complete.
+	/// </summary>
 	public unsafe ResultToken ReadFile(string path)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
@@ -76,12 +86,9 @@ public class CommandBuffer
 	}
 
 	/// <summary>
-	/// The buffer MUST remain alive until the operation is complete.
+	/// Writes the contents of a buffer into a file in storage.
+	/// The buffer must remain alive until the operation is complete.
 	/// </summary>
-	/// <param name="path"></param>
-	/// <param name="buffer"></param>
-	/// <param name="size"></param>
-	/// <returns></returns>
 	public unsafe ResultToken WriteFile(string path, IntPtr buffer, ulong size)
 	{
 		var resultToken = UserStorage.ResultTokenPool.Obtain();
