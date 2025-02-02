@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using SDL3;
 
 namespace MoonWorks.Storage;
@@ -7,7 +6,6 @@ namespace MoonWorks.Storage;
 /// <summary>
 /// Read-only abstraction over platform file storage.
 /// Use this instead of System.IO for maximum portability.
-/// This is NOT thread-safe.
 /// </summary>
 public class TitleStorage : IDisposable
 {
