@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Audio
 {
@@ -108,12 +108,25 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without decoding the entire file.
 		/// </summary>
-		public static Format GetFormat(string filePath)
+		public static unsafe Format GetFormat(TitleStorage storage, string filePath)
 		{
-			var handle = FAudio.qoa_open_from_filename(filePath);
+			if (!storage.GetFileSize(filePath, out var size))
+			{
+				return new Format();
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(filePath, span))
+			{
+				return new Format();
+			}
+
+			var handle = FAudio.qoa_open_from_memory((nint) buffer, (uint) size, 0);
 			if (handle == IntPtr.Zero)
 			{
-				throw new InvalidOperationException("Error loading QOA file!");
+				Logger.LogError("Error loading QOA file!");
+				return new Format();
 			}
 
 			FAudio.qoa_attributes(handle, out var channels, out var samplerate, out var _, out var _);
@@ -126,6 +139,7 @@ namespace MoonWorks.Audio
 			};
 
 			FAudio.qoa_close(handle);
+			NativeMemory.Free(buffer);
 			return format;
 		}
 
@@ -188,19 +202,27 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Decodes an entire QOA file into an AudioBuffer.
 		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var fileMemory = NativeMemory.Alloc((nuint) stream.Length);
-			var fileSpan = new Span<byte>(fileMemory, (int) stream.Length);
-			stream.ReadExactly(fileSpan);
+			if (!storage.GetFileSize(path, out var size))
+			{
+				return null;
+			}
 
-			var result = Load(fileSpan);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
+
+			var result = Load(span);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
+			NativeMemory.Free(buffer);
 
-			NativeMemory.Free(fileMemory);
 			return audioBuffer;
 		}
 	}

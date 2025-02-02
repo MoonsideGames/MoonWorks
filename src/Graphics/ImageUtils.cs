@@ -1,6 +1,7 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
+using SDL3;
 
 namespace MoonWorks.Graphics;
 
@@ -37,48 +38,43 @@ public static class ImageUtils
 	}
 
 	/// <summary>
-	/// Gets pointer to pixel data from a compressed image stream.
-	///
-	/// The returned pointer must be freed by calling FreePixelData.
-	/// </summary>
-	public static unsafe byte* GetPixelDataFromStream(
-		Stream stream,
-		out uint width,
-		out uint height,
-		out uint sizeInBytes
-	) {
-		var length = stream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		stream.ReadExactly(span);
-
-		var pixelData = GetPixelDataFromBytes(span, out width, out height, out sizeInBytes);
-
-		NativeMemory.Free(buffer);
-
-		return pixelData;
-	}
-
-	/// <summary>
 	/// Gets pointer to pixel data from a compressed image file.
 	///
 	/// The returned pointer must be freed by calling FreePixelData.
 	/// </summary>
 	public static unsafe byte* GetPixelDataFromFile(
+		TitleStorage storage,
 		string path,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return GetPixelDataFromStream(fileStream, out width, out height, out sizeInBytes);
+		width = 0;
+		height = 0;
+		sizeInBytes = 0;
+
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
+		{
+			return null;
+		}
+
+		var result = GetPixelDataFromBytes(span, out width, out height, out sizeInBytes);
+		NativeMemory.Free(buffer);
+		return result;
 	}
 
 	/// <summary>
 	/// Get metadata from compressed image bytes.
 	/// </summary>
 	public static unsafe bool ImageInfoFromBytes(
-		Span<byte> data,
+		ReadOnlySpan<byte> data,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
@@ -103,37 +99,35 @@ public static class ImageUtils
 	}
 
 	/// <summary>
-	/// Get metadata from a compressed image stream.
-	/// </summary>
-	public static unsafe bool ImageInfoFromStream(
-		Stream stream,
-		out uint width,
-		out uint height,
-		out uint sizeInBytes
-	) {
-		var length = stream.Length;
-		var buffer = NativeMemory.Alloc((nuint) length);
-		var span = new Span<byte>(buffer, (int) length);
-		stream.ReadExactly(span);
-
-		var result = ImageInfoFromBytes(span, out width, out height, out sizeInBytes);
-
-		NativeMemory.Free(buffer);
-
-		return result;
-	}
-
-	/// <summary>
 	/// Get metadata from a compressed image file.
 	/// </summary>
-	public static bool ImageInfoFromFile(
+	public static unsafe bool ImageInfoFromFile(
+		TitleStorage storage,
 		string path,
 		out uint width,
 		out uint height,
 		out uint sizeInBytes
 	) {
-		var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-		return ImageInfoFromStream(fileStream, out width, out height, out sizeInBytes);
+		width = 0;
+		height = 0;
+		sizeInBytes = 0;
+
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return false;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+		if (!storage.ReadFile(path, span))
+		{
+			return false;
+		}
+
+		var result = ImageInfoFromBytes(span, out width, out height, out sizeInBytes);
+		NativeMemory.Free(buffer);
+
+		return result;
 	}
 
 	/// <summary>
@@ -144,45 +138,24 @@ public static class ImageUtils
 		IRO.IRO_FreeImage((nint) pixels);
 	}
 
-	private static int writeGlobal = 0;
-	private static System.Collections.Generic.Dictionary<IntPtr, Stream> writeStreams =
-		new System.Collections.Generic.Dictionary<IntPtr, Stream>();
-
-	private unsafe static void INTERNAL_Write(
-		IntPtr context,
-		IntPtr data,
-		int size
-	) {
-		Stream stream;
-		lock (writeStreams)
-		{
-			stream = writeStreams[context];
-		}
-		stream.Write(new Span<byte>((void*) data, size));
-	}
-
 	/// <summary>
-	/// Saves Color data to a PNG file.
+	/// Encodes pixel data to a PNG buffer.
+	/// You must call FreePNGBuffer when you are done with the data.
 	/// </summary>
-	public static unsafe void SavePNG(
-		string path,
+	public static unsafe IntPtr EncodePNGBuffer(
+		UserStorage userStorage,
 		Span<Color> pixels,
 		uint width,
 		uint height,
-		bool bgra
+		bool bgra,
+		out int size
 	) {
-		IntPtr context;
-		Stream stream = new FileStream(path, FileMode.Create, FileAccess.Write);
-		lock (writeStreams)
-		{
-			context = writeGlobal++;
-			writeStreams.Add(context, stream);
-		}
+		IntPtr pngBuffer;
 
 		if (bgra)
 		{
 			var bgraPtr = NativeMemory.Alloc(width * height * 4);
-			Span<Color> bgraColors = new Span<Color>(bgraPtr, (int) (width * height * 4));
+			var bgraColors = new Span<Color>(bgraPtr, (int) (width * height * 4));
 			for (var i = 0; i < width * height; i += 1)
 			{
 				bgraColors[i].R = pixels[i].B;
@@ -191,37 +164,29 @@ public static class ImageUtils
 				bgraColors[i].A = pixels[i].A;
 			}
 
-			IRO.IRO_EncodePNG(
-				INTERNAL_Write,
-				context,
-				bgraColors,
-				width,
-				height
-			);
-
+			pngBuffer = IRO.IRO_EncodePNG((nint) bgraPtr, width, height, out size);
 			NativeMemory.Free(bgraPtr);
 		}
 		else
 		{
-			IRO.IRO_EncodePNG(
-				INTERNAL_Write,
-				context,
-				pixels,
-				width,
-				height
-			);
+			fixed (Color* pixelPtr = pixels)
+			{
+				pngBuffer = IRO.IRO_EncodePNG((nint) pixelPtr, width, height, out size);
+			}
 		}
 
-		lock (writeStreams)
-		{
-			writeStreams.Remove(context);
-		}
+		return pngBuffer;
+	}
+
+	public static unsafe void FreePNGBuffer(IntPtr buffer)
+	{
+		SDL.SDL_free(buffer);
 	}
 
 	// DDS loading extension, based on MojoDDS
 	// Taken from https://github.com/FNA-XNA/FNA/blob/1e49f868f595f62bc6385db45949a03186a7cd7f/src/Graphics/Texture.cs#L194
-	public static void ParseDDS(
-		BinaryReader reader,
+	internal static bool ParseDDS(
+		ref ByteSpanReader reader,
 		out TextureFormat format,
 		out int width,
 		out int height,
@@ -252,60 +217,73 @@ public static class ImageUtils
 			DDSD_PITCH | DDSD_LINEARSIZE
 		);
 
+		// Assign defaults
+		format = TextureFormat.Invalid;
+		height = 0;
+		width = 0;
+		levels = 0;
+		isCube = false;
+
 		// File should start with 'DDS '
-		if (reader.ReadUInt32() != DDS_MAGIC)
+		if (reader.Read<uint>() != DDS_MAGIC)
 		{
-			throw new NotSupportedException("Not a DDS!");
+			Logger.LogError("Not a DDS!");
+			return false;
 		}
 
 		// Texture info
-		uint size = reader.ReadUInt32();
+		uint size = reader.Read<uint>();
 		if (size != DDS_HEADERSIZE)
 		{
-			throw new NotSupportedException("Invalid DDS header!");
+			Logger.LogError("Invalid DDS header!");
+			return false;
 		}
-		uint flags = reader.ReadUInt32();
+		uint flags = reader.Read<uint>();
 		if ((flags & DDSD_REQ) != DDSD_REQ)
 		{
-			throw new NotSupportedException("Invalid DDS flags!");
+			Logger.LogError("Invalid DDS flags!");
+			return false;
 		}
 		if ((flags & pitchAndLinear) == pitchAndLinear)
 		{
-			throw new NotSupportedException("Invalid DDS flags!");
+			Logger.LogError("Invalid DDS flags!");
+			return false;
 		}
-		height = reader.ReadInt32();
-		width = reader.ReadInt32();
-		reader.ReadUInt32(); // dwPitchOrLinearSize, unused
-		reader.ReadUInt32(); // dwDepth, unused
-		levels = reader.ReadInt32();
+		height = reader.Read<int>();
+		width = reader.Read<int>();
+		reader.Read<uint>(); // dwPitchOrLinearSize, unused
+		reader.Read<uint>(); // dwDepth, unused
+		levels = reader.Read<int>();
 
 		// "Reserved"
-		reader.ReadBytes(4 * 11);
+		reader.Advance(4 * 11);
 
 		// Format info
-		uint formatSize = reader.ReadUInt32();
+		uint formatSize = reader.Read<uint>();
 		if (formatSize != DDS_PIXFMTSIZE)
 		{
-			throw new NotSupportedException("Bogus PIXFMTSIZE!");
+			Logger.LogError("Bogus PIXFMTSIZE!");
+			return false;
 		}
-		uint formatFlags = reader.ReadUInt32();
-		uint formatFourCC = reader.ReadUInt32();
-		uint formatRGBBitCount = reader.ReadUInt32();
-		uint formatRBitMask = reader.ReadUInt32();
-		uint formatGBitMask = reader.ReadUInt32();
-		uint formatBBitMask = reader.ReadUInt32();
-		uint formatABitMask = reader.ReadUInt32();
+		uint formatFlags = reader.Read<uint>();
+		uint formatFourCC = reader.Read<uint>();
+		uint formatRGBBitCount = reader.Read<uint>();
+		uint formatRBitMask = reader.Read<uint>();
+		uint formatGBitMask = reader.Read<uint>();
+		uint formatBBitMask = reader.Read<uint>();
+		uint formatABitMask = reader.Read<uint>();
 
 		// dwCaps "stuff"
-		uint caps = reader.ReadUInt32();
+		uint caps = reader.Read<uint>();
 		if ((caps & DDSCAPS_TEXTURE) == 0)
 		{
-			throw new NotSupportedException("Not a texture!");
+			Logger.LogError("Not a texture!");
+			return false;
 		}
 
 		isCube = false;
 
-		uint caps2 = reader.ReadUInt32();
+		uint caps2 = reader.Read<uint>();
 		if (caps2 != 0)
 		{
 			if ((caps2 & DDSCAPS2_CUBEMAP) == DDSCAPS2_CUBEMAP)
@@ -314,15 +292,16 @@ public static class ImageUtils
 			}
 			else
 			{
-				throw new NotSupportedException("Invalid caps2!");
+				Logger.LogError("Invalid caps2!");
+				return false;
 			}
 		}
 
-		reader.ReadUInt32(); // dwCaps3, unused
-		reader.ReadUInt32(); // dwCaps4, unused
+		reader.Read<uint>(); // dwCaps3, unused
+		reader.Read<uint>(); // dwCaps4, unused
 
 		// "Reserved"
-		reader.ReadUInt32();
+		reader.Read<uint>();
 
 		// Mipmap sanity check
 		if ((caps & DDSCAPS_MIPMAP) != DDSCAPS_MIPMAP)
@@ -352,7 +331,7 @@ public static class ImageUtils
 					break;
 				case FOURCC_DX10:
 					// If the fourCC is DX10, there is an extra header with additional format information.
-					uint dxgiFormat = reader.ReadUInt32();
+					uint dxgiFormat = reader.Read<uint>();
 
 					// These values are taken from the DXGI_FORMAT enum.
 					switch (dxgiFormat)
@@ -382,21 +361,19 @@ public static class ImageUtils
 							break;
 
 						default:
-							throw new NotSupportedException(
-								"Unsupported DDS texture format"
-							);
+							Logger.LogError("Unsupported DDS texture format");
+							return false;
 					}
 
-					uint resourceDimension = reader.ReadUInt32();
+					uint resourceDimension = reader.Read<uint>();
 
 					// These values are taken from the D3D10_RESOURCE_DIMENSION enum.
 					switch (resourceDimension)
 					{
 						case 0: // Unknown
 						case 1: // Buffer
-							throw new NotSupportedException(
-								"Unsupported DDS texture format"
-							);
+							Logger.LogError("Unsupported DDS texture format");
+							return false;
 						default:
 							break;
 					}
@@ -405,28 +382,26 @@ public static class ImageUtils
 					 * This flag seemingly only indicates if the texture is a cube map.
 					 * This is already determined above. Cool!
 					 */
-					uint miscFlag = reader.ReadUInt32();
+					uint miscFlag = reader.Read<uint>();
 
 					/*
 					 * Indicates the number of elements in the texture array.
-					 * We don't support texture arrays so just throw if it's greater than 1.
+					 * We don't support texture arrays so just return false if it's greater than 1.
 					 */
-					uint arraySize = reader.ReadUInt32();
+					uint arraySize = reader.Read<uint>();
 
 					if (arraySize > 1)
 					{
-						throw new NotSupportedException(
-							"Unsupported DDS texture format"
-						);
+						Logger.LogError("Unsupported DDS texture format");
+						return false;
 					}
 
-					reader.ReadUInt32(); // reserved
+					reader.Read<uint>(); // reserved
 
 					break;
 				default:
-					throw new NotSupportedException(
-						"Unsupported DDS texture format"
-					);
+					Logger.LogError("Unsupported DDS texture format");
+					return false;
 			}
 		}
 		else if ((formatFlags & DDPF_RGB) == DDPF_RGB)
@@ -437,19 +412,19 @@ public static class ImageUtils
 				formatBBitMask != 0x000000FF ||
 				formatABitMask != 0xFF000000	)
 			{
-				throw new NotSupportedException(
-					"Unsupported DDS texture format"
-				);
+				Logger.LogError("Unsupported DDS texture format");
+				return false;
 			}
 
 			format = TextureFormat.B8G8R8A8Unorm;
 		}
 		else
 		{
-			throw new NotSupportedException(
-				"Unsupported DDS texture format"
-			);
+			Logger.LogError("Unsupported DDS texture format");
+			return false;
 		}
+
+		return true;
 	}
 
 	public static int CalculateDDSLevelSize(

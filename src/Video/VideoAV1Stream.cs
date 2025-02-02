@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using System.Threading;
 using MoonWorks.Graphics;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Video
 {
@@ -10,6 +12,8 @@ namespace MoonWorks.Video
 	{
 		public IntPtr Handle => handle;
 		IntPtr handle;
+
+		private IntPtr ByteBuffer;
 
 		public bool Loaded => handle != IntPtr.Zero;
 		public bool Ended => Handle == IntPtr.Zero || Dav1dfile.df_eos(Handle) == 1;
@@ -57,9 +61,9 @@ namespace MoonWorks.Video
 			}
 		}
 
-		public void Load(string filename)
+		public void Load(TitleStorage storage, string filename)
 		{
-			Actions.Add(() => LoadHelper(filename));
+			Actions.Add(() => LoadHelper(storage, filename));
 		}
 
 		public void Reset()
@@ -77,13 +81,25 @@ namespace MoonWorks.Video
 			Actions.Add(UnloadHelper);
 		}
 
-		private void LoadHelper(string filename)
+		private unsafe void LoadHelper(TitleStorage storage, string path)
 		{
 			if (!Loaded)
 			{
-				if (Dav1dfile.df_fopen(filename, out handle) == 0)
+				if (!storage.GetFileSize(path, out var size))
 				{
-					Logger.LogError("Failed to load video file: " + filename);
+					return;
+				}
+
+				ByteBuffer = (nint) NativeMemory.Alloc((nuint) size);
+				var span = new Span<byte>((void*) ByteBuffer, (int) size);
+				if (!storage.ReadFile(path, span))
+				{
+					return;
+				}
+
+				if (Dav1dfile.df_open_from_memory(ByteBuffer, (uint) size, out handle) == 0)
+				{
+					Logger.LogError("Failed to load video file: " + path);
 					throw new Exception("Failed to load video file!");
 				}
 
@@ -131,12 +147,14 @@ namespace MoonWorks.Video
 			}
 		}
 
-		private void UnloadHelper()
+		private unsafe void UnloadHelper()
 		{
 			if (Loaded)
 			{
 				Dav1dfile.df_close(handle);
 				handle = IntPtr.Zero;
+				NativeMemory.Free((void*) ByteBuffer);
+				ByteBuffer = IntPtr.Zero;
 			}
 		}
 

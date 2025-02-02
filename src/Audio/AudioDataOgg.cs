@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Audio
 {
@@ -103,12 +103,26 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Get audio format data without decoding the entire file.
 		/// </summary>
-		public static Format GetFormat(string filePath)
+		public static unsafe Format GetFormat(TitleStorage storage, string path)
 		{
-			var handle = FAudio.stb_vorbis_open_filename(filePath, out var error, IntPtr.Zero);
+			if (!storage.GetFileSize(path, out var size))
+			{
+				return new Format();
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return new Format();
+			}
+
+			var handle = FAudio.stb_vorbis_open_memory((nint) buffer, (int) size, out var error, IntPtr.Zero);
 			if (error != 0)
 			{
-				throw new InvalidOperationException("Error loading file: " + error);
+				Logger.LogError("Error loading file: " + error);
+				NativeMemory.Free(buffer);
+				return new Format();
 			}
 
 			var info = FAudio.stb_vorbis_get_info(handle);
@@ -121,6 +135,7 @@ namespace MoonWorks.Audio
 			};
 
 			FAudio.stb_vorbis_close(handle);
+			NativeMemory.Free(buffer);
 			return format;
 		}
 
@@ -190,19 +205,25 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Decodes an entire OGG file into an AudioBuffer.
 		/// </summary>
-		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		public static unsafe AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var fileMemory = NativeMemory.Alloc((nuint) stream.Length);
-			var fileSpan = new Span<byte>(fileMemory, (int) stream.Length);
-			stream.ReadExactly(fileSpan);
+			if (!storage.GetFileSize(path, out var size))
+			{
+				return null;
+			}
 
-			var result = Load(fileSpan);
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
 
+			var result = Load(span);
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetDataPointer(result.DataPtr, result.Length, true);
 
-			NativeMemory.Free(fileMemory);
+			NativeMemory.Free(buffer);
 			return audioBuffer;
 		}
 	}

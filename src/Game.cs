@@ -1,5 +1,4 @@
 ﻿using SDL3;
-using MoonWorks.AsyncIO;
 using MoonWorks.Audio;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -7,6 +6,7 @@ using System.Text;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks
 {
@@ -18,6 +18,8 @@ namespace MoonWorks
 	/// </summary>
 	public abstract class Game
 	{
+		public AppInfo AppInfo { get; }
+
 		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 		public FramePacingSettings FramePacingSettings { get; private set; }
 
@@ -38,6 +40,13 @@ namespace MoonWorks
 		public Inputs Inputs { get; }
 
 		/// <summary>
+		/// Automatically opens on startup and automatically closes on shutdown.
+		/// </summary>
+		public TitleStorage RootTitleStorage { get; }
+
+		public UserStorage UserStorage { get; }
+
+		/// <summary>
 		/// This Window is automatically created when your Game is instantiated.
 		/// </summary>
 		public Window MainWindow { get; }
@@ -51,11 +60,14 @@ namespace MoonWorks
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
 		public Game(
+			AppInfo appInfo,
 			WindowCreateInfo windowCreateInfo,
 			FramePacingSettings framePacingSettings,
 			ShaderFormat availableShaderFormats,
 			bool debugMode = false
 		) {
+			AppInfo = appInfo;
+
 			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
 			gameTimer = Stopwatch.StartNew();
@@ -76,11 +88,18 @@ namespace MoonWorks
 
 			Logger.InitSDLLogging();
 
+			Logger.LogInfo("Initializing title storage...");
+			RootTitleStorage = new TitleStorage();
+
+			Logger.LogInfo("Initializing user storage...");
+			UserStorage = new UserStorage(AppInfo);
+
 			Logger.LogInfo("Initializing input...");
 			Inputs = new Inputs();
 
 			Logger.LogInfo("Initializing graphics device...");
 			GraphicsDevice = new GraphicsDevice(
+				RootTitleStorage,
 				availableShaderFormats,
 				debugMode
 			);
@@ -126,6 +145,12 @@ namespace MoonWorks
 
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
+
+			Logger.LogInfo("Disposing title storage...");
+			RootTitleStorage.Dispose();
+
+			Logger.LogInfo("Disposing user storage...");
+			UserStorage.Dispose();
 
 			Logger.LogInfo("Quitting SDL...");
 			SDL.SDL_Quit();

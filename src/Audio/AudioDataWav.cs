@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
+using MoonWorks.Storage;
 
 namespace MoonWorks.Audio
 {
@@ -23,66 +23,64 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private static ParseResult Parse(ReadOnlySpan<byte> span)
+		private static Format ParseFormat(ref ByteSpanReader reader)
 		{
-			var stream = new ByteSpanStream(span);
-
 			// RIFF Signature
-			if (stream.Read<int>() != MAGIC_RIFF)
+			if (reader.Read<int>() != MAGIC_RIFF)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			stream.Read<uint>(); // Riff chunk size
+			reader.Read<uint>(); // Riff chunk size
 
 			// WAVE Header
-			if (stream.Read<int>() != MAGIC_WAVE)
+			if (reader.Read<int>() != MAGIC_WAVE)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
 			// Skip over non-format chunks
-			while (stream.Remaining >= 4 && stream.Read<int>() != MAGIC_FMT)
+			while (reader.Remaining >= 4 && reader.Read<int>() != MAGIC_FMT)
 			{
-				var chunkSize = stream.Read<uint>();
-				stream.Advance(chunkSize);
+				var chunkSize = reader.Read<uint>();
+				reader.Advance(chunkSize);
 			}
 
-			if (stream.Remaining < 4)
+			if (reader.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			uint format_chunk_size = stream.Read<uint>();
+			uint format_chunk_size = reader.Read<uint>();
 
 			// WaveFormatEx data
-			ushort wFormatTag = stream.Read<ushort>();
-			ushort nChannels = stream.Read<ushort>();
-			uint nSamplesPerSec = stream.Read<uint>();
-			uint nAvgBytesPerSec = stream.Read<uint>();
-			ushort nBlockAlign = stream.Read<ushort>();
-			ushort wBitsPerSample = stream.Read<ushort>();
+			ushort wFormatTag = reader.Read<ushort>();
+			ushort nChannels = reader.Read<ushort>();
+			uint nSamplesPerSec = reader.Read<uint>();
+			uint nAvgBytesPerSec = reader.Read<uint>();
+			ushort nBlockAlign = reader.Read<ushort>();
+			ushort wBitsPerSample = reader.Read<ushort>();
 
 			// Reads residual bytes
 			if (format_chunk_size > 16)
 			{
-				stream.Advance(format_chunk_size - 16);
+				reader.Advance(format_chunk_size - 16);
 			}
 
 			// Skip over non-data chunks
-			while (stream.Remaining > 4 && stream.Read<int>() != MAGIC_DATA)
+			while (reader.Remaining > 4 && reader.Read<int>() != MAGIC_DATA)
 			{
-				var chunkSize = stream.Read<uint>();
-				stream.Advance(chunkSize);
+				var chunkSize = reader.Read<uint>();
+				reader.Advance(chunkSize);
 			}
 
-			if (stream.Remaining < 4)
+			if (reader.Remaining < 4)
 			{
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int waveDataLength = stream.Read<int>();
-			var dataSpan = stream.SliceRemainder();
+			int waveDataLength = reader.Read<int>();
+			var dataSpan = reader.SliceRemainder();
 
 			var format = new Format
 			{
@@ -91,6 +89,18 @@ namespace MoonWorks.Audio
 				Channels = nChannels,
 				SampleRate = nSamplesPerSec
 			};
+
+			return format;
+		}
+
+		private static ParseResult Parse(ReadOnlySpan<byte> span)
+		{
+			var stream = new ByteSpanReader(span);
+
+			var format = ParseFormat(ref stream);
+
+			int waveDataLength = stream.Read<int>();
+			var dataSpan = stream.SliceRemainder(waveDataLength);
 
 			return new ParseResult(format, dataSpan);
 		}
@@ -108,73 +118,51 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Create an AudioBuffer containing all the WAV audio data in a file.
 		/// </summary>
-		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, string filePath)
+		public unsafe static AudioBuffer CreateBuffer(AudioDevice device, TitleStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			var memory = NativeMemory.Alloc((nuint) stream.Length);
-			var span = new Span<byte>(memory, (int) stream.Length);
-			stream.ReadExactly(span);
+			if (!storage.GetFileSize(path, out var size))
+			{
+				return null;
+			}
+
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
+			{
+				return null;
+			}
 
 			var result = Parse(span);
 
 			var audioBuffer = AudioBuffer.Create(device, result.Format);
 			audioBuffer.SetData(result.Data);
+			NativeMemory.Free(buffer);
 
-			NativeMemory.Free(memory);
 			return audioBuffer;
 		}
 
 		/// <summary>
 		/// Get audio format data without reading the entire file.
 		/// </summary>
-		public static Format GetFormat(string filePath)
+		public static unsafe Format GetFormat(TitleStorage storage, string path)
 		{
-			using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-			using var reader = new BinaryReader(stream);
-
-			// RIFF Signature
-			if (reader.ReadInt32() != MAGIC_RIFF)
+			if (!storage.GetFileSize(path, out var size))
 			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
+				return new Format();
 			}
 
-			reader.ReadUInt32(); // Riff chunk size
-
-			// WAVE Header
-			if (reader.ReadInt32() != MAGIC_WAVE)
+			var buffer = NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>(buffer, (int) size);
+			if (!storage.ReadFile(path, span))
 			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
+				return new Format();
 			}
 
-			// Skip over non-format chunks
-			while (stream.Position + 4 < stream.Length && reader.ReadInt32() != MAGIC_FMT)
-			{
-				var chunkSize = reader.ReadUInt32();
-				stream.Position += chunkSize;
-			}
+			var reader = new ByteSpanReader(span);
+			var format = ParseFormat(ref reader);
+			NativeMemory.Free(buffer);
 
-			if (stream.Position + 4 >= stream.Length)
-			{
-				throw new NotSupportedException("Specified stream is not a wave file.");
-			}
-
-			uint formatChunkSize = reader.ReadUInt32();
-
-			// WaveFormatEx data
-			ushort wFormatTag = reader.ReadUInt16();
-			ushort nChannels = reader.ReadUInt16();
-			uint nSamplesPerSec = reader.ReadUInt32();
-			uint nAvgBytesPerSec = reader.ReadUInt32();
-			ushort nBlockAlign = reader.ReadUInt16();
-			ushort wBitsPerSample = reader.ReadUInt16();
-
-			return new Format
-			{
-				Tag = (FormatTag) wFormatTag,
-				BitsPerSample = wBitsPerSample,
-				Channels = nChannels,
-				SampleRate = nSamplesPerSec
-			};
+			return format;
 		}
 	}
 }
