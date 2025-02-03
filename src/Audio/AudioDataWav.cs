@@ -79,9 +79,6 @@ namespace MoonWorks.Audio
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
-			int waveDataLength = reader.Read<int>();
-			var dataSpan = reader.SliceRemainder();
-
 			var format = new Format
 			{
 				Tag = (FormatTag) wFormatTag,

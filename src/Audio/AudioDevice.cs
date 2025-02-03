@@ -26,7 +26,8 @@ namespace MoonWorks.Audio
 		public float SpeedOfSound = 343.5f;
 
 		private readonly HashSet<GCHandle> resourceHandles = new HashSet<GCHandle>();
-		private readonly HashSet<UpdatingSourceVoice> updatingSourceVoices = new HashSet<UpdatingSourceVoice>();
+		private readonly HashSet<StreamingAudioSource> streamingAudioSources = new HashSet<StreamingAudioSource>();
+		private readonly HashSet<TransientVoice> transientVoices = new HashSet<TransientVoice>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -163,18 +164,22 @@ namespace MoonWorks.Audio
 
 			AudioTweenManager.Update(elapsedSeconds);
 
-			foreach (var voice in updatingSourceVoices)
+			foreach (var voice in streamingAudioSources)
 			{
 				voice.Update();
 			}
 
+			foreach (var voice in transientVoices)
+			{
+				if (voice.State == SoundState.Playing && voice.BuffersQueued == 0)
+				{
+					VoicesToReturn.Add(voice);
+					transientVoices.Remove(voice);
+				}
+			}
+
 			foreach (var voice in VoicesToReturn)
 			{
-				if (voice is UpdatingSourceVoice updatingSourceVoice)
-				{
-					updatingSourceVoices.Remove(updatingSourceVoice);
-				}
-
 				voice.Reset();
 				VoicePool.Return(voice);
 			}
@@ -201,9 +206,9 @@ namespace MoonWorks.Audio
 			{
 				var voice = VoicePool.Obtain<T>(format);
 
-				if (voice is UpdatingSourceVoice updatingSourceVoice)
+				if (voice is TransientVoice transientVoice)
 				{
-					updatingSourceVoices.Add(updatingSourceVoice);
+					transientVoices.Add(transientVoice);
 				}
 
 				return voice;
@@ -219,6 +224,22 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				VoicesToReturn.Add(voice);
+			}
+		}
+
+		internal void RegisterStreamingAudioSource(StreamingAudioSource source)
+		{
+			lock (streamingAudioSources)
+			{
+				streamingAudioSources.Add(source);
+			}
+		}
+
+		internal void UnregisterStreamingAudioSource(StreamingAudioSource source)
+		{
+			lock (streamingAudioSources)
+			{
+				streamingAudioSources.Remove(source);
 			}
 		}
 
@@ -265,11 +286,6 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resourceHandles.Add(resourceReference);
-
-				if (resourceReference.Target is UpdatingSourceVoice updatableVoice)
-				{
-					updatingSourceVoices.Add(updatableVoice);
-				}
 			}
 		}
 
@@ -278,11 +294,6 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resourceHandles.Remove(resourceReference);
-
-				if (resourceReference.Target is UpdatingSourceVoice updatableVoice)
-				{
-					updatingSourceVoices.Remove(updatableVoice);
-				}
 			}
 		}
 

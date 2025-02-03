@@ -9,16 +9,20 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public class AudioDataQoa : AudioDataStreamable
 	{
-		private const uint QOA_MAGIC = 0x716f6166; /* 'qoaf' */
-
 		private IntPtr QoaHandle = IntPtr.Zero;
 		private IntPtr BufferDataPtr = IntPtr.Zero;
 		private uint BufferDataLength = 0;
 
-		public override bool Loaded => QoaHandle != IntPtr.Zero;
+		private const uint AUDIO_BUFFER_SIZE = 32768;
+		private IntPtr[] AudioBuffers = new IntPtr[BUFFER_COUNT];
+		private int NextBufferIndex = 0;
+		private uint DecodeBufferSize = 0;
 
-		private uint decodeBufferSize;
-		public override uint DecodeBufferSize => decodeBufferSize;
+		public Format Format { get; private set; }
+
+		public bool Loaded => QoaHandle != IntPtr.Zero;
+
+		public bool Loop { get; set; }
 
 		public static AudioDataQoa Create(AudioDevice device)
 		{
@@ -26,18 +30,6 @@ namespace MoonWorks.Audio
 		}
 
 		private AudioDataQoa(AudioDevice device) : base(device) { }
-
-		public override unsafe void Decode(void* buffer, int bufferLengthInBytes, out int filledLengthInBytes, out bool reachedEnd)
-		{
-			var lengthInShorts = bufferLengthInBytes / sizeof(short);
-
-			// NOTE: this function returns samples per channel!
-			var samples = FAudio.qoa_decode_next_frame(QoaHandle, (short*) buffer);
-
-			var sampleCount = samples * Format.Channels;
-			reachedEnd = sampleCount < lengthInShorts;
-			filledLengthInBytes = (int) (sampleCount * sizeof(short));
-		}
 
 		/// <summary>
 		/// Prepares qoa data for streaming.
@@ -81,27 +73,96 @@ namespace MoonWorks.Audio
 			format.Channels = (ushort) channels;
 			Format = format;
 
-			decodeBufferSize = channels * samplesPerChannelPerFrame * sizeof(short);
+			DecodeBufferSize = channels * samplesPerChannelPerFrame * sizeof(short);
+
+			for (int i = 0; i < BUFFER_COUNT; i += 1)
+			{
+				AudioBuffers[i] = (nint) NativeMemory.Alloc(DecodeBufferSize);
+			}
+
+			OutOfData = false;
 		}
 
 		public override void Seek(uint sampleFrame)
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
+			OutOfData = false;
+			QueueBuffers(); // to avoid stutter when seeking before playback
+		}
+
+		protected override unsafe FAudio.FAudioBuffer OnBufferNeeded()
+		{
+			if (!Loaded)
+			{
+				OutOfData = true;
+				return new FAudio.FAudioBuffer();
+			}
+
+			var buffer = AudioBuffers[NextBufferIndex];
+			NextBufferIndex = (NextBufferIndex + 1) % BUFFER_COUNT;
+
+			var lengthInShorts = DecodeBufferSize / sizeof(short);
+
+			// NOTE: this function returns samples per channel!
+			var samples = FAudio.qoa_decode_next_frame(QoaHandle, (short*) buffer);
+
+			var sampleCount = samples * Format.Channels;
+			var filledLengthInBytes = sampleCount * sizeof(short);
+
+			if (sampleCount < lengthInShorts)
+			{
+				if (Loop)
+				{
+					Seek(0);
+				}
+				else
+				{
+					OutOfData = true;
+				}
+			}
+
+			if (filledLengthInBytes > 0)
+			{
+				return new FAudio.FAudioBuffer
+				{
+					AudioBytes = filledLengthInBytes,
+					pAudioData = buffer,
+					PlayLength = (
+						filledLengthInBytes /
+						Format.Channels /
+						(uint) (Format.BitsPerSample / 8)
+					)
+				};
+			}
+
+			return new FAudio.FAudioBuffer(); // no data, return zeroed struct
 		}
 
 		/// <summary>
-		/// Unloads the qoa data, freeing resources.
+		/// Unloads the QOA data, freeing resources.
+		/// This will automatically disconnect from the source voice.
 		/// </summary>
 		public override unsafe void Close()
 		{
 			if (Loaded)
 			{
+				if (SendVoice != null)
+				{
+					Disconnect();
+				}
+
 				FAudio.qoa_close(QoaHandle);
 				NativeMemory.Free((void*) BufferDataPtr);
 
 				QoaHandle = IntPtr.Zero;
 				BufferDataPtr = IntPtr.Zero;
 				BufferDataLength = 0;
+
+				for (int i = 0; i < BUFFER_COUNT; i += 1)
+				{
+					NativeMemory.Free((void*) AudioBuffers[i]);
+					AudioBuffers[i] = IntPtr.Zero;
+				}
 			}
 		}
 
