@@ -21,19 +21,23 @@ public abstract class StreamingAudioSource : AudioResource
 
 	/// <summary>
 	/// Sets the source voice to stream the audio through.
+	/// This will also enqueue some buffers to avoid stuttering when Play is called.
 	/// </summary>
 	public void SendTo(SourceVoice sourceVoice)
 	{
+		Device.RegisterStreamingAudioSource(this);
 		SendVoice = sourceVoice;
 		QueueBuffers();
 	}
 
 	/// <summary>
 	/// Disconnect from the source voice.
+	/// This will stop voice playback.
 	/// </summary>
 	public void Disconnect()
 	{
-		SendVoice.Stop();
+		Device.UnregisterStreamingAudioSource(this);
+		SendVoice?.Stop();
 		SendVoice = null;
 	}
 

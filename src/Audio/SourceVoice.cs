@@ -57,6 +57,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Starts consumption and processing of audio by the voice.
 		/// Delivers the result to any connected submix or mastering voice.
+		/// The voice will remain in the Playing state even if it runs out of buffers to consume.
 		/// </summary>
 		/// <param name="syncGroup">Optional. Denotes that the operation will be pending until AudioDevice.TriggerSyncGroup is called.</param>
 		public void Play(uint syncGroup = FAudio.FAUDIO_COMMIT_NOW)
@@ -98,7 +99,7 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Stops playback and removes all pending audio buffers from the voice queue.
+		/// Stops playback and removes all queued audio buffers from the voice queue.
 		/// </summary>
 		/// <param name="syncGroup">Optional. Denotes that the operation will be pending until AudioDevice.TriggerSyncGroup is called.</param>
 		public void Stop(uint syncGroup = FAudio.FAUDIO_COMMIT_NOW)
@@ -189,6 +190,9 @@ namespace MoonWorks.Audio
 			Device.Return(this);
 		}
 
+		/// <summary>
+		/// Stops the voice and resets all of its parameters to default.
+		/// </summary>
 		public override void Reset()
 		{
 			Stop();

@@ -140,6 +140,7 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Unloads the QOA data, freeing resources.
+		/// This will automatically disconnect from the source voice.
 		/// </summary>
 		public override unsafe void Close()
 		{

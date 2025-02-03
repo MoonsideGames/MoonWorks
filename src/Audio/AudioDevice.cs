@@ -227,6 +227,22 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		internal void RegisterStreamingAudioSource(StreamingAudioSource source)
+		{
+			lock (streamingAudioSources)
+			{
+				streamingAudioSources.Add(source);
+			}
+		}
+
+		internal void UnregisterStreamingAudioSource(StreamingAudioSource source)
+		{
+			lock (streamingAudioSources)
+			{
+				streamingAudioSources.Remove(source);
+			}
+		}
+
 		internal void CreateTween(
 			Voice voice,
 			AudioTweenProperty property,
@@ -270,11 +286,6 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resourceHandles.Add(resourceReference);
-
-				if (resourceReference.Target is StreamingAudioSource streamingAudioSource)
-				{
-					streamingAudioSources.Add(streamingAudioSource);
-				}
 			}
 		}
 
@@ -283,11 +294,6 @@ namespace MoonWorks.Audio
 			lock (StateLock)
 			{
 				resourceHandles.Remove(resourceReference);
-
-				if (resourceReference.Target is StreamingAudioSource streamingAudioSource)
-				{
-					streamingAudioSources.Remove(streamingAudioSource);
-				}
 			}
 		}
 
