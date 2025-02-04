@@ -30,6 +30,7 @@ namespace MoonWorks.Audio
 
 			var buffer = NativeMemory.Alloc((nuint) size);
 			var span = new Span<byte>(buffer, (int) size);
+			storage.ReadFile(filePath, span);
 			Open(span);
 			NativeMemory.Free(buffer);
 		}
