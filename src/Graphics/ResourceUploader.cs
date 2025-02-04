@@ -168,7 +168,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a texture from a DDS stream.
 	/// </summary>
-	private Texture CreateTextureFromDDS(string name, ReadOnlySpan<byte> span)
+	public Texture CreateTextureFromDDS(string name, ReadOnlySpan<byte> span)
 	{
 		Texture texture;
 		int faces;
