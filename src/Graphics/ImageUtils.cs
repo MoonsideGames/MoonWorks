@@ -143,7 +143,6 @@ public static class ImageUtils
 	/// You must call FreePNGBuffer when you are done with the data.
 	/// </summary>
 	public static unsafe IntPtr EncodePNGBuffer(
-		UserStorage userStorage,
 		Span<Color> pixels,
 		uint width,
 		uint height,
