@@ -88,7 +88,7 @@ public abstract class StreamingAudioSource : AudioResource
 		{
 			if (disposing)
 			{
-				SendVoice?.Stop();
+				Disconnect();
 			}
 		}
 

@@ -307,7 +307,16 @@ namespace MoonWorks.Audio
 				{
 					Thread.Join();
 
-					// dispose all source voices first
+					// dispose audio sources first
+					foreach (var handle in resourceHandles)
+					{
+						if (handle.Target is StreamingAudioSource streaming)
+						{
+							streaming.Dispose();
+						}
+					}
+
+					// then dispose source voices
 					foreach (var handle in resourceHandles)
 					{
 						if (handle.Target is SourceVoice voice)
