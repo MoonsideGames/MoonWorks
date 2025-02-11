@@ -13,6 +13,7 @@ namespace MoonWorks.Video
 		public VideoState State { get; private set; } = VideoState.Stopped;
 		public bool Loop { get; set; }
 		public float PlaybackSpeed { get; set; } = 1;
+		public bool Loaded => Video != null;
 
 		private VideoAV1 Video = null;
 		private VideoAV1Stream Stream { get; }
