@@ -10,7 +10,7 @@ namespace MoonWorks.Audio
 	public class AudioBuffer : AudioResource
 	{
 		IntPtr BufferDataPtr;
-		uint BufferDataLength;
+		public uint BufferDataLength { get; private set;}
 		private bool OwnsBufferData;
 
 		public Format Format { get; set; }
