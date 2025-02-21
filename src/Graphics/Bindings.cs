@@ -519,7 +519,7 @@ public struct IndirectDrawCommand
 	public uint NumVertices;
 	public uint NumInstances;
 	public uint FirstVertex;
-	public uint FirstIndex;
+	public uint FirstInstance;
 }
 
 [StructLayout(LayoutKind.Sequential)]
