@@ -205,13 +205,14 @@ public static class ImageUtils
 	/// <param name="compressedData">A span of zlib-encoded data.</param>
 	/// <param name="decompressedLength">Filled with the length of the decoded data.</param>
 	/// <returns></returns>
-	public static unsafe IntPtr DecompressBuffer(
+	public static unsafe bool Decompress(
 		ReadOnlySpan<byte> compressedData,
-		out uint decompressedLength
+		ReadOnlySpan<byte> destination
 	) {
-		fixed (byte *ptr = compressedData)
+		fixed (byte *src = compressedData)
+		fixed (byte *dest = destination)
 		{
-			return IRO.IRO_Decompress((nint) ptr, (uint) compressedData.Length, out decompressedLength);
+			return IRO.IRO_Decompress((nint) src, (nint) dest, (uint) compressedData.Length, (uint) destination.Length);
 		}
 	}
 

@@ -1675,15 +1675,16 @@ internal static partial class IRO
 	public static partial IntPtr IRO_Compress(
 		IntPtr data,
 		uint dataLength,
-		out uint outLength
+		out uint decodedLength
 	);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr IRO_Decompress(
-		IntPtr data,
-		uint dataLength,
-		out uint outLength
+	public static partial SDLBool IRO_Decompress(
+		IntPtr encodedBuffer,
+		IntPtr decodedBuffer,
+		uint encodedLength,
+		uint decodedLength
 	);
 
 	[LibraryImport(nativeLibName)]
