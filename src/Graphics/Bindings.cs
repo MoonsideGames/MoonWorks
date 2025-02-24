@@ -1669,6 +1669,28 @@ internal static partial class IRO
 		uint w,
 		uint h
 	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr IRO_Compress(
+		IntPtr data,
+		uint dataLength,
+		out uint outLength
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr IRO_Decompress(
+		IntPtr data,
+		uint dataLength,
+		out uint outLength
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial void IRO_FreeBuffer(
+		IntPtr buffer
+	);
 }
 
 internal static partial class SDL_ShaderCross

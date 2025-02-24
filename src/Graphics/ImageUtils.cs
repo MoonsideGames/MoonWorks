@@ -177,9 +177,47 @@ public static class ImageUtils
 		return pngBuffer;
 	}
 
-	public static unsafe void FreePNGBuffer(IntPtr buffer)
+	/// <summary>
+	/// Compressed data using zlib encoding.
+	/// Returns an allocated buffer of encoded data.
+	/// You must free the buffer with FreeBufferData when you are done with the data.
+	/// Returns IntPtr.Zero if compression failed.
+	/// </summary>
+	/// <param name="buffer">A span of data.</param>
+	/// <param name="compressedLength">Filled with the length of the encoded data.</param>
+	/// <returns></returns>
+	public static unsafe IntPtr CompressBuffer(
+		ReadOnlySpan<byte> buffer,
+		out uint compressedLength
+	) {
+		fixed (byte *ptr = buffer)
+		{
+			return IRO.IRO_Compress((nint) ptr, (uint) buffer.Length, out compressedLength);
+		}
+	}
+
+	/// <summary>
+	/// Decompresses zlib-encoded data.
+	/// Returns an allocated buffer of decoded data.
+	/// You must free the buffer with FreeBufferData when you are done with the data.
+	/// Returns IntPtr.Zero if decompression failed.
+	/// </summary>
+	/// <param name="compressedData">A span of zlib-encoded data.</param>
+	/// <param name="decompressedLength">Filled with the length of the decoded data.</param>
+	/// <returns></returns>
+	public static unsafe IntPtr DecompressBuffer(
+		ReadOnlySpan<byte> compressedData,
+		out uint decompressedLength
+	) {
+		fixed (byte *ptr = compressedData)
+		{
+			return IRO.IRO_Decompress((nint) ptr, (uint) compressedData.Length, out decompressedLength);
+		}
+	}
+
+	public static unsafe void FreeBufferData(IntPtr buffer)
 	{
-		SDL.SDL_free(buffer);
+		IRO.IRO_FreeBuffer(buffer);
 	}
 
 	// DDS loading extension, based on MojoDDS
