@@ -1675,7 +1675,8 @@ internal static partial class IRO
 	public static partial IntPtr IRO_Compress(
 		IntPtr data,
 		uint dataLength,
-		out uint decodedLength
+		int compressionLevel,
+		out uint outLength
 	);
 
 	[LibraryImport(nativeLibName)]

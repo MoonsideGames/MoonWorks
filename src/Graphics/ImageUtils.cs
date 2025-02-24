@@ -184,15 +184,17 @@ public static class ImageUtils
 	/// Returns IntPtr.Zero if compression failed.
 	/// </summary>
 	/// <param name="buffer">A span of data.</param>
+	/// <param name="compressionLevel">1 is highest speed, 9 is highest compression factor.</param>
 	/// <param name="compressedLength">Filled with the length of the encoded data.</param>
 	/// <returns></returns>
-	public static unsafe IntPtr CompressBuffer(
+	public static unsafe IntPtr Compress(
 		ReadOnlySpan<byte> buffer,
+		int compressionLevel,
 		out uint compressedLength
 	) {
 		fixed (byte *ptr = buffer)
 		{
-			return IRO.IRO_Compress((nint) ptr, (uint) buffer.Length, out compressedLength);
+			return IRO.IRO_Compress((nint) ptr, (uint) buffer.Length, compressionLevel, out compressedLength);
 		}
 	}
 
