@@ -164,9 +164,12 @@ namespace MoonWorks.Audio
 
 			AudioTweenManager.Update(elapsedSeconds);
 
-			foreach (var voice in streamingAudioSources)
+			lock (streamingAudioSources)
 			{
-				voice.Update();
+				foreach (var voice in streamingAudioSources)
+				{
+					voice.Update();
+				}
 			}
 
 			foreach (var voice in transientVoices)
