@@ -30,6 +30,11 @@ namespace MoonWorks.Video
 		private TimeSpan timeAccumulator;
 		private TimeSpan framerateTimestep;
 
+		// Plays immediately when the current video ends
+		// Maybe this should be a secondary object?
+		private VideoAV1 NextVideo;
+		private bool NextVideoLoop;
+
 		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
 			Name = "VideoPlayer";
@@ -98,9 +103,16 @@ namespace MoonWorks.Video
 
 				framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / video.FramesPerSecond));
 				timeAccumulator = TimeSpan.Zero;
+				previousTicks = 0;
 
 				InitializeDav1dStream();
 			}
+		}
+
+		public void LoadAndPlayNext(VideoAV1 video, bool loop)
+		{
+			NextVideo = video;
+			NextVideoLoop = loop;
 		}
 
 		/// <summary>
@@ -115,7 +127,7 @@ namespace MoonWorks.Video
 				return;
 			}
 
-			timer.Start();
+			timer.Restart();
 
 			State = VideoState.Playing;
 		}
@@ -152,7 +164,9 @@ namespace MoonWorks.Video
 			timer.Stop();
 			timer.Reset();
 
+			NextVideo = null;
 			timeAccumulator = TimeSpan.Zero;
+			previousTicks = 0;
 
 			ResetDav1dStreams();
 
@@ -172,7 +186,9 @@ namespace MoonWorks.Video
 			timer.Stop();
 			timer.Reset();
 
+			NextVideo = null;
 			timeAccumulator = TimeSpan.Zero;
+			previousTicks = 0;
 
 			State = VideoState.Stopped;
 
@@ -210,13 +226,24 @@ namespace MoonWorks.Video
 
 			if (Stream.Ended)
 			{
-				Stream.Reset();
-
-				if (!Loop)
+				if (Loop)
 				{
-					State = VideoState.Stopped;
-					timer.Stop();
-					timer.Reset();
+					Stream.Reset();
+				}
+				else
+				{
+					if (NextVideo != null)
+					{
+						Load(NextVideo);
+						Loop = NextVideoLoop;
+						Play();
+
+						NextVideo = null;
+					}
+					else
+					{
+						Stop();
+					}
 				}
 			}
 		}
