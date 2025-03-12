@@ -31,7 +31,7 @@ namespace MoonWorks.Video
 		private BlockingCollection<Action> Actions = new BlockingCollection<Action>();
 
 		private bool Running = false;
-
+		CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 		Thread Thread;
 
 		public VideoAV1Stream(GraphicsDevice device) : base(device)
@@ -49,15 +49,18 @@ namespace MoonWorks.Video
 		{
 			while (Running)
 			{
-				// block until we can take an action, then run it
-				var action = Actions.Take();
-				action.Invoke();
-			}
-
-			// shutting down...
-			while (Actions.TryTake(out var action))
-			{
-				action.Invoke();
+				try
+				{
+					// Block until we can take an action, then run it
+					var action = Actions.Take(CancellationTokenSource.Token);
+					action.Invoke();
+				} 
+				catch (OperationCanceledException)
+				{
+					// Fired on thread shutdown
+					Logger.LogInfo("Cancelling AV1 thread!");
+					Running = false;
+				}
 			}
 		}
 
@@ -167,6 +170,7 @@ namespace MoonWorks.Video
 
 				if (disposing)
 				{
+					CancellationTokenSource.Cancel();
 					Thread.Join();
 				}
 			}

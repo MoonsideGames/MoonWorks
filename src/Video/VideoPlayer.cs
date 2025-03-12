@@ -218,6 +218,8 @@ namespace MoonWorks.Video
 				{
 					// Start over!
 					currentFrame = -1;
+					timeElapsed = 0;
+					lastTimestamp = 0;
 					timer.Start();
 				}
 				else
