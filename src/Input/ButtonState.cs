@@ -73,7 +73,7 @@
 		/// </summary>
 		public static ButtonState operator |(ButtonState a, ButtonState b)
 		{
-			if (a.ButtonStatus == ButtonStatus.Idle || a.ButtonStatus == ButtonStatus.Released)
+			if (a.ButtonStatus == ButtonStatus.Idle)
 			{
 				return b;
 			}
@@ -84,6 +84,17 @@
 					return new ButtonState(ButtonStatus.Held);
 				}
 				else
+				{
+					return a;
+				}
+			}
+			else if (a.ButtonStatus == ButtonStatus.Released)
+			{
+				if (b.ButtonStatus == ButtonStatus.Pressed || b.ButtonStatus == ButtonStatus.Held)
+				{
+					return b;
+				}
+				else 
 				{
 					return a;
 				}
