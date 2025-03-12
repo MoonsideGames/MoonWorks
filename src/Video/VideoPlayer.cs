@@ -25,11 +25,10 @@ namespace MoonWorks.Video
 
 		private TransferBuffer TransferBuffer;
 
-		private int currentFrame;
-
 		private Stopwatch timer;
-		private double lastTimestamp;
-		private double timeElapsed;
+		private long previousTicks = 0;
+		private TimeSpan timeAccumulator;
+		private TimeSpan framerateTimestep;
 
 		public VideoPlayer(GraphicsDevice device) : base(device)
 		{
@@ -97,6 +96,9 @@ namespace MoonWorks.Video
 
 				Video = video;
 
+				framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / video.FramesPerSecond));
+				timeAccumulator = TimeSpan.Zero;
+
 				InitializeDav1dStream();
 			}
 		}
@@ -150,8 +152,7 @@ namespace MoonWorks.Video
 			timer.Stop();
 			timer.Reset();
 
-			lastTimestamp = 0;
-			timeElapsed = 0;
+			timeAccumulator = TimeSpan.Zero;
 
 			ResetDav1dStreams();
 
@@ -171,8 +172,7 @@ namespace MoonWorks.Video
 			timer.Stop();
 			timer.Reset();
 
-			lastTimestamp = 0;
-			timeElapsed = 0;
+			timeAccumulator = TimeSpan.Zero;
 
 			State = VideoState.Stopped;
 
@@ -191,40 +191,32 @@ namespace MoonWorks.Video
 				return;
 			}
 
-			timeElapsed += (timer.Elapsed.TotalMilliseconds - lastTimestamp) * PlaybackSpeed;
-			lastTimestamp = timer.Elapsed.TotalMilliseconds;
-
-			int thisFrame = ((int) (timeElapsed / (1000.0 / Video.FramesPerSecond)));
-			if (thisFrame > currentFrame)
+			if (Stream.FrameDataUpdated)
 			{
-				if (Stream.FrameDataUpdated)
-				{
-					UpdateRenderTexture();
-					Stream.FrameDataUpdated = false;
-				}
+				UpdateRenderTexture();
+				Stream.FrameDataUpdated = false;
+			}
 
-				currentFrame = thisFrame;
+			long currentTicks = timer.Elapsed.Ticks;
+			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - previousTicks);
+			timeAccumulator += timeAdvanced * PlaybackSpeed;
+			previousTicks = currentTicks;
+
+			while (timeAccumulator >= framerateTimestep)
+			{
 				Stream.ReadNextFrame();
+				timeAccumulator -= framerateTimestep;
 			}
 
 			if (Stream.Ended)
 			{
-				timer.Stop();
-				timer.Reset();
-
 				Stream.Reset();
 
-				if (Loop)
-				{
-					// Start over!
-					currentFrame = -1;
-					timeElapsed = 0;
-					lastTimestamp = 0;
-					timer.Start();
-				}
-				else
+				if (!Loop)
 				{
 					State = VideoState.Stopped;
+					timer.Stop();
+					timer.Reset();
 				}
 			}
 		}
@@ -375,13 +367,11 @@ namespace MoonWorks.Video
 		private void InitializeDav1dStream()
 		{
 			Stream.Load(Video.Storage, Video.Path);
-			currentFrame = -1;
 		}
 
 		private void ResetDav1dStreams()
 		{
 			Stream.Reset();
-			currentFrame = -1;
 		}
 
 		protected override void Dispose(bool disposing)
