@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using MoonWorks.Graphics;
@@ -7,7 +6,7 @@ using MoonWorks.Graphics;
 namespace MoonWorks.Video;
 
 // Responsible for performing video operations on a single background thread.
-public class VideoAV1BufferStream : IDisposable
+public class VideoDevice : IDisposable
 {
 	private GraphicsDevice GraphicsDevice;
 	private TransferBuffer TransferBuffer;
@@ -21,7 +20,7 @@ public class VideoAV1BufferStream : IDisposable
 	private bool Running = false;
 	public bool IsDisposed { get; private set; }
 
-	public VideoAV1BufferStream(GraphicsDevice device)
+	public VideoDevice(GraphicsDevice device)
 	{
 		GraphicsDevice = device;
 
@@ -242,7 +241,7 @@ public class VideoAV1BufferStream : IDisposable
 		}
 	}
 
-	~VideoAV1BufferStream()
+	~VideoDevice()
 	{
 		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
 		Dispose(disposing: false);

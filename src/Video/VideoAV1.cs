@@ -18,7 +18,7 @@ namespace MoonWorks.Video
 		internal string Path { get; private init; }
 
 		// One of these per Game class
-		private VideoAV1BufferStream Stream { get; }
+		private VideoDevice VideoDevice { get; }
 
 		public IntPtr Handle => handle;
 		internal IntPtr handle;
@@ -53,12 +53,12 @@ namespace MoonWorks.Video
 		uint Width;
 		uint Height;
 
-		public VideoAV1(GraphicsDevice device, VideoAV1BufferStream stream, TitleStorage storage, string filepath, double framesPerSecond) : base(device)
+		public VideoAV1(GraphicsDevice graphicsDevice, VideoDevice videoDevice, TitleStorage storage, string filepath, double framesPerSecond) : base(graphicsDevice)
 		{
 			Name = "VideoPlayer";
 			Storage = storage;
 			Path = filepath;
-			Stream = stream;
+			VideoDevice = videoDevice;
 			FramesPerSecond = framesPerSecond;
 		}
 
@@ -164,7 +164,7 @@ namespace MoonWorks.Video
 			Width = (uint) width;
 			Height = (uint) height;
 
-			Stream.RegisterVideo(this);
+			VideoDevice.RegisterVideo(this);
 
 			// FIXME: jaaaaaank
 			// wait until 3 frames are buffered by the video thread
@@ -225,7 +225,7 @@ namespace MoonWorks.Video
 
 			State = VideoState.Stopped;
 
-			Stream.UnregisterVideo(this);
+			VideoDevice.UnregisterVideo(this);
 
 			if (Loaded)
 			{

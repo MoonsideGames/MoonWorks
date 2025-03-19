@@ -38,7 +38,7 @@ namespace MoonWorks
 
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
-		public VideoAV1BufferStream VideoDevice { get; }
+		public VideoDevice VideoDevice { get; }
 		public Inputs Inputs { get; }
 
 		/// <summary>
@@ -118,7 +118,7 @@ namespace MoonWorks
 			AudioDevice = new AudioDevice();
 
 			Logger.LogInfo("Initializing video thread...");
-			VideoDevice = new VideoAV1BufferStream(GraphicsDevice);
+			VideoDevice = new VideoDevice(GraphicsDevice);
 		}
 
 		/// <summary>
