@@ -1,43 +1,33 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using MoonWorks.Graphics;
-using MoonWorks.Storage;
 
 namespace MoonWorks.Video;
 
-internal class VideoAV1BufferStream : GraphicsResource
+// Responsible for performing video operations on a single background thread.
+public class VideoAV1BufferStream : IDisposable
 {
-	public IntPtr Handle => handle;
-	IntPtr handle;
-
-	private IntPtr ByteBuffer;
-
-	public bool Loaded => handle != IntPtr.Zero;
-	public bool Ended => Handle == IntPtr.Zero || Dav1dfile.df_eos(Handle) == 1;
-	public bool Loop;
-
-	const int BUFFERED_FRAME_COUNT = 5;
-	private List<Texture> AvailableTextures = [];
-	private ConcurrentQueue<Texture> BufferedTextures = [];
-
+	private GraphicsDevice GraphicsDevice;
 	private TransferBuffer TransferBuffer;
-	private Texture yTexture = null;
-	private Texture uTexture = null;
-	private Texture vTexture = null;
 
-	private BlockingCollection<Action> Actions = [];
-	private bool Running = false;
-	CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+	private HashSet<VideoAV1> ActiveVideos = [];
+
 	Thread Thread;
+	private AutoResetEvent WakeSignal;
+	private TimeSpan UpdateInterval;
 
-	public VideoAV1BufferStream(GraphicsDevice device) : base(device)
+	private bool Running = false;
+	public bool IsDisposed { get; private set; }
+
+	public VideoAV1BufferStream(GraphicsDevice device)
 	{
-		handle = IntPtr.Zero;
-		Name = "VideoAV1Stream";
+		GraphicsDevice = device;
+
+		var step = 200;
+		UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / step);
+		WakeSignal = new AutoResetEvent(true);
 
 		Thread = new Thread(ThreadMain);
 		Thread.Start();
@@ -49,215 +39,75 @@ internal class VideoAV1BufferStream : GraphicsResource
 
 		while (Running)
 		{
-			try
+			// this lock might be really bad?
+			lock (ActiveVideos)
 			{
-				// Block until we can take an action, then run it
-				var action = Actions.Take(CancellationTokenSource.Token);
-				action.Invoke();
-			}
-			catch (OperationCanceledException)
-			{
-				// Fired on thread shutdown
-				Logger.LogInfo("Cancelling AV1 thread!");
-				Running = false;
-			}
-		}
-	}
-
-	public Task Load(TitleStorage storage, string filename, bool loop)
-	{
-		return Task.Run(() => LoadHelper(storage, filename, loop));
-	}
-
-	public void Reset()
-	{
-		Actions.Add(ResetHelper);
-	}
-
-	public void Unload()
-	{
-		Actions.Add(UnloadHelper);
-	}
-
-	/// <summary>
-	/// Obtains a buffered frame. Returns false if no frames are available.
-	/// If successful, this method also enqueues a new buffered frame.
-	/// You must call ReleaseFrame eventually or the texture will leak.
-	/// </summary>
-	/// <returns>True if frame is available, otherwise false.</returns>
-	public bool TryGetBufferedFrame(out Texture texture)
-	{
-		texture = null;
-		Actions.Add(BufferFrame);
-
-		if (BufferedTextures.Count > 0)
-		{
-			bool success = BufferedTextures.TryDequeue(out texture);
-			return success;
-		}
-
-		return false;
-	}
-
-	/// <summary>
-	/// Releases a buffered frame that was previously obtained by TryGetBufferedFrame.
-	/// </summary>
-	public void ReleaseFrame(Texture texture)
-	{
-		if (texture == null) { return; }
-
-		lock (AvailableTextures)
-		{
-			AvailableTextures.Add(texture);
-		}
-	}
-
-	private unsafe void LoadHelper(TitleStorage storage, string filename, bool loop)
-	{
-		if (!storage.GetFileSize(filename, out var size))
-		{
-			return;
-		}
-
-		ByteBuffer = (nint) NativeMemory.Alloc((nuint) size);
-		var span = new Span<byte>((void*) ByteBuffer, (int) size);
-		if (!storage.ReadFile(filename, span))
-		{
-			return;
-		}
-
-		if (Dav1dfile.df_open_from_memory(ByteBuffer, (uint) size, out handle) == 0)
-		{
-			Logger.LogError("Failed to load video file: " + filename);
-			throw new Exception("Failed to load video file!");
-		}
-
-		Dav1dfile.df_videoinfo(handle, out var width, out var height, out var pixelLayout);
-
-		int uvWidth;
-		int uvHeight;
-
-		if (pixelLayout == Dav1dfile.PixelLayout.I420)
-		{
-			uvWidth = width / 2;
-			uvHeight = height / 2;
-		}
-		else if (pixelLayout == Dav1dfile.PixelLayout.I422)
-		{
-			uvWidth = width / 2;
-			uvHeight = height;
-		}
-		else if (pixelLayout == Dav1dfile.PixelLayout.I444)
-		{
-			uvWidth = width;
-			uvHeight = height;
-		}
-		else
-		{
-			Logger.LogError("Failed to load video: unrecognized YUV format!");
-			return;
-		}
-
-		for (var i = 0; i < BUFFERED_FRAME_COUNT; i += 1)
-		{
-			if (AvailableTextures.Count > i)
-			{
-				if (AvailableTextures[i].Width == width && AvailableTextures[i].Height == height)
+				foreach (var video in ActiveVideos)
 				{
-					continue;
-				}
-				else
-				{
-					AvailableTextures[i] = Texture.Create2D(
-						Device,
-						(uint) width,
-						(uint) height,
-						TextureFormat.R8G8B8A8Unorm,
-						TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
-					);
+					ProcessVideo(video);
 				}
 			}
-			else
-			{
-				AvailableTextures.Add(Texture.Create2D(
-					Device,
-					(uint) width,
-					(uint) height,
-					TextureFormat.R8G8B8A8Unorm,
-					TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
-				));
-			}
-		}
 
-		if (yTexture == null || yTexture.Width != width || yTexture.Height != height)
-		{
-			yTexture?.Dispose();
-			yTexture = CreateSubTexture(Device, width, height);
-		}
-
-		if (uTexture == null || uTexture.Width != uvWidth || uTexture.Height != uvHeight)
-		{
-			uTexture?.Dispose();
-			uTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-		}
-
-		if (vTexture == null || vTexture.Width != uvWidth || vTexture.Height != uvHeight)
-		{
-			vTexture?.Dispose();
-			vTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-		}
-
-		// pre-buffer frames
-		for (var i = 0; i < BUFFERED_FRAME_COUNT; i += 1)
-		{
-			Actions.Add(BufferFrame);
-		}
-
-		Loop = loop;
-	}
-
-	private void ResetHelper()
-	{
-		if (Loaded)
-		{
-			Dav1dfile.df_reset(handle);
-			Actions.Add(BufferFrame);
+			WakeSignal.WaitOne(UpdateInterval);
 		}
 	}
 
-	private unsafe void UnloadHelper()
+	private void ProcessVideo(VideoAV1 video)
 	{
-		if (Loaded)
+		var neededFrames = VideoAV1.BUFFERED_FRAME_COUNT - video.BufferedFrameCount();
+		for (var i = 0; i < neededFrames; i += 1)
 		{
-			Dav1dfile.df_close(handle);
-			handle = IntPtr.Zero;
-			NativeMemory.Free((void*) ByteBuffer);
-			ByteBuffer = IntPtr.Zero;
+			BufferFrameSync(video);
 
-			while (BufferedTextures.Count > 0)
+			if (video.Ended && video.Loop)
 			{
-				if (BufferedTextures.TryDequeue(out var texture))
-				{
-					AvailableTextures.Add(texture);
-				}
+				ResetSync(video);
 			}
 		}
 	}
 
-	private unsafe void BufferFrame()
+	internal void RegisterVideo(VideoAV1 video)
 	{
-		if (AvailableTextures.Count == 0) { return; }
+		lock (ActiveVideos)
+		{
+			ActiveVideos.Add(video);
+		}
+	}
+
+	internal void UnregisterVideo(VideoAV1 video)
+	{
+		lock (ActiveVideos)
+		{
+			ActiveVideos.Remove(video);
+		}
+	}
+
+	private void ResetSync(VideoAV1 videoPlayer)
+	{
+		Dav1dfile.df_reset(videoPlayer.Handle);
+		BufferFrameSync(videoPlayer);
+	}
+
+	public unsafe void BufferFrameSync(VideoAV1 videoPlayer)
+	{
+		nint yDataHandle;
+		nint uDataHandle;
+		nint vDataHandle;
+		uint yDataLength;
+		uint uvDataLength;
+		uint yStride;
+		uint uvStride;
 
 		var result = Dav1dfile.df_readvideo(
-			handle,
+			videoPlayer.handle,
 			1,
-			out var yDataHandle,
-			out var uDataHandle,
-			out var vDataHandle,
-			out var yDataLength,
-			out var uvDataLength,
-			out var yStride,
-			out var uvStride
+			out yDataHandle,
+			out uDataHandle,
+			out vDataHandle,
+			out yDataLength,
+			out uvDataLength,
+			out yStride,
+			out uvStride
 		);
 
 		if (result == 0)
@@ -265,7 +115,7 @@ internal class VideoAV1BufferStream : GraphicsResource
 			return;
 		}
 
-		var renderTexture = AcquireTexture();
+		var renderTexture = videoPlayer.AcquireTexture();
 
 		var ySpan = new Span<byte>((void*) yDataHandle, (int) yDataLength);
 		var uSpan = new Span<byte>((void*) uDataHandle, (int) uvDataLength);
@@ -274,7 +124,7 @@ internal class VideoAV1BufferStream : GraphicsResource
 		if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 		{
 			TransferBuffer?.Dispose();
-			TransferBuffer = TransferBuffer.Create(Device, new TransferBufferCreateInfo
+			TransferBuffer = TransferBuffer.Create(GraphicsDevice, new TransferBufferCreateInfo
 			{
 				Usage = TransferBufferUsage.Upload,
 				Size = (uint) (ySpan.Length + uSpan.Length + vSpan.Length)
@@ -290,9 +140,9 @@ internal class VideoAV1BufferStream : GraphicsResource
 		TransferBuffer.Unmap();
 
 		var uOffset = (uint) ySpan.Length;
-		var vOffset = (uint) (ySpan.Length + vSpan.Length);
+		var vOffset = (uint) (ySpan.Length + uSpan.Length);
 
-		var commandBuffer = Device.AcquireCommandBuffer();
+		var commandBuffer = GraphicsDevice.AcquireCommandBuffer();
 
 		var copyPass = commandBuffer.BeginCopyPass();
 
@@ -302,16 +152,16 @@ internal class VideoAV1BufferStream : GraphicsResource
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = 0,
 				PixelsPerRow = yStride,
-				RowsPerLayer = yTexture.Height
+				RowsPerLayer = videoPlayer.yTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = yTexture.Handle,
-				W = yTexture.Width,
-				H = yTexture.Height,
+				Texture = videoPlayer.yTexture.Handle,
+				W = videoPlayer.yTexture.Width,
+				H = videoPlayer.yTexture.Height,
 				D = 1
 			},
-			true
+			false
 		);
 
 		copyPass.UploadToTexture(
@@ -320,16 +170,16 @@ internal class VideoAV1BufferStream : GraphicsResource
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = uOffset,
 				PixelsPerRow = uvStride,
-				RowsPerLayer = uTexture.Height
+				RowsPerLayer = videoPlayer.uTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = uTexture.Handle,
-				W = uTexture.Width,
-				H = uTexture.Height,
+				Texture = videoPlayer.uTexture.Handle,
+				W = videoPlayer.uTexture.Width,
+				H = videoPlayer.uTexture.Height,
 				D = 1
 			},
-			true
+			false
 		);
 
 		copyPass.UploadToTexture(
@@ -338,16 +188,16 @@ internal class VideoAV1BufferStream : GraphicsResource
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = vOffset,
 				PixelsPerRow = uvStride,
-				RowsPerLayer = vTexture.Height
+				RowsPerLayer = videoPlayer.vTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = vTexture.Handle,
-				W = vTexture.Width,
-				H = vTexture.Height,
+				Texture = videoPlayer.vTexture.Handle,
+				W = videoPlayer.vTexture.Width,
+				H = videoPlayer.vTexture.Height,
 				D = 1
 			},
-			true
+			false
 		);
 
 		commandBuffer.EndCopyPass(copyPass);
@@ -359,81 +209,49 @@ internal class VideoAV1BufferStream : GraphicsResource
 				LoadOp = LoadOp.Clear,
 				ClearColor = Color.Black,
 				StoreOp = StoreOp.Store,
-				Cycle = true
+				Cycle = false
 			}
 		);
 
-		renderPass.BindGraphicsPipeline(Device.VideoPipeline);
+		renderPass.BindGraphicsPipeline(GraphicsDevice.VideoPipeline);
 		renderPass.BindFragmentSamplers(
-			new TextureSamplerBinding(yTexture, Device.LinearSampler),
-			new TextureSamplerBinding(uTexture, Device.LinearSampler),
-			new TextureSamplerBinding(vTexture, Device.LinearSampler)
+			new TextureSamplerBinding(videoPlayer.yTexture, GraphicsDevice.LinearSampler),
+			new TextureSamplerBinding(videoPlayer.uTexture, GraphicsDevice.LinearSampler),
+			new TextureSamplerBinding(videoPlayer.vTexture, GraphicsDevice.LinearSampler)
 		);
 		renderPass.DrawPrimitives(3, 1, 0, 0);
 
 		commandBuffer.EndRenderPass(renderPass);
-		Device.Submit(commandBuffer);
+		GraphicsDevice.Submit(commandBuffer);
 
-		BufferedTextures.Enqueue(renderTexture);
+		videoPlayer.BufferFrame(renderTexture);
 	}
 
-	private Texture AcquireTexture()
-	{
-		lock (AvailableTextures)
-		{
-			var result = AvailableTextures[AvailableTextures.Count - 1];
-			AvailableTextures.RemoveAt(AvailableTextures.Count - 1);
-			return result;
-		}
-	}
-
-	private static Texture CreateSubTexture(GraphicsDevice graphicsDevice, int width, int height)
-	{
-		return Texture.Create2D(
-			graphicsDevice,
-			(uint) width,
-			(uint) height,
-			TextureFormat.R8Unorm,
-			TextureUsageFlags.Sampler
-		);
-	}
-
-	protected override unsafe void Dispose(bool disposing)
+	protected virtual void Dispose(bool disposing)
 	{
 		if (!IsDisposed)
 		{
-			Unload();
 			Running = false;
 
 			if (disposing)
 			{
-				CancellationTokenSource.Cancel();
 				Thread.Join();
 
-				if (Loaded)
-				{
-					Dav1dfile.df_close(handle);
-					handle = IntPtr.Zero;
-					NativeMemory.Free((void*) ByteBuffer);
-					ByteBuffer = IntPtr.Zero;
-
-					yTexture?.Dispose();
-					uTexture?.Dispose();
-					vTexture?.Dispose();
-
-					while (BufferedTextures.TryDequeue(out var texture))
-					{
-						AvailableTextures.Add(texture);
-					}
-
-					for (var i = 0; i < AvailableTextures.Count; i += 1)
-					{
-						AvailableTextures[i]?.Dispose();
-					}
-				}
+				TransferBuffer?.Dispose();
 			}
 		}
+	}
 
-		base.Dispose(disposing);
+	~VideoAV1BufferStream()
+	{
+		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		Dispose(disposing: false);
+	}
+
+	public void Dispose()
+	{
+		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
 	}
 }
