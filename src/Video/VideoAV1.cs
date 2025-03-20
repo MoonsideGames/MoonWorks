@@ -14,7 +14,6 @@ namespace MoonWorks.Video
 	/// </summary>
 	public unsafe class VideoAV1 : GraphicsResource
 	{
-		internal TitleStorage Storage { get; private init; }
 		internal string Path { get; private init; }
 
 		// One of these per Game class
@@ -25,8 +24,8 @@ namespace MoonWorks.Video
 
 		internal IntPtr ByteBuffer;
 
-		public bool Loaded => handle != IntPtr.Zero;
-		public bool Ended => Handle == IntPtr.Zero || Dav1dfile.df_eos(Handle) == 1;
+		public bool Loaded { get; private set; }
+		public bool Ended => Handle == IntPtr.Zero || (BufferedTextures.IsEmpty && Dav1dfile.df_eos(Handle) == 1);
 		public double FramesPerSecond { get; set; }
 
 		public bool Loop { get; private set; }
@@ -53,65 +52,37 @@ namespace MoonWorks.Video
 		uint Width;
 		uint Height;
 
-		public VideoAV1(GraphicsDevice graphicsDevice, VideoDevice videoDevice, TitleStorage storage, string filepath, double framesPerSecond) : base(graphicsDevice)
+		// Returns null if unsuccessful.
+		public static VideoAV1 Create(GraphicsDevice graphicsDevice, VideoDevice videoDevice, TitleStorage storage, string filepath, double framesPerSecond)
 		{
-			Name = "VideoPlayer";
-			Storage = storage;
-			Path = filepath;
-			VideoDevice = videoDevice;
-			FramesPerSecond = framesPerSecond;
-		}
-
-		/// <summary>
-		/// Prepares a VideoAV1 for decoding and rendering.
-		/// </summary>
-		/// <param name="video"></param>
-		public void Load(bool loop)
-		{
-			if (Loaded || !LoadTask.IsCompleted)
+			if (!storage.GetFileSize(filepath, out var size))
 			{
-				return;
+				Logger.LogError("Failed to open video file: " + filepath);
+				return null;
 			}
 
-			LoadTask.Wait(); // if we're still loading, wait first
-
-			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
-			timeAccumulator = TimeSpan.Zero;
-
-			Loop = loop;
-
-			LoadTask = Task.Run(LoadHelper);
-		}
-
-		private void LoadHelper()
-		{
-			// FIXME: should the storage be on the video object?
-			if (!Storage.GetFileSize(Path, out var size))
+			var byteBuffer = (nint) NativeMemory.Alloc((nuint) size);
+			var span = new Span<byte>((void*) byteBuffer, (int) size);
+			if (!storage.ReadFile(filepath, span))
 			{
-				Logger.LogError("Failed to open video file: " + Path);
-				return;
+				Logger.LogError("Failed to open video file: " + filepath);
+				NativeMemory.Free((void*) byteBuffer);
+				return null;
 			}
 
-			ByteBuffer = (nint) NativeMemory.Alloc((nuint) size);
-			var span = new Span<byte>((void*) ByteBuffer, (int) size);
-			if (!Storage.ReadFile(Path, span))
+			if (Dav1dfile.df_open_from_memory(byteBuffer, (uint) size, out var handle) == 0)
 			{
-				Logger.LogError("Failed to open video file: " + Path);
-				NativeMemory.Free((void*) ByteBuffer);
-				return;
+				Logger.LogError("Failed to load video file: " + filepath);
+				NativeMemory.Free((void*) byteBuffer);
+				return null;
 			}
 
-			if (Dav1dfile.df_open_from_memory(ByteBuffer, (uint) size, out handle) == 0)
-			{
-				Logger.LogError("Failed to load video file: " + Path);
-				NativeMemory.Free((void*) ByteBuffer);
-				return;
-			}
+			Dav1dfile.df_videoinfo(handle, out var videoWidth, out var videoHeight, out var pixelLayout);
 
-			Dav1dfile.df_videoinfo(Handle, out var width, out var height, out var pixelLayout);
-
-			int uvWidth;
-			int uvHeight;
+			uint width = (uint) videoWidth;
+			uint height = (uint) videoHeight;
+			uint uvWidth;
+			uint uvHeight;
 
 			if (pixelLayout == Dav1dfile.PixelLayout.I420)
 			{
@@ -131,41 +102,82 @@ namespace MoonWorks.Video
 			else
 			{
 				Logger.LogError("Failed to load video: unrecognized YUV format!");
-				Unload();
+				Dav1dfile.df_close(handle);
+				NativeMemory.Free((void*) byteBuffer);
+				return null;
+			}
+
+			return new VideoAV1(
+				handle,
+				byteBuffer,
+				graphicsDevice,
+				videoDevice,
+				filepath,
+				framesPerSecond,
+				width,
+				height,
+				uvWidth,
+				uvHeight);
+		}
+
+		private VideoAV1(
+			IntPtr dav1dHandle,
+			IntPtr byteBuffer,
+			GraphicsDevice graphicsDevice,
+			VideoDevice videoDevice,
+			string filepath,
+			double framesPerSecond,
+			uint width,
+			uint height,
+			uint uvWidth,
+			uint uvHeight
+		) : base(graphicsDevice)
+		{
+			handle = dav1dHandle;
+			ByteBuffer = byteBuffer;
+			Name = "VideoPlayer";
+			Path = filepath;
+			VideoDevice = videoDevice;
+			FramesPerSecond = framesPerSecond;
+
+			yTexture = CreateSubTexture(Device, width, height);
+			uTexture = CreateSubTexture(Device, uvWidth, uvHeight);
+			vTexture = CreateSubTexture(Device, uvWidth, uvHeight);
+
+			Width = width;
+			Height = height;
+		}
+
+		/// <summary>
+		/// Prepares a VideoAV1 for decoding and rendering.
+		/// </summary>
+		public void Load(bool loop)
+		{
+			if (Loaded || !LoadTask.IsCompleted)
+			{
 				return;
 			}
 
-			for (var i = 0; i < BUFFERED_FRAME_COUNT; i += 1)
+			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
+			timeAccumulator = TimeSpan.Zero;
+
+			Loop = loop;
+
+			LoadTask = Task.Run(LoadHelper);
+		}
+
+		private void LoadHelper()
+		{
+			for (var i = 0; i < BUFFERED_FRAME_COUNT - AvailableTextures.Count; i += 1)
 			{
 				AvailableTextures.Enqueue(Texture.Create2D(
 					Device,
-					(uint) width,
-					(uint) height,
+					Width,
+					Height,
 					TextureFormat.R8G8B8A8Unorm,
 					TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
 				));
 			}
-
-			if (yTexture == null || yTexture.Width != width || yTexture.Height != height)
-			{
-				yTexture?.Dispose();
-				yTexture = CreateSubTexture(Device, width, height);
-			}
-
-			if (uTexture == null || uTexture.Width != uvWidth || uTexture.Height != uvHeight)
-			{
-				uTexture?.Dispose();
-				uTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-			}
-
-			if (vTexture == null || vTexture.Width != uvWidth || vTexture.Height != uvHeight)
-			{
-				vTexture?.Dispose();
-				vTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-			}
-
-			Width = (uint) width;
-			Height = (uint) height;
 
 			VideoDevice.RegisterVideo(this);
 
@@ -175,6 +187,8 @@ namespace MoonWorks.Video
 			{
 				Thread.Sleep(1);
 			}
+
+			Loaded = true;
 		}
 
 		/// <summary>
@@ -207,24 +221,30 @@ namespace MoonWorks.Video
 		/// <summary>
 		/// Unloads the currently playing video.
 		/// </summary>
-		public void Unload()
+		/// <param name="freeTextures">
+		/// Set this to true to free the render textures.
+		/// </param>
+		public void Unload(bool freeTextures)
 		{
 			timeAccumulator = TimeSpan.Zero;
-
 			State = VideoState.Stopped;
 
 			VideoDevice.UnregisterVideo(this);
+			Loaded = false;
 
 			if (Loaded)
 			{
-				Dav1dfile.df_close(Handle);
-				handle = IntPtr.Zero;
-				NativeMemory.Free((void*) ByteBuffer);
-				ByteBuffer = IntPtr.Zero;
-
 				while (BufferedTextures.TryDequeue(out var texture))
 				{
 					AvailableTextures.Enqueue(texture);
+				}
+
+				if (freeTextures)
+				{
+					while (AvailableTextures.TryDequeue(out var texture))
+					{
+						texture.Dispose();
+					}
 				}
 			}
 		}
@@ -234,13 +254,13 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Update(TimeSpan delta)
 		{
-			// Wait for loading to actually be done
-			LoadTask.Wait();
-
 			if (!Loaded || State == VideoState.Stopped)
 			{
 				return;
 			}
+
+			// Wait for loading to actually be done
+			LoadTask.Wait();
 
 			if (State == VideoState.Playing)
 			{
@@ -316,12 +336,12 @@ namespace MoonWorks.Video
 			BufferedTextures.Enqueue(texture);
 		}
 
-		private static Texture CreateSubTexture(GraphicsDevice graphicsDevice, int width, int height)
+		private static Texture CreateSubTexture(GraphicsDevice graphicsDevice, uint width, uint height)
 		{
 			return Texture.Create2D(
 				graphicsDevice,
-				(uint) width,
-				(uint) height,
+				width,
+				height,
 				TextureFormat.R8Unorm,
 				TextureUsageFlags.Sampler
 			);
@@ -331,7 +351,10 @@ namespace MoonWorks.Video
 		{
 			if (!IsDisposed)
 			{
-				Unload();
+				Dav1dfile.df_close(Handle);
+				handle = IntPtr.Zero;
+				NativeMemory.Free((void*) ByteBuffer);
+				ByteBuffer = IntPtr.Zero;
 			}
 			base.Dispose(disposing);
 		}

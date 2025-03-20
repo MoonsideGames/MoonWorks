@@ -12,6 +12,7 @@ public class VideoDevice : IDisposable
 	private TransferBuffer TransferBuffer;
 
 	private HashSet<VideoAV1> ActiveVideos = [];
+	private HashSet<VideoAV1> VideosToDeactivate = [];
 
 	Thread Thread;
 	private AutoResetEvent WakeSignal;
@@ -38,6 +39,13 @@ public class VideoDevice : IDisposable
 
 		while (Running)
 		{
+			foreach (var video in VideosToDeactivate)
+			{
+				Dav1dfile.df_reset(video.Handle);
+				ActiveVideos.Remove(video);
+			}
+			VideosToDeactivate.Clear();
+
 			// this lock might be really bad?
 			lock (ActiveVideos)
 			{
@@ -75,10 +83,7 @@ public class VideoDevice : IDisposable
 
 	internal void UnregisterVideo(VideoAV1 video)
 	{
-		lock (ActiveVideos)
-		{
-			ActiveVideos.Remove(video);
-		}
+		VideosToDeactivate.Add(video);
 	}
 
 	private void ResetSync(VideoAV1 videoPlayer)
