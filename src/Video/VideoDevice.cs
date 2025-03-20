@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using MoonWorks.Graphics;
@@ -12,7 +13,9 @@ public class VideoDevice : IDisposable
 	private TransferBuffer TransferBuffer;
 
 	private HashSet<VideoAV1> ActiveVideos = [];
-	private HashSet<VideoAV1> VideosToDeactivate = [];
+
+	private ConcurrentQueue<VideoAV1> VideosToActivate = [];
+	private ConcurrentQueue<VideoAV1> VideosToDeactivate = [];
 
 	Thread Thread;
 	private AutoResetEvent WakeSignal;
@@ -39,20 +42,28 @@ public class VideoDevice : IDisposable
 
 		while (Running)
 		{
-			foreach (var video in VideosToDeactivate)
+			while (VideosToDeactivate.TryDequeue(out var video))
 			{
 				Dav1dfile.df_reset(video.Handle);
 				ActiveVideos.Remove(video);
 			}
-			VideosToDeactivate.Clear();
 
-			// this lock might be really bad?
-			lock (ActiveVideos)
+			while (VideosToActivate.TryDequeue(out var video))
 			{
-				foreach (var video in ActiveVideos)
+				ActiveVideos.Add(video);
+
+				for (var i = 0; i < 3; i += 1)
 				{
-					ProcessVideo(video);
+					BufferFrameSync(video);
 				}
+
+				video.LoadWaitHandle.Set();
+				video.Loaded = true;
+			}
+
+			foreach (var video in ActiveVideos)
+			{
+				ProcessVideo(video);
 			}
 
 			WakeSignal.WaitOne(UpdateInterval);
@@ -75,15 +86,12 @@ public class VideoDevice : IDisposable
 
 	internal void RegisterVideo(VideoAV1 video)
 	{
-		lock (ActiveVideos)
-		{
-			ActiveVideos.Add(video);
-		}
+		VideosToActivate.Enqueue(video);
 	}
 
 	internal void UnregisterVideo(VideoAV1 video)
 	{
-		VideosToDeactivate.Add(video);
+		VideosToDeactivate.Enqueue(video);
 	}
 
 	private void ResetSync(VideoAV1 videoPlayer)

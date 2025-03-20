@@ -24,7 +24,7 @@ namespace MoonWorks.Video
 
 		internal IntPtr ByteBuffer;
 
-		public bool Loaded { get; private set; }
+		public bool Loaded { get; internal set; }
 		public bool Ended => Handle == IntPtr.Zero || (BufferedTextures.IsEmpty && Dav1dfile.df_eos(Handle) == 1);
 		public double FramesPerSecond { get; set; }
 
@@ -39,8 +39,6 @@ namespace MoonWorks.Video
 		private TimeSpan timeAccumulator;
 		private TimeSpan framerateTimestep;
 
-		private Task LoadTask = Task.CompletedTask;
-
 		public const int BUFFERED_FRAME_COUNT = 5;
 		private ConcurrentQueue<Texture> AvailableTextures = [];
 		private ConcurrentQueue<Texture> BufferedTextures = [];
@@ -51,6 +49,9 @@ namespace MoonWorks.Video
 
 		uint Width;
 		uint Height;
+
+		// if signaled, loading is complete.
+		internal EventWaitHandle LoadWaitHandle;
 
 		// Returns null if unsuccessful.
 		public static VideoAV1 Create(GraphicsDevice graphicsDevice, VideoDevice videoDevice, TitleStorage storage, string filepath, double framesPerSecond)
@@ -146,6 +147,8 @@ namespace MoonWorks.Video
 
 			Width = width;
 			Height = height;
+
+			LoadWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 		}
 
 		/// <summary>
@@ -153,21 +156,11 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Load(bool loop)
 		{
-			if (Loaded || !LoadTask.IsCompleted)
+			if (Loaded)
 			{
 				return;
 			}
 
-			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
-			timeAccumulator = TimeSpan.Zero;
-
-			Loop = loop;
-
-			LoadTask = Task.Run(LoadHelper);
-		}
-
-		private void LoadHelper()
-		{
 			for (var i = 0; i < BUFFERED_FRAME_COUNT - AvailableTextures.Count; i += 1)
 			{
 				AvailableTextures.Enqueue(Texture.Create2D(
@@ -179,16 +172,13 @@ namespace MoonWorks.Video
 				));
 			}
 
+			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
+			timeAccumulator = TimeSpan.Zero;
+
+			Loop = loop;
+
+			LoadWaitHandle.Reset(); //de-signal
 			VideoDevice.RegisterVideo(this);
-
-			// FIXME: jaaaaaank
-			// wait until 3 frames are buffered by the video thread
-			while (BufferedFrameCount() < 3)
-			{
-				Thread.Sleep(1);
-			}
-
-			Loaded = true;
 		}
 
 		/// <summary>
@@ -260,7 +250,7 @@ namespace MoonWorks.Video
 			}
 
 			// Wait for loading to actually be done
-			LoadTask.Wait();
+			LoadWaitHandle.WaitOne();
 
 			if (State == VideoState.Playing)
 			{
