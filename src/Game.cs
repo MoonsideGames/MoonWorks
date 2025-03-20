@@ -145,14 +145,14 @@ namespace MoonWorks
 				window.Dispose();
 			}
 
+			Logger.LogInfo("Closing video thread...");
+			VideoDevice.Dispose();
+
 			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
 
 			Logger.LogInfo("Closing audio thread...");
 			AudioDevice.Dispose();
-
-			Logger.LogInfo("Closing video thread...");
-			VideoDevice.Dispose();
 
 			Logger.LogInfo("Disposing title storage...");
 			RootTitleStorage.Dispose();
