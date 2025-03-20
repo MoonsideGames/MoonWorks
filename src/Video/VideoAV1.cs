@@ -68,9 +68,12 @@ namespace MoonWorks.Video
 		/// <param name="video"></param>
 		public void Load(bool loop)
 		{
-			LoadTask.Wait(); // if we're still loading, wait first
+			if (Loaded || !LoadTask.IsCompleted)
+			{
+				return;
+			}
 
-			Unload();
+			LoadTask.Wait(); // if we're still loading, wait first
 
 			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
 			timeAccumulator = TimeSpan.Zero;
@@ -199,21 +202,6 @@ namespace MoonWorks.Video
 			}
 
 			State = VideoState.Paused;
-		}
-
-		/// <summary>
-		/// Stops and resets decoding of the currently playing video.
-		/// </summary>
-		public void Stop()
-		{
-			if (State == VideoState.Stopped)
-			{
-				return;
-			}
-
-			timeAccumulator = TimeSpan.Zero;
-
-			State = VideoState.Stopped;
 		}
 
 		/// <summary>
