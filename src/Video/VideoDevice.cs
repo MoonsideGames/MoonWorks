@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using MoonWorks.Graphics;
 
@@ -24,6 +25,7 @@ public class VideoDevice : IDisposable
 	Thread Thread;
 	private AutoResetEvent WakeSignal;
 	private TimeSpan UpdateInterval;
+	private Stopwatch ThreadTimer = new Stopwatch();
 
 	private bool Running = false;
 	public bool IsDisposed { get; private set; }
@@ -46,6 +48,8 @@ public class VideoDevice : IDisposable
 
 		while (Running)
 		{
+			ThreadTimer.Restart();
+
 			while (VideosToDeactivate.TryDequeue(out var video))
 			{
 				Dav1dfile.df_reset(video.Handle);
@@ -70,7 +74,12 @@ public class VideoDevice : IDisposable
 				ProcessVideo(video);
 			}
 
-			WakeSignal.WaitOne(UpdateInterval);
+			ThreadTimer.Stop();
+
+			if (ThreadTimer.Elapsed < UpdateInterval)
+			{
+				WakeSignal.WaitOne(UpdateInterval - ThreadTimer.Elapsed);
+			}
 		}
 	}
 
