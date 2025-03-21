@@ -9,13 +9,17 @@ namespace MoonWorks.Video;
 // Responsible for performing video operations on a single background thread.
 public class VideoDevice : IDisposable
 {
-	private GraphicsDevice GraphicsDevice;
-	private TransferBuffer TransferBuffer;
-
 	private HashSet<VideoAV1> ActiveVideos = [];
 
 	private ConcurrentQueue<VideoAV1> VideosToActivate = [];
 	private ConcurrentQueue<VideoAV1> VideosToDeactivate = [];
+
+	GraphicsDevice GraphicsDevice;
+	TransferBuffer TransferBuffer;
+	Dictionary<(uint, uint), Texture> RenderTextureCache = [];
+	Dictionary<(uint, uint), Texture> YTextureCache = [];
+	Dictionary<(uint, uint), Texture> UTextureCache = [];
+	Dictionary<(uint, uint), Texture> VTextureCache = [];
 
 	Thread Thread;
 	private AutoResetEvent WakeSignal;
@@ -24,9 +28,9 @@ public class VideoDevice : IDisposable
 	private bool Running = false;
 	public bool IsDisposed { get; private set; }
 
-	public VideoDevice(GraphicsDevice device)
+	public VideoDevice(GraphicsDevice graphicsDevice)
 	{
-		GraphicsDevice = device;
+		GraphicsDevice = graphicsDevice;
 
 		var step = 200;
 		UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / step);
@@ -94,13 +98,13 @@ public class VideoDevice : IDisposable
 		VideosToDeactivate.Enqueue(video);
 	}
 
-	private void ResetSync(VideoAV1 videoPlayer)
+	private void ResetSync(VideoAV1 video)
 	{
-		Dav1dfile.df_reset(videoPlayer.Handle);
-		BufferFrameSync(videoPlayer);
+		Dav1dfile.df_reset(video.Handle);
+		BufferFrameSync(video);
 	}
 
-	public unsafe void BufferFrameSync(VideoAV1 videoPlayer)
+	public unsafe void BufferFrameSync(VideoAV1 video)
 	{
 		nint yDataHandle;
 		nint uDataHandle;
@@ -111,7 +115,7 @@ public class VideoDevice : IDisposable
 		uint uvStride;
 
 		var result = Dav1dfile.df_readvideo(
-			videoPlayer.handle,
+			video.handle,
 			1,
 			out yDataHandle,
 			out uDataHandle,
@@ -127,25 +131,115 @@ public class VideoDevice : IDisposable
 			return;
 		}
 
-		var renderTexture = videoPlayer.AcquireTexture();
+		// TODO: what should we do if there aren't any available framebuffers?
+		var framebuffer = video.AcquireFramebuffer();
 
 		var ySpan = new Span<byte>((void*) yDataHandle, (int) yDataLength);
 		var uSpan = new Span<byte>((void*) uDataHandle, (int) uvDataLength);
 		var vSpan = new Span<byte>((void*) vDataHandle, (int) uvDataLength);
 
+		framebuffer.SetBufferData(
+			ySpan,
+			uSpan,
+			vSpan,
+			yStride,
+			uvStride,
+			video.Width,
+			video.Height,
+			video.UVWidth,
+			video.UVHeight
+		);
+
+		video.EnqueueFramebuffer(framebuffer);
+	}
+
+	// This is NOT thread-safe!
+	// In general use cases only one video is rendered at a time.
+	// This function happens on the VideoDevice so we can share graphics resources.
+	internal unsafe Texture RenderFrame(YUVFramebuffer framebuffer)
+	{
+		if (!RenderTextureCache.TryGetValue((framebuffer.YWidth, framebuffer.YHeight), out var renderTexture))
+		{
+			renderTexture = Texture.Create2D(
+				GraphicsDevice,
+				"Video Render Texture",
+				framebuffer.YWidth,
+				framebuffer.YHeight,
+				TextureFormat.R8G8B8A8Unorm,
+				TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
+			);
+
+			RenderTextureCache.Add((framebuffer.YWidth, framebuffer.YHeight), renderTexture);
+		}
+
+		if (!YTextureCache.TryGetValue((framebuffer.YWidth, framebuffer.YHeight), out var yTexture))
+		{
+			yTexture = Texture.Create2D(
+				GraphicsDevice,
+				"Y Sample Texture",
+				framebuffer.YWidth,
+				framebuffer.YHeight,
+				TextureFormat.R8Unorm,
+				TextureUsageFlags.Sampler
+			);
+
+			YTextureCache.Add((framebuffer.YWidth, framebuffer.YHeight), yTexture);
+		}
+
+		if (!UTextureCache.TryGetValue((framebuffer.UVWidth, framebuffer.UVHeight), out var uTexture))
+		{
+			uTexture = Texture.Create2D(
+				GraphicsDevice,
+				"U Sample Texture",
+				framebuffer.UVWidth,
+				framebuffer.UVHeight,
+				TextureFormat.R8Unorm,
+				TextureUsageFlags.Sampler
+			);
+
+			UTextureCache.Add((framebuffer.UVWidth, framebuffer.UVHeight), uTexture);
+		}
+
+		if (!VTextureCache.TryGetValue((framebuffer.UVWidth, framebuffer.UVHeight), out var vTexture))
+		{
+			vTexture = Texture.Create2D(
+				GraphicsDevice,
+				"V Sample Texture",
+				framebuffer.UVWidth,
+				framebuffer.UVHeight,
+				TextureFormat.R8Unorm,
+				TextureUsageFlags.Sampler
+			);
+
+			VTextureCache.Add((framebuffer.UVWidth, framebuffer.UVHeight), vTexture);
+		}
+
+		var ySpan = new Span<byte>(
+			(void*) framebuffer.YDataBuffer,
+			(int) framebuffer.YDataBufferLength);
+
+		var uSpan = new Span<byte>(
+			(void*) framebuffer.UDataBuffer,
+			(int) framebuffer.UVDataBufferLength);
+
+		var vSpan = new Span<byte>(
+			(void*) framebuffer.VDataBuffer,
+			(int) framebuffer.UVDataBufferLength);
+
 		if (TransferBuffer == null || TransferBuffer.Size < ySpan.Length + uSpan.Length + vSpan.Length)
 		{
 			TransferBuffer?.Dispose();
-			TransferBuffer = TransferBuffer.Create(GraphicsDevice, new TransferBufferCreateInfo
-			{
-				Usage = TransferBufferUsage.Upload,
-				Size = (uint) (ySpan.Length + uSpan.Length + vSpan.Length)
-			});
+			TransferBuffer = TransferBuffer.Create<byte>(
+				GraphicsDevice,
+				"Video Transfer Buffer",
+				TransferBufferUsage.Upload,
+				(uint) (ySpan.Length + uSpan.Length + vSpan.Length)
+			);
 		}
 
 		var transferYSpan = TransferBuffer.Map<byte>(true);
-		var transferUSpan = transferYSpan[(int) yDataLength..];
-		var transferVSpan = transferYSpan[(int) (yDataLength + uvDataLength)..];
+		var transferUSpan = transferYSpan[(int) framebuffer.YDataBufferLength..];
+		var transferVSpan = transferYSpan[(int) (framebuffer.YDataBufferLength + framebuffer.UVDataBufferLength)..];
 		ySpan.CopyTo(transferYSpan);
 		uSpan.CopyTo(transferUSpan);
 		vSpan.CopyTo(transferVSpan);
@@ -163,14 +257,14 @@ public class VideoDevice : IDisposable
 			{
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = 0,
-				PixelsPerRow = yStride,
-				RowsPerLayer = videoPlayer.yTexture.Height
+				PixelsPerRow = framebuffer.YStride,
+				RowsPerLayer = yTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = videoPlayer.yTexture.Handle,
-				W = videoPlayer.yTexture.Width,
-				H = videoPlayer.yTexture.Height,
+				Texture = yTexture.Handle,
+				W = yTexture.Width,
+				H = yTexture.Height,
 				D = 1
 			},
 			false
@@ -181,14 +275,14 @@ public class VideoDevice : IDisposable
 			{
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = uOffset,
-				PixelsPerRow = uvStride,
-				RowsPerLayer = videoPlayer.uTexture.Height
+				PixelsPerRow = framebuffer.UVStride,
+				RowsPerLayer = uTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = videoPlayer.uTexture.Handle,
-				W = videoPlayer.uTexture.Width,
-				H = videoPlayer.uTexture.Height,
+				Texture = uTexture.Handle,
+				W = uTexture.Width,
+				H = uTexture.Height,
 				D = 1
 			},
 			false
@@ -199,14 +293,14 @@ public class VideoDevice : IDisposable
 			{
 				TransferBuffer = TransferBuffer.Handle,
 				Offset = vOffset,
-				PixelsPerRow = uvStride,
-				RowsPerLayer = videoPlayer.vTexture.Height
+				PixelsPerRow = framebuffer.UVStride,
+				RowsPerLayer = vTexture.Height
 			},
 			new TextureRegion
 			{
-				Texture = videoPlayer.vTexture.Handle,
-				W = videoPlayer.vTexture.Width,
-				H = videoPlayer.vTexture.Height,
+				Texture = vTexture.Handle,
+				W = vTexture.Width,
+				H = vTexture.Height,
 				D = 1
 			},
 			false
@@ -227,16 +321,16 @@ public class VideoDevice : IDisposable
 
 		renderPass.BindGraphicsPipeline(GraphicsDevice.VideoPipeline);
 		renderPass.BindFragmentSamplers(
-			new TextureSamplerBinding(videoPlayer.yTexture, GraphicsDevice.LinearSampler),
-			new TextureSamplerBinding(videoPlayer.uTexture, GraphicsDevice.LinearSampler),
-			new TextureSamplerBinding(videoPlayer.vTexture, GraphicsDevice.LinearSampler)
+			new TextureSamplerBinding(yTexture, GraphicsDevice.LinearSampler),
+			new TextureSamplerBinding(uTexture, GraphicsDevice.LinearSampler),
+			new TextureSamplerBinding(vTexture, GraphicsDevice.LinearSampler)
 		);
 		renderPass.DrawPrimitives(3, 1, 0, 0);
 
 		commandBuffer.EndRenderPass(renderPass);
 		GraphicsDevice.Submit(commandBuffer);
 
-		videoPlayer.BufferFrame(renderTexture);
+		return renderTexture;
 	}
 
 	protected virtual void Dispose(bool disposing)
@@ -249,7 +343,29 @@ public class VideoDevice : IDisposable
 			{
 				Thread.Join();
 
-				TransferBuffer?.Dispose();
+				foreach (var (_, texture) in RenderTextureCache)
+				{
+					texture.Dispose();
+				}
+				RenderTextureCache.Clear();
+
+				foreach (var (_, texture) in YTextureCache)
+				{
+					texture.Dispose();
+				}
+				YTextureCache.Clear();
+
+				foreach (var (_, texture) in UTextureCache)
+				{
+					texture.Dispose();
+				}
+				UTextureCache.Clear();
+
+				foreach (var (_, texture) in VTextureCache)
+				{
+					texture.Dispose();
+				}
+				VTextureCache.Clear();
 			}
 		}
 	}

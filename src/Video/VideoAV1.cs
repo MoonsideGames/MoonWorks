@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
 
@@ -25,13 +23,15 @@ namespace MoonWorks.Video
 		internal IntPtr ByteBuffer;
 
 		public bool Loaded { get; internal set; }
-		public bool Ended => Handle == IntPtr.Zero || (BufferedTextures.IsEmpty && Dav1dfile.df_eos(Handle) == 1);
+		public bool Ended => Handle == IntPtr.Zero || (QueuedBuffers.IsEmpty && Dav1dfile.df_eos(Handle) == 1);
 		public double FramesPerSecond { get; set; }
 
 		public bool Loop { get; private set; }
 
-		public Texture RenderTexture => renderTexture;
-		private Texture renderTexture = null;
+		// This texture is owned by the VideoDevice.
+		public Texture RenderTexture { get; internal set; }
+
+		private YUVFramebuffer CurrentFrameBuffer;
 
 		public VideoState State { get; private set; } = VideoState.Stopped;
 		public float PlaybackSpeed { get; set; } = 1;
@@ -40,15 +40,13 @@ namespace MoonWorks.Video
 		private TimeSpan framerateTimestep;
 
 		public const int BUFFERED_FRAME_COUNT = 5;
-		private ConcurrentQueue<Texture> AvailableTextures = [];
-		private ConcurrentQueue<Texture> BufferedTextures = [];
+		private ConcurrentQueue<YUVFramebuffer> AvailableBuffers = [];
+		private ConcurrentQueue<YUVFramebuffer> QueuedBuffers = [];
 
-		internal Texture yTexture = null;
-		internal Texture uTexture = null;
-		internal Texture vTexture = null;
-
-		uint Width;
-		uint Height;
+		public uint Width { get; private set; }
+		public uint Height { get; private set; }
+		public uint UVWidth { get; private set; }
+		public uint UVHeight { get; private set; }
 
 		// if signaled, loading is complete.
 		internal EventWaitHandle LoadWaitHandle;
@@ -141,12 +139,10 @@ namespace MoonWorks.Video
 			VideoDevice = videoDevice;
 			FramesPerSecond = framesPerSecond;
 
-			yTexture = CreateSubTexture(Device, width, height);
-			uTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-			vTexture = CreateSubTexture(Device, uvWidth, uvHeight);
-
 			Width = width;
 			Height = height;
+			UVWidth = uvWidth;
+			UVHeight = uvHeight;
 
 			LoadWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 		}
@@ -161,15 +157,9 @@ namespace MoonWorks.Video
 				return;
 			}
 
-			for (var i = 0; i < BUFFERED_FRAME_COUNT - AvailableTextures.Count; i += 1)
+			for (var i = 0; i < BUFFERED_FRAME_COUNT - AvailableBuffers.Count; i += 1)
 			{
-				AvailableTextures.Enqueue(Texture.Create2D(
-					Device,
-					Width,
-					Height,
-					TextureFormat.R8G8B8A8Unorm,
-					TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
-				));
+				AvailableBuffers.Enqueue(new YUVFramebuffer());
 			}
 
 			framerateTimestep = TimeSpan.FromTicks((long) (TimeSpan.TicksPerSecond / FramesPerSecond));
@@ -214,7 +204,7 @@ namespace MoonWorks.Video
 		/// <param name="freeTextures">
 		/// Set this to true to free the render textures.
 		/// </param>
-		public void Unload(bool freeTextures)
+		public void Unload()
 		{
 			timeAccumulator = TimeSpan.Zero;
 			State = VideoState.Stopped;
@@ -224,17 +214,9 @@ namespace MoonWorks.Video
 
 			if (Loaded)
 			{
-				while (BufferedTextures.TryDequeue(out var texture))
+				while (QueuedBuffers.TryDequeue(out var texture))
 				{
-					AvailableTextures.Enqueue(texture);
-				}
-
-				if (freeTextures)
-				{
-					while (AvailableTextures.TryDequeue(out var texture))
-					{
-						texture.Dispose();
-					}
+					AvailableBuffers.Enqueue(texture);
 				}
 			}
 		}
@@ -259,14 +241,17 @@ namespace MoonWorks.Video
 
 			while (timeAccumulator >= framerateTimestep)
 			{
-				if (TryGetBufferedFrame(out var newTexture))
+				if (TryGetFramebuffer(out var newFramebuffer))
 				{
-					if (renderTexture != null)
+					if (CurrentFrameBuffer != null)
 					{
-						ReleaseFrame(renderTexture);
+						ReleaseFramebuffer(CurrentFrameBuffer);
 					}
 
-					renderTexture = newTexture;
+					CurrentFrameBuffer = newFramebuffer;
+
+					// now that we have a new framebuffer, render it
+					RenderTexture = VideoDevice.RenderFrame(CurrentFrameBuffer);
 				}
 
 				timeAccumulator -= framerateTimestep;
@@ -275,66 +260,48 @@ namespace MoonWorks.Video
 
 		internal int BufferedFrameCount()
 		{
-			return BufferedTextures.Count;
+			return QueuedBuffers.Count;
 		}
 
-		internal Texture AcquireTexture()
+		internal YUVFramebuffer AcquireFramebuffer()
 		{
-			if (!AvailableTextures.TryDequeue(out var texture))
+			if (!AvailableBuffers.TryDequeue(out var framebuffer))
 			{
-				return Texture.Create2D(
-					Device,
-					Width,
-					Height,
-					TextureFormat.R8G8B8A8Unorm,
-					TextureUsageFlags.ColorTarget | TextureUsageFlags.Sampler
-				);
+				// FIXME: this should never happen?
+				return new YUVFramebuffer();
 			}
-			return texture;
+
+			return framebuffer;
 		}
 
 		/// <summary>
-		/// Obtains a buffered frame. Returns false if no frames are available.
-		/// If successful, this method also enqueues a new buffered frame.
+		/// Obtains a frame buffer container. Returns false if none are available.
 		/// You must call ReleaseFrame eventually or the texture will leak.
 		/// </summary>
 		/// <returns>True if frame is available, otherwise false.</returns>
-		private bool TryGetBufferedFrame(out Texture texture)
+		private bool TryGetFramebuffer(out YUVFramebuffer buffer)
 		{
-			texture = null;
-
-			if (BufferedTextures.Count > 0)
+			if (QueuedBuffers.Count > 0)
 			{
-				bool success = BufferedTextures.TryDequeue(out texture);
+				bool success = QueuedBuffers.TryDequeue(out buffer);
 				return success;
 			}
 
+			buffer = default;
 			return false;
 		}
 
 		/// <summary>
 		/// Releases a buffered frame that was previously obtained by TryGetBufferedFrame.
 		/// </summary>
-		private void ReleaseFrame(Texture texture)
+		private void ReleaseFramebuffer(YUVFramebuffer framebuffer)
 		{
-			if (texture == null) { return; }
-			AvailableTextures.Enqueue(texture);
+			AvailableBuffers.Enqueue(framebuffer);
 		}
 
-		internal void BufferFrame(Texture texture)
+		internal void EnqueueFramebuffer(YUVFramebuffer framebuffer)
 		{
-			BufferedTextures.Enqueue(texture);
-		}
-
-		private static Texture CreateSubTexture(GraphicsDevice graphicsDevice, uint width, uint height)
-		{
-			return Texture.Create2D(
-				graphicsDevice,
-				width,
-				height,
-				TextureFormat.R8Unorm,
-				TextureUsageFlags.Sampler
-			);
+			QueuedBuffers.Enqueue(framebuffer);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -345,7 +312,18 @@ namespace MoonWorks.Video
 				handle = IntPtr.Zero;
 				NativeMemory.Free((void*) ByteBuffer);
 				ByteBuffer = IntPtr.Zero;
+
+				while (QueuedBuffers.TryDequeue(out var queuedBuffer))
+				{
+					queuedBuffer.Dispose();
+				}
+
+				while (AvailableBuffers.TryDequeue(out var availableBuffer))
+				{
+					availableBuffer.Dispose();
+				}
 			}
+
 			base.Dispose(disposing);
 		}
 	}
