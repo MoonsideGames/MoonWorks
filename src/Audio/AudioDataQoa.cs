@@ -87,7 +87,6 @@ namespace MoonWorks.Audio
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
 			OutOfData = false;
-			QueueBuffers(); // to avoid stutter when seeking before playback
 		}
 
 		protected override unsafe FAudio.FAudioBuffer OnBufferNeeded()
