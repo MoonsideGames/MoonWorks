@@ -13,7 +13,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
-using MoonWorks.Math;
 using System.Numerics;
 
 namespace MoonWorks.Graphics
@@ -21,9 +20,14 @@ namespace MoonWorks.Graphics
 	/// <summary>
 	/// Describes a 32-bit packed color.
 	/// </summary>
-	public record struct Color(byte R, byte G, byte B, byte A)
+	public record struct Color(byte R, byte G, byte B, byte A = 255)
 	{
-		public Color(byte r, byte g, byte b) : this(r, g, b, 255) { }
+		public Color(int r, int g, int b, int a = 255) : this(
+			(byte) int.Clamp(r, 0, 255),
+			(byte) int.Clamp(g, 0, 255),
+			(byte) int.Clamp(b, 0, 255),
+			(byte) int.Clamp(a, 0, 255)
+		) { }
 
 		/// <summary>
 		/// Constructs an RGBA color from scalars which represent red, green, blue and alpha values.
@@ -49,7 +53,7 @@ namespace MoonWorks.Graphics
 			(byte) (System.Math.Clamp(r, 0, 1) * byte.MaxValue),
 			(byte) (System.Math.Clamp(g, 0, 1) * byte.MaxValue),
 			(byte) (System.Math.Clamp(b, 0, 1) * byte.MaxValue),
-			255
+			(byte) 255
 		) { }
 
 		public Color(Vector4 vector) : this(vector.X, vector.Y, vector.Z, vector.W) { }
