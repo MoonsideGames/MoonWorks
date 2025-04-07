@@ -36,7 +36,8 @@ namespace MoonWorks.Audio
 
 		private const int Step = 200;
 		private TimeSpan UpdateInterval;
-		private System.Diagnostics.Stopwatch TickStopwatch = new System.Diagnostics.Stopwatch();
+		private System.Diagnostics.Stopwatch ThreadTimer = new System.Diagnostics.Stopwatch();
+		private System.Diagnostics.Stopwatch TimeElapsedStopwatch = new System.Diagnostics.Stopwatch();
 		private long previousTickTime;
 		private Thread Thread;
 		private AutoResetEvent WakeSignal;
@@ -132,7 +133,7 @@ namespace MoonWorks.Audio
 
 			Running = true;
 
-			TickStopwatch.Start();
+			TimeElapsedStopwatch.Start();
 			previousTickTime = 0;
 		}
 
@@ -140,6 +141,8 @@ namespace MoonWorks.Audio
 		{
 			while (Running)
 			{
+				ThreadTimer.Restart();
+
 				lock (StateLock)
 				{
 					try
@@ -152,14 +155,19 @@ namespace MoonWorks.Audio
 					}
 				}
 
-				WakeSignal.WaitOne(UpdateInterval);
+				ThreadTimer.Stop();
+
+				if (ThreadTimer.Elapsed < UpdateInterval)
+				{
+					WakeSignal.WaitOne(UpdateInterval - ThreadTimer.Elapsed);
+				}
 			}
 		}
 
 		private void ThreadMainTick()
 		{
-			long tickDelta = TickStopwatch.Elapsed.Ticks - previousTickTime;
-			previousTickTime = TickStopwatch.Elapsed.Ticks;
+			long tickDelta = TimeElapsedStopwatch.Elapsed.Ticks - previousTickTime;
+			previousTickTime = TimeElapsedStopwatch.Elapsed.Ticks;
 			float elapsedSeconds = (float) tickDelta / System.TimeSpan.TicksPerSecond;
 
 			AudioTweenManager.Update(elapsedSeconds);

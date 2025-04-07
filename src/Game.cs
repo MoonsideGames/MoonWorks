@@ -7,6 +7,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Storage;
+using MoonWorks.Video;
 
 namespace MoonWorks
 {
@@ -37,6 +38,7 @@ namespace MoonWorks
 
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
+		public VideoDevice VideoDevice { get; }
 		public Inputs Inputs { get; }
 
 		/// <summary>
@@ -114,6 +116,9 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing audio thread...");
 			AudioDevice = new AudioDevice();
+
+			Logger.LogInfo("Initializing video thread...");
+			VideoDevice = new VideoDevice(GraphicsDevice);
 		}
 
 		/// <summary>
@@ -139,6 +144,9 @@ namespace MoonWorks
 				GraphicsDevice.UnclaimWindow(window);
 				window.Dispose();
 			}
+
+			Logger.LogInfo("Closing video thread...");
+			VideoDevice.Dispose();
 
 			Logger.LogInfo("Disposing graphics device...");
 			GraphicsDevice.Dispose();
@@ -255,6 +263,7 @@ namespace MoonWorks
 
 			if (!quit)
 			{
+				int updateCount = 0;
 				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 				{
 					Inputs.Update();
@@ -262,6 +271,12 @@ namespace MoonWorks
 					AudioDevice.WakeThread();
 
 					accumulatedUpdateTime -= FramePacingSettings.Timestep;
+					updateCount += 1;
+				}
+
+				if (updateCount > 1)
+				{
+					Logger.LogInfo($"Missed a frame, updated {updateCount} times");
 				}
 
 				// Timestep alpha should be 0 if we are in latency-optimized mode.

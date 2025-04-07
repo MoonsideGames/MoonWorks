@@ -22,12 +22,18 @@ public abstract class StreamingAudioSource : AudioResource
 	/// <summary>
 	/// Sets the source voice to stream the audio through.
 	/// This will also enqueue some buffers to avoid stuttering when Play is called.
+	/// Seek before calling this if you are not starting from the beginnign of the audio source!
 	/// </summary>
 	public void SendTo(SourceVoice sourceVoice)
 	{
+		if (SendVoice != null)
+		{
+			Disconnect();
+		}
+
+		QueueBuffers();
 		Device.RegisterStreamingAudioSource(this);
 		SendVoice = sourceVoice;
-		QueueBuffers();
 	}
 
 	/// <summary>
@@ -54,13 +60,15 @@ public abstract class StreamingAudioSource : AudioResource
 		if (
 			SendVoice != null &&
 			!OutOfData &&
-			SendVoice.State == SoundState.Playing &&
 			SendVoice.BuffersQueued < BUFFER_COUNT
 		) {
 			QueueBuffers();
 		}
 	}
 
+	// This is called by the AudioDevice thread after the source is registered.
+	// This is NOT thread-safe!
+	// If you call this while the thread is running bad things will happen!
 	protected void QueueBuffers()
 	{
 		if (SendVoice != null)

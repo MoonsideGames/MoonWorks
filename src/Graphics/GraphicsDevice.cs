@@ -618,7 +618,7 @@ public class GraphicsDevice : IDisposable
 					// Dispose video players first to avoid race condition on threaded decoding
 					foreach (var resource in resources)
 					{
-						if (resource.Target is VideoPlayer player)
+						if (resource.Target is VideoAV1 player)
 						{
 							player.Dispose();
 						}
