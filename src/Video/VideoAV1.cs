@@ -239,6 +239,7 @@ namespace MoonWorks.Video
 				timeAccumulator += delta * PlaybackSpeed;
 			}
 
+			bool shouldRenderFrame = timeAccumulator >= framerateTimestep;
 			while (timeAccumulator >= framerateTimestep)
 			{
 				if (TryGetFramebuffer(out var newFramebuffer))
@@ -249,12 +250,15 @@ namespace MoonWorks.Video
 					}
 
 					CurrentFrameBuffer = newFramebuffer;
-
-					// now that we have a new framebuffer, render it
-					RenderTexture = VideoDevice.RenderFrame(CurrentFrameBuffer);
 				}
 
 				timeAccumulator -= framerateTimestep;
+			}
+
+			// now that we have a new framebuffer, render it
+			if (shouldRenderFrame && CurrentFrameBuffer != null)
+			{
+				RenderTexture = VideoDevice.RenderFrame(CurrentFrameBuffer);
 			}
 		}
 
