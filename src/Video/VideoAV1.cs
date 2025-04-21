@@ -226,21 +226,21 @@ namespace MoonWorks.Video
 		/// </summary>
 		public void Update(TimeSpan delta)
 		{
+			// Wait for loading to actually be done
+			LoadWaitHandle.WaitOne();
+
 			if (!Loaded || State == VideoState.Stopped)
 			{
 				return;
 			}
-
-			// Wait for loading to actually be done
-			LoadWaitHandle.WaitOne();
 
 			if (State == VideoState.Playing)
 			{
 				timeAccumulator += delta * PlaybackSpeed;
 			}
 
-			bool shouldRenderFrame = timeAccumulator >= framerateTimestep;
-			while (timeAccumulator >= framerateTimestep)
+			bool shouldRenderFrame = RenderTexture == null || timeAccumulator >= framerateTimestep;
+			while (CurrentFrameBuffer == null || timeAccumulator >= framerateTimestep)
 			{
 				if (TryGetFramebuffer(out var newFramebuffer))
 				{

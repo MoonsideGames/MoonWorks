@@ -65,8 +65,8 @@ public class VideoDevice : IDisposable
 					BufferFrameSync(video);
 				}
 
-				video.LoadWaitHandle.Set();
 				video.Loaded = true;
+				video.LoadWaitHandle.Set();
 			}
 
 			foreach (var video in ActiveVideos)
