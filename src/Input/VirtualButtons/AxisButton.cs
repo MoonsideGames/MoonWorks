@@ -38,11 +38,11 @@ namespace MoonWorks.Input
 			{
 				if (positive)
 				{
-					Code = AxisButtonCode.LeftY_Up;
+					Code = AxisButtonCode.LeftY_Down;
 				}
 				else
 				{
-					Code = AxisButtonCode.LeftY_Down;
+					Code = AxisButtonCode.LeftY_Up;
 				}
 			}
 			else if (parent.Code == AxisCode.RightX)
@@ -60,11 +60,11 @@ namespace MoonWorks.Input
 			{
 				if (positive)
 				{
-					Code = AxisButtonCode.RightY_Up;
+					Code = AxisButtonCode.RightY_Down;
 				}
 				else
 				{
-					Code = AxisButtonCode.RightY_Down;
+					Code = AxisButtonCode.RightY_Up;
 				}
 			}
 		}
