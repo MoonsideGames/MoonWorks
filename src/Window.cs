@@ -36,7 +36,19 @@ namespace MoonWorks
 			}
 		}
 
-		public string Title { get; private set;}
+		/// <summary>
+		/// This is a combination of the window pixel density and the display content scale,
+		/// and is the expected scale for displaying content in this window.
+		/// For example, if a 3840x2160 window had a display scale of 2.0,
+		/// the user expects the content to take twice as many pixels
+		/// and be the same physical size as if it were being displayed in a 1920x1080 window with a display scale of 1.0.
+		/// Conceptually this value corresponds to the scale display setting,
+		/// and is updated when that setting is changed,
+		/// or the window moves to a display with a different scale setting.
+		/// </summary>
+		public float DisplayScale => SDL.SDL_GetWindowDisplayScale(Handle);
+
+		public string Title { get; private set; }
 
 		public bool RelativeMouseMode { get; private set; } = false;
 		public bool TextInputActive { get; private set; } = false;
@@ -62,6 +74,11 @@ namespace MoonWorks
 			if (windowCreateInfo.StartMaximized)
 			{
 				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED;
+			}
+
+			if (windowCreateInfo.HighDPI)
+			{
+				flags |= SDL.SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
 			}
 
 			ScreenMode = windowCreateInfo.ScreenMode;
