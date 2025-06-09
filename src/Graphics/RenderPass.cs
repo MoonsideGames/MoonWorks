@@ -270,7 +270,7 @@ public class RenderPass
 	/// Binds storage buffers to the fragment shader starting at slot 0.
 	/// </summary>
 	/// <param name="buffers">The buffers to bind.</param>
-	public void BindFragmentStorageBuffers(params Span<Buffer> buffers) => BindFragmentStorageBuffers(buffers);
+	public void BindFragmentStorageBuffers(params Span<Buffer> buffers) => BindFragmentStorageBuffers(0, buffers);
 
 	/// <summary>
 	/// Draws using a vertex buffer and an index buffer.
