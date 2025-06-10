@@ -44,4 +44,23 @@ public static class InteropUtilities
 	{
 		return Encoding.UTF8.GetString(buffer, bufferLength - 1);
 	}
+
+	/// <summary>
+	/// Decodes a native C string into a C# string.
+	/// </summary>
+	public static unsafe string DecodeFromCString(byte* buffer, int maxLength)
+	{
+		var length = 0;
+		for (var i = 0; i < maxLength; i += 1)
+		{
+			length += 1;
+
+			if (buffer[i] == 0)
+			{
+				break;
+			}
+		}
+
+		return DecodeFromUTF8Buffer(buffer, length);
+	}
 }

@@ -1706,13 +1706,41 @@ internal static partial class SDL_ShaderCross
 		Compute
 	}
 
-	public struct GraphicsShaderMetadata
+	public enum IOVarType {
+		Unknown,
+		Int8,
+		Uint8,
+		Int16,
+		Uint16,
+		Int32,
+		Uint32,
+		Int64,
+		Uint64,
+		Float16,
+		Float32,
+		Float64
+	}
+
+	public unsafe struct INTERNAL_IOVarMetadata
+	{
+		public byte* Name;
+		public uint Location;
+		public uint Offset;
+		public IOVarType VectorType;
+		public uint VectorSize;
+	}
+
+	public unsafe struct INTERNAL_GraphicsShaderMetadata
 	{
 		public uint NumSamplers;
 		public uint NumStorageTextures;
 		public uint NumStorageBuffers;
 		public uint NumUniformBuffers;
-	};
+		public uint NumInputs;
+		public INTERNAL_IOVarMetadata* Inputs;
+		public uint NumOutputs;
+		public INTERNAL_IOVarMetadata* Outputs;
+	}
 
 	public struct ComputePipelineMetadata
 	{
@@ -1796,18 +1824,20 @@ internal static partial class SDL_ShaderCross
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+	public static unsafe partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 		IntPtr device,
 		in INTERNAL_SPIRVInfo info,
-		out GraphicsShaderMetadata metadata
+		INTERNAL_GraphicsShaderMetadata* metadata,
+		uint props
 	);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromSPIRV(
+	public static unsafe partial IntPtr SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 		IntPtr device,
 		in INTERNAL_SPIRVInfo info,
-		out ComputePipelineMetadata metadata
+		ComputePipelineMetadata* metadata,
+		uint props
 	);
 
 	[LibraryImport(nativeLibName)]
@@ -1835,35 +1865,92 @@ internal static partial class SDL_ShaderCross
 		out UIntPtr size
 	);
 
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
+	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-		IntPtr device,
-		in INTERNAL_HLSLInfo info,
-		out GraphicsShaderMetadata metadata
-	);
-
-	[LibraryImport(nativeLibName, StringMarshalling = StringMarshalling.Utf8)]
-	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial IntPtr SDL_ShaderCross_CompileComputePipelineFromHLSL(
-		IntPtr device,
-		in INTERNAL_HLSLInfo info,
-		out ComputePipelineMetadata metadata
+	public static unsafe partial INTERNAL_GraphicsShaderMetadata* SDL_ShaderCross_ReflectGraphicsSPIRV(
+		nint bytecode,
+		UIntPtr bytecodeSize,
+		uint props
 	);
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_ShaderCross_ReflectGraphicsSPIRV(
-		Span<byte> bytecode,
+	public static unsafe partial ComputePipelineMetadata* SDL_ShaderCross_ReflectComputeSPIRV(
+		nint bytecode,
 		UIntPtr bytecodeSize,
-		out GraphicsShaderMetadata info
+		uint props
 	);
 
-	[LibraryImport(nativeLibName)]
-	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-	public static partial SDLBool SDL_ShaderCross_ReflectComputeSPIRV(
-		Span<byte> bytecode,
-		UIntPtr bytecodeSize,
-		out ComputePipelineMetadata info
-	);
+	public static unsafe VertexElementFormat FromIOVarType(IOVarType type, uint vectorSize)
+	{
+		return type switch
+		{
+			IOVarType.Int8 =>
+				vectorSize switch
+				{
+					2 => VertexElementFormat.Byte2,
+					4 => VertexElementFormat.Byte4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Uint8 =>
+				vectorSize switch
+				{
+					2 => VertexElementFormat.Ubyte2,
+					4 => VertexElementFormat.Ubyte4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Int16 =>
+				vectorSize switch
+				{
+					2 => VertexElementFormat.Short2,
+					4 => VertexElementFormat.Short4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Uint16 =>
+				vectorSize switch
+				{
+					2 => VertexElementFormat.Ushort2,
+					4 => VertexElementFormat.Ushort4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Int32 =>
+				vectorSize switch
+				{
+					1 => VertexElementFormat.Int,
+					2 => VertexElementFormat.Int2,
+					3 => VertexElementFormat.Int3,
+					4 => VertexElementFormat.Int4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Uint32 =>
+				vectorSize switch
+				{
+					1 => VertexElementFormat.Uint,
+					2 => VertexElementFormat.Uint2,
+					3 => VertexElementFormat.Uint3,
+					4 => VertexElementFormat.Uint4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Int64 => VertexElementFormat.Invalid,
+			IOVarType.Uint64 => VertexElementFormat.Invalid,
+			IOVarType.Float16 =>
+				vectorSize switch
+				{
+					2 => VertexElementFormat.Half2,
+					4 => VertexElementFormat.Half4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Float32 =>
+				vectorSize switch
+				{
+					1 => VertexElementFormat.Float,
+					2 => VertexElementFormat.Float2,
+					3 => VertexElementFormat.Float3,
+					4 => VertexElementFormat.Float4,
+					_ => VertexElementFormat.Invalid
+				},
+			IOVarType.Float64 => VertexElementFormat.Invalid,
+			_ => VertexElementFormat.Invalid
+		};
+	}
 }

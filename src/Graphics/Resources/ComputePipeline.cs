@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using MoonWorks.Storage;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
@@ -157,10 +156,17 @@ public class ComputePipeline : SDLGPUResource
 			spirvInfo.Name = nameBuffer;
 			spirvInfo.Props = 0;
 
+			var metadata = SDL_ShaderCross.SDL_ShaderCross_ReflectComputeSPIRV(
+				(nint) spanPtr,
+				(nuint) span.Length,
+				0
+			);
+
 			var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
 				device.Handle,
 				spirvInfo,
-				out var pipelineMetadata
+				metadata,
+				0
 			);
 
 			NativeMemory.Free(entryPointBuffer);
@@ -176,15 +182,15 @@ public class ComputePipeline : SDLGPUResource
 			var computePipeline = new ComputePipeline(device)
 			{
 				Handle = computePipelineHandle,
-				NumSamplers = pipelineMetadata.NumSamplers,
-				NumReadOnlyStorageTextures = pipelineMetadata.NumReadOnlyStorageTextures,
-				NumReadOnlyStorageBuffers = pipelineMetadata.NumReadOnlyStorageBuffers,
-				NumReadWriteStorageTextures = pipelineMetadata.NumReadWriteStorageTextures,
-				NumReadWriteStorageBuffers = pipelineMetadata.NumReadWriteStorageBuffers,
-				NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
-				ThreadCountX = pipelineMetadata.ThreadCountX,
-				ThreadCountY = pipelineMetadata.ThreadCountY,
-				ThreadCountZ = pipelineMetadata.ThreadCountZ,
+				NumSamplers = metadata->NumSamplers,
+				NumReadOnlyStorageTextures = metadata->NumReadOnlyStorageTextures,
+				NumReadOnlyStorageBuffers = metadata->NumReadOnlyStorageBuffers,
+				NumReadWriteStorageTextures = metadata->NumReadWriteStorageTextures,
+				NumReadWriteStorageBuffers = metadata->NumReadWriteStorageBuffers,
+				NumUniformBuffers = metadata->NumUniformBuffers,
+				ThreadCountX = metadata->ThreadCountX,
+				ThreadCountY = metadata->ThreadCountY,
+				ThreadCountZ = metadata->ThreadCountZ,
 				Name = name ?? "ComputePipeline"
 			};
 
@@ -210,7 +216,6 @@ public class ComputePipeline : SDLGPUResource
 
 		fixed (byte* spanPtr = span)
 		{
-
 			SDL_ShaderCross.INTERNAL_HLSLDefine* definesBuffer = null;
 
 			if (defines.Length > 0) {
@@ -235,10 +240,31 @@ public class ComputePipeline : SDLGPUResource
 			hlslInfo.Name = nameBuffer;
 			hlslInfo.Props = 0;
 
-			var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromHLSL(
-				device.Handle,
+			var spirvBytecode = SDL_ShaderCross.SDL_ShaderCross_CompileSPIRVFromHLSL(
 				hlslInfo,
-				out var pipelineMetadata
+				out var spirvBytecodeSize
+			);
+
+			var metadata = SDL_ShaderCross.SDL_ShaderCross_ReflectComputeSPIRV(
+				spirvBytecode,
+				spirvBytecodeSize,
+				0
+			);
+
+			SDL_ShaderCross.INTERNAL_SPIRVInfo spirvInfo;
+			spirvInfo.Bytecode = (byte*) spirvBytecode;
+			spirvInfo.BytecodeSize = spirvBytecodeSize;
+			spirvInfo.EntryPoint = entryPointBuffer;
+			spirvInfo.ShaderStage = SDL_ShaderCross.ShaderStage.Compute;
+			spirvInfo.EnableDebug = enableDebug;
+			spirvInfo.Name = nameBuffer;
+			spirvInfo.Props = 0;
+
+			var computePipelineHandle = SDL_ShaderCross.SDL_ShaderCross_CompileComputePipelineFromSPIRV(
+				device.Handle,
+				spirvInfo,
+				metadata,
+				0
 			);
 
 			NativeMemory.Free(entryPointBuffer);
@@ -261,15 +287,15 @@ public class ComputePipeline : SDLGPUResource
 			var computePipeline = new ComputePipeline(device)
 			{
 				Handle = computePipelineHandle,
-				NumSamplers = pipelineMetadata.NumSamplers,
-				NumReadOnlyStorageTextures = pipelineMetadata.NumReadOnlyStorageTextures,
-				NumReadOnlyStorageBuffers = pipelineMetadata.NumReadOnlyStorageBuffers,
-				NumReadWriteStorageTextures = pipelineMetadata.NumReadWriteStorageTextures,
-				NumReadWriteStorageBuffers = pipelineMetadata.NumReadWriteStorageBuffers,
-				NumUniformBuffers = pipelineMetadata.NumUniformBuffers,
-				ThreadCountX = pipelineMetadata.ThreadCountX,
-				ThreadCountY = pipelineMetadata.ThreadCountY,
-				ThreadCountZ = pipelineMetadata.ThreadCountZ,
+				NumSamplers = metadata->NumSamplers,
+				NumReadOnlyStorageTextures = metadata->NumReadOnlyStorageTextures,
+				NumReadOnlyStorageBuffers = metadata->NumReadOnlyStorageBuffers,
+				NumReadWriteStorageTextures = metadata->NumReadWriteStorageTextures,
+				NumReadWriteStorageBuffers = metadata->NumReadWriteStorageBuffers,
+				NumUniformBuffers = metadata->NumUniformBuffers,
+				ThreadCountX = metadata->ThreadCountX,
+				ThreadCountY = metadata->ThreadCountY,
+				ThreadCountZ = metadata->ThreadCountZ,
 				Name = name ?? "ComputePipeline"
 			};
 

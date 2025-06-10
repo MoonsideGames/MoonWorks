@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Text;
 using MoonWorks.Storage;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
@@ -18,6 +17,10 @@ namespace MoonWorks.Graphics
 		public uint NumStorageTextures { get; init; }
 		public uint NumStorageBuffers { get; init; }
 		public uint NumUniformBuffers { get; init; }
+
+		// Optional, filled in by ShaderCross or JSON loading
+		public IOVarMetadata[] Inputs { get; init; }
+		public IOVarMetadata[] Outputs { get; init; }
 
 		private Shader(GraphicsDevice device) : base(device)
 		{
@@ -136,6 +139,12 @@ namespace MoonWorks.Graphics
 
 			fixed (byte* spanPtr = span)
 			{
+				SDL_ShaderCross.INTERNAL_GraphicsShaderMetadata* metadata = SDL_ShaderCross.SDL_ShaderCross_ReflectGraphicsSPIRV(
+					(nint) spanPtr,
+					(nuint) span.Length,
+					0
+				);
+
 				SDL_ShaderCross.INTERNAL_SPIRVInfo spirvInfo;
 				spirvInfo.Bytecode = spanPtr;
 				spirvInfo.BytecodeSize = (nuint) span.Length;
@@ -148,7 +157,8 @@ namespace MoonWorks.Graphics
 				var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
 					device.Handle,
 					spirvInfo,
-					out var shaderMetadata
+					metadata,
+					0
 				);
 
 				NativeMemory.Free(entryPointBuffer);
@@ -161,15 +171,45 @@ namespace MoonWorks.Graphics
 					return null;
 				}
 
+				var inputs = new IOVarMetadata[metadata->NumInputs];
+				for (var i = 0; i < metadata->NumInputs; i += 1)
+				{
+					inputs[i] = new IOVarMetadata
+					{
+						Name = InteropUtilities.DecodeFromCString(metadata->Inputs[i].Name, 64),
+						Location = metadata->Inputs[i].Location,
+						Offset = metadata->Inputs[i].Offset,
+						VectorType = (IOVarType) metadata->Inputs[i].VectorType,
+						VectorSize = metadata->Inputs[i].VectorSize
+					};
+				}
+
+				var outputs = new IOVarMetadata[metadata->NumOutputs];
+				for (var i = 0; i < metadata->NumOutputs; i += 1)
+				{
+					outputs[i] = new IOVarMetadata
+					{
+						Name = InteropUtilities.DecodeFromCString(metadata->Outputs[i].Name, 64),
+						Location = metadata->Outputs[i].Location,
+						Offset = metadata->Outputs[i].Offset,
+						VectorType = (IOVarType) metadata->Outputs[i].VectorType,
+						VectorSize = metadata->Outputs[i].VectorSize
+					};
+				}
+
 				var shader = new Shader(device)
 				{
 					Handle = shaderModule,
-					NumSamplers = shaderMetadata.NumSamplers,
-					NumStorageTextures = shaderMetadata.NumStorageTextures,
-					NumStorageBuffers = shaderMetadata.NumStorageBuffers,
-					NumUniformBuffers = shaderMetadata.NumUniformBuffers,
+					NumSamplers = metadata->NumSamplers,
+					NumStorageTextures = metadata->NumStorageTextures,
+					NumStorageBuffers = metadata->NumStorageBuffers,
+					NumUniformBuffers = metadata->NumUniformBuffers,
+					Inputs = inputs,
+					Outputs = outputs,
 					Name = name ?? "Shader"
 				};
+
+				SDL3.SDL.SDL_free((nint)metadata);
 
 				return shader;
 			}
@@ -195,7 +235,8 @@ namespace MoonWorks.Graphics
 			fixed (byte* spanPtr = span)
 			{
 				SDL_ShaderCross.INTERNAL_HLSLDefine* definesBuffer = null;
-				if (defines.Length > 0) {
+				if (defines.Length > 0)
+				{
 					definesBuffer = (SDL_ShaderCross.INTERNAL_HLSLDefine*) NativeMemory.Alloc((nuint) (Marshal.SizeOf<SDL_ShaderCross.INTERNAL_HLSLDefine>() * (defines.Length + 1)));
 					for (var i = 0; i < defines.Length; i += 1)
 					{
@@ -217,12 +258,34 @@ namespace MoonWorks.Graphics
 				hlslInfo.Name = nameBuffer;
 				hlslInfo.Props = 0;
 
-				var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromHLSL(
-					device.Handle,
+				var spirvBytecode = SDL_ShaderCross.SDL_ShaderCross_CompileSPIRVFromHLSL(
 					hlslInfo,
-					out var shaderMetadata
+					out var spirvBytecodeSize
 				);
 
+				var metadata = SDL_ShaderCross.SDL_ShaderCross_ReflectGraphicsSPIRV(
+					spirvBytecode,
+					spirvBytecodeSize,
+					0
+				);
+
+				SDL_ShaderCross.INTERNAL_SPIRVInfo spirvInfo;
+				spirvInfo.Bytecode = (byte*) spirvBytecode;
+				spirvInfo.BytecodeSize = spirvBytecodeSize;
+				spirvInfo.EntryPoint = entryPointBuffer;
+				spirvInfo.ShaderStage = (SDL_ShaderCross.ShaderStage) shaderStage;
+				spirvInfo.EnableDebug = enableDebug;
+				spirvInfo.Name = nameBuffer;
+				spirvInfo.Props = 0;
+
+				var shaderModule = SDL_ShaderCross.SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(
+					device.Handle,
+					spirvInfo,
+					metadata,
+					0
+				);
+
+				SDL3.SDL.SDL_free(spirvBytecode);
 				NativeMemory.Free(entryPointBuffer);
 				NativeMemory.Free(includeDirBuffer);
 				for (var i = 0; i < defines.Length; i += 1)
@@ -240,15 +303,45 @@ namespace MoonWorks.Graphics
 					return null;
 				}
 
+				var inputs = new IOVarMetadata[metadata->NumInputs];
+				for (var i = 0; i < metadata->NumInputs; i += 1)
+				{
+					inputs[i] = new IOVarMetadata
+					{
+						Name = InteropUtilities.DecodeFromCString(metadata->Inputs[i].Name, 64),
+						Location = metadata->Inputs[i].Location,
+						Offset = metadata->Inputs[i].Offset,
+						VectorType = (IOVarType) metadata->Inputs[i].VectorType,
+						VectorSize = metadata->Inputs[i].VectorSize
+					};
+				}
+
+				var outputs = new IOVarMetadata[metadata->NumOutputs];
+				for (var i = 0; i < metadata->NumOutputs; i += 1)
+				{
+					outputs[i] = new IOVarMetadata
+					{
+						Name = InteropUtilities.DecodeFromCString(metadata->Outputs[i].Name, 64),
+						Location = metadata->Outputs[i].Location,
+						Offset = metadata->Outputs[i].Offset,
+						VectorType = (IOVarType) metadata->Outputs[i].VectorType,
+						VectorSize = metadata->Outputs[i].VectorSize
+					};
+				}
+
 				var shader = new Shader(device)
 				{
 					Handle = shaderModule,
-					NumSamplers = shaderMetadata.NumSamplers,
-					NumStorageTextures = shaderMetadata.NumStorageTextures,
-					NumStorageBuffers = shaderMetadata.NumStorageBuffers,
-					NumUniformBuffers = shaderMetadata.NumUniformBuffers,
+					NumSamplers = metadata->NumSamplers,
+					NumStorageTextures = metadata->NumStorageTextures,
+					NumStorageBuffers = metadata->NumStorageBuffers,
+					NumUniformBuffers = metadata->NumUniformBuffers,
+					Inputs = inputs,
+					Outputs = outputs,
 					Name = name ?? "Shader"
 				};
+
+				SDL3.SDL.SDL_free((nint) metadata);
 
 				return shader;
 			}
