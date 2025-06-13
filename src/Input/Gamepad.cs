@@ -419,15 +419,21 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// Obtains a gamepad button object given a button code.
 		/// </summary>
-		public GamepadButton Button(GamepadButtonCode buttonCode)
+		public VirtualButton Button(GamepadButtonCode buttonCode)
 		{
-			return EnumToButton[(SDL.SDL_GamepadButton) buttonCode];
+			// The invalid button code exists, so wrap this for safety
+			if (EnumToButton.TryGetValue((SDL.SDL_GamepadButton) buttonCode, out var virtualButton))
+			{
+				return virtualButton;
+			}
+
+			return EmptyButton.Empty;
 		}
 
 		/// <summary>
 		/// Obtains an axis button object given a button code.
 		/// </summary>
-		public AxisButton Button(AxisButtonCode axisButtonCode)
+		public VirtualButton Button(AxisButtonCode axisButtonCode)
 		{
 			return AxisButtonCodeToAxisButton[axisButtonCode];
 		}
@@ -435,7 +441,7 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// Obtains a trigger button object given a button code.
 		/// </summary>
-		public TriggerButton Button(TriggerCode triggerCode)
+		public VirtualButton Button(TriggerCode triggerCode)
 		{
 			return TriggerCodeToTriggerButton[triggerCode];
 		}
