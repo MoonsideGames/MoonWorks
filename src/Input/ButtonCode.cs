@@ -6,7 +6,7 @@ namespace MoonWorks.Input
 	/// </summary>
 	public enum GamepadButtonCode
 	{
-		Invalid,
+		Invalid = -1,
 		South,
 		East,
 		West,
