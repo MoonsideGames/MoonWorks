@@ -119,6 +119,8 @@ namespace MoonWorks
 
 			Logger.LogInfo("Initializing video thread...");
 			VideoDevice = new VideoDevice(GraphicsDevice);
+
+			HandleSDLEvents(); // handle initial events so we can get initial controller settings, etc
 		}
 
 		/// <summary>

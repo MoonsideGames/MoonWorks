@@ -18,10 +18,29 @@ namespace MoonWorks.Input
 
 		public int Slot { get; internal set; }
 
-		public GamepadButton A { get; }
-		public GamepadButton B { get; }
-		public GamepadButton X { get; }
-		public GamepadButton Y { get; }
+		public GamepadType GamepadType { get; internal set; }
+		public GamepadFamily GamepadFamily { get; internal set; }
+
+		/// <summary>
+		/// Bottom face button (e.g. Xbox A button)
+		/// </summary>
+		public GamepadButton South { get; }
+
+		/// <summary>
+		/// Right face button (e.g. Xbox B button)
+		/// </summary>
+		public GamepadButton East { get; }
+
+		/// <summary>
+		/// Left face button (e.g. Xbox X button)
+		/// </summary>
+		public GamepadButton West { get; }
+
+		/// <summary>
+		/// Top face button (e.g. Xbox Y button)
+		/// </summary>
+		public GamepadButton North { get; }
+
 		public GamepadButton Back { get; }
 		public GamepadButton Guide { get; }
 		public GamepadButton Start { get; }
@@ -33,6 +52,61 @@ namespace MoonWorks.Input
 		public GamepadButton DpadDown { get; }
 		public GamepadButton DpadLeft { get; }
 		public GamepadButton DpadRight { get; }
+
+		/// <summary>
+		/// Additional button (e.g. Xbox Series X share button, Nintendo Switch Pro capture button)
+		/// </summary>
+		public GamepadButton Misc1 { get; }
+
+		/// <summary>
+		/// Upper or primary paddle, under your right hand (e.g. Xbox Elite paddle P1)
+		/// </summary>
+		public GamepadButton RightPaddle1 { get; }
+
+		/// <summary>
+		/// Upper or primary paddle, under your left hand (e.g. Xbox Elite paddle P3)
+		/// </summary>
+		public GamepadButton LeftPaddle1 { get; }
+
+		/// <summary>
+		/// Lower or secondary paddle, under your right hand (e.g. Xbox Elite paddle P2)
+		/// </summary>
+		public GamepadButton RightPaddle2 { get; }
+
+		/// <summary>
+		/// Lower or secondary paddle, under your left hand (e.g. Xbox Elite paddle P4)
+		/// </summary>
+		public GamepadButton LeftPaddle2 { get; }
+
+		/// <summary>
+		/// PS4/PS5 touchpad button
+		/// </summary>
+		public GamepadButton TouchPad { get; }
+
+		/// <summary>
+		/// Additional button
+		/// </summary>
+		public GamepadButton Misc2 { get; }
+
+		/// <summary>
+		/// Additional button
+		/// </summary>
+		public GamepadButton Misc3 { get; }
+
+		/// <summary>
+		/// Additional button
+		/// </summary>
+		public GamepadButton Misc4 { get; }
+
+		/// <summary>
+		/// Additional button
+		/// </summary>
+		public GamepadButton Misc5 { get; }
+
+		/// <summary>
+		/// Additional button
+		/// </summary>
+		public GamepadButton Misc6 { get; }
 
 		public Axis LeftX { get; }
 		public Axis LeftY { get; }
@@ -85,16 +159,16 @@ namespace MoonWorks.Input
 		{
 			Handle = handle;
 			Slot = slot;
+			JoystickInstanceID = 0;
 
-			IntPtr joystickHandle = SDL.SDL_GetGamepadJoystick(Handle);
-			JoystickInstanceID = SDL.SDL_GetJoystickID(joystickHandle);
+			Name = "Not Connected";
 
 			AnyPressed = false;
 
-			A = new GamepadButton(this, GamepadButtonCode.A, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH);
-			B = new GamepadButton(this, GamepadButtonCode.B, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST);
-			X = new GamepadButton(this, GamepadButtonCode.X, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST);
-			Y = new GamepadButton(this, GamepadButtonCode.Y, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH);
+			South = new GamepadButton(this, GamepadButtonCode.South, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH);
+			East = new GamepadButton(this, GamepadButtonCode.East, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST);
+			West = new GamepadButton(this, GamepadButtonCode.West, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST);
+			North = new GamepadButton(this, GamepadButtonCode.North, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH);
 
 			Back = new GamepadButton(this, GamepadButtonCode.Back, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK);
 			Guide = new GamepadButton(this, GamepadButtonCode.Guide, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE);
@@ -110,6 +184,21 @@ namespace MoonWorks.Input
 			DpadDown = new GamepadButton(this, GamepadButtonCode.DpadDown, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN);
 			DpadLeft = new GamepadButton(this, GamepadButtonCode.DpadLeft, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT);
 			DpadRight = new GamepadButton(this, GamepadButtonCode.DpadRight, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+
+			Misc1 = new GamepadButton(this, GamepadButtonCode.Misc1, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC1);
+
+			RightPaddle1 = new GamepadButton(this, GamepadButtonCode.RightPaddle1, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1);
+			LeftPaddle1 = new GamepadButton(this, GamepadButtonCode.LeftPaddle1, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_PADDLE1);
+			RightPaddle2 = new GamepadButton(this, GamepadButtonCode.RightPaddle2, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2);
+			LeftPaddle2 = new GamepadButton(this, GamepadButtonCode.LeftPaddle2, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_PADDLE2);
+
+			TouchPad = new GamepadButton(this, GamepadButtonCode.TouchPad, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_TOUCHPAD);
+
+			Misc2 = new GamepadButton(this, GamepadButtonCode.Misc2, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC2);
+			Misc3 = new GamepadButton(this, GamepadButtonCode.Misc3, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC3);
+			Misc4 = new GamepadButton(this, GamepadButtonCode.Misc4, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC4);
+			Misc5 = new GamepadButton(this, GamepadButtonCode.Misc5, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC5);
+			Misc6 = new GamepadButton(this, GamepadButtonCode.Misc6, SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC6);
 
 			LeftX = new Axis(this, AxisCode.LeftX, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX);
 			LeftY = new Axis(this, AxisCode.LeftY, SDL.SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY);
@@ -134,10 +223,10 @@ namespace MoonWorks.Input
 
 			EnumToButton = new Dictionary<SDL.SDL_GamepadButton, GamepadButton>
 			{
-				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH, A },
-				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST, B },
-				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST, X },
-				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH, Y },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_SOUTH, South },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_EAST, East },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_WEST, West },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_NORTH, North },
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK, Back },
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_GUIDE, Guide },
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START, Start },
@@ -148,7 +237,18 @@ namespace MoonWorks.Input
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_UP, DpadUp },
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN, DpadDown },
 				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT, DpadLeft },
-				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT, DpadRight }
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT, DpadRight },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC1, Misc1 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1, RightPaddle1 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, LeftPaddle1 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2, RightPaddle2 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_PADDLE2, LeftPaddle2 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_TOUCHPAD, TouchPad },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC2, Misc2 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC3, Misc3 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC4, Misc4 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC5, Misc5 },
+				{ SDL.SDL_GamepadButton.SDL_GAMEPAD_BUTTON_MISC6, Misc6 }
 			};
 
 			EnumToAxis = new Dictionary<SDL.SDL_GamepadAxis, Axis>
@@ -185,10 +285,10 @@ namespace MoonWorks.Input
 
 			VirtualButtons = new VirtualButton[]
 			{
-				A,
-				B,
-				X,
-				Y,
+				South,
+				East,
+				West,
+				North,
 				Back,
 				Guide,
 				Start,
@@ -200,6 +300,17 @@ namespace MoonWorks.Input
 				DpadDown,
 				DpadLeft,
 				DpadRight,
+				Misc1,
+				RightPaddle1,
+				LeftPaddle1,
+				RightPaddle2,
+				LeftPaddle2,
+				TouchPad,
+				Misc2,
+				Misc3,
+				Misc4,
+				Misc5,
+				Misc6,
 				LeftXLeft,
 				LeftXRight,
 				LeftYUp,
@@ -220,6 +331,21 @@ namespace MoonWorks.Input
 			IntPtr joystickHandle = SDL.SDL_GetGamepadJoystick(Handle);
 			JoystickInstanceID = SDL.SDL_GetJoystickID(joystickHandle);
 
+			GamepadType = (GamepadType) SDL.SDL_GetGamepadType(Handle);
+			GamepadFamily = GamepadType switch
+			{
+				GamepadType.Xbox360 => GamepadFamily.Xbox,
+				GamepadType.XboxOne => GamepadFamily.Xbox,
+				GamepadType.PS3 => GamepadFamily.PlayStation,
+				GamepadType.PS4 => GamepadFamily.PlayStation,
+				GamepadType.PS5 => GamepadFamily.PlayStation,
+				GamepadType.SwitchPro => GamepadFamily.Nintendo,
+				GamepadType.SwitchJoyConLeft => GamepadFamily.Nintendo,
+				GamepadType.SwitchJoyConRight => GamepadFamily.Nintendo,
+				GamepadType.SwitchJoyConPair => GamepadFamily.Nintendo,
+				_ => GamepadFamily.Generic
+			};
+
 			Name = SDL.SDL_GetGamepadName(Handle);
 		}
 
@@ -227,6 +353,9 @@ namespace MoonWorks.Input
 		{
 			Handle = IntPtr.Zero;
 			JoystickInstanceID = 0;
+			GamepadType = GamepadType.Unknown;
+			GamepadFamily = GamepadFamily.Generic;
+			Name = "Not Connected";
 		}
 
 		internal void Update()
@@ -290,15 +419,21 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// Obtains a gamepad button object given a button code.
 		/// </summary>
-		public GamepadButton Button(GamepadButtonCode buttonCode)
+		public VirtualButton Button(GamepadButtonCode buttonCode)
 		{
-			return EnumToButton[(SDL.SDL_GamepadButton) buttonCode];
+			// The invalid button code exists, so wrap this for safety
+			if (EnumToButton.TryGetValue((SDL.SDL_GamepadButton) buttonCode, out var virtualButton))
+			{
+				return virtualButton;
+			}
+
+			return EmptyButton.Empty;
 		}
 
 		/// <summary>
 		/// Obtains an axis button object given a button code.
 		/// </summary>
-		public AxisButton Button(AxisButtonCode axisButtonCode)
+		public VirtualButton Button(AxisButtonCode axisButtonCode)
 		{
 			return AxisButtonCodeToAxisButton[axisButtonCode];
 		}
@@ -306,7 +441,7 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// Obtains a trigger button object given a button code.
 		/// </summary>
-		public TriggerButton Button(TriggerCode triggerCode)
+		public VirtualButton Button(TriggerCode triggerCode)
 		{
 			return TriggerCodeToTriggerButton[triggerCode];
 		}
