@@ -2,7 +2,7 @@
 
 # MoonWorks
 
-MoonWorks is a free cross-platform game development framework. Its implementation is heavily inspired by [FNA](https://github.com/FNA-XNA/FNA), which is itself a free implementation of the Microsoft XNA API.
+MoonWorks is a free cross-platform game development framework. Its implementation is heavily inspired by [FNA](https://github.com/FNA-XNA/FNA), which is itself a free implementation of the Microsoft XNA API. While FNA is a preservation project and needs to remain the same forever, MoonWorks can go beyond the legacy restrictions of XNA for more advanced capabilities.
 
 MoonWorks wraps native-code implementations in managed C# for clean high-level abstractions that still run fast. It's simple and it tries to stay out of your way as much as possible.
 
