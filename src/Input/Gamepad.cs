@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using MoonWorks.Math;
 using SDL3;
 
 namespace MoonWorks.Input
@@ -20,6 +19,8 @@ namespace MoonWorks.Input
 
 		public GamepadType GamepadType { get; internal set; }
 		public GamepadFamily GamepadFamily { get; internal set; }
+
+		public bool HasLED { get; internal set; }
 
 		/// <summary>
 		/// Bottom face button (e.g. Xbox A button)
@@ -347,6 +348,10 @@ namespace MoonWorks.Input
 			};
 
 			Name = SDL.SDL_GetGamepadName(Handle);
+
+			var props = SDL.SDL_GetGamepadProperties(Handle);
+			HasLED = SDL.SDL_GetBooleanProperty(props, "SDL.joystick.cap.rgb_led", false);
+			SDL.SDL_DestroyProperties(props);
 		}
 
 		internal void Unregister()
@@ -414,6 +419,22 @@ namespace MoonWorks.Input
 				(ushort) (float.Clamp(rightMotor, 0f, 1f) * 0xFFFF),
 				durationInMilliseconds
 			);
+		}
+
+		public bool SetLED(MoonWorks.Graphics.Color color)
+		{
+			if (!HasLED)
+			{
+				return false;
+			}
+
+			if (!SDL.SDL_SetGamepadLED(Handle, color.R, color.G, color.B))
+			{
+				Logger.LogError(SDL.SDL_GetError());
+				return false;
+			}
+
+			return true;
 		}
 
 		/// <summary>
