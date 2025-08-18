@@ -23,7 +23,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		private static Format ParseFormat(ref ByteSpanReader reader)
+		public static Format ParseFormat(ref ByteSpanReader reader, out uint dataLength)
 		{
 			// RIFF Signature
 			if (reader.Read<int>() != MAGIC_RIFF)
@@ -79,6 +79,8 @@ namespace MoonWorks.Audio
 				throw new NotSupportedException("Specified stream is not a wave file.");
 			}
 
+			dataLength = (uint) reader.Read<int>();
+
 			var format = new Format
 			{
 				Tag = (FormatTag) wFormatTag,
@@ -94,10 +96,8 @@ namespace MoonWorks.Audio
 		{
 			var stream = new ByteSpanReader(span);
 
-			var format = ParseFormat(ref stream);
-
-			int waveDataLength = stream.Read<int>();
-			var dataSpan = stream.SliceRemainder(waveDataLength);
+			var format = ParseFormat(ref stream, out var dataLength);
+			var dataSpan = stream.SliceRemainder((int) dataLength);
 
 			return new ParseResult(format, dataSpan);
 		}
@@ -156,7 +156,7 @@ namespace MoonWorks.Audio
 			}
 
 			var reader = new ByteSpanReader(span);
-			var format = ParseFormat(ref reader);
+			var format = ParseFormat(ref reader, out var _);
 			NativeMemory.Free(buffer);
 
 			return format;

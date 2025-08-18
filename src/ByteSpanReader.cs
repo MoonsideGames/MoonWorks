@@ -6,7 +6,7 @@ namespace MoonWorks;
 /// <summary>
 /// Note that this is a struct, so if you want it to retain state you have to pass it by ref.
 /// </summary>
-internal ref struct ByteSpanReader
+public ref struct ByteSpanReader
 {
 	public ReadOnlySpan<byte> Span;
 	public int Index;
