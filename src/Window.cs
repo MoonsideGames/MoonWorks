@@ -114,6 +114,11 @@ namespace MoonWorks
 				SDL.SDL_SetWindowFullscreen(Handle, true);
 				UpdateSize();
 			}
+			else if (screenMode == ScreenMode.Maximized)
+			{
+				SDL.SDL_MaximizeWindow(Handle);
+				UpdateSize();
+			}
 			else
 			{
 				SDL.SDL_SetWindowFullscreen(Handle, false);
