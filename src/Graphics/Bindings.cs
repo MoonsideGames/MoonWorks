@@ -978,6 +978,36 @@ public struct VertexInputState
 			VertexAttributes = attributes
 		};
 	}
+
+	public static VertexInputState CreateSeparatedBindings<T>() where T : unmanaged, IVertexType
+	{
+		var count = T.Formats.Length;
+
+		var descriptions = new VertexBufferDescription[count];
+		var attributes = new VertexAttribute[count];
+
+		for (var i = 0; i < count; i += 1)
+		{
+			descriptions[i].Slot = (uint) i;
+			descriptions[i].InputRate = VertexInputRate.Vertex;
+			descriptions[i].InstanceStepRate = 0;
+			descriptions[i].Pitch = Conversions.VertexElementFormatSize(T.Formats[i]);
+		}
+
+		for (var i = 0; i < count; i += 1)
+		{
+			attributes[i].Location = (uint) i;
+			attributes[i].BufferSlot = (uint) i;
+			attributes[i].Format = T.Formats[i];
+			attributes[i].Offset = 0;
+		}
+
+		return new VertexInputState
+		{
+			VertexBufferDescriptions = descriptions,
+			VertexAttributes = attributes
+		};
+	}
 }
 
 public struct GraphicsPipelineTargetInfo
