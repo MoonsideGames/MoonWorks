@@ -111,5 +111,8 @@ namespace MoonWorks.Input
 		{
 			SDL.SDL_HideCursor();
 		}
+
+		public void SetRelativeMode(Window window, bool enabled) => SDL.SDL_SetWindowRelativeMouseMode(window.Handle, enabled);
+		public bool IsRelative(Window window) => SDL.SDL_GetWindowRelativeMouseMode(window.Handle);
 	}
 }
