@@ -185,6 +185,11 @@ namespace MoonWorks
 		}
 
 		/// <summary>
+        /// Executes once per tick, even when catching up.
+        /// </summary>
+		protected abstract void Step();
+
+		/// <summary>
 		/// Will execute at the specified targetTimestep you provided when instantiating your Game class.
 		/// </summary>
 		/// <param name="delta"></param>
@@ -265,6 +270,8 @@ namespace MoonWorks
 
 			if (!quit)
 			{
+				Step();
+
 				int updateCount = 0;
 				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 				{
