@@ -447,20 +447,23 @@ namespace MoonWorks.Audio
 		/// </summary>
 		public unsafe void SetReverbEffectChain(ReverbEffect reverbEffect)
 		{
-			var sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
-			sendDesc[0].Flags = 0;
-			sendDesc[0].pOutputVoice = OutputVoice.Handle;
-			sendDesc[1].Flags = 0;
-			sendDesc[1].pOutputVoice = reverbEffect.Handle;
+			if (reverbEffect.Valid)
+			{
+				var sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
+				sendDesc[0].Flags = 0;
+				sendDesc[0].pOutputVoice = OutputVoice.Handle;
+				sendDesc[1].Flags = 0;
+				sendDesc[1].pOutputVoice = reverbEffect.Handle;
 
-			var sends = new FAudio.FAudioVoiceSends();
-			sends.SendCount = 2;
-			sends.pSends = (nint) sendDesc;
+				var sends = new FAudio.FAudioVoiceSends();
+				sends.SendCount = 2;
+				sends.pSends = (nint) sendDesc;
 
-			FAudio.FAudioVoice_SetOutputVoices(
-				Handle,
-				ref sends
-			);
+				FAudio.FAudioVoice_SetOutputVoices(
+					Handle,
+					ref sends
+				);
+			}
 
 			ReverbEffect = reverbEffect;
 		}

@@ -5,6 +5,8 @@ namespace MoonWorks.Audio
 {
 	/// <summary>
 	/// Use this in conjunction with SourceVoice.SetReverbEffectChain to add reverb to a voice.
+	/// Creating the effect chain can fail on certain configurations, if this happens then
+	/// setting the reverb effect chain will become a no-op.
 	/// </summary>
 	public unsafe class ReverbEffect : SubmixVoice
 	{
@@ -37,6 +39,11 @@ namespace MoonWorks.Audio
 
 		public FAudio.FAudioFXReverbParameters Params { get; private set; }
 
+		/// <summary>
+        /// Creating the reverb effect can fail, so we don't want weird dry output if that happens.
+        /// </summary>
+		internal bool Valid { get; }
+
 		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
 		{
 			/* Init reverb */
@@ -54,29 +61,49 @@ namespace MoonWorks.Audio
 			chain.EffectCount = 1;
 			chain.pEffectDescriptors = (nint) (&descriptor);
 
-			FAudio.FAudioVoice_SetEffectChain(
+			var result = FAudio.FAudioVoice_SetEffectChain(
 				Handle,
 				ref chain
 			);
 
 			FAudio.FAPOBase_Release(reverb);
 
-			SetParams(DefaultParams);
+			Valid = false;
+
+			if (result == 0)
+			{
+				// Success!
+				if (SetParams(DefaultParams))
+				{
+					Valid = true;
+				}
+			}
+			else
+			{
+				Logger.LogWarn("Failed to set reverb effect chain!");
+			}
 		}
 
-		public void SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
+		public bool SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
 		{
 			Params = reverbParams;
 
 			fixed (FAudio.FAudioFXReverbParameters* reverbParamsPtr = &reverbParams)
 			{
-				FAudio.FAudioVoice_SetEffectParameters(
+				var result = FAudio.FAudioVoice_SetEffectParameters(
 					Handle,
 					0,
 					(nint) reverbParamsPtr,
 					(uint) Marshal.SizeOf<FAudio.FAudioFXReverbParameters>(),
 					0
 				);
+
+				if (result != 0)
+				{
+					Logger.LogWarn("Failed to set reverb effect parameters!");
+				}
+
+				return result == 0;
 			}
 		}
 	}
