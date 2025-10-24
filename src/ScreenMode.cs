@@ -3,6 +3,7 @@
 	public enum ScreenMode
 	{
 		Fullscreen,
-		Windowed
+		Windowed,
+		Maximized
 	}
 }
