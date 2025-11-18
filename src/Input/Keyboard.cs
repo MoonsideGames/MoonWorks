@@ -19,7 +19,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public KeyboardButton AnyPressedButton { get; private set; }
 
-		private ScanCode[] KeyCodes;
+		private ScanCode[] ScanCodes;
 		private KeyboardButton[] Keys { get; }
 		private List<SDL.SDL_KeyboardEvent>[] ButtonEvents = [];
 		private int numKeys;
@@ -50,14 +50,14 @@ namespace MoonWorks.Input
 		{
 			SDL.SDL_GetKeyboardState(out numKeys);
 
-			KeyCodes = Enum.GetValues<ScanCode>();
+			ScanCodes = Enum.GetValues<ScanCode>();
 			Keys = new KeyboardButton[numKeys];
 			ButtonEvents = new List<SDL.SDL_KeyboardEvent>[numKeys];
 
-			foreach (ScanCode keycode in KeyCodes)
+			foreach (ScanCode scancode in ScanCodes)
 			{
-				var button = new KeyboardButton(this, keycode);
-				Keys[(int) keycode] = button;
+				var button = new KeyboardButton(this, scancode);
+				Keys[(int) scancode] = button;
 			}
 
 			for (var i = 0; i < numKeys; i += 1)
@@ -117,65 +117,65 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// True if the button was pressed this frame.
 		/// </summary>
-		public bool IsPressed(ScanCode keycode)
+		public bool IsPressed(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsPressed;
+			return Keys[(int) scancode].IsPressed;
 		}
 
 		/// <summary>
 		/// True if the button was pressed this frame and the previous frame.
 		/// </summary>
-		public bool IsHeld(ScanCode keycode)
+		public bool IsHeld(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsHeld;
+			return Keys[(int) scancode].IsHeld;
 		}
 
 		/// <summary>
 		/// True if the button was either pressed or continued to be held this frame.
 		/// </summary>
-		public bool IsDown(ScanCode keycode)
+		public bool IsDown(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsDown;
+			return Keys[(int) scancode].IsDown;
 		}
 
 		/// <summary>
 		/// True if the button was let go this frame.
 		/// </summary>
-		public bool IsReleased(ScanCode keycode)
+		public bool IsReleased(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsReleased;
+			return Keys[(int) scancode].IsReleased;
 		}
 
 		/// <summary>
 		/// True if the button was not pressed this frame or the previous frame.
 		/// </summary>
-		public bool IsIdle(ScanCode keycode)
+		public bool IsIdle(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsIdle;
+			return Keys[(int) scancode].IsIdle;
 		}
 
 		/// <summary>
 		/// True if the button was either idle or released this frame.
 		/// </summary>
-		public bool IsUp(ScanCode keycode)
+		public bool IsUp(ScanCode scancode)
 		{
-			return Keys[(int) keycode].IsUp;
+			return Keys[(int) scancode].IsUp;
 		}
 
 		/// <summary>
 		/// Gets a reference to a keyboard button object using a key code.
 		/// </summary>
-		public KeyboardButton Button(ScanCode keycode)
+		public KeyboardButton Button(ScanCode scancode)
 		{
-			return Keys[(int) keycode];
+			return Keys[(int) scancode];
 		}
 
 		/// <summary>
 		/// Gets the state of a keyboard button from a key code.
 		/// </summary>
-		public ButtonState ButtonState(ScanCode keycode)
+		public ButtonState ButtonState(ScanCode scancode)
 		{
-			return Keys[(int) keycode].State;
+			return Keys[(int) scancode].State;
 		}
 	}
 }
