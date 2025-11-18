@@ -9,7 +9,6 @@ namespace MoonWorks.Input
 	{
 		Mouse Parent;
 		SDL.SDL_MouseButtonFlags ButtonMask;
-
 		public MouseButtonCode Code { get; private set; }
 
 		internal MouseButton(Mouse parent, MouseButtonCode code, SDL.SDL_MouseButtonFlags buttonMask)
@@ -19,9 +18,9 @@ namespace MoonWorks.Input
 			ButtonMask = buttonMask;
 		}
 
-		internal override bool CheckPressed()
-		{
-			return (Parent.ButtonMask & ButtonMask) != 0;
-		}
+		internal void Update(bool isPressed)
+        {
+            UpdateState(isPressed);
+        }
 	}
 }

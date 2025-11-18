@@ -145,7 +145,11 @@ namespace MoonWorks.Input
 		/// <summary>
 		/// The implementation-dependent name of the gamepad.
 		/// </summary>
-		public string Name { get; private set;}
+		public string Name { get; private set; }
+
+		private List<SDL.SDL_GamepadButtonEvent>[] ButtonEvents = [];
+		private List<SDL.SDL_GamepadAxisEvent>[] AxisEvents = [];
+		private List<SDL.SDL_GamepadAxisEvent>[] TriggerEvents = [];
 
 		private Dictionary<SDL.SDL_GamepadButton, GamepadButton> EnumToButton;
 		private Dictionary<SDL.SDL_GamepadAxis, Axis> EnumToAxis;
@@ -323,6 +327,24 @@ namespace MoonWorks.Input
 				TriggerLeftButton,
 				TriggerRightButton
 			};
+
+			ButtonEvents = new List<SDL.SDL_GamepadButtonEvent>[EnumToButton.Count];
+			for (var i = 0; i < EnumToButton.Count; i += 1)
+            {
+                ButtonEvents[i] = [];
+            }
+
+			AxisEvents = new List<SDL.SDL_GamepadAxisEvent>[EnumToAxis.Count];
+			for (var i = 0; i < EnumToAxis.Count; i += 1)
+            {
+                AxisEvents[i] = [];
+            }
+
+			TriggerEvents = new List<SDL.SDL_GamepadAxisEvent>[EnumToTrigger.Count];
+			for (var i = 0; i < EnumToTrigger.Count; i += 1)
+            {
+                TriggerEvents[i] = [];
+            }
 		}
 
 		internal void Register(IntPtr handle)
@@ -363,38 +385,107 @@ namespace MoonWorks.Input
 			Name = "Not Connected";
 		}
 
+		internal void AddButtonEvent(SDL.SDL_GamepadButtonEvent evt)
+        {
+			ButtonEvents[evt.button].Add(evt);
+        }
+
+		internal void AddAxisEvent(SDL.SDL_GamepadAxisEvent evt)
+        {
+			if (EnumToAxis.TryGetValue((SDL.SDL_GamepadAxis) evt.axis, out var axis))
+            {
+                AxisEvents[(int) axis.Code].Add(evt);
+            }
+			else if (EnumToTrigger.TryGetValue((SDL.SDL_GamepadAxis) evt.axis, out var trigger))
+            {
+                TriggerEvents[(int) trigger.Code - 4].Add(evt);
+            }
+        }
+
+		private static bool ButtonDown(List<SDL.SDL_GamepadButtonEvent> events)
+        {
+			foreach (var buttonEvent in events)
+			{
+				if (buttonEvent.down)
+				{
+					return true;
+				}
+			}
+			return false;
+        }
+
 		internal void Update()
 		{
 			AnyPressed = false;
 
 			if (!IsDummy)
 			{
+				// Update input state from events
+
 				foreach (var button in EnumToButton.Values)
-				{
-					button.Update();
-				}
+                {
+                    var events = ButtonEvents[(int) button.Code];
+					button.Update(events.Count > 0 ? ButtonDown(events) : button.IsDown);
+					events.Clear();
+                }
 
 				foreach (var axis in EnumToAxis.Values)
 				{
-					axis.Update();
+					var events = AxisEvents[(int) axis.Code];
+					if (events.Count > 0)
+                    {
+						var latest = events[^1];
+                        axis.SetValue(latest.value);
+                    }
+
+					switch (axis.Code)
+					{
+						case AxisCode.LeftX:
+							LeftXLeft.Update();
+							LeftXRight.Update();
+							break;
+
+						case AxisCode.LeftY:
+							LeftYUp.Update();
+							LeftYDown.Update();
+							break;
+
+						case AxisCode.RightX:
+							RightXLeft.Update();
+							RightXRight.Update();
+							break;
+
+						case AxisCode.RightY:
+							RightYUp.Update();
+							RightYDown.Update();
+							break;
+					}
+
+					events.Clear();
 				}
 
 				foreach (var trigger in EnumToTrigger.Values)
 				{
-					trigger.Update();
+					var events = TriggerEvents[(int) trigger.Code - 4];
+					if (events.Count > 0)
+                    {
+						var latest = events[^1];
+						trigger.SetValue(latest.value);
+                    }
+
+					switch (trigger.Code)
+					{
+						case TriggerCode.Left:
+							TriggerLeftButton.Update();
+							break;
+
+						case TriggerCode.Right:
+							TriggerRightButton.Update();
+							break;
+					}
+
+					events.Clear();
 				}
-
-				LeftXLeft.Update();
-				LeftXRight.Update();
-				LeftYUp.Update();
-				LeftYDown.Update();
-				RightXLeft.Update();
-				RightXRight.Update();
-				RightYUp.Update();
-				RightYDown.Update();
-
-				TriggerLeftButton.Update();
-				TriggerRightButton.Update();
 
 				foreach (var button in VirtualButtons)
 				{

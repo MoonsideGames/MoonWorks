@@ -69,9 +69,9 @@ namespace MoonWorks.Input
 			}
 		}
 
-		internal override bool CheckPressed()
-		{
-			return Sign * Parent.Value >= threshold;
-		}
+		internal void Update()
+        {
+            UpdateState(Sign * Parent.Value >= threshold);
+        }
 	}
 }

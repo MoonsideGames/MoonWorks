@@ -6,10 +6,5 @@ namespace MoonWorks.Input
 	public class EmptyButton : VirtualButton
 	{
 		public static readonly EmptyButton Empty = new();
-
-		internal override bool CheckPressed()
-		{
-			return false;
-		}
 	}
 }

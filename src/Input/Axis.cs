@@ -28,10 +28,10 @@ namespace MoonWorks.Input
 			Code = code;
 		}
 
-		internal void Update()
+		internal void SetValue(short value)
 		{
 			Value = MathHelper.Normalize(
-				SDL.SDL_GetGamepadAxis(Parent.Handle, SDL_Axis),
+				value,
 				short.MinValue, short.MaxValue,
 				-1, 1
 			);

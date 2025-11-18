@@ -6,17 +6,17 @@ namespace MoonWorks.Input
 	public class KeyboardButton : VirtualButton
 	{
 		Keyboard Parent;
-		public KeyCode KeyCode { get; }
+		public ScanCode ScanCode { get; }
 
-		internal KeyboardButton(Keyboard parent, KeyCode keyCode)
+		internal KeyboardButton(Keyboard parent, ScanCode scanCode)
 		{
 			Parent = parent;
-			KeyCode = keyCode;
+			ScanCode = scanCode;
 		}
 
-		internal unsafe override bool CheckPressed()
-		{
-			return Conversions.ByteToBool(((byte*) Parent.State)[(int) KeyCode]);
-		}
+		internal void Update(bool isPressed)
+        {
+            UpdateState(isPressed);
+        }
 	}
 }

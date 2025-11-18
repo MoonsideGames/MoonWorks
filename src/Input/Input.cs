@@ -1,5 +1,6 @@
 ﻿using SDL3;
 using System;
+using System.Collections.Generic;
 
 namespace MoonWorks.Input
 {
@@ -22,6 +23,7 @@ namespace MoonWorks.Input
 		public Mouse Mouse { get; }
 
 		Gamepad[] Gamepads;
+		Dictionary<uint, Gamepad> JoystickIDToGamepad = [];
 
 		public static event Action<char> TextInput;
 
@@ -126,6 +128,16 @@ namespace MoonWorks.Input
 			return Gamepads[slot];
 		}
 
+		internal Gamepad GetGamepadFromJoystickID(uint index)
+        {
+            if (JoystickIDToGamepad.TryGetValue(index, out var gamepad))
+            {
+                return gamepad;
+            }
+
+			return null;
+        }
+
 		internal void AddGamepad(uint index)
 		{
 			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
@@ -142,6 +154,8 @@ namespace MoonWorks.Input
 					{
 						Gamepads[slot].Register(openResult);
 						Logger.LogInfo($"Gamepad {Gamepads[slot].Name} added to slot {slot}!");
+
+						JoystickIDToGamepad[index] = Gamepads[slot];
 
 						if (OnGamepadConnected != null)
 						{
@@ -165,6 +179,7 @@ namespace MoonWorks.Input
 					Logger.LogInfo($"Gamepad {Gamepads[slot].Name} removed from slot {slot}!");
 					SDL.SDL_CloseGamepad(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
+					JoystickIDToGamepad.Remove(joystickInstanceID);
 					OnGamepadDisconnected(slot);
 					return;
 				}

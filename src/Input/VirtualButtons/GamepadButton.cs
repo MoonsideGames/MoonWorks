@@ -11,6 +11,7 @@ namespace MoonWorks.Input
 		SDL.SDL_GamepadButton SDL_Button;
 		public GamepadButtonCode Code { get; }
 
+
 		internal GamepadButton(Gamepad parent, GamepadButtonCode code, SDL.SDL_GamepadButton sdlButton)
 		{
 			Parent = parent;
@@ -18,9 +19,9 @@ namespace MoonWorks.Input
 			SDL_Button = sdlButton;
 		}
 
-		internal override bool CheckPressed()
-		{
-			return SDL.SDL_GetGamepadButton(Parent.Handle, SDL_Button);
-		}
+		internal void Update(bool isPressed)
+        {
+            UpdateState(isPressed);
+        }
 	}
 }

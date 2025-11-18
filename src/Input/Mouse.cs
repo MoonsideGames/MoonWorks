@@ -38,7 +38,8 @@ namespace MoonWorks.Input
 
 		public bool Visible => SDL.SDL_CursorVisible();
 
-		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
+		private readonly MouseButton[] CodeToButton;
+		private readonly List<SDL.SDL_MouseButtonEvent>[] ButtonEvents = [];
 
 		internal Mouse()
 		{
@@ -48,15 +49,38 @@ namespace MoonWorks.Input
 			X1Button = new MouseButton(this, MouseButtonCode.X1, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X1MASK);
 			X2Button = new MouseButton(this, MouseButtonCode.X2, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X2MASK);
 
-			CodeToButton = new Dictionary<MouseButtonCode, MouseButton>
-			{
-				{ MouseButtonCode.Left, LeftButton },
-				{ MouseButtonCode.Right, RightButton },
-				{ MouseButtonCode.Middle, MiddleButton },
-				{ MouseButtonCode.X1, X1Button },
-				{ MouseButtonCode.X2, X2Button }
-			};
+			CodeToButton =
+			[
+				LeftButton,
+				RightButton,
+				MiddleButton,
+				X1Button,
+				X2Button
+			];
+			ButtonEvents = new List<SDL.SDL_MouseButtonEvent>[CodeToButton.Length];
+
+			for (var i = 0; i < CodeToButton.Length; i += 1)
+            {
+                ButtonEvents[i] = [];
+            }
 		}
+
+		internal void AddButtonEvent(SDL.SDL_MouseButtonEvent evt)
+        {
+			ButtonEvents[evt.button].Add(evt);
+        }
+
+		private static bool ButtonDown(List<SDL.SDL_MouseButtonEvent> events)
+        {
+			foreach (var buttonEvent in events)
+			{
+				if (buttonEvent.down)
+				{
+					return true;
+				}
+			}
+			return false;
+        }
 
 		internal void Update()
 		{
@@ -74,16 +98,20 @@ namespace MoonWorks.Input
 			Wheel = WheelRaw - previousWheelRaw;
 			previousWheelRaw = WheelRaw;
 
-			foreach (var button in CodeToButton.Values)
-			{
-				button.Update();
+			foreach (var button in CodeToButton)
+            {
+                var events = ButtonEvents[(int) button.Code];
+
+				button.Update(events.Count > 0 ? ButtonDown(events) : button.IsDown);
 
 				if (button.IsPressed)
 				{
 					AnyPressed = true;
 					AnyPressedButton = button;
 				}
-			}
+
+				events.Clear();
+            }
 		}
 
 		/// <summary>
@@ -91,7 +119,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public MouseButton Button(MouseButtonCode buttonCode)
 		{
-			return CodeToButton[buttonCode];
+			return CodeToButton[(int) buttonCode];
 		}
 
 		/// <summary>
@@ -99,7 +127,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
-			return CodeToButton[buttonCode].State;
+			return CodeToButton[(int) buttonCode].State;
 		}
 
 		public void Show()

@@ -4,7 +4,7 @@
 	/// Can be used to determine key state without a direct reference to the virtual button object.
 	/// Enum values are equivalent to the SDL Scancode value.
 	/// </summary>
-	public enum KeyCode : int
+	public enum ScanCode : int
 	{
 		Unknown = 0,
 		A = 4,
