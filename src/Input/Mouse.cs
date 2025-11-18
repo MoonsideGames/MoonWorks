@@ -70,11 +70,11 @@ namespace MoonWorks.Input
 			ButtonEvents[evt.button].Add(evt);
         }
 
-		private static bool ButtonDown(List<SDL.SDL_MouseButtonEvent> events)
+		private static bool ButtonDown(ulong frameTimestamp, List<SDL.SDL_MouseButtonEvent> events)
         {
 			foreach (var buttonEvent in events)
 			{
-				if (buttonEvent.down)
+				if (buttonEvent.down && Inputs.TimestampDifference(frameTimestamp, buttonEvent.timestamp) < Inputs.ButtonDiscardThreshold)
 				{
 					return true;
 				}
@@ -82,7 +82,7 @@ namespace MoonWorks.Input
 			return false;
         }
 
-		internal void Update()
+		internal void Update(ulong timestamp)
 		{
 			AnyPressed = false;
 
@@ -102,7 +102,7 @@ namespace MoonWorks.Input
             {
                 var events = ButtonEvents[(int) button.Code];
 
-				button.Update(events.Count > 0 ? ButtonDown(events) : button.IsDown);
+				button.Update(events.Count > 0 ? ButtonDown(timestamp, events) : button.IsDown);
 
 				if (button.IsPressed)
 				{

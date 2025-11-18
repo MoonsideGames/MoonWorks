@@ -402,11 +402,11 @@ namespace MoonWorks.Input
             }
         }
 
-		private static bool ButtonDown(List<SDL.SDL_GamepadButtonEvent> events)
+		private static bool ButtonDown(ulong frameTimestamp, List<SDL.SDL_GamepadButtonEvent> events)
         {
 			foreach (var buttonEvent in events)
 			{
-				if (buttonEvent.down)
+				if (buttonEvent.down && Inputs.TimestampDifference(frameTimestamp, buttonEvent.timestamp) < Inputs.ButtonDiscardThreshold)
 				{
 					return true;
 				}
@@ -414,7 +414,7 @@ namespace MoonWorks.Input
 			return false;
         }
 
-		internal void Update()
+		internal void Update(ulong timestamp)
 		{
 			AnyPressed = false;
 
@@ -425,7 +425,7 @@ namespace MoonWorks.Input
 				foreach (var button in EnumToButton.Values)
                 {
                     var events = ButtonEvents[(int) button.Code];
-					button.Update(events.Count > 0 ? ButtonDown(events) : button.IsDown);
+					button.Update(events.Count > 0 ? ButtonDown(timestamp, events) : button.IsDown);
 					events.Clear();
                 }
 

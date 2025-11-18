@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SDL3;
 
 namespace MoonWorks.Input
@@ -50,7 +49,7 @@ namespace MoonWorks.Input
 		{
 			SDL.SDL_GetKeyboardState(out numKeys);
 
-			ScanCodes = Enum.GetValues<ScanCode>();
+			ScanCodes = System.Enum.GetValues<ScanCode>();
 			Keys = new KeyboardButton[numKeys];
 			ButtonEvents = new List<SDL.SDL_KeyboardEvent>[numKeys];
 
@@ -71,11 +70,11 @@ namespace MoonWorks.Input
 			ButtonEvents[(int) evt.scancode].Add(evt);
         }
 
-		private static bool ButtonDown(List<SDL.SDL_KeyboardEvent> events)
+		private static bool ButtonDown(ulong frameTimestamp, List<SDL.SDL_KeyboardEvent> events)
         {
 			foreach (var buttonEvent in events)
 			{
-				if (buttonEvent.down)
+				if (buttonEvent.down && Inputs.TimestampDifference(frameTimestamp, buttonEvent.timestamp) < Inputs.ButtonDiscardThreshold)
 				{
 					return true;
 				}
@@ -83,7 +82,7 @@ namespace MoonWorks.Input
 			return false;
         }
 
-		internal void Update()
+		internal void Update(ulong timestamp)
 		{
 			AnyPressed = false;
 
@@ -93,7 +92,7 @@ namespace MoonWorks.Input
 
 				var events = ButtonEvents[(int) button.ScanCode];
 
-				button.Update(events.Count > 0 ? ButtonDown(events) : button.IsDown);
+				button.Update(events.Count > 0 ? ButtonDown(timestamp, events) : button.IsDown);
 
 				if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
 				{
