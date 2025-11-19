@@ -402,7 +402,7 @@ namespace MoonWorks.Input
             }
         }
 
-		private static bool ButtonDown(ulong frameTimestamp, List<SDL.SDL_GamepadButtonEvent> events)
+		private static bool ButtonWasPressed(ulong frameTimestamp, List<SDL.SDL_GamepadButtonEvent> events)
         {
 			foreach (var buttonEvent in events)
 			{
@@ -425,8 +425,20 @@ namespace MoonWorks.Input
 				foreach (var button in EnumToButton.Values)
                 {
                     var events = ButtonEvents[(int) button.Code];
-					button.Update(events.Count > 0 ? ButtonDown(timestamp, events) : button.IsDown);
-					events.Clear();
+
+					// by default, the button pressed state is whatever it was last time
+					bool isDown = button.Down;
+					bool wasPressed = isDown;
+
+					if (events.Count > 0)
+                    {
+						// if we have events, determine whether the button was pressed and its current press state
+                        wasPressed = ButtonWasPressed(timestamp, events);
+						isDown = events[^1].down;
+						events.Clear();
+                    }
+
+					button.Update(wasPressed, isDown);
                 }
 
 				foreach (var axis in EnumToAxis.Values)

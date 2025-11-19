@@ -70,7 +70,7 @@ namespace MoonWorks.Input
 			ButtonEvents[(int) evt.scancode].Add(evt);
         }
 
-		private static bool ButtonDown(ulong frameTimestamp, List<SDL.SDL_KeyboardEvent> events)
+		private static bool ButtonWasPressed(ulong frameTimestamp, List<SDL.SDL_KeyboardEvent> events)
         {
 			foreach (var buttonEvent in events)
 			{
@@ -92,7 +92,17 @@ namespace MoonWorks.Input
 
 				var events = ButtonEvents[(int) button.ScanCode];
 
-				button.Update(events.Count > 0 ? ButtonDown(timestamp, events) : button.IsDown);
+				bool isDown = button.Down;
+				bool wasPressed = isDown;
+
+				if (events.Count > 0)
+                {
+                    wasPressed = ButtonWasPressed(timestamp, events);
+					isDown = events[^1].down;
+					events.Clear();
+                }
+
+				button.Update(wasPressed, isDown);
 
 				if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
 				{

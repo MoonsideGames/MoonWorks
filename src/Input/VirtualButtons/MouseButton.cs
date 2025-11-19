@@ -8,19 +8,21 @@ namespace MoonWorks.Input
 	public class MouseButton : VirtualButton
 	{
 		Mouse Parent;
-		SDL.SDL_MouseButtonFlags ButtonMask;
-		public MouseButtonCode Code { get; private set; }
+		public MouseButtonCode Code { get; }
+		public int Index { get; } // the SDL mouse button index
+		internal bool Down { get; private set; } // Tracks the most recent button event
 
-		internal MouseButton(Mouse parent, MouseButtonCode code, SDL.SDL_MouseButtonFlags buttonMask)
+		internal MouseButton(Mouse parent, MouseButtonCode code, int index)
 		{
 			Parent = parent;
 			Code = code;
-			ButtonMask = buttonMask;
+			Index = index;
 		}
 
-		internal void Update(bool isPressed)
+		internal void Update(bool wasPressed, bool isDown)
         {
-            UpdateState(isPressed);
+            UpdateState(wasPressed);
+			Down = isDown;
         }
 	}
 }

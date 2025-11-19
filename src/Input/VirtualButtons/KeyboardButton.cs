@@ -7,6 +7,7 @@ namespace MoonWorks.Input
 	{
 		Keyboard Parent;
 		public ScanCode ScanCode { get; }
+		internal bool Down { get; private set; } // Tracks the most recent button event
 
 		internal KeyboardButton(Keyboard parent, ScanCode scanCode)
 		{
@@ -14,9 +15,10 @@ namespace MoonWorks.Input
 			ScanCode = scanCode;
 		}
 
-		internal void Update(bool isPressed)
+		internal void Update(bool wasPressed, bool isDown)
         {
-            UpdateState(isPressed);
+            UpdateState(wasPressed);
+			Down = isDown;
         }
 	}
 }

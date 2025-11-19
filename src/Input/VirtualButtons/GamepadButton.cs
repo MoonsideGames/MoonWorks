@@ -10,7 +10,7 @@ namespace MoonWorks.Input
 		public Gamepad Parent { get; }
 		SDL.SDL_GamepadButton SDL_Button;
 		public GamepadButtonCode Code { get; }
-
+		internal bool Down { get; private set; } // Tracks the most recent button event
 
 		internal GamepadButton(Gamepad parent, GamepadButtonCode code, SDL.SDL_GamepadButton sdlButton)
 		{
@@ -19,9 +19,10 @@ namespace MoonWorks.Input
 			SDL_Button = sdlButton;
 		}
 
-		internal void Update(bool isPressed)
+		internal void Update(bool wasPressed, bool isDown)
         {
-            UpdateState(isPressed);
+            UpdateState(wasPressed);
+			Down = isDown;
         }
 	}
 }
