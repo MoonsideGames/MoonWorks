@@ -91,7 +91,7 @@ namespace MoonWorks
 			Logger.InitSDLLogging();
 
 			Logger.LogInfo("Initializing title storage...");
-			RootTitleStorage = new TitleStorage();
+			RootTitleStorage = new TitleStorage(System.AppContext.BaseDirectory);
 
 			Logger.LogInfo("Initializing user storage...");
 			UserStorage = new UserStorage(AppInfo);
