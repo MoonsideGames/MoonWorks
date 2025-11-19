@@ -34,36 +34,57 @@ namespace MoonWorks.Input
 		/// </summary>
 		public MouseButton AnyPressedButton { get; private set; }
 
-		internal SDL.SDL_MouseButtonFlags ButtonMask { get; private set; }
-
 		public bool Visible => SDL.SDL_CursorVisible();
 
-		private readonly Dictionary<MouseButtonCode, MouseButton> CodeToButton;
+		private readonly MouseButton[] CodeToButton;
+		private readonly List<SDL.SDL_MouseButtonEvent>[] ButtonEvents = [];
 
 		internal Mouse()
 		{
-			LeftButton = new MouseButton(this, MouseButtonCode.Left, SDL.SDL_MouseButtonFlags.SDL_BUTTON_LMASK);
-			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, SDL.SDL_MouseButtonFlags.SDL_BUTTON_MMASK);
-			RightButton = new MouseButton(this, MouseButtonCode.Right, SDL.SDL_MouseButtonFlags.SDL_BUTTON_RMASK);
-			X1Button = new MouseButton(this, MouseButtonCode.X1, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X1MASK);
-			X2Button = new MouseButton(this, MouseButtonCode.X2, SDL.SDL_MouseButtonFlags.SDL_BUTTON_X2MASK);
+			LeftButton = new MouseButton(this, MouseButtonCode.Left, 1);
+			MiddleButton = new MouseButton(this, MouseButtonCode.Middle, 2);
+			RightButton = new MouseButton(this, MouseButtonCode.Right, 3);
+			X1Button = new MouseButton(this, MouseButtonCode.X1, 4);
+			X2Button = new MouseButton(this, MouseButtonCode.X2, 5);
 
-			CodeToButton = new Dictionary<MouseButtonCode, MouseButton>
-			{
-				{ MouseButtonCode.Left, LeftButton },
-				{ MouseButtonCode.Right, RightButton },
-				{ MouseButtonCode.Middle, MiddleButton },
-				{ MouseButtonCode.X1, X1Button },
-				{ MouseButtonCode.X2, X2Button }
-			};
+			CodeToButton =
+			[
+				LeftButton,
+				RightButton,
+				MiddleButton,
+				X1Button,
+				X2Button
+			];
+			ButtonEvents = new List<SDL.SDL_MouseButtonEvent>[CodeToButton.Length];
+
+			for (var i = 0; i < CodeToButton.Length; i += 1)
+            {
+                ButtonEvents[i] = [];
+            }
 		}
 
-		internal void Update()
+		internal void AddButtonEvent(SDL.SDL_MouseButtonEvent evt)
+        {
+			ButtonEvents[evt.button - 1].Add(evt);
+        }
+
+		private static bool ButtonWasPressed(ulong frameTimestamp, List<SDL.SDL_MouseButtonEvent> events)
+        {
+			foreach (var buttonEvent in events)
+			{
+				if (buttonEvent.down && Inputs.TimestampDifference(frameTimestamp, buttonEvent.timestamp) < Inputs.ButtonDiscardThreshold)
+				{
+					return true;
+				}
+			}
+			return false;
+        }
+
+		internal void Update(ulong timestamp)
 		{
 			AnyPressed = false;
-
-			ButtonMask = SDL.SDL_GetMouseState(out var x, out var y);
-			var _ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
+			_ = SDL.SDL_GetMouseState(out var x, out var y);
+			_ = SDL.SDL_GetRelativeMouseState(out var deltaX, out var deltaY);
 
 			// TODO: should we support subpixel movement?
 			X = (int) x;
@@ -74,16 +95,29 @@ namespace MoonWorks.Input
 			Wheel = WheelRaw - previousWheelRaw;
 			previousWheelRaw = WheelRaw;
 
-			foreach (var button in CodeToButton.Values)
-			{
-				button.Update();
+			foreach (var button in CodeToButton)
+            {
+                var events = ButtonEvents[button.Index - 1];
+
+				bool isDown = button.Down;
+				bool wasPressed = isDown;
+
+				if (events.Count > 0)
+                {
+                    wasPressed = ButtonWasPressed(timestamp, events);
+					isDown = events[^1].down;
+					events.Clear();
+                }
+
+				button.Update(wasPressed, isDown);
 
 				if (button.IsPressed)
 				{
 					AnyPressed = true;
 					AnyPressedButton = button;
 				}
-			}
+
+            }
 		}
 
 		/// <summary>
@@ -91,7 +125,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public MouseButton Button(MouseButtonCode buttonCode)
 		{
-			return CodeToButton[buttonCode];
+			return CodeToButton[(int) buttonCode];
 		}
 
 		/// <summary>
@@ -99,7 +133,7 @@ namespace MoonWorks.Input
 		/// </summary>
 		public ButtonState ButtonState(MouseButtonCode buttonCode)
 		{
-			return CodeToButton[buttonCode].State;
+			return CodeToButton[(int) buttonCode].State;
 		}
 
 		public void Show()

@@ -37,11 +37,9 @@ namespace MoonWorks.Input
 		/// </summary>
 		public bool IsUp => State.IsUp;
 
-		internal virtual void Update()
+		protected void UpdateState(bool isPressed)
 		{
-			State = State.Update(CheckPressed());
+			State = State.Update(isPressed);
 		}
-
-		internal abstract bool CheckPressed();
 	}
 }

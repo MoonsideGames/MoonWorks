@@ -317,6 +317,11 @@ namespace MoonWorks
 						Inputs.Mouse.WheelRaw += (int) _event.wheel.y;
 						break;
 
+					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+						HandleMouseButton(_event.button);
+						break;
+
 					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_BEGIN:
 						DropBegin();
 						break;
@@ -330,11 +335,25 @@ namespace MoonWorks
 						break;
 
 					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
-						HandleControllerAdded(_event.gdevice);
+						HandleGamepadAdded(_event.gdevice);
 						break;
 
 					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
-						HandleControllerRemoved(_event.gdevice);
+						HandleGamepadRemoved(_event.gdevice);
+						break;
+
+					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
+						HandleGamepadButton(_event.gbutton);
+						break;
+
+					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
+						HandleGamepadAxis(_event.gaxis);
+						break;
+
+					case (uint) SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
+					case (uint) SDL.SDL_EventType.SDL_EVENT_KEY_UP:
+						HandleKeyboardButton(_event.key);
 						break;
 
 					case (uint) SDL.SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
@@ -405,7 +424,7 @@ namespace MoonWorks
 			DropFile(filePath);
 		}
 
-		private void HandleControllerAdded(SDL.SDL_GamepadDeviceEvent evt)
+		private void HandleGamepadAdded(SDL.SDL_GamepadDeviceEvent evt)
 		{
 			var index = evt.which;
 			if (SDL.SDL_IsGamepad(index))
@@ -415,11 +434,35 @@ namespace MoonWorks
 			}
 		}
 
-		private void HandleControllerRemoved(SDL.SDL_GamepadDeviceEvent evt)
+		private void HandleGamepadRemoved(SDL.SDL_GamepadDeviceEvent evt)
 		{
 			Logger.LogInfo("Controller removal detected!");
 			Inputs.RemoveGamepad(evt.which);
 		}
+
+		private void HandleGamepadButton(SDL.SDL_GamepadButtonEvent evt)
+        {
+			var index = evt.which;
+			var gamepad = Inputs.GetGamepadFromJoystickID(index);
+			gamepad?.AddButtonEvent(evt);
+        }
+
+		private void HandleGamepadAxis(SDL.SDL_GamepadAxisEvent evt)
+        {
+			var index = evt.which;
+			var gamepad = Inputs.GetGamepadFromJoystickID(index);
+			gamepad?.AddAxisEvent(evt);
+        }
+
+		private void HandleKeyboardButton(SDL.SDL_KeyboardEvent evt)
+        {
+            Inputs.Keyboard.AddButtonEvent(evt);
+        }
+
+		private void HandleMouseButton(SDL.SDL_MouseButtonEvent evt)
+        {
+            Inputs.Mouse.AddButtonEvent(evt);
+        }
 
 		public static void ShowRuntimeError(string title, string message)
 		{

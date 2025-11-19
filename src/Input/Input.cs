@@ -1,5 +1,6 @@
 ﻿using SDL3;
 using System;
+using System.Collections.Generic;
 
 namespace MoonWorks.Input
 {
@@ -12,6 +13,13 @@ namespace MoonWorks.Input
 		public const int MAX_GAMEPADS = 4;
 
 		/// <summary>
+        /// Button presses older than the discard threshold will be discarded when inputs are processed.
+		/// This can be useful if you want to throw away inputs received during long lag spikes.
+		/// By default, button presses will never be discarded.
+        /// </summary>
+		public static TimeSpan ButtonDiscardThreshold = TimeSpan.MaxValue;
+
+		/// <summary>
 		/// The reference to the Keyboard input abstraction.
 		/// </summary>
 		public Keyboard Keyboard { get; }
@@ -22,6 +30,7 @@ namespace MoonWorks.Input
 		public Mouse Mouse { get; }
 
 		Gamepad[] Gamepads;
+		Dictionary<uint, Gamepad> JoystickIDToGamepad = [];
 
 		public static event Action<char> TextInput;
 
@@ -68,10 +77,12 @@ namespace MoonWorks.Input
 		// Assumes that SDL_PumpEvents has been called!
 		internal void Update()
 		{
+			var timestamp = SDL.SDL_GetTicksNS();
+
 			AnyPressed = false;
 			AnyPressedButton = default; // DeviceKind.None
 
-			Keyboard.Update();
+			Keyboard.Update(timestamp);
 
 			if (Keyboard.AnyPressed)
 			{
@@ -79,7 +90,7 @@ namespace MoonWorks.Input
 				AnyPressedButton = Keyboard.AnyPressedButton;
 			}
 
-			Mouse.Update();
+			Mouse.Update(timestamp);
 
 			if (Mouse.AnyPressed)
 			{
@@ -89,7 +100,7 @@ namespace MoonWorks.Input
 
 			foreach (var gamepad in Gamepads)
 			{
-				gamepad.Update();
+				gamepad.Update(timestamp);
 
 				if (gamepad.AnyPressed)
 				{
@@ -126,6 +137,16 @@ namespace MoonWorks.Input
 			return Gamepads[slot];
 		}
 
+		internal Gamepad GetGamepadFromJoystickID(uint index)
+        {
+            if (JoystickIDToGamepad.TryGetValue(index, out var gamepad))
+            {
+                return gamepad;
+            }
+
+			return null;
+        }
+
 		internal void AddGamepad(uint index)
 		{
 			for (var slot = 0; slot < MAX_GAMEPADS; slot += 1)
@@ -142,6 +163,8 @@ namespace MoonWorks.Input
 					{
 						Gamepads[slot].Register(openResult);
 						Logger.LogInfo($"Gamepad {Gamepads[slot].Name} added to slot {slot}!");
+
+						JoystickIDToGamepad[index] = Gamepads[slot];
 
 						if (OnGamepadConnected != null)
 						{
@@ -165,6 +188,7 @@ namespace MoonWorks.Input
 					Logger.LogInfo($"Gamepad {Gamepads[slot].Name} removed from slot {slot}!");
 					SDL.SDL_CloseGamepad(Gamepads[slot].Handle);
 					Gamepads[slot].Unregister();
+					JoystickIDToGamepad.Remove(joystickInstanceID);
 					OnGamepadDisconnected(slot);
 					return;
 				}
@@ -178,5 +202,10 @@ namespace MoonWorks.Input
 				TextInput(c);
 			}
 		}
+
+		internal static TimeSpan TimestampDifference(ulong frameTimestamp, ulong eventTimestamp)
+        {
+            return new TimeSpan((long) (frameTimestamp - eventTimestamp) / 100);
+        }
 	}
 }

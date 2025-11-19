@@ -21,9 +21,9 @@ namespace MoonWorks.Input
 			Parent = parent;
 		}
 
-		internal override bool CheckPressed()
-		{
-			return Parent.Value >= Threshold;
-		}
+		internal void Update()
+        {
+            UpdateState(Parent.Value >= Threshold);
+        }
 	}
 }

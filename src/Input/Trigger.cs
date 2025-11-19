@@ -28,10 +28,10 @@ namespace MoonWorks.Input
 			SDL_Axis = sdlAxis;
 		}
 
-		internal void Update()
+		internal void SetValue(short value)
 		{
 			Value = MathHelper.Normalize(
-				SDL.SDL_GetGamepadAxis(Parent.Handle, SDL_Axis),
+				value,
 				0, short.MaxValue,
 				0, 1
 			);
