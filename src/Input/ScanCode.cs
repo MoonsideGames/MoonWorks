@@ -1,8 +1,9 @@
 ﻿namespace MoonWorks.Input
 {
 	/// <summary>
-	/// Can be used to determine key state without a direct reference to the virtual button object.
-	/// Enum values are equivalent to the SDL Scancode value.
+	/// ScanCode refers to a physical button location on a keyboard. It is localization-independent.
+	/// If you need the localized value of the button, use KeyCode instead.
+	/// Values are equivalent to SDL_Scancode.
 	/// </summary>
 	public enum ScanCode : int
 	{
