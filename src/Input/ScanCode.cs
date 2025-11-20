@@ -219,7 +219,7 @@
 		RightControl = 228,
 		RightShift = 229,
 		RightAlt = 230,
-		RightGui = 231,
+		RightMeta = 231, // Windows, Command, Meta
 		Mode = 257,
 		Sleep = 258,
 		Wake = 259,
