@@ -49,7 +49,8 @@ public class CopyPass
 			{
 				Texture = destination.Handle,
 				W = destination.Width,
-				H = destination.Height
+				H = destination.Height,
+				D = destination.LayerCountOrDepth
 			},
 			cycle
 		);
