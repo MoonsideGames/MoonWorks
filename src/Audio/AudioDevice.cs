@@ -127,11 +127,9 @@ namespace MoonWorks.Audio
 
 			WakeSignal = new AutoResetEvent(true);
 
-			Thread = new Thread(ThreadMain);
+			Thread = new Thread(ThreadMain);			
 			Thread.IsBackground = true;
 			Thread.Start();
-
-			Running = true;
 
 			TimeElapsedStopwatch.Start();
 			previousTickTime = 0;
@@ -139,6 +137,8 @@ namespace MoonWorks.Audio
 
 		private void ThreadMain()
 		{
+			Running = true;
+
 			while (Running)
 			{
 				ThreadTimer.Restart();
