@@ -240,7 +240,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 		return sb.ToString();
 	}
 
-/// <summary>
+	/// <summary>
 	/// Returns a hexadecimal <see cref="String"/> representation of this <see cref="Color"/> in the format:
 	/// 0x[R][G][B][A]
 	/// </summary>
