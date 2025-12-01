@@ -8,6 +8,11 @@
 
  * Derived from code by the Mono.Xna Team (Copyright 2006).
  * Released under the MIT License. See monoxna.LICENSE for details.
+ *
+ * Derived from code by Noel Berry (Copyright 2023).
+ * Released under the MIT License. See foster.LICENSE for details.
+ * Specifically, we're using their clever implementation for FromBigEndianRGB(A), 
+ * which utilizes integer overflow.
  */
 
 using System;
@@ -58,6 +63,21 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 
 	public Color(Vector4 vector) : this(vector.X, vector.Y, vector.Z, vector.W) { }
 
+	// Private, to enforce using explicit FromBigEndianRGB(A) functions.
+	private Color(uint bigEndian_RGBA) : this(
+		(byte)(bigEndian_RGBA >> 24), 	// R
+		(byte)(bigEndian_RGBA >> 16), 	// G
+		(byte)(bigEndian_RGBA >> 8), 	// B
+		(byte)bigEndian_RGBA 			// A
+	) { }
+
+	private Color(int bigEndian_RGB, byte alpha = 255) : this(
+        (byte)(bigEndian_RGB >> 16),	// R
+        (byte)(bigEndian_RGB >> 8),		// G
+        (byte)bigEndian_RGB,			// B
+        alpha
+	) { }
+	 
 	/// <summary>
 	/// Gets a packed RGBA value of this <see cref="Color"/>.
 	/// <para>NOTE: Because of endianness, if you format this value directly as a hex string, 
@@ -67,15 +87,33 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	/// <para>Otherwise, if the value is read back and the color is naively reconstructed 
 	/// via an <see cref="Unsafe.BitCast"/>, an endianness mismatch may occur
 	/// for different machines reading that file.</para>
+	/// <para>For this reason, a straightforward "FromPackedValue()" function will never be exposed.</para>
 	/// </summary>
 	public readonly uint PackedValue() => Unsafe.BitCast<Color, uint>(this);
-
-	/// <summary>
-    /// Gets a <see cref="Color"/> representation for a <see cref="PackedColor"/> value.
+    
+    /// <summary>
+    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.
+    /// <para>Example valid input: `0xF0F8FFFF`, aka AliceBlue.</para>
     /// </summary>
-    /// <param name="packedColor">The <see cref="PackedColor"/> to convert.</param>
-    /// <returns>A <see cref="Color"/> representation for the <see cref="PackedColor"/>.</returns>
-	public static Color FromPacked(PackedColor packedColor) => Unsafe.BitCast<uint, Color>(packedColor.RGBA);
+    /// <param name="bigEndian_RGBA">A big-endian packed color that specifies R, G, B, and A values.</param>
+    /// <returns>A <see cref="Color"/> representation for the big-endian RGBA packed value.</returns>
+    public static Color FromBigEndianRGBA(uint bigEndian_RGBA)
+    {
+        return new Color(bigEndian_RGBA);
+    }
+
+    /// <summary>
+    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.
+    /// <para>Example valid input: `0xF0F8FF`, aka AliceBlue.</para>
+    /// <para>The above will be interpeted as a big-endian input of `0xF0F8FF(AlphaByte)`.</para>
+    /// </summary>
+    /// <param name="bigEndian_RGB">A big-endian packed color that specifies R, G, and B values.</param>
+    /// <param name="alpha">The Alpha channel value for the color.</param>
+    /// <returns>A <see cref="Color"/> representation for the big-endian RGBA packed value.</returns>
+    public static Color FromBigEndianRGB(int bigEndian_RGB, byte alpha = 255)
+    {
+        return new Color(bigEndian_RGB, alpha);
+    }
 
 	/// <summary>
 	/// Gets a <see cref="Vector3"/> representation for this object.
