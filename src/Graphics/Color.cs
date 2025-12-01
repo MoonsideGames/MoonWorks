@@ -62,6 +62,11 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	/// Gets a packed RGBA value of this <see cref="Color"/>.
 	/// <para>NOTE: Because of endianness, if you format this value directly as a hex string, 
 	/// the order of bytes may be unexpected.</para>
+	/// <para>DO NOT store this value directly into a file 
+	/// without formatting it to a specific endianness!</para>
+	/// <para>Otherwise, if the value is read back and the color is naively reconstructed 
+	/// through <see cref="PackedColor.FromCurrentEndianRGBA"/>, an endianness mismatch may occur
+	/// with different machines reading that file.</para>
 	/// </summary>
 	public readonly uint PackedValue() => Unsafe.BitCast<Color, uint>(this);
 
