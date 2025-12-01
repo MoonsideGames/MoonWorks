@@ -103,7 +103,7 @@ public readonly record struct PackedColor()
         public static uint ToLittleEndian(uint bigEndian_RGBA)
         {
             var reversedColor = FromBigEndian_RGBA(bigEndian_RGBA);
-            return reversedColor.PackedValue();
+            return reversedColor.RegularColorPackedValue();
         }
 
         private static ReversedEndiannessColor FromBigEndian_RGBA(uint bigEndian_RGBA)
@@ -114,7 +114,7 @@ public readonly record struct PackedColor()
             return new Color(R, G, B, A);
         }
 
-        private uint PackedValue()
+        private uint RegularColorPackedValue()
         {
             var color = ToRegularColor();
             return color.PackedValue();
