@@ -276,7 +276,8 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	};
 
 
-#region Built-In Colors
+///=== Built-In Colors
+
 	/// <summary>
 	/// Transparent color (R:0, G:0, B:0, A:0).
 	/// </summary>
@@ -1127,7 +1128,4 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	/// <para>RGBA Hex: #663399FF.</para>
 	/// </summary>
 	public static Color RebeccaPurple => new((byte)102, (byte)51, (byte)153);
-
-#endregion Built-In Colors
-
 }
