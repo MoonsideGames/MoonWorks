@@ -21,7 +21,6 @@ namespace MoonWorks.Graphics;
 /// <summary>
 /// Describes a 32-bit packed color.
 /// </summary>
-[StructLayout(LayoutKind.Sequential, Size = 4, Pack = 4)]
 public record struct Color(byte R, byte G, byte B, byte A = 255)
 {
 	public Color(int r, int g, int b, int a = 255) : this(
