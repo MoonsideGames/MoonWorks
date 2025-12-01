@@ -8,7 +8,8 @@ namespace MoonWorks.Graphics;
 /// <summary>
 /// A <see cref="Color"/> packed as 4 bytes in an unsigned integer representation.
 /// <para>This represensation exists to prevent footguns related to endianness.</para>
-/// <para>Using static constructors, we guarantee that we can safely bit-cast this value into a <see cref="Color"/>.</para>
+/// <para>With appropriately-used static constructors, we guarantee 
+/// that we can safely bit-cast this value into a <see cref="Color"/>.</para>
 /// </summary>
 public readonly record struct PackedColor()
 {
@@ -22,31 +23,6 @@ public readonly record struct PackedColor()
     private PackedColor(uint rgba) : this()
     {
         RGBA = rgba;
-    }
-
-    /// <summary>
-    /// Returns a <see cref="PackedColor"/> representation of a <see cref="Color"/> value.
-    /// </summary>
-    /// <param name="color">The <see cref="Color"/> to convert.</param>
-    /// <returns>A <see cref="PackedColor"/> representation of a <see cref="Color"/> value</returns>
-    public static PackedColor FromColor(Color color) 
-        => new PackedColor(Unsafe.BitCast<Color, uint>(color));
-
-    /// <summary>
-    /// Returns a <see cref="PackedColor"/> representation of a packed RGBA value 
-    /// whose endianness matches the <see cref="Color"/> struct.
-    /// <para>Example use-case: convert the result of <see cref="Color.PackedValue"/> 
-    /// into a <see cref="PackedColor"/>, such that we can now explicitly bit-cast it 
-    /// back into a <see cref="Color"/>.</para>
-    /// <para>Of course, the result of <see cref="Color.PackedValue"/> could've 
-    /// been directly bit-casted anyways, but using these facilities is good practice 
-    /// since it forces the user to think about endianness for other cases.</para>
-    /// </summary>
-    /// <param name="color">The <see cref="Color"/> to convert.</param>
-    /// <returns></returns>
-    public static PackedColor FromCurrentEndianRGBA(uint rgba)
-    {
-        return new PackedColor(rgba);
     }
     
     /// <summary>
