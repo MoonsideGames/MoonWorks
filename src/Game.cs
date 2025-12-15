@@ -262,22 +262,15 @@ namespace MoonWorks
 			// Now that we are going to perform an update, let's handle SDL events.
 			HandleSDLEvents();
 
-			// Do not let any step take longer than our maximum.
-			if (accumulatedUpdateTime > MAX_DELTA_TIME)
-			{
-				accumulatedUpdateTime = MAX_DELTA_TIME;
-			}
-
 			if (!quit)
 			{
 				Step();
 
 				int updateCount = 0;
-				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
+				while (accumulatedUpdateTime >= FramePacingSettings.Timestep && updateCount < FramePacingSettings.MaxUpdatesPerTick)
 				{
 					Inputs.Update();
 					Update(FramePacingSettings.Timestep);
-					AudioDevice.WakeThread();
 
 					accumulatedUpdateTime -= FramePacingSettings.Timestep;
 					updateCount += 1;
@@ -285,8 +278,10 @@ namespace MoonWorks
 
 				if (updateCount > 1)
 				{
-					Logger.LogInfo($"Missed a frame, updated {updateCount} times");
+					Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
 				}
+
+				AudioDevice.WakeThread();
 
 				// Timestep alpha should be 0 if we are in latency-optimized mode.
 				var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?

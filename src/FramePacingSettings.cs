@@ -50,17 +50,25 @@ namespace MoonWorks
 		public TimeSpan FramerateCapTimestep { get; private set; }
 
 		/// <summary>
+		/// If a previous frame took too long, this is how many times Game.Update will be called to catch up before continuing on.
+		/// This value must be at least 2.
+		/// </summary>
+		public int MaxUpdatesPerTick { get; private set; }
+
+		/// <summary>
 		/// The game will render at the same pace as the timestep.
 		/// The tick loop will wait on the swapchain right before events are processed to minimize visual latency.
 		/// Note that this will lead to lower throughput in GPU-bound scenarios.
 		/// </summary>
 		public static FramePacingSettings CreateLatencyOptimized(
-			int timestepFPS
+			int timestepFPS,
+			int maxUpdatesPerTick
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.LatencyOptimized,
 				timestepFPS,
-				timestepFPS
+				timestepFPS,
+				maxUpdatesPerTick
 			);
 		}
 
@@ -70,12 +78,14 @@ namespace MoonWorks
 		/// </summary>
 		public static FramePacingSettings CreateCapped(
 			int timestepFPS,
-			int framerateCapFPS
+			int framerateCapFPS,
+			int maxUpdatesPerTick
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.Capped,
 				timestepFPS,
-				framerateCapFPS
+				framerateCapFPS,
+				maxUpdatesPerTick
 			);
 		}
 
@@ -86,22 +96,33 @@ namespace MoonWorks
 		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
 		/// </summary>
 		public static FramePacingSettings CreateUncapped(
-			int timestepFPS
+			int timestepFPS,
+			int maxUpdatesPerTick
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.Uncapped,
 				timestepFPS,
-				0
+				0,
+				maxUpdatesPerTick
 			);
 		}
 
 		private FramePacingSettings(
 			FramePacingMode mode,
 			int timestepFPS,
-			int framerateCapFPS
+			int framerateCapFPS,
+			int maxUpdatesPerTick
 		) {
 			Mode = mode;
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / timestepFPS);
+
+			if (maxUpdatesPerTick < 2)
+			{
+				Logger.LogWarn("Max updates per tick cannot be less than 2!");
+				maxUpdatesPerTick = 2;
+			}
+
+			MaxUpdatesPerTick = maxUpdatesPerTick;
 
 			if (mode != FramePacingMode.Uncapped)
 			{
