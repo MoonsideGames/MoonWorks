@@ -14,14 +14,12 @@ namespace MoonWorks
 		/// </summary>
 		LatencyOptimized,
 		/// <summary>
-		/// The game will render no more than the specified frames per second.
-		/// The framerate limit may be different from the timestep.
+		/// The game will render at the same pace as the timestep.
 		/// </summary>
 		Capped,
 		/// <summary>
 		/// The game will render at the maximum possible framerate that the computing resources allow. <br/>
 		/// Note that this may lead to overheating, resource starvation, etc. <br/>
-		/// The framerate limit may be different from the timestep.
 		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
 		/// </summary>
 		Uncapped
@@ -39,15 +37,10 @@ namespace MoonWorks
 
 		/// <summary>
 		/// Represents how often Game.Update will called.
+		/// If Mode is set to Capped or LatencyOptimized, this also represents how often Game.Draw will be called.
+		/// If Mode is set to Uncapped, Game.Draw will run as fast as possible.
 		/// </summary>
 		public TimeSpan Timestep { get; private set; }
-
-		/// <summary>
- 		/// If Mode is set to Uncapped, this will be ignored and Game.Draw will run as fast as possible.
-		/// If Mode is set to Capped, this represents how often Game.Draw will be called.
-		/// If Mode is set to LatencyOptimized, this value will be ignored and Game.Draw will run at the same rate as Game.Update.
-		/// </summary>
-		public TimeSpan FramerateCapTimestep { get; private set; }
 
 		/// <summary>
 		/// If a previous frame took too long, this is how many times Game.Update will be called to catch up before continuing on.
@@ -67,7 +60,6 @@ namespace MoonWorks
 			return new FramePacingSettings(
 				FramePacingMode.LatencyOptimized,
 				timestepFPS,
-				timestepFPS,
 				maxUpdatesPerTick
 			);
 		}
@@ -78,13 +70,11 @@ namespace MoonWorks
 		/// </summary>
 		public static FramePacingSettings CreateCapped(
 			int timestepFPS,
-			int framerateCapFPS,
 			int maxUpdatesPerTick
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.Capped,
 				timestepFPS,
-				framerateCapFPS,
 				maxUpdatesPerTick
 			);
 		}
@@ -92,7 +82,6 @@ namespace MoonWorks
 		/// <summary>
 		/// The game will render at the maximum possible framerate that the computing resources allow. <br/>
 		/// Note that this may lead to overheating, resource starvation, etc. <br/>
-		/// The framerate limit may be different from the timestep.
 		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
 		/// </summary>
 		public static FramePacingSettings CreateUncapped(
@@ -102,7 +91,6 @@ namespace MoonWorks
 			return new FramePacingSettings(
 				FramePacingMode.Uncapped,
 				timestepFPS,
-				0,
 				maxUpdatesPerTick
 			);
 		}
@@ -110,7 +98,6 @@ namespace MoonWorks
 		private FramePacingSettings(
 			FramePacingMode mode,
 			int timestepFPS,
-			int framerateCapFPS,
 			int maxUpdatesPerTick
 		) {
 			Mode = mode;
@@ -123,15 +110,6 @@ namespace MoonWorks
 			}
 
 			MaxUpdatesPerTick = maxUpdatesPerTick;
-
-			if (mode != FramePacingMode.Uncapped)
-			{
-				FramerateCapTimestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / framerateCapFPS);
-			}
-			else
-			{
-				FramerateCapTimestep = TimeSpan.Zero;
-			}
 		}
 	}
 }

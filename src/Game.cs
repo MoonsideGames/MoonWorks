@@ -28,7 +28,6 @@ namespace MoonWorks
 		private Stopwatch gameTimer;
 		private long previousTicks = 0;
 		TimeSpan accumulatedUpdateTime = TimeSpan.Zero;
-		TimeSpan accumulatedDrawTime = TimeSpan.Zero;
 		// must be a power of 2 so we can do a bitmask optimization when checking worst case
 		private const int PREVIOUS_SLEEP_TIME_COUNT = 128;
 		private const int SLEEP_TIME_MASK = PREVIOUS_SLEEP_TIME_COUNT - 1;
@@ -226,15 +225,12 @@ namespace MoonWorks
 
 			if (FramePacingSettings.Mode != FramePacingMode.Uncapped)
 			{
-				// If we are in latency-optimized mode, we use the game timestep. Otherwise, we use the framerate cap.
-				var capTimespan = FramePacingSettings.Mode == FramePacingMode.Capped ? FramePacingSettings.FramerateCapTimestep : FramePacingSettings.Timestep;
-
 				/* We want to wait until the framerate cap,
 				* but we don't want to oversleep. Requesting repeated 1ms sleeps and
 				* seeing how long we actually slept for lets us estimate the worst case
 				* sleep precision so we don't oversleep the next frame.
 				*/
-				while (accumulatedDrawTime + worstCaseSleepPrecision < capTimespan)
+				while (accumulatedUpdateTime + worstCaseSleepPrecision <  FramePacingSettings.Timestep)
 				{
 					System.Threading.Thread.Sleep(1);
 					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
@@ -246,7 +242,7 @@ namespace MoonWorks
 				* SpinWait(1) works by pausing the thread for very short intervals, so it is
 				* an efficient and time-accurate way to wait out the rest of the time.
 				*/
-				while (accumulatedDrawTime < capTimespan)
+				while (accumulatedUpdateTime < FramePacingSettings.Timestep)
 				{
 					System.Threading.Thread.SpinWait(1);
 					AdvanceElapsedTime();
@@ -262,12 +258,22 @@ namespace MoonWorks
 			// Now that we are going to perform an update, let's handle SDL events.
 			HandleSDLEvents();
 
+			// Do not let the accumulator go crazy.
+			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
+			{
+				accumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+			}
+
 			if (!quit)
 			{
-				Step();
+				if (accumulatedUpdateTime >= FramePacingSettings.Timestep)
+				{
+					// Step once on the timestep interval.
+					Step();
+				}
 
 				int updateCount = 0;
-				while (accumulatedUpdateTime >= FramePacingSettings.Timestep && updateCount < FramePacingSettings.MaxUpdatesPerTick)
+				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 				{
 					Inputs.Update();
 					Update(FramePacingSettings.Timestep);
@@ -290,7 +296,6 @@ namespace MoonWorks
 
 
 				Draw(alpha);
-				accumulatedDrawTime -= FramePacingSettings.FramerateCapTimestep;
 			}
 		}
 
@@ -474,7 +479,6 @@ namespace MoonWorks
 			long currentTicks = gameTimer.Elapsed.Ticks;
 			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - previousTicks);
 			accumulatedUpdateTime += timeAdvanced;
-			accumulatedDrawTime += timeAdvanced;
 			previousTicks = currentTicks;
 			return timeAdvanced;
 		}
