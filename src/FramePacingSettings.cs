@@ -43,7 +43,8 @@ namespace MoonWorks
 		public TimeSpan Timestep { get; private set; }
 
 		/// <summary>
-		/// If a previous frame took too long, this is how many times Game.Update will be called to catch up before continuing on.
+		/// If previous frames took too long, this is how many times Game.Update can be called to catch up in a single tick.
+		/// Any remaining updates for that tick will be dropped, thus dropping frames to avoid a spiral of death.
 		/// This value must be at least 2.
 		/// </summary>
 		public int MaxUpdatesPerTick { get; private set; }
