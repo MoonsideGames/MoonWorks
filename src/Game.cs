@@ -21,7 +21,6 @@ namespace MoonWorks
 	{
 		public AppInfo AppInfo { get; }
 
-		public TimeSpan MAX_DELTA_TIME = TimeSpan.FromMilliseconds(100);
 		public FramePacingSettings FramePacingSettings { get; private set; }
 
 		private bool quit = false;
