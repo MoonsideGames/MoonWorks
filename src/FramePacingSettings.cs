@@ -20,6 +20,8 @@ namespace MoonWorks
 		/// <summary>
 		/// The game will render at the maximum possible framerate that the computing resources allow. <br/>
 		/// Note that this may lead to overheating, resource starvation, etc. <br/>
+		/// It also uses more of the CPU, since the main thread won't be set to sleep while it waits for the next fixed update,
+		/// so that it can perform more rendering calls in-between fixed updates. <br/>
 		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
 		/// </summary>
 		Uncapped
@@ -43,8 +45,7 @@ namespace MoonWorks
 		public TimeSpan Timestep { get; private set; }
 
 		/// <summary>
-		/// If previous frames took too long, this is how many times Game.Update can be called to catch up in a single tick.
-		/// Any remaining updates for that tick will be dropped, thus dropping frames to avoid a spiral of death.
+		/// If a previous frame took too long, this is how many times Game.Update will be called to catch up before continuing on.
 		/// This value must be at least 2.
 		/// </summary>
 		public int MaxUpdatesPerTick { get; private set; }
