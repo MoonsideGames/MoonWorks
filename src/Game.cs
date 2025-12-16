@@ -184,7 +184,7 @@ namespace MoonWorks
 		}
 
 		/// <summary>
-        /// Executes once per tick, even when catching up.
+        /// Executes once per timestep interval, even when catching up.
         /// </summary>
 		protected abstract void Step();
 
