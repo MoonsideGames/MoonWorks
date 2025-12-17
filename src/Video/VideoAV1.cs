@@ -157,7 +157,8 @@ namespace MoonWorks.Video
 				return;
 			}
 
-			for (var i = 0; i < BUFFERED_FRAME_COUNT - AvailableBuffers.Count; i += 1)
+			var buffersNeeded = BUFFERED_FRAME_COUNT - AvailableBuffers.Count + 1;
+			for (var i = 0; i < buffersNeeded; i += 1)
 			{
 				AvailableBuffers.Enqueue(new YUVFramebuffer());
 			}
@@ -214,9 +215,9 @@ namespace MoonWorks.Video
 
 			if (Loaded)
 			{
-				while (QueuedBuffers.TryDequeue(out var texture))
+				while (QueuedBuffers.TryDequeue(out var framebuffer))
 				{
-					AvailableBuffers.Enqueue(texture);
+					AvailableBuffers.Enqueue(framebuffer);
 				}
 			}
 		}
@@ -242,7 +243,7 @@ namespace MoonWorks.Video
 			bool shouldRenderFrame = RenderTexture == null || timeAccumulator >= framerateTimestep;
 			while (CurrentFrameBuffer == null || timeAccumulator >= framerateTimestep)
 			{
-				if (TryGetFramebuffer(out var newFramebuffer))
+				if (TryGetQueuedFramebuffer(out var newFramebuffer))
 				{
 					if (CurrentFrameBuffer != null)
 					{
@@ -267,12 +268,11 @@ namespace MoonWorks.Video
 			return QueuedBuffers.Count;
 		}
 
-		internal YUVFramebuffer AcquireFramebuffer()
+		internal YUVFramebuffer AcquireAvailableFramebuffer()
 		{
 			if (!AvailableBuffers.TryDequeue(out var framebuffer))
 			{
-				// FIXME: this should never happen?
-				return new YUVFramebuffer();
+				return null;
 			}
 
 			return framebuffer;
@@ -283,16 +283,9 @@ namespace MoonWorks.Video
 		/// You must call ReleaseFrame eventually or the texture will leak.
 		/// </summary>
 		/// <returns>True if frame is available, otherwise false.</returns>
-		private bool TryGetFramebuffer(out YUVFramebuffer buffer)
+		private bool TryGetQueuedFramebuffer(out YUVFramebuffer buffer)
 		{
-			if (QueuedBuffers.Count > 0)
-			{
-				bool success = QueuedBuffers.TryDequeue(out buffer);
-				return success;
-			}
-
-			buffer = default;
-			return false;
+			return QueuedBuffers.TryDequeue(out buffer);
 		}
 
 		/// <summary>
@@ -306,6 +299,57 @@ namespace MoonWorks.Video
 		internal void EnqueueFramebuffer(YUVFramebuffer framebuffer)
 		{
 			QueuedBuffers.Enqueue(framebuffer);
+		}
+
+		internal void BufferFrameSync()
+		{
+			var result = Dav1dfile.df_readvideo(
+				handle,
+				1,
+				out nint yDataHandle,
+				out nint uDataHandle,
+				out nint vDataHandle,
+				out uint yDataLength,
+				out uint uvDataLength,
+				out uint yStride,
+				out uint uvStride
+			);
+
+			if (result == 0)
+			{
+				return;
+			}
+
+			var framebuffer = AcquireAvailableFramebuffer();
+			if (framebuffer == null)
+			{
+				Logger.LogError("Failed to acquire available framebuffer!");
+				return;
+			}
+
+			var ySpan = new Span<byte>((void*) yDataHandle, (int) yDataLength);
+			var uSpan = new Span<byte>((void*) uDataHandle, (int) uvDataLength);
+			var vSpan = new Span<byte>((void*) vDataHandle, (int) uvDataLength);
+
+			framebuffer.SetBufferData(
+				ySpan,
+				uSpan,
+				vSpan,
+				yStride,
+				uvStride,
+				Width,
+				Height,
+				UVWidth,
+				UVHeight
+			);
+
+			EnqueueFramebuffer(framebuffer);
+		}
+
+		internal void ResetSync()
+		{
+			Dav1dfile.df_reset(Handle);
+			BufferFrameSync();
 		}
 
 		protected override void Dispose(bool disposing)

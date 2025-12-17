@@ -59,11 +59,7 @@ public class VideoDevice : IDisposable
 			while (VideosToActivate.TryDequeue(out var video))
 			{
 				ActiveVideos.Add(video);
-
-				for (var i = 0; i < 3; i += 1)
-				{
-					BufferFrameSync(video);
-				}
+				video.BufferFrameSync();
 
 				video.Loaded = true;
 				video.LoadWaitHandle.Set();
@@ -88,11 +84,11 @@ public class VideoDevice : IDisposable
 		var neededFrames = VideoAV1.BUFFERED_FRAME_COUNT - video.BufferedFrameCount();
 		for (var i = 0; i < neededFrames; i += 1)
 		{
-			BufferFrameSync(video);
+			video.BufferFrameSync();
 
 			if (video.Ended && video.Loop)
 			{
-				ResetSync(video);
+				video.ResetSync();
 			}
 		}
 	}
@@ -105,61 +101,6 @@ public class VideoDevice : IDisposable
 	internal void UnregisterVideo(VideoAV1 video)
 	{
 		VideosToDeactivate.Enqueue(video);
-	}
-
-	private void ResetSync(VideoAV1 video)
-	{
-		Dav1dfile.df_reset(video.Handle);
-		BufferFrameSync(video);
-	}
-
-	public unsafe void BufferFrameSync(VideoAV1 video)
-	{
-		nint yDataHandle;
-		nint uDataHandle;
-		nint vDataHandle;
-		uint yDataLength;
-		uint uvDataLength;
-		uint yStride;
-		uint uvStride;
-
-		var result = Dav1dfile.df_readvideo(
-			video.handle,
-			1,
-			out yDataHandle,
-			out uDataHandle,
-			out vDataHandle,
-			out yDataLength,
-			out uvDataLength,
-			out yStride,
-			out uvStride
-		);
-
-		if (result == 0)
-		{
-			return;
-		}
-
-		// TODO: what should we do if there aren't any available framebuffers?
-		var framebuffer = video.AcquireFramebuffer();
-
-		var ySpan = new Span<byte>((void*) yDataHandle, (int) yDataLength);
-		var uSpan = new Span<byte>((void*) uDataHandle, (int) uvDataLength);
-		var vSpan = new Span<byte>((void*) vDataHandle, (int) uvDataLength);
-
-		framebuffer.SetBufferData(
-			ySpan,
-			uSpan,
-			vSpan,
-			yStride,
-			uvStride,
-			video.Width,
-			video.Height,
-			video.UVWidth,
-			video.UVHeight
-		);
-
-		video.EnqueueFramebuffer(framebuffer);
 	}
 
 	// This is NOT thread-safe!
