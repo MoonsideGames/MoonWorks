@@ -19,8 +19,9 @@ namespace MoonWorks
 		internal Texture SwapchainTexture { get; set; }
 
 		public bool Claimed { get; internal set; }
-		public MoonWorks.Graphics.SwapchainComposition SwapchainComposition { get; internal set; }
-		public MoonWorks.Graphics.TextureFormat SwapchainFormat { get; internal set; }
+		public PresentMode PresentMode { get; internal set; }
+		public SwapchainComposition SwapchainComposition { get; internal set; }
+		public TextureFormat SwapchainFormat { get; internal set; }
 
 		public (int, int) Position
 		{

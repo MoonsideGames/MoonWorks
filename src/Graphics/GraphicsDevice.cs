@@ -16,6 +16,7 @@ public class GraphicsDevice : IDisposable
 	public IntPtr Handle { get; }
 	public string Backend { get; }
 	public bool DebugMode { get; }
+	public uint AllowedFramesInFlight { get; private set; } = 2;
 
 	// Built-in video pipeline
 	internal GraphicsPipeline VideoPipeline { get; }
@@ -286,6 +287,7 @@ public class GraphicsDevice : IDisposable
 		if (result)
 		{
 			window.Claimed = true;
+			window.PresentMode = PresentMode.VSync;
 			window.SwapchainComposition = SwapchainComposition.SDR;
 			window.SwapchainFormat = GetSwapchainFormat(window);
 
@@ -323,6 +325,48 @@ public class GraphicsDevice : IDisposable
 	}
 
 	/// <summary>
+	/// Checks support for a specific present mode on a window.
+	/// Note that Vsync is always supported.
+	/// </summary>
+	public bool SupportsPresentMode(
+		Window window,
+		PresentMode presentMode
+	) {
+		if (!window.Claimed)
+		{
+			Logger.LogError("Cannot query present mode support on unclaimed window!");
+			return false;
+		}
+
+		return SDL.SDL_WindowSupportsGPUPresentMode(
+			Handle,
+			window.Handle,
+			presentMode
+		);
+	}
+
+	/// <summary>
+	/// Checks support for a specific swapchain composition on a window.
+	/// Note that SDR is always supported.
+	/// </summary>
+	public bool SupportsSwapchainComposition(
+		Window window,
+		SwapchainComposition swapchainComposition
+	) {
+		if (!window.Claimed)
+		{
+			Logger.LogError("Cannot query present mode support on unclaimed window!");
+			return false;
+		}
+
+		return SDL.SDL_WindowSupportsGPUSwapchainComposition(
+			Handle,
+			window.Handle,
+			swapchainComposition
+		);
+	}
+
+	/// <summary>
 	/// Changes the present mode of a claimed window. Does nothing if the window is not claimed.
 	/// </summary>
 	public bool SetSwapchainParameters(
@@ -345,6 +389,7 @@ public class GraphicsDevice : IDisposable
 
 		if (result)
 		{
+			window.PresentMode = presentMode;
 			window.SwapchainComposition = swapchainComposition;
 			window.SwapchainFormat = GetSwapchainFormat(window);
 
@@ -374,11 +419,18 @@ public class GraphicsDevice : IDisposable
 	/// <returns>True on success or false on error.</returns>
 	public bool SetAllowedFramesInFlight(uint allowedFramesInFlight)
 	{
-		var result = SDL.SDL_SetGPUAllowedFramesInFlight(Handle, allowedFramesInFlight);
-		if (!result) {
-			Logger.LogError(SDL3.SDL.SDL_GetError());
+		if (AllowedFramesInFlight == allowedFramesInFlight)
+		{
+			return true;
 		}
-		return result;
+
+		if (!SDL.SDL_SetGPUAllowedFramesInFlight(Handle, allowedFramesInFlight)) {
+			Logger.LogError(SDL3.SDL.SDL_GetError());
+			return false;
+		}
+
+		AllowedFramesInFlight = allowedFramesInFlight;
+		return true;
 	}
 
 	/// <summary>

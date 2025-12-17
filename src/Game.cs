@@ -112,6 +112,9 @@ namespace MoonWorks
 				throw new System.SystemException("Could not claim window!");
 			}
 
+			Logger.LogInfo("Applying frame pacing settings...");
+			SetFramePacingSettings(framePacingSettings);
+
 			Logger.LogInfo("Initializing audio thread...");
 			AudioDevice = new AudioDevice();
 
@@ -168,9 +171,32 @@ namespace MoonWorks
 
 		/// <summary>
 		/// Updates the frame pacing settings.
+		/// Note that this may stall the command queue or change Vsync settings.
 		/// </summary>
 		public void SetFramePacingSettings(FramePacingSettings settings)
 		{
+			if (settings.Mode == FramePacingMode.LatencyOptimized)
+			{
+				GraphicsDevice.SetAllowedFramesInFlight(1);
+			}
+			else
+			{
+				GraphicsDevice.SetAllowedFramesInFlight(2);
+			}
+
+			if (settings.Mode == FramePacingMode.LatencyOptimized)
+			{
+				// If latency-optimized, prefer mailbox or immediate mode
+				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Mailbox))
+				{
+					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox);
+				}
+				else if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
+				{
+					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Immediate);
+				}
+			}
+
 			FramePacingSettings = settings;
 		}
 
@@ -292,7 +318,6 @@ namespace MoonWorks
 				var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
 					0 :
 					(accumulatedUpdateTime / FramePacingSettings.Timestep);
-
 
 				Draw(alpha);
 			}
