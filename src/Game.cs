@@ -282,6 +282,7 @@ namespace MoonWorks
 
 			// Now that we are going to perform an update, let's handle SDL events.
 			HandleSDLEvents();
+			Inputs.Update();
 
 			// Do not let the accumulator go crazy.
 			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
@@ -300,7 +301,6 @@ namespace MoonWorks
 				int updateCount = 0;
 				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 				{
-					Inputs.Update();
 					Update(FramePacingSettings.Timestep);
 
 					accumulatedUpdateTime -= FramePacingSettings.Timestep;
