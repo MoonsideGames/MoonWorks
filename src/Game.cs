@@ -34,6 +34,10 @@ namespace MoonWorks
 		private int sleepTimeIndex = 0;
 		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
 
+		// For handling WINDOW_EXPOSED on Windows
+		// This prevents stalling on window drag
+		readonly SDL.SDL_EventFilter EventWatch;
+
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
 		public VideoDevice VideoDevice { get; }
@@ -59,7 +63,7 @@ namespace MoonWorks
 		/// <param name="availableShaderFormats">Bitflags of which GPU backends to attempt to initialize.</param>
 		/// <param name="targetTimestep">How often Game.Update will run in terms of ticks per second.</param>
 		/// <param name="debugMode">If true, enables extra debug checks. Should be turned off for release builds.</param>
-		public Game(
+		public unsafe Game(
 			AppInfo appInfo,
 			WindowCreateInfo windowCreateInfo,
 			FramePacingSettings framePacingSettings,
@@ -122,6 +126,13 @@ namespace MoonWorks
 			VideoDevice = new VideoDevice(GraphicsDevice);
 
 			HandleSDLEvents(); // handle initial events so we can get initial controller settings, etc
+
+			// Set up WINDOW_EXPOSED handling to prevent stalling on window drag
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				EventWatch = new SDL.SDL_EventFilter(OnEventWatch);
+				SDL.SDL_AddEventWatch(EventWatch, nint.Zero);
+			}
 		}
 
 		/// <summary>
@@ -133,7 +144,7 @@ namespace MoonWorks
 
 			while (!quit)
 			{
-				Tick();
+				Tick(true);
 			}
 
 			Logger.LogInfo("Starting shutdown sequence...");
@@ -244,44 +255,47 @@ namespace MoonWorks
 		protected virtual void DropBegin() {}
 		protected virtual void DropComplete() {}
 
-		private void Tick()
+		private void Tick(bool processEvents)
 		{
 			AdvanceElapsedTime();
 
-			if (FramePacingSettings.Mode != FramePacingMode.Uncapped)
+			if (processEvents)
 			{
-				/* We want to wait until the framerate cap,
-				* but we don't want to oversleep. Requesting repeated 1ms sleeps and
-				* seeing how long we actually slept for lets us estimate the worst case
-				* sleep precision so we don't oversleep the next frame.
-				*/
-				while (accumulatedUpdateTime + worstCaseSleepPrecision <  FramePacingSettings.Timestep)
+				if (FramePacingSettings.Mode != FramePacingMode.Uncapped)
 				{
-					System.Threading.Thread.Sleep(1);
-					TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
-					UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
+					/* We want to wait until the framerate cap,
+					* but we don't want to oversleep. Requesting repeated 1ms sleeps and
+					* seeing how long we actually slept for lets us estimate the worst case
+					* sleep precision so we don't oversleep the next frame.
+					*/
+					while (accumulatedUpdateTime + worstCaseSleepPrecision <  FramePacingSettings.Timestep)
+					{
+						System.Threading.Thread.Sleep(1);
+						TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
+						UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
+					}
+
+					/* Now that we have slept into the sleep precision threshold, we need to wait
+					* for just a little bit longer until the target elapsed time has been reached.
+					* SpinWait(1) works by pausing the thread for very short intervals, so it is
+					* an efficient and time-accurate way to wait out the rest of the time.
+					*/
+					while (accumulatedUpdateTime < FramePacingSettings.Timestep)
+					{
+						System.Threading.Thread.SpinWait(1);
+						AdvanceElapsedTime();
+					}
 				}
 
-				/* Now that we have slept into the sleep precision threshold, we need to wait
-				* for just a little bit longer until the target elapsed time has been reached.
-				* SpinWait(1) works by pausing the thread for very short intervals, so it is
-				* an efficient and time-accurate way to wait out the rest of the time.
-				*/
-				while (accumulatedUpdateTime < FramePacingSettings.Timestep)
+				if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
 				{
-					System.Threading.Thread.SpinWait(1);
-					AdvanceElapsedTime();
+					// Block on the swapchain before event processing for latency optimization.
+					GraphicsDevice.WaitForSwapchain(MainWindow);
 				}
-			}
 
-			if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
-			{
-				// Block on the swapchain before event processing for latency optimization.
-				GraphicsDevice.WaitForSwapchain(MainWindow);
+				// Now that we are going to perform an update, let's handle SDL events.
+				HandleSDLEvents();
 			}
-
-			// Now that we are going to perform an update, let's handle SDL events.
-			HandleSDLEvents();
 
 			// Do not let the accumulator go crazy.
 			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
@@ -547,6 +561,16 @@ namespace MoonWorks
 
 			previousSleepTimes[sleepTimeIndex] = timeSpentSleeping;
 			sleepTimeIndex = (sleepTimeIndex + 1) & SLEEP_TIME_MASK;
+		}
+
+		private unsafe bool OnEventWatch(nint userdata, SDL.SDL_Event* evt)
+		{
+			if ((SDL.SDL_EventType) evt->type == SDL.SDL_EventType.SDL_EVENT_WINDOW_EXPOSED)
+			{
+				Tick(false);
+			}
+
+			return true;
 		}
 
 		private unsafe static int MeasureStringLength(byte* ptr)
