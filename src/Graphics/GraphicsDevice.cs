@@ -380,6 +380,13 @@ public class GraphicsDevice : IDisposable
 			return false;
 		}
 
+		if (
+			window.PresentMode == presentMode &&
+			window.SwapchainComposition == swapchainComposition)
+		{
+			return true;
+		}
+
 		bool result = SDL.SDL_SetGPUSwapchainParameters(
 			Handle,
 			window.Handle,
