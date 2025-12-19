@@ -206,23 +206,21 @@ namespace MoonWorks
 				GraphicsDevice.SetAllowedFramesInFlight(2);
 			}
 
-			if (settings.MinimizeVisualLatency)
+			// Always prefer using Mailbox over default VSYNC present-mode.
+			// Like VSYNC, no visual tearing is possible with it, but it boasts lower visual latency.
+			// Also prefer it over Immediate, since it has no tearing possible.
+			// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode
+			if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Mailbox))
 			{
-				// If latency-optimized, prefer immediate mode.
+				GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox);
+			}
+			else if (settings.MinimizeVisualLatency)
+			{
+				// If latency-optimized, use Immediate mode if we can't use Mailbox.
 				// Tearing may occur.
 				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
 				{
 					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Immediate);
-				}
-			}
-			else
-			{
-				// Always prefer using Mailbox over default VSYNC present-mode.
-				// Like VSYNC, no visual tearing is possible with it, but it boasts lower visual latency.
-				// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode
-				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Mailbox))
-				{
-					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox);
 				}
 			}
 
