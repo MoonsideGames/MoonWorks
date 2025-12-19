@@ -282,6 +282,10 @@ namespace MoonWorks
 
 			// Now that we are going to perform an update, let's handle SDL events.
 			HandleSDLEvents();
+			if (quit)
+			{
+				return;
+			}
 
 			// Do not let the accumulator go crazy.
 			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
@@ -289,38 +293,46 @@ namespace MoonWorks
 				accumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
 			}
 
-			if (!quit)
+			int updateCount = 0;
+			if (accumulatedUpdateTime >= FramePacingSettings.Timestep)
 			{
-				if (accumulatedUpdateTime >= FramePacingSettings.Timestep)
-				{
-					// Step once on the timestep interval.
-					Step();
-				}
+				// Step once on the timestep interval.
+				Step();
 
-				int updateCount = 0;
-				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
+				while (true)
 				{
 					Inputs.Update();
 					Update(FramePacingSettings.Timestep);
 
 					accumulatedUpdateTime -= FramePacingSettings.Timestep;
 					updateCount += 1;
+
+					if (accumulatedUpdateTime < FramePacingSettings.Timestep)
+					{
+						break;
+					}
+					// Else, we'll loop again, so handle input events for the next loop.
+					HandleSDLEvents();
+					if (quit)
+					{
+						return;
+					}
 				}
-
-				if (updateCount > 1)
-				{
-					Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
-				}
-
-				AudioDevice.WakeThread();
-
-				// Timestep alpha should be 0 if we are in latency-optimized mode.
-				var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
-					0 :
-					(accumulatedUpdateTime / FramePacingSettings.Timestep);
-
-				Draw(alpha);
 			}
+
+			if (updateCount > 1)
+			{
+				Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
+			}
+
+			AudioDevice.WakeThread();
+
+			// Timestep alpha should be 0 if we are in latency-optimized mode.
+			var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
+				0 :
+				(accumulatedUpdateTime / FramePacingSettings.Timestep);
+
+			Draw(alpha);
 		}
 
 		private void HandleSDLEvents()
