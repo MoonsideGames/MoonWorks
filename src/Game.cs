@@ -36,7 +36,8 @@ namespace MoonWorks
 
 		// For handling WINDOW_EXPOSED on Windows
 		// This prevents stalling on window drag
-		readonly SDL.SDL_EventFilter EventWatch;
+		readonly SDL.SDL_EventFilter EventFilter;
+		bool Initialized = false;
 
 		public GraphicsDevice GraphicsDevice { get; }
 		public AudioDevice AudioDevice { get; }
@@ -130,8 +131,8 @@ namespace MoonWorks
 			// Set up WINDOW_EXPOSED handling to prevent stalling on window drag
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				EventWatch = new SDL.SDL_EventFilter(OnEventWatch);
-				SDL.SDL_AddEventWatch(EventWatch, nint.Zero);
+				EventFilter = new SDL.SDL_EventFilter(OnEventFilter);
+				SDL.SDL_SetEventFilter(EventFilter, nint.Zero);
 			}
 		}
 
@@ -141,6 +142,8 @@ namespace MoonWorks
 		public void Run()
 		{
 			MainWindow.Show();
+
+			Initialized = true;
 
 			while (!quit)
 			{
@@ -563,11 +566,17 @@ namespace MoonWorks
 			sleepTimeIndex = (sleepTimeIndex + 1) & SLEEP_TIME_MASK;
 		}
 
-		private unsafe bool OnEventWatch(nint userdata, SDL.SDL_Event* evt)
+		private unsafe bool OnEventFilter(nint userdata, SDL.SDL_Event* evt)
 		{
+			if (!Initialized)
+			{
+				return true;
+			}
+
 			if ((SDL.SDL_EventType) evt->type == SDL.SDL_EventType.SDL_EVENT_WINDOW_EXPOSED)
 			{
 				Tick(false);
+				return false;
 			}
 
 			return true;
