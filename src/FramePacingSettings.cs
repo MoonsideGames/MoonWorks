@@ -8,19 +8,21 @@ namespace MoonWorks
 	public enum FramePacingMode
 	{
 		/// <summary>
-		/// The game will render at the same pace as the timestep.
+		/// The game will call Draw at the same pace as Update.
 		/// The tick loop will wait on the swapchain right before events are processed to minimize visual latency.
-		/// Note that this will lead to lower throughput in GPU-bound scenarios.
+		/// Note that this will lead to lower framerate in GPU-bound scenarios.
 		/// </summary>
 		LatencyOptimized,
 		/// <summary>
-		/// The game will render at the same pace as the timestep.
+		/// The game will call Draw at the same pace as Update.
+		/// Has the same CPU power characteristics as LatencyOptimized, but with better GPU utilization at the cost of input latency.
 		/// </summary>
 		Capped,
 		/// <summary>
-		/// The game will render at the maximum possible framerate that the computing resources allow. <br/>
+		/// If the GraphicsDevice.PresentMode is set to VSync, the Draw rate will be limited by the monitor refresh rate.
+		/// Otherwise the game will call Draw at the maximum possible framerate that the computing resources allow. <br/>
 		/// Note that this may lead to overheating, resource starvation, etc. <br/>
-		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
+		/// Even with Vsync on, the CPU can't sleep as often, so this setting may cause increased power consumption.
 		/// </summary>
 		Uncapped
 	}
