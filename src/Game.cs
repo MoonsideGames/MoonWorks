@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Storage;
 using MoonWorks.Video;
+using System.Collections.Generic;
 
 namespace MoonWorks
 {
@@ -23,16 +24,20 @@ namespace MoonWorks
 
 		public FramePacingSettings FramePacingSettings { get; private set; }
 
-		private bool quit = false;
-		private Stopwatch gameTimer;
-		private long previousTicks = 0;
-		TimeSpan accumulatedUpdateTime = TimeSpan.Zero;
+		private bool QuitRequested = false;
+		private readonly Stopwatch GameTimer;
+		private long PreviousTicks = 0;
+		TimeSpan AccumulatedUpdateTime = TimeSpan.Zero;
 		// must be a power of 2 so we can do a bitmask optimization when checking worst case
 		private const int PREVIOUS_SLEEP_TIME_COUNT = 128;
 		private const int SLEEP_TIME_MASK = PREVIOUS_SLEEP_TIME_COUNT - 1;
-		private TimeSpan[] previousSleepTimes = new TimeSpan[PREVIOUS_SLEEP_TIME_COUNT];
-		private int sleepTimeIndex = 0;
-		private TimeSpan worstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
+		private TimeSpan[] PreviousSleepTimes = new TimeSpan[PREVIOUS_SLEEP_TIME_COUNT];
+		private int SleepTimeIndex = 0;
+		private TimeSpan WorstCaseSleepPrecision = TimeSpan.FromMilliseconds(1);
+
+		// General event handling
+		readonly Queue<SDL.SDL_Event> InputEventQueue = [];
+		readonly Queue<SDL.SDL_Event> SystemEventQueue = [];
 
 		// For handling WINDOW_EXPOSED on Windows
 		// This prevents stalling on window drag
@@ -75,13 +80,13 @@ namespace MoonWorks
 
 			Logger.LogInfo("Starting up MoonWorks...");
 			Logger.LogInfo("Initializing frame limiter...");
-			gameTimer = Stopwatch.StartNew();
+			GameTimer = Stopwatch.StartNew();
 
 			FramePacingSettings = framePacingSettings;
 
-			for (int i = 0; i < previousSleepTimes.Length; i += 1)
+			for (int i = 0; i < PreviousSleepTimes.Length; i += 1)
 			{
-				previousSleepTimes[i] = TimeSpan.FromMilliseconds(1);
+				PreviousSleepTimes[i] = TimeSpan.FromMilliseconds(1);
 			}
 
 			Logger.LogInfo("Initializing SDL...");
@@ -126,7 +131,9 @@ namespace MoonWorks
 			Logger.LogInfo("Initializing video thread...");
 			VideoDevice = new VideoDevice(GraphicsDevice);
 
-			HandleSDLEvents(); // handle initial events so we can get initial controller settings, etc
+			// handle initial system events so we can get initial controller settings, etc
+			GatherSDLEvents();
+			ProcessSystemEvents();
 
 			// Set up WINDOW_EXPOSED handling to prevent stalling on window drag
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -145,7 +152,7 @@ namespace MoonWorks
 
 			Initialized = true;
 
-			while (!quit)
+			while (!QuitRequested)
 			{
 				Tick(true);
 			}
@@ -219,7 +226,7 @@ namespace MoonWorks
 		/// </summary>
 		public void Quit()
 		{
-			quit = true;
+			QuitRequested = true;
 		}
 
 		/// <summary>
@@ -266,24 +273,22 @@ namespace MoonWorks
 			{
 				if (FramePacingSettings.Mode != FramePacingMode.Uncapped)
 				{
-					/* We want to wait until the framerate cap,
-					* but we don't want to oversleep. Requesting repeated 1ms sleeps and
-					* seeing how long we actually slept for lets us estimate the worst case
-					* sleep precision so we don't oversleep the next frame.
-					*/
-					while (accumulatedUpdateTime + worstCaseSleepPrecision <  FramePacingSettings.Timestep)
+					// We want to wait until the framerate cap,
+					// but we don't want to oversleep. Requesting repeated 1ms sleeps and
+					// seeing how long we actually slept for lets us estimate the worst case
+					// sleep precision so we don't oversleep the next frame.
+					while (AccumulatedUpdateTime + WorstCaseSleepPrecision <  FramePacingSettings.Timestep)
 					{
 						System.Threading.Thread.Sleep(1);
 						TimeSpan timeAdvancedSinceSleeping = AdvanceElapsedTime();
 						UpdateEstimatedSleepPrecision(timeAdvancedSinceSleeping);
 					}
 
-					/* Now that we have slept into the sleep precision threshold, we need to wait
-					* for just a little bit longer until the target elapsed time has been reached.
-					* SpinWait(1) works by pausing the thread for very short intervals, so it is
-					* an efficient and time-accurate way to wait out the rest of the time.
-					*/
-					while (accumulatedUpdateTime < FramePacingSettings.Timestep)
+					// Now that we have slept into the sleep precision threshold, we need to wait
+					// for just a little bit longer until the target elapsed time has been reached.
+					// SpinWait(1) works by pausing the thread for very short intervals, so it is
+					// an efficient and time-accurate way to wait out the rest of the time.
+					while (AccumulatedUpdateTime < FramePacingSettings.Timestep)
 					{
 						System.Threading.Thread.SpinWait(1);
 						AdvanceElapsedTime();
@@ -297,112 +302,173 @@ namespace MoonWorks
 				}
 
 				// Now that we are going to perform an update, let's handle SDL events.
-				HandleSDLEvents();
+				// We'll process the system events immediately, and the input events before updating.
+				GatherSDLEvents();
+				ProcessSystemEvents();
+			}
+
+			// Quit event came in, bail immediately.
+			if (QuitRequested)
+			{
+				return;
 			}
 
 			// Do not let the accumulator go crazy.
-			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
+			if (AccumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
 			{
-				accumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+				AccumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
 			}
 
-			if (!quit)
+			bool firstIteration = true;
+			int updateCount = 0;
+			while (AccumulatedUpdateTime >= FramePacingSettings.Timestep)
 			{
-				if (accumulatedUpdateTime >= FramePacingSettings.Timestep)
+				// If we are processing events in the accumulator loop
+				// we want to process only input events and not system events.
+				if (processEvents)
 				{
-					// Step once on the timestep interval.
-					Step();
-				}
-
-				int updateCount = 0;
-				while (accumulatedUpdateTime >= FramePacingSettings.Timestep)
-				{
+					GatherSDLEvents();
+					ProcessInputEvents();
 					Inputs.Update();
-					Update(FramePacingSettings.Timestep);
-
-					accumulatedUpdateTime -= FramePacingSettings.Timestep;
-					updateCount += 1;
 				}
 
-				if (updateCount > 1)
+				// Step once on the timestep interval.
+				if (firstIteration)
 				{
-					Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
+					Step();
+					firstIteration = false;
 				}
 
-				AudioDevice.WakeThread();
+				Update(FramePacingSettings.Timestep);
 
-				// Timestep alpha should be 0 if we are in latency-optimized mode.
-				var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
-					0 :
-					(accumulatedUpdateTime / FramePacingSettings.Timestep);
+				AccumulatedUpdateTime -= FramePacingSettings.Timestep;
+				updateCount += 1;
+			}
 
-				Draw(alpha);
+			if (updateCount > 1)
+			{
+				Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {AccumulatedUpdateTime.TotalMilliseconds} ms");
+			}
+
+			AudioDevice.WakeThread();
+
+			// Timestep alpha should be 0 if we are in latency-optimized mode.
+			var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
+				0 :
+				(AccumulatedUpdateTime / FramePacingSettings.Timestep);
+
+			Draw(alpha);
+		}
+
+		// Route events into two different event queues so we can process inputs separately.
+		private void GatherSDLEvents()
+		{
+			while (SDL.SDL_PollEvent(out var evt))
+			{
+				switch ((SDL.SDL_EventType) evt.type)
+				{
+					case SDL.SDL_EventType.SDL_EVENT_QUIT:
+					case SDL.SDL_EventType.SDL_EVENT_DROP_BEGIN:
+					case SDL.SDL_EventType.SDL_EVENT_DROP_COMPLETE:
+					case SDL.SDL_EventType.SDL_EVENT_DROP_FILE:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
+					case SDL.SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+					case SDL.SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						SystemEventQueue.Enqueue(evt);
+						break;
+
+					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
+					case SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_KEY_UP:
+						InputEventQueue.Enqueue(evt);
+						break;
+				}
 			}
 		}
 
-		private void HandleSDLEvents()
+		private void ProcessInputEvents()
 		{
-			while (SDL.SDL_PollEvent(out var _event))
+			while (InputEventQueue.TryDequeue(out var evt))
 			{
-				switch (_event.type)
+				switch ((SDL.SDL_EventType) evt.type)
 				{
-					case (uint) SDL.SDL_EventType.SDL_EVENT_QUIT:
-						quit = true;
+					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+						HandleTextInput(evt.text);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
-						HandleTextInput(_event.text);
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+						Inputs.Mouse.WheelRaw += (int) evt.wheel.y;
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
-						Inputs.Mouse.WheelRaw += (int) _event.wheel.y;
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+						HandleMouseButton(evt.button);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
-					case (uint) SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
-						HandleMouseButton(_event.button);
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
+						HandleGamepadButton(evt.gbutton);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_BEGIN:
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
+						HandleGamepadAxis(evt.gaxis);
+						break;
+
+					case SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_KEY_UP:
+						HandleKeyboardButton(evt.key);
+						break;
+
+					default:
+						Logger.LogError("Unhandled input event!");
+						break;
+				}
+			}
+		}
+
+		private void ProcessSystemEvents()
+		{
+			while (SystemEventQueue.TryDequeue(out var evt))
+			{
+				switch ((SDL.SDL_EventType) evt.type)
+				{
+					case SDL.SDL_EventType.SDL_EVENT_QUIT:
+						Quit();
+						break;
+
+					case SDL.SDL_EventType.SDL_EVENT_DROP_BEGIN:
 						DropBegin();
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_COMPLETE:
+					case SDL.SDL_EventType.SDL_EVENT_DROP_COMPLETE:
 						DropComplete();
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_DROP_FILE:
-						HandleFileDrop(_event.drop);
+					case SDL.SDL_EventType.SDL_EVENT_DROP_FILE:
+						HandleFileDrop(evt.drop);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
-						HandleGamepadAdded(_event.gdevice);
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_ADDED:
+						HandleGamepadAdded(evt.gdevice);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
-						HandleGamepadRemoved(_event.gdevice);
+					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED:
+						HandleGamepadRemoved(evt.gdevice);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
-						HandleGamepadButton(_event.gbutton);
+					case SDL.SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+						HandleWindowPixelSizeChangeEvent(evt.window);
 						break;
 
-					case (uint) SDL.SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
-						HandleGamepadAxis(_event.gaxis);
-						break;
-
-					case (uint) SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
-					case (uint) SDL.SDL_EventType.SDL_EVENT_KEY_UP:
-						HandleKeyboardButton(_event.key);
-						break;
-
-					case (uint) SDL.SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-						HandleWindowPixelSizeChangeEvent(_event.window);
-						break;
-
-					case (uint) SDL.SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-						HandleWindowCloseRequestedEvent(_event.window);
+					case SDL.SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						HandleWindowCloseRequestedEvent(evt.window);
 						break;
 				}
 			}
@@ -517,10 +583,10 @@ namespace MoonWorks
 
 		private TimeSpan AdvanceElapsedTime()
 		{
-			long currentTicks = gameTimer.Elapsed.Ticks;
-			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - previousTicks);
-			accumulatedUpdateTime += timeAdvanced;
-			previousTicks = currentTicks;
+			long currentTicks = GameTimer.Elapsed.Ticks;
+			TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - PreviousTicks);
+			AccumulatedUpdateTime += timeAdvanced;
+			PreviousTicks = currentTicks;
 			return timeAdvanced;
 		}
 
@@ -545,25 +611,25 @@ namespace MoonWorks
 			 * is if we either 1) just got a new worst case, or 2) the worst case was
 			 * the oldest entry on the list.
 			 */
-			if (timeSpentSleeping >= worstCaseSleepPrecision)
+			if (timeSpentSleeping >= WorstCaseSleepPrecision)
 			{
-				worstCaseSleepPrecision = timeSpentSleeping;
+				WorstCaseSleepPrecision = timeSpentSleeping;
 			}
-			else if (previousSleepTimes[sleepTimeIndex] == worstCaseSleepPrecision)
+			else if (PreviousSleepTimes[SleepTimeIndex] == WorstCaseSleepPrecision)
 			{
 				var maxSleepTime = TimeSpan.MinValue;
-				for (int i = 0; i < previousSleepTimes.Length; i++)
+				for (int i = 0; i < PreviousSleepTimes.Length; i++)
 				{
-					if (previousSleepTimes[i] > maxSleepTime)
+					if (PreviousSleepTimes[i] > maxSleepTime)
 					{
-						maxSleepTime = previousSleepTimes[i];
+						maxSleepTime = PreviousSleepTimes[i];
 					}
 				}
-				worstCaseSleepPrecision = maxSleepTime;
+				WorstCaseSleepPrecision = maxSleepTime;
 			}
 
-			previousSleepTimes[sleepTimeIndex] = timeSpentSleeping;
-			sleepTimeIndex = (sleepTimeIndex + 1) & SLEEP_TIME_MASK;
+			PreviousSleepTimes[SleepTimeIndex] = timeSpentSleeping;
+			SleepTimeIndex = (SleepTimeIndex + 1) & SLEEP_TIME_MASK;
 		}
 
 		private unsafe bool OnEventFilter(nint userdata, SDL.SDL_Event* evt)
