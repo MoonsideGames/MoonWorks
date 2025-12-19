@@ -314,7 +314,7 @@ namespace MoonWorks
 
 				if (updateCount > 1)
 				{
-					Logger.LogInfo($"Previously missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
+					Logger.LogInfo($"Previously missed frame(s), updated {updateCount} times to catch up, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
 				}
 
 				AudioDevice.WakeThread();
