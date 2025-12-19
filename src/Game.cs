@@ -196,8 +196,9 @@ namespace MoonWorks
 		/// </summary>
 		public void SetFramePacingSettings(FramePacingSettings settings)
 		{
-			if (settings.Mode == FramePacingMode.LatencyOptimized)
+			if (settings.MinimizeVisualLatency)
 			{
+				// Decrease visual latency at the expense of throughput.
 				GraphicsDevice.SetAllowedFramesInFlight(1);
 			}
 			else
@@ -205,16 +206,23 @@ namespace MoonWorks
 				GraphicsDevice.SetAllowedFramesInFlight(2);
 			}
 
-			if (settings.Mode == FramePacingMode.LatencyOptimized)
+			if (settings.MinimizeVisualLatency)
 			{
-				// If latency-optimized, prefer mailbox or immediate mode
+				// If latency-optimized, prefer immediate mode.
+				// Tearing may occur.
+				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
+				{
+					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Immediate);
+				}
+			}
+			else
+			{
+				// Always prefer using Mailbox over default VSYNC present-mode.
+				// Like VSYNC, no visual tearing is possible with it, but it boasts lower visual latency.
+				// https://wiki.libsdl.org/SDL3/SDL_GPUPresentMode
 				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Mailbox))
 				{
 					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox);
-				}
-				else if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
-				{
-					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Immediate);
 				}
 			}
 

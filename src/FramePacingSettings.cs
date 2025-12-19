@@ -35,7 +35,7 @@ namespace MoonWorks
 		/// <summary>
 		/// Specifies the frame pacing strategy of the Game's tick loop.
 		/// </summary>
-		public FramePacingMode Mode { get; private set;}
+		public FramePacingMode Mode { get; private set; }
 
 		/// <summary>
 		/// Represents how often Game.Update will called.
@@ -49,6 +49,16 @@ namespace MoonWorks
 		/// </summary>
 		public int MaxUpdatesPerTick { get; private set; }
 
+
+		/// <summary>
+		/// If false, smooth presentation is prioritized:
+		/// 2 frames in flight will be used and screen tearing will never occur.<br/>
+		/// 
+		/// If true, lowering visual latency is prioritized:
+		/// 1 frame in flight will be used and screen tearing may occur.
+		/// </summary>
+		public bool MinimizeVisualLatency { get; private set; }
+
 		/// <summary>
 		/// The game will render at the same pace as the timestep.
 		/// The tick loop will wait on the swapchain right before events are processed to minimize visual latency.
@@ -61,7 +71,8 @@ namespace MoonWorks
 			return new FramePacingSettings(
 				FramePacingMode.LatencyOptimized,
 				timestepFPS,
-				maxUpdatesPerTick
+				maxUpdatesPerTick,
+				true
 			);
 		}
 
@@ -71,12 +82,14 @@ namespace MoonWorks
 		/// </summary>
 		public static FramePacingSettings CreateCapped(
 			int timestepFPS,
-			int maxUpdatesPerTick
+			int maxUpdatesPerTick,
+			bool minimizeVisualLatency
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.Capped,
 				timestepFPS,
-				maxUpdatesPerTick
+				maxUpdatesPerTick,
+				minimizeVisualLatency
 			);
 		}
 
@@ -87,23 +100,27 @@ namespace MoonWorks
 		/// </summary>
 		public static FramePacingSettings CreateUncapped(
 			int timestepFPS,
-			int maxUpdatesPerTick
+			int maxUpdatesPerTick,
+			bool minimizeVisualLatency
 		) {
 			return new FramePacingSettings(
 				FramePacingMode.Uncapped,
 				timestepFPS,
-				maxUpdatesPerTick
+				maxUpdatesPerTick,
+				minimizeVisualLatency
 			);
 		}
 
 		private FramePacingSettings(
 			FramePacingMode mode,
 			int timestepFPS,
-			int maxUpdatesPerTick
+			int maxUpdatesPerTick,
+			bool minimizeVisualLatency
 		) {
 			Mode = mode;
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / timestepFPS);
 			MaxUpdatesPerTick = maxUpdatesPerTick;
+			MinimizeVisualLatency = minimizeVisualLatency;
 		}
 	}
 }
