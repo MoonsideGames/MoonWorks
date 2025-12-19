@@ -314,9 +314,11 @@ namespace MoonWorks
 			}
 
 			// Do not let the accumulator go crazy.
-			if (AccumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
+			var maxUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+			if (AccumulatedUpdateTime > maxUpdateTime)
 			{
-				AccumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+				Logger.LogInfo($"Exceeded max update time. Update time reduced from {AccumulatedUpdateTime.TotalMilliseconds} ms to {maxUpdateTime.TotalMilliseconds} ms");
+				AccumulatedUpdateTime = maxUpdateTime;
 			}
 
 			bool firstIteration = true;
@@ -347,7 +349,7 @@ namespace MoonWorks
 
 			if (updateCount > 1)
 			{
-				Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {AccumulatedUpdateTime.TotalMilliseconds} ms");
+				Logger.LogInfo($"A frame took too long, updated {updateCount} times to catch up, remaining accumulator time {AccumulatedUpdateTime.TotalMilliseconds} ms");
 			}
 
 			AudioDevice.WakeThread();

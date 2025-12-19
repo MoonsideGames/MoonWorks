@@ -45,9 +45,7 @@ namespace MoonWorks
 		public TimeSpan Timestep { get; private set; }
 
 		/// <summary>
-		/// If previous frames took too long, this is how many times Game.Update can be called to catch up in a single tick.
-		/// Any remaining updates for that tick will be dropped, thus dropping frames to avoid a spiral of death.
-		/// This value must be at least 2.
+		/// If a previous frame took too long, this is how many times Game.Update can be called to catch up before continuing.
 		/// </summary>
 		public int MaxUpdatesPerTick { get; private set; }
 
@@ -105,13 +103,6 @@ namespace MoonWorks
 		) {
 			Mode = mode;
 			Timestep = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / timestepFPS);
-
-			if (maxUpdatesPerTick < 2)
-			{
-				Logger.LogWarn("Max updates per tick cannot be less than 2!");
-				maxUpdatesPerTick = 2;
-			}
-
 			MaxUpdatesPerTick = maxUpdatesPerTick;
 		}
 	}
