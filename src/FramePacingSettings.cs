@@ -80,6 +80,7 @@ namespace MoonWorks
 		/// The game will render no more than the specified frames per second.
 		/// The framerate limit may be different from the timestep.
 		/// </summary>
+		/// <param name="minimizeVisualLatency">Whether or not to allow tearing and lessen GPU throughput to minimize visual latency.</param>
 		public static FramePacingSettings CreateCapped(
 			int timestepFPS,
 			int maxUpdatesPerTick,
@@ -98,6 +99,7 @@ namespace MoonWorks
 		/// Note that this may lead to overheating, resource starvation, etc. <br/>
 		/// If the GraphicsDevice.PresentMode is set to VSYNC, the framerate will be limited by the monitor refresh rate.
 		/// </summary>
+		/// <param name="minimizeVisualLatency">Whether or not to allow tearing and lessen GPU throughput to minimize visual latency.</param>
 		public static FramePacingSettings CreateUncapped(
 			int timestepFPS,
 			int maxUpdatesPerTick,
