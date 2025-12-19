@@ -284,9 +284,14 @@ namespace MoonWorks
 			HandleSDLEvents();
 
 			// Do not let the accumulator go crazy.
-			if (accumulatedUpdateTime > FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep)
 			{
-				accumulatedUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+				var maxUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
+				if (accumulatedUpdateTime > maxUpdateTime)
+				{
+					var difference = accumulatedUpdateTime - maxUpdateTime;
+					Logger.LogInfo($"Exceeded max update time; app was likely frozen. Update time reduced from {accumulatedUpdateTime.TotalMilliseconds} ms down to {maxUpdateTime.TotalMilliseconds} ms (-{difference.TotalMilliseconds} ms)");
+					accumulatedUpdateTime = maxUpdateTime;
+				}
 			}
 
 			if (!quit)
@@ -309,7 +314,7 @@ namespace MoonWorks
 
 				if (updateCount > 1)
 				{
-					Logger.LogInfo($"Missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
+					Logger.LogInfo($"Previously missed a frame, updated {updateCount} times, remaining accumulator time {accumulatedUpdateTime.TotalMilliseconds} ms");
 				}
 
 				AudioDevice.WakeThread();
