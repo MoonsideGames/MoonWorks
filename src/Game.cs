@@ -294,13 +294,16 @@ namespace MoonWorks
 						AdvanceElapsedTime();
 					}
 				}
+			}
 
-				if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
-				{
-					// Block on the swapchain before event processing for latency optimization.
-					GraphicsDevice.WaitForSwapchain(MainWindow);
-				}
+			if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
+			{
+				// Block on the swapchain before event processing for latency optimization.
+				GraphicsDevice.WaitForSwapchain(MainWindow);
+			}
 
+			if (processEvents)
+			{
 				// Now that we are going to perform an update, let's handle SDL events.
 				// We'll process the system events immediately, and the input events before updating.
 				GatherSDLEvents();
