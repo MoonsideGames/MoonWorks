@@ -281,12 +281,12 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	/// (Prefix)[R][G][B][A] <br/>
 	/// Thus, it's in Big Endian format.
 	/// </summary>
-	/// <param name="hashtagOrHexadecimalPrefix">"#" prefix if false, "0x" otherwise.</param>
+	/// <param name="hexadecimalOrHashtagPrefix">"0x" prefix if false, "#" otherwise.</param>
 	/// <returns><see cref="String"/> representation of this <see cref="Color"/>.</returns>
-	public string ToHexString(bool hashtagOrHexadecimalPrefix = false)
+	public string ToHexString(bool hexadecimalOrHashtagPrefix = false)
 	{
 		StringBuilder sb = new StringBuilder(10);
-		if (!hashtagOrHexadecimalPrefix)
+		if (hexadecimalOrHashtagPrefix)
         {
             sb.Append("#");
         }
