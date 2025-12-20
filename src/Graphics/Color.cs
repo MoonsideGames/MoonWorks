@@ -86,7 +86,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
     
     /// <summary>
     /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
-    /// Example valid input: `0xF0F8FFFF`, aka AliceBlue.
+    /// Example valid input: `0xF0F8FFFF`, aka <see cref="AliceBlue"/>.
     /// </summary>
     /// <param name="bigEndian_RGBA">A big-endian packed color that specifies R, G, B, and A values.</param>
     /// <returns>A <see cref="Color"/> representation for the big-endian RGBA packed value.</returns>
@@ -97,7 +97,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 
     /// <summary>
     /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
-    /// Example valid input: `0xF0F8FF`, aka AliceBlue.
+    /// Example valid input: `0xF0F8FF`, aka <see cref="AliceBlue"/>.
     /// The above will be interpeted as a big-endian input of `0xF0F8FF(AlphaByte)`.<br/>
     /// </summary>
     /// <param name="bigEndian_RGB">A big-endian packed color that specifies R, G, and B values.</param>
