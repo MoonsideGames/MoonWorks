@@ -298,7 +298,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 		return sb.ToString();
 	}
 
-/// <summary>
+	/// <summary>
 	/// Returns a <see cref="Color"/> representation of a <see cref="String"/> in hexadecimal format. <br/>
 	/// If the conversion fails, returns null. <br/>
 	/// The string must have the following big-endian format:
