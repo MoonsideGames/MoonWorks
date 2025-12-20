@@ -77,7 +77,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 
 	/// <summary>
 	/// Returns the <see cref="Color"/> in a Big-Endian UInt32 packed value format.
-	/// Thus, the value is in RGBA byte-order.
+	/// Thus, the value is in RGBA bit-order.
 	/// </summary>
 	public readonly uint BigEndianPackedValue()
 	{
