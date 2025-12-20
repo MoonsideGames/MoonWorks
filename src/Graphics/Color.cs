@@ -76,20 +76,19 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	 
 	/// <summary>
 	/// Gets a packed RGBA value of this <see cref="Color"/>.
-	/// <para>NOTE: Because of endianness, if you format this value directly as a hex string, 
-	/// the order of bytes may be unexpected.</para>
-	/// <para>DO NOT store this value directly into a file 
-	/// without formatting it to a specific endianness!</para>
-	/// <para>Otherwise, if the value is read back and the color is naively reconstructed 
-	/// via an <see cref="Unsafe.BitCast"/>, an endianness mismatch may occur
-	/// for different machines reading that file.</para>
-	/// <para>For this reason, a straightforward "FromPackedValue()" function will never be exposed.</para>
+	/// Its endianness depends on the machine running this code.<br/>
+	/// NOTE: Because of endianness, if you format this value directly as a hex string, 
+	/// the order of bytes may be unexpected.<br/>
+	/// DO NOT store this value directly into a file!<br/>
+	/// Otherwise, if the value is read back and the color is naively reconstructed 
+	/// via an Unsafe.BitCast, an endianness mismatch may occur
+	/// for different machines reading that file.
 	/// </summary>
-	public readonly uint PackedValue() => Unsafe.BitCast<Color, uint>(this);
+	public readonly uint UnsafePackedValue() => Unsafe.BitCast<Color, uint>(this);
     
     /// <summary>
-    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.
-    /// <para>Example valid input: `0xF0F8FFFF`, aka AliceBlue.</para>
+    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
+    /// Example valid input: `0xF0F8FFFF`, aka AliceBlue.
     /// </summary>
     /// <param name="bigEndian_RGBA">A big-endian packed color that specifies R, G, B, and A values.</param>
     /// <returns>A <see cref="Color"/> representation for the big-endian RGBA packed value.</returns>
@@ -99,9 +98,9 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
     }
 
     /// <summary>
-    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.
-    /// <para>Example valid input: `0xF0F8FF`, aka AliceBlue.</para>
-    /// <para>The above will be interpeted as a big-endian input of `0xF0F8FF(AlphaByte)`.</para>
+    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
+    /// Example valid input: `0xF0F8FF`, aka AliceBlue.
+    /// The above will be interpeted as a big-endian input of `0xF0F8FF(AlphaByte)`.<br/>
     /// </summary>
     /// <param name="bigEndian_RGB">A big-endian packed color that specifies R, G, and B values.</param>
     /// <param name="alpha">The Alpha channel value for the color.</param>
@@ -281,8 +280,8 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 
 	/// <summary>
 	/// Returns a hexadecimal <see cref="String"/> representation of this <see cref="Color"/> in the format:
-	/// (Prefix)[R][G][B][A]
-	/// <para>Thus, it's in Big Endian format.</para>
+	/// (Prefix)[R][G][B][A]<br/>
+	/// Thus, it's in Big Endian format.
 	/// </summary>
 	/// <param name="hashtagOrHexadecimalPrefix">"#" prefix if false, "0x" otherwise.</param>
 	/// <returns><see cref="String"/> representation of this <see cref="Color"/>.</returns>
