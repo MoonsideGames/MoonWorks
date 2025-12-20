@@ -279,7 +279,8 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	/// <summary>
 	/// Returns a hexadecimal <see cref="String"/> representation of this <see cref="Color"/> in the format:
 	/// (Prefix)[R][G][B][A] <br/>
-	/// Thus, it's in Big Endian format.
+	/// Thus, it's in Big Endian format. <br/>
+	/// The prefix will either be "0x" (default) or "#".
 	/// </summary>
 	/// <param name="hexadecimalOrHashtagPrefix">"0x" prefix if false, "#" otherwise.</param>
 	/// <returns><see cref="String"/> representation of this <see cref="Color"/>.</returns>
