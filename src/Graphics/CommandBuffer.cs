@@ -31,8 +31,10 @@ public class CommandBuffer
 	/// <summary>
 	/// Acquires a swapchain texture.
 	/// This texture will be presented to the given window when the command buffer is submitted.
-	/// Can return null if the swapchain is unavailable. The user should ALWAYS handle the case where this occurs.
+	/// Can return null if the swapchain is unavailable, this is not necessarily an error and the client should ALWAYS handle the case where this occurs.
+	/// If there is an error this method will throw an exception. You should not attempt to recover as the graphics driver state is unrecoverable.
 	/// If null is returned, presentation will not occur.
+	/// You may want to call GraphicsDevice.Cancel if acquiring the swapchain texture fails if the command buffer already has a lot of commands in it.
 	/// It is an error to acquire two swapchain textures from the same window in one command buffer.
 	/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
 	/// </summary>
@@ -46,44 +48,7 @@ public class CommandBuffer
 			out var width,
 			out var height
 		)) {
-			// FIXME: should we throw?
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			return null;
-		}
-
-		if (texturePtr == IntPtr.Zero)
-		{
-			return null;
-		}
-
-		// Override the texture properties to avoid allocating a new texture instance!
-		window.SwapchainTexture.Handle = texturePtr;
-		window.SwapchainTexture.Width = width;
-		window.SwapchainTexture.Height = height;
-		window.SwapchainTexture.Format = window.SwapchainFormat;
-
-		return window.SwapchainTexture;
-	}
-
-	/// <summary>
-	/// Blocks until a swapchain texture is available and then acquires a swapchain texture.
-	/// This texture will be presented to the given window when the command buffer is submitted.
-	/// It is an error to acquire two swapchain textures from the same window in one command buffer.
-	/// It is an error to dispose the swapchain texture. If you do this your game WILL crash. DO NOT DO THIS.
-	/// </summary>
-	public Texture WaitAndAcquireSwapchainTexture(
-		Window window
-	) {
-		if (!SDL.SDL_WaitAndAcquireGPUSwapchainTexture(
-			Handle,
-			window.Handle,
-			out var texturePtr,
-			out var width,
-			out var height
-		)) {
-			// FIXME: should we throw?
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			return null;
+			throw new System.InvalidOperationException(SDL3.SDL.SDL_GetError());
 		}
 
 		if (texturePtr == IntPtr.Zero)

@@ -296,11 +296,8 @@ namespace MoonWorks
 				}
 			}
 
-			if (FramePacingSettings.Mode == FramePacingMode.LatencyOptimized)
-			{
-				// Block on the swapchain before event processing for latency optimization.
-				GraphicsDevice.WaitForSwapchain(MainWindow);
-			}
+			// Wait for the swapchain before event processing to minimize input latency.
+			GraphicsDevice.WaitForSwapchain(MainWindow);
 
 			if (processEvents)
 			{
