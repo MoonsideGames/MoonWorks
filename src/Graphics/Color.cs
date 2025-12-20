@@ -14,6 +14,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Numerics;
+using System.Globalization;
 
 namespace MoonWorks.Graphics;
 
@@ -295,6 +296,56 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
         }
 		sb.Append(BigEndianPackedValue().ToString("X8"));
 		return sb.ToString();
+	}
+
+/// <summary>
+	/// Returns a <see cref="Color"/> representation of a <see cref="String"/> in hexadecimal format. <br/>
+	/// If the conversion fails, returns null. <br/>
+	/// The string must have the following big-endian format:
+	/// (Prefix)[R][G][B][A]* <br/>
+	/// Only "#", "0x", or no prefix at all are valid prefixes. <br/>
+	/// *: Specifying A is optional. In this case, a default of 0xFF / 255 (fully opaque) is assumed.
+	/// </summary>
+	/// <returns>A <see cref="Color"/> representation of the hex <see cref="String"/>. Null if the conversion fails.</returns>
+	public static Color? FromHexString(string hexString)
+	{
+		if (hexString.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase)) 
+		{
+			hexString = hexString.Substring(2);
+		}
+		else if (hexString.StartsWith("#", StringComparison.CurrentCultureIgnoreCase))
+		{
+			hexString = hexString.Substring(1);
+		}
+
+		if (hexString.Length != 6 && hexString.Length != 8)
+		{
+			return null;
+		}
+
+		uint bigEndianPackedValue;
+		bool success = uint.TryParse(
+			hexString, 
+			NumberStyles.HexNumber, 
+			CultureInfo.InvariantCulture, 
+			out bigEndianPackedValue
+		);
+
+		if (!success)
+		{
+			return null;
+		}
+
+		if (hexString.Length == 8)
+		{
+			// Assume all RGBA values were specified.
+			return FromBigEndianRGBA(bigEndianPackedValue);
+		}
+		else
+		{
+			// Assume only RGB values were specified.
+			return FromBigEndianRGB((int)bigEndianPackedValue);
+		}
 	}
 
 	public static implicit operator VertexStructs.Ubyte4Norm(Color color) => new VertexStructs.Ubyte4Norm
