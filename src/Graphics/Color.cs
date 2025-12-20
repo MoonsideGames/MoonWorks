@@ -293,10 +293,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
         {
             sb.Append("0x");
         }
-		sb.Append(R.ToString("X2"));
-		sb.Append(G.ToString("X2"));
-		sb.Append(B.ToString("X2"));
-		sb.Append(A.ToString("X2"));
+		sb.Append(BigEndianPackedValue().ToString("X8"));
 		return sb.ToString();
 	}
 
