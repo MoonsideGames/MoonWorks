@@ -96,13 +96,13 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
     }
 
     /// <summary>
-    /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
+    /// Converts a big-endian RGB packed color into a <see cref="Color"/>.<br/>
     /// Example valid input: `0xF0F8FF`, aka <see cref="AliceBlue"/>.
-    /// The above will be interpeted as a big-endian input of `0xF0F8FF(AlphaByte)`.<br/>
+    /// The above will be interpeted as a big-endian RGBA input of `0xF0F8FF(alpha)`.<br/>
     /// </summary>
     /// <param name="bigEndian_RGB">A big-endian packed color that specifies R, G, and B values.</param>
     /// <param name="alpha">The Alpha channel value for the color.</param>
-    /// <returns>A <see cref="Color"/> representation for the big-endian RGBA packed value.</returns>
+    /// <returns>A <see cref="Color"/> representation for the big-endian RGB packed value.</returns>
     public static Color FromBigEndianRGB(int bigEndian_RGB, byte alpha = 255)
     {
         return new Color(bigEndian_RGB, alpha);
