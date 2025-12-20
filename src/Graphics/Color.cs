@@ -73,18 +73,15 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
         (byte)bigEndian_RGB,			// B
         alpha
 	) { }
-	 
+
 	/// <summary>
-	/// Gets a packed RGBA value of this <see cref="Color"/>.
-	/// Its endianness depends on the machine running this code.<br/>
-	/// NOTE: Because of endianness, if you format this value directly as a hex string, 
-	/// the order of bytes may be unexpected.<br/>
-	/// DO NOT store this value directly into a file!<br/>
-	/// Otherwise, if the value is read back and the color is naively reconstructed 
-	/// via an Unsafe.BitCast, an endianness mismatch may occur
-	/// for different machines reading that file.
+	/// Returns the <see cref="Color"/> in a Big-Endian UInt32 packed value format.
+	/// Thus, the value is in RGBA byte-order.
 	/// </summary>
-	public readonly uint UnsafePackedValue() => Unsafe.BitCast<Color, uint>(this);
+	public readonly uint BigEndianPackedValue()
+	{
+		return ((uint)R << 24) | ((uint)G << 16) | ((uint)B << 8) | A;
+	}
     
     /// <summary>
     /// Converts a big-endian RGBA packed color into a <see cref="Color"/>.<br/>
