@@ -8,11 +8,6 @@
 
  * Derived from code by the Mono.Xna Team (Copyright 2006).
  * Released under the MIT License. See monoxna.LICENSE for details.
- *
- * Derived from code by Noel Berry (Copyright 2023).
- * Released under the MIT License. See foster.LICENSE for details.
- * Specifically, we're using their clever implementation for FromBigEndianRGB(A), 
- * which utilizes integer overflow.
  */
 
 using System;
@@ -65,6 +60,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 
 	// Private, to enforce using explicit FromBigEndianRGB(A) functions.
 	private Color(uint bigEndian_RGBA) : this(
+		// Casting to byte triggers overflow behavior, meaning we retain the 8 least significant bits.
 		(byte)(bigEndian_RGBA >> 24), 	// R
 		(byte)(bigEndian_RGBA >> 16), 	// G
 		(byte)(bigEndian_RGBA >> 8), 	// B
@@ -325,7 +321,7 @@ public record struct Color(byte R, byte G, byte B, byte A = 255)
 	};
 
 
-///=== Built-In Colors
+	//MARK: Built-In Colors
 
 	/// <summary>
 	/// Transparent color (R:0, G:0, B:0, A:0).
