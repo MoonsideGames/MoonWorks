@@ -52,7 +52,7 @@ public class VideoDevice : IDisposable
 
 			while (VideosToDeactivate.TryDequeue(out var video))
 			{
-				Dav1dfile.df_reset(video.Handle);
+				Dav1dfile.Bindings.df_reset(video.Handle);
 				ActiveVideos.Remove(video);
 			}
 

@@ -23,7 +23,7 @@ namespace MoonWorks.Video
 		internal IntPtr ByteBuffer;
 
 		public bool Loaded { get; internal set; }
-		public bool Ended => Handle == IntPtr.Zero || (QueuedBuffers.IsEmpty && Dav1dfile.df_eos(Handle) == 1);
+		public bool Ended => Handle == IntPtr.Zero || (QueuedBuffers.IsEmpty && Dav1dfile.Bindings.df_eos(Handle) == 1);
 		public double FramesPerSecond { get; set; }
 
 		public bool Loop { get; private set; }
@@ -69,31 +69,31 @@ namespace MoonWorks.Video
 				return null;
 			}
 
-			if (Dav1dfile.df_open_from_memory(byteBuffer, (uint) size, out var handle) == 0)
+			if (Dav1dfile.Bindings.df_open_from_memory(byteBuffer, (uint) size, out var handle) == 0)
 			{
 				Logger.LogError("Failed to load video file: " + filepath);
 				NativeMemory.Free((void*) byteBuffer);
 				return null;
 			}
 
-			Dav1dfile.df_videoinfo(handle, out var videoWidth, out var videoHeight, out var pixelLayout);
+			Dav1dfile.Bindings.df_videoinfo(handle, out var videoWidth, out var videoHeight, out var pixelLayout);
 
 			uint width = (uint) videoWidth;
 			uint height = (uint) videoHeight;
 			uint uvWidth;
 			uint uvHeight;
 
-			if (pixelLayout == Dav1dfile.PixelLayout.I420)
+			if (pixelLayout == Dav1dfile.Bindings.PixelLayout.I420)
 			{
 				uvWidth = width / 2;
 				uvHeight = height / 2;
 			}
-			else if (pixelLayout == Dav1dfile.PixelLayout.I422)
+			else if (pixelLayout == Dav1dfile.Bindings.PixelLayout.I422)
 			{
 				uvWidth = width / 2;
 				uvHeight = height;
 			}
-			else if (pixelLayout == Dav1dfile.PixelLayout.I444)
+			else if (pixelLayout == Dav1dfile.Bindings.PixelLayout.I444)
 			{
 				uvWidth = width;
 				uvHeight = height;
@@ -101,7 +101,7 @@ namespace MoonWorks.Video
 			else
 			{
 				Logger.LogError("Failed to load video: unrecognized YUV format!");
-				Dav1dfile.df_close(handle);
+				Dav1dfile.Bindings.df_close(handle);
 				NativeMemory.Free((void*) byteBuffer);
 				return null;
 			}
@@ -303,7 +303,7 @@ namespace MoonWorks.Video
 
 		internal void BufferFrameSync()
 		{
-			var result = Dav1dfile.df_readvideo(
+			var result = Dav1dfile.Bindings.df_readvideo(
 				handle,
 				1,
 				out nint yDataHandle,
@@ -348,7 +348,7 @@ namespace MoonWorks.Video
 
 		internal void ResetSync()
 		{
-			Dav1dfile.df_reset(Handle);
+			Dav1dfile.Bindings.df_reset(Handle);
 			BufferFrameSync();
 		}
 
@@ -356,7 +356,7 @@ namespace MoonWorks.Video
 		{
 			if (!IsDisposed)
 			{
-				Dav1dfile.df_close(Handle);
+				Dav1dfile.Bindings.df_close(Handle);
 				handle = IntPtr.Zero;
 				NativeMemory.Free((void*) ByteBuffer);
 				ByteBuffer = IntPtr.Zero;
