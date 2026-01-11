@@ -357,8 +357,11 @@ namespace MoonWorks
 			// Gather and process system events before drawing.
 			// This is to handle changes to the window, to ensure rendering info is up-to-date.
 			// We could've missed such an update during busy game update loops, especially when catching up.
-			GatherSDLEvents();
-			ProcessSystemEvents();
+			if (processEvents)
+			{
+				GatherSDLEvents();
+				ProcessSystemEvents();
+			}
 
 			// Timestep alpha should be 0 if we are in latency-optimized mode.
 			var alpha = FramePacingSettings.Mode == FramePacingMode.LatencyOptimized ?
