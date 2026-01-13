@@ -75,27 +75,36 @@ namespace MoonWorks.Input
 		}
 
 		// Assumes that SDL_PumpEvents has been called!
-		internal void Update()
+		internal void Update(
+			bool preventMouseInputs,
+			bool preventKeyboardInputs
+			)
 		{
 			var timestamp = SDL.SDL_GetTicksNS();
 
 			AnyPressed = false;
 			AnyPressedButton = default; // DeviceKind.None
 
-			Keyboard.Update(timestamp);
-
-			if (Keyboard.AnyPressed)
+			if (!preventKeyboardInputs)
 			{
-				AnyPressed = true;
-				AnyPressedButton = Keyboard.AnyPressedButton;
+				Keyboard.Update(timestamp);
+
+				if (Keyboard.AnyPressed)
+				{
+					AnyPressed = true;
+					AnyPressedButton = Keyboard.AnyPressedButton;
+				}
 			}
 
-			Mouse.Update(timestamp);
-
-			if (Mouse.AnyPressed)
+			if (!preventMouseInputs)
 			{
-				AnyPressed = true;
-				AnyPressedButton = Mouse.AnyPressedButton;
+				Mouse.Update(timestamp);
+
+				if (Mouse.AnyPressed)
+				{
+					AnyPressed = true;
+					AnyPressedButton = Mouse.AnyPressedButton;
+				}
 			}
 
 			foreach (var gamepad in Gamepads)
