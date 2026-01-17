@@ -122,6 +122,21 @@ namespace MoonWorks.Input
             }
 		}
 
+		internal void ReleaseInputs()
+		{
+			AnyPressed = false;
+
+			foreach (var button in Keys)
+			{
+				if (button == null) { continue; }
+
+				bool wasPressed = button.Down;
+				bool isDown = false;
+
+				button.Update(wasPressed, isDown);
+			}
+		}
+
 		/// <summary>
 		/// Translates a ScanCode from a KeyCode.
 		/// </summary>
