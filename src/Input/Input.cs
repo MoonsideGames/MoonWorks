@@ -95,6 +95,10 @@ namespace MoonWorks.Input
 					AnyPressedButton = Keyboard.AnyPressedButton;
 				}
 			}
+			else
+			{
+				Keyboard.ReleaseInputs();
+			}
 
 			if (!preventMouseInputs)
 			{
@@ -105,6 +109,10 @@ namespace MoonWorks.Input
 					AnyPressed = true;
 					AnyPressedButton = Mouse.AnyPressedButton;
 				}
+			}
+			else
+			{
+				Mouse.ReleaseInputs();
 			}
 
 			foreach (var gamepad in Gamepads)
