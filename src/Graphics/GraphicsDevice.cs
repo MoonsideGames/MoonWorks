@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 using MoonWorks.Storage;
+using System.IO;
 
 namespace MoonWorks.Graphics;
 
@@ -88,10 +89,10 @@ public class GraphicsDevice : IDisposable
 		{
 			SDL3.SDL.SDL_SetNumberProperty(properties, "SDL.gpu.device.create.d3d12.agility_sdk_version", int.Parse(agilitySDKVersion));
 
-			var path = ".\\";
+			var path = ".\\D3D12\\";
 			if ((Path.GetDirectoryName(Environment.ProcessPath) + Path.DirectorySeparatorChar) != System.AppContext.BaseDirectory)
 			{
-				path = Path.GetRelativePath(Environment.ProcessPath, System.AppContext.BaseDirectory);
+				path = Path.Combine(Path.GetRelativePath(Environment.ProcessPath, System.AppContext.BaseDirectory), "D3D12") + Path.DirectorySeparatorChar;
 			}
 			SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.d3d12.agility_sdk_path", path);
 		}
