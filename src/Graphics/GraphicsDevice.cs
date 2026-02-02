@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MoonWorks.Video;
@@ -80,6 +80,20 @@ public class GraphicsDevice : IDisposable
 		}
 		if ((shaderFormats & ShaderFormat.MetalLib) != 0) {
 			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.metallib", true);
+		}
+
+		// FIXME: we could redesign this API
+		var agilitySDKVersion = Environment.GetEnvironmentVariable("AGILITY_SDK_VERSION");
+		if (agilitySDKVersion != null)
+		{
+			SDL3.SDL.SDL_SetNumberProperty(properties, "SDL.gpu.device.create.d3d12.agility_sdk_version", int.Parse(agilitySDKVersion));
+
+			var path = ".\\";
+			if ((Path.GetDirectoryName(Environment.ProcessPath) + Path.DirectorySeparatorChar) != System.AppContext.BaseDirectory)
+			{
+				path = Path.GetRelativePath(Environment.ProcessPath, System.AppContext.BaseDirectory);
+			}
+			SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.d3d12.agility_sdk_path", path);
 		}
 
 		Handle = SDL.SDL_CreateGPUDeviceWithProperties(properties);
