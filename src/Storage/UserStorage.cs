@@ -31,6 +31,7 @@ public class UserStorage : IDisposable
 
 		Running = true;
 		Thread = new Thread(ThreadMain);
+		Thread.IsBackground = true;
 		Thread.Start();
 	}
 

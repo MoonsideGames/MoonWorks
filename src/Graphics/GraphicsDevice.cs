@@ -101,10 +101,10 @@ public class GraphicsDevice : IDisposable
 
 		SDL3.SDL.SDL_DestroyProperties(properties);
 
+		// TODO: Rewrite MoonWorks initialization to avoid the exception pattern
 		if (Handle == IntPtr.Zero)
 		{
-			Logger.LogError(SDL3.SDL.SDL_GetError());
-			throw new InvalidOperationException("Failed to create graphics device!");
+			throw new GraphicsInitException(SDL3.SDL.SDL_GetError());
 		}
 
 		DebugMode = debugMode;
