@@ -15,6 +15,7 @@ namespace MoonWorks.Graphics;
 public class GraphicsDevice : IDisposable
 {
 	public IntPtr Handle { get; }
+	public ShaderFormat ShaderFormats { get; }
 	public string Backend { get; }
 	public bool DebugMode { get; }
 	public uint AllowedFramesInFlight { get; private set; } = 2;
@@ -117,6 +118,9 @@ public class GraphicsDevice : IDisposable
 		// TODO: check for CreateDevice fail
 
 		Backend = SDL.SDL_GetGPUDeviceDriver(Handle);
+		ShaderFormats = SDL.SDL_GetGPUShaderFormats(Handle);
+
+		Logger.LogInfo("Supported shader formats: " + ShaderFormats);
 
 		// Check for replacement stock shaders
 		string fullscreenVertPath = "fullscreen.vert.private";
