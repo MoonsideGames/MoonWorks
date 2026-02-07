@@ -52,8 +52,7 @@ public class GraphicsDevice : IDisposable
 	internal unsafe GraphicsDevice(
 		TitleStorage rootTitleStorage,
 		ShaderFormat shaderFormats,
-		bool debugMode,
-		string backendName = null
+		bool debugMode
 	) {
 		if (shaderFormats == 0)
 		{
@@ -61,8 +60,15 @@ public class GraphicsDevice : IDisposable
 		}
 
 		var properties = SDL3.SDL.SDL_CreateProperties();
+
+		// FIXME: we could redesign this API
+		var forceBackend = Environment.GetEnvironmentVariable("MOONWORKS_FORCE_GRAPHICS_BACKEND");
+		if (forceBackend != null)
+		{
+			SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.name", forceBackend);
+		}
+
 		SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.debugmode", debugMode);
-		SDL3.SDL.SDL_SetStringProperty(properties, "SDL.gpu.device.create.name", backendName);
 
 		if ((shaderFormats & ShaderFormat.Private) != 0) {
 			SDL3.SDL.SDL_SetBooleanProperty(properties, "SDL.gpu.device.create.shaders.private", true);
