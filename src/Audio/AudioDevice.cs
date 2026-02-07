@@ -59,10 +59,10 @@ namespace MoonWorks.Audio
 
 			if (devices == 0)
 			{
-				Logger.LogError("No audio devices found!");
-				FAudio.FAudio_Release(Handle);
-				Handle = IntPtr.Zero;
-				return;
+				Logger.LogError("No audio devices found! Setting dummy driver!");
+
+				SDL3.SDL.SDL_SetHint("SDL_AUDIO_DRIVER", "dummy");
+				FAudio.FAudio_GetDeviceCount(Handle, out devices);
 			}
 
 			FAudio.FAudioDeviceDetails deviceDetails;
