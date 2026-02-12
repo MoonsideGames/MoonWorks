@@ -16,7 +16,7 @@ namespace MoonWorks.Audio
 		public uint DestinationChannelCount { get; }
 
 		protected SubmixVoice OutputVoice;
-		private ReverbEffect ReverbEffect;
+		protected ReverbEffect ReverbEffect;
 
 		protected byte* pMatrixCoefficients;
 
@@ -267,6 +267,8 @@ namespace MoonWorks.Audio
 			nuint memsize = 4 * sourceChannelCount * destinationChannelCount;
 			pMatrixCoefficients = (byte*) NativeMemory.AllocZeroed(memsize);
 			SetPanMatrixCoefficients();
+
+			OutputVoice = device.MasteringVoice;
 		}
 
 		/// <summary>
@@ -415,6 +417,7 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Sets the output voice for this voice.
+		/// NOTE: For submixes, this method can fail - it's better to do sends via the constructor.
 		/// </summary>
 		/// <param name="send">Where the output should be sent.</param>
 		public unsafe void SetOutputVoice(SubmixVoice send)
@@ -435,15 +438,21 @@ namespace MoonWorks.Audio
 				sends.SendCount = 1;
 				sends.pSends = (nint) sendDesc;
 
-				FAudio.FAudioVoice_SetOutputVoices(
+				var result = FAudio.FAudioVoice_SetOutputVoices(
 					Handle,
 					ref sends
 				);
+
+				if (result != 0)
+				{
+					Logger.LogError($"Failed to set output voice {send} for voice {this}");
+				}
 			}
 		}
 
 		/// <summary>
 		/// Applies a reverb effect chain to this voice.
+		/// NOTE: For submixes, this method can fail - it's better to set the effect chain via the constructor.
 		/// </summary>
 		public unsafe void SetReverbEffectChain(ReverbEffect reverbEffect)
 		{
@@ -459,10 +468,15 @@ namespace MoonWorks.Audio
 				sends.SendCount = 2;
 				sends.pSends = (nint) sendDesc;
 
-				FAudio.FAudioVoice_SetOutputVoices(
+				var result = FAudio.FAudioVoice_SetOutputVoices(
 					Handle,
 					ref sends
 				);
+
+				if (result != 0)
+				{
+					Logger.LogError($"Failed to set output voice {reverbEffect} for voice {this}");
+				}
 			}
 
 			ReverbEffect = reverbEffect;

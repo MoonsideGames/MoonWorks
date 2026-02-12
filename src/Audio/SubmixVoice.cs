@@ -9,13 +9,23 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public class SubmixVoice : Voice
 	{
-		public SubmixVoice(
+		public unsafe SubmixVoice(
 			AudioDevice device,
 			uint sourceChannelCount,
 			uint sampleRate,
 			uint processingStage
 		) : base(device, sourceChannelCount, device.DeviceDetails.OutputFormat.Format.nChannels)
 		{
+			FAudio.FAudioSendDescriptor* sendDesc = stackalloc FAudio.FAudioSendDescriptor[1];
+			sendDesc[0].Flags = 0;
+			sendDesc[0].pOutputVoice = device.MasteringVoice.Handle;
+
+			var sends = new FAudio.FAudioVoiceSends
+			{
+				SendCount = 1,
+				pSends = (nint) sendDesc
+			};
+
 			FAudio.FAudio_CreateSubmixVoice(
 				device.Handle,
 				out handle,
@@ -23,11 +33,77 @@ namespace MoonWorks.Audio
 				sampleRate,
 				FAudio.FAUDIO_VOICE_USEFILTER,
 				processingStage,
-				IntPtr.Zero,
+				(nint) (&sends),
+				IntPtr.Zero
+			);
+		}
+
+		public unsafe SubmixVoice(
+			AudioDevice device,
+			SubmixVoice outputVoice,
+			uint sourceChannelCount,
+			uint sampleRate,
+			uint processingStage
+		) : base(device, sourceChannelCount, device.DeviceDetails.OutputFormat.Format.nChannels)
+		{
+			FAudio.FAudioSendDescriptor* sendDesc = stackalloc FAudio.FAudioSendDescriptor[1];
+			sendDesc[0].Flags = 0;
+			sendDesc[0].pOutputVoice = outputVoice.Handle;
+
+			var sends = new FAudio.FAudioVoiceSends
+			{
+				SendCount = 1,
+				pSends = (nint) sendDesc
+			};
+
+			FAudio.FAudio_CreateSubmixVoice(
+				device.Handle,
+				out handle,
+				sourceChannelCount,
+				sampleRate,
+				FAudio.FAUDIO_VOICE_USEFILTER,
+				processingStage,
+				(nint) (&sends),
 				IntPtr.Zero
 			);
 
-			SetOutputVoice(device.MasteringVoice);
+			OutputVoice = outputVoice;
+		}
+
+		public unsafe SubmixVoice(
+			AudioDevice device,
+			SubmixVoice outputVoice,
+			ReverbEffect reverbEffect,
+			uint sourceChannelCount,
+			uint sampleRate,
+			uint processingStage
+		) : base(device, sourceChannelCount, device.DeviceDetails.OutputFormat.Format.nChannels)
+		{
+			FAudio.FAudioSendDescriptor* sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
+			sendDesc[0].Flags = 0;
+			sendDesc[0].pOutputVoice = outputVoice.Handle;
+			sendDesc[1].Flags = 0;
+			sendDesc[1].pOutputVoice = reverbEffect.handle;
+
+			var sends = new FAudio.FAudioVoiceSends
+			{
+				SendCount = 2,
+				pSends = (nint) sendDesc
+			};
+
+			FAudio.FAudio_CreateSubmixVoice(
+				device.Handle,
+				out handle,
+				sourceChannelCount,
+				sampleRate,
+				FAudio.FAUDIO_VOICE_USEFILTER,
+				processingStage,
+				(nint) (&sends),
+				IntPtr.Zero
+			);
+
+			OutputVoice = outputVoice;
+			ReverbEffect = reverbEffect;
 		}
 
 		private SubmixVoice(

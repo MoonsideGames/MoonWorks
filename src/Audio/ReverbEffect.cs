@@ -42,9 +42,9 @@ namespace MoonWorks.Audio
 		/// <summary>
         /// Creating the reverb effect can fail, so we don't want weird dry output if that happens.
         /// </summary>
-		internal bool Valid { get; }
+		internal bool Valid { get; private set; }
 
-		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
+		private void Init()
 		{
 			/* Init reverb */
 			IntPtr reverb;
@@ -82,6 +82,16 @@ namespace MoonWorks.Audio
 			{
 				Logger.LogWarn("Failed to set reverb effect chain!");
 			}
+		}
+
+		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
+		{
+			Init();
+		}
+
+		public ReverbEffect(AudioDevice audioDevice, SubmixVoice outputVoice, uint processingStage) : base(audioDevice, outputVoice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
+		{
+			Init();
 		}
 
 		public bool SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
