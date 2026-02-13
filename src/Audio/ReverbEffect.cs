@@ -94,6 +94,11 @@ namespace MoonWorks.Audio
 			Init();
 		}
 
+		public ReverbEffect(AudioDevice audioDevice, SubmixVoice outputVoice, uint sampleRate, uint processingStage) : base(audioDevice, outputVoice, 1, sampleRate, processingStage)
+		{
+			Init();
+		}
+
 		public bool SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
 		{
 			Params = reverbParams;
