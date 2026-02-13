@@ -20,6 +20,7 @@ struct ChunkData
 	float4 Color;
 	float DistanceRange;
 	uint FontIndex;
+	float2 Padding;
 };
 
 StructuredBuffer<ChunkData> ChunkDataBuffer : register(t0, space0);
