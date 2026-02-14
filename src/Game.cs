@@ -62,6 +62,31 @@ namespace MoonWorks
 		public Window MainWindow { get; }
 
 		/// <summary>
+		/// Should only be used to send event data to other backends.
+		/// For example, a Dear ImGui backend.
+		/// Otherwise, the game already processes these events.
+		/// </summary>
+		public Action<SDL.SDL_Event> OnReceiveEvent = null;
+
+		/// <summary>
+		/// Useful to hide mouse inputs from the game. <br/>
+		/// Ex: If using Dear ImGui, ImGui.GetIO().WantCaptureMouse will
+		/// determine if we should hide mouse inputs.
+		/// This ensures the game and editor state never blend together.
+		/// </summary>
+		public bool PreventMouseInputs = false;
+
+		/// <summary>
+		/// Useful to hide keyboard inputs from the game. <br/>
+		/// Ex: If using Dear ImGui, ImGui.GetIO().WantCaptureKeyboard will
+		/// determine if we should hide keyboard inputs.
+		/// This ensures the game and editor state never blend together. <br/>
+		/// Notably, can prevent WASD editor text input from being
+		/// possibly interpreted as character movement.
+		/// </summary>
+		public bool PreventKeyboardInputs = false;
+
+		/// <summary>
 		/// Instantiates your Game.
 		/// </summary>
 		/// <param name="windowCreateInfo">The parameters that will be used to create the MainWindow.</param>
@@ -331,7 +356,7 @@ namespace MoonWorks
 				{
 					GatherSDLEvents();
 					ProcessInputEvents();
-					Inputs.Update();
+					Inputs.Update(PreventMouseInputs, PreventKeyboardInputs);
 				}
 
 				// Step once on the timestep interval.
@@ -367,6 +392,11 @@ namespace MoonWorks
 		{
 			while (SDL.SDL_PollEvent(out var evt))
 			{
+				if (OnReceiveEvent != null)
+				{
+					OnReceiveEvent(evt);
+				}
+
 				switch ((SDL.SDL_EventType) evt.type)
 				{
 					case SDL.SDL_EventType.SDL_EVENT_QUIT:
@@ -380,15 +410,31 @@ namespace MoonWorks
 						SystemEventQueue.Enqueue(evt);
 						break;
 
-					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+					// Mouse events
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+						if (PreventMouseInputs)
+						{
+							break;
+						}
+						goto InputEvent; // Explicit fallthrough doesn't exist in C#
+
+					// Keyboard events
+					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+					case SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
+					case SDL.SDL_EventType.SDL_EVENT_KEY_UP:
+						if (PreventKeyboardInputs)
+						{
+							break;
+						}
+						goto InputEvent;
+
+					// Gamepad events
 					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN:
 					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP:
 					case SDL.SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
-					case SDL.SDL_EventType.SDL_EVENT_KEY_DOWN:
-					case SDL.SDL_EventType.SDL_EVENT_KEY_UP:
+					InputEvent: 
 						InputEventQueue.Enqueue(evt);
 						break;
 				}
