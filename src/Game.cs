@@ -299,20 +299,6 @@ namespace MoonWorks
 			// Wait for the swapchain before event processing to minimize input latency.
 			GraphicsDevice.WaitForSwapchain(MainWindow);
 
-			if (processEvents)
-			{
-				// Now that we are going to perform an update, let's handle SDL events.
-				// We'll process the system events immediately, and the input events before updating.
-				GatherSDLEvents();
-				ProcessSystemEvents();
-			}
-
-			// Quit event came in, bail immediately.
-			if (QuitRequested)
-			{
-				return;
-			}
-
 			// Do not let the accumulator go crazy.
 			var maxUpdateTime = FramePacingSettings.MaxUpdatesPerTick * FramePacingSettings.Timestep;
 			if (AccumulatedUpdateTime > maxUpdateTime)
@@ -337,6 +323,19 @@ namespace MoonWorks
 				// Step once on the timestep interval.
 				if (firstIteration)
 				{
+					if (processEvents)
+					{
+						// Process system events once per timestep interval.
+						// SDL events were already gathered above.
+						ProcessSystemEvents();
+					}
+
+					// Quit event came in, bail immediately.
+					if (QuitRequested)
+					{
+						return;
+					}
+					
 					Step();
 					firstIteration = false;
 				}
