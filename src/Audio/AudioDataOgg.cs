@@ -78,6 +78,8 @@ namespace MoonWorks.Audio
 		{
 			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
 			OutOfData = false;
+			SendVoice?.Flush();
+			QueueBuffers();
 		}
 
 		protected override FAudio.FAudioBuffer OnBufferNeeded()

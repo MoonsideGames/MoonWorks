@@ -141,6 +141,15 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
+		/// Flushes all queued buffers on the voice.
+		/// If the voice is still playing, the active buffer is left alone.
+		/// </summary>
+		public void Flush()
+		{
+			FAudio.FAudioSourceVoice_FlushSourceBuffers(Handle);
+		}
+
+		/// <summary>
 		/// Calculates positional sound. This must be called continuously to update positional sound.
 		/// </summary>
 		/// <param name="listener"></param>

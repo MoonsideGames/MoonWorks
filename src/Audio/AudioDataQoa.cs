@@ -87,6 +87,8 @@ namespace MoonWorks.Audio
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
 			OutOfData = false;
+			SendVoice?.Flush();
+			QueueBuffers();
 		}
 
 		protected override unsafe FAudio.FAudioBuffer OnBufferNeeded()
