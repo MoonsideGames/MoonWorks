@@ -83,12 +83,16 @@ namespace MoonWorks.Audio
 			OutOfData = false;
 		}
 
-		public override void Seek(uint sampleFrame)
+		public override void Seek(uint sampleFrame, bool flush = false)
 		{
 			FAudio.qoa_seek_frame(QoaHandle, (int) sampleFrame);
 			OutOfData = false;
-			SendVoice?.Flush();
-			QueueBuffers();
+
+			if (flush)
+			{
+				SendVoice?.Flush();
+				QueueBuffers();
+			}
 		}
 
 		protected override unsafe FAudio.FAudioBuffer OnBufferNeeded()

@@ -43,7 +43,7 @@ namespace MoonWorks.Audio
 		/// <summary>
 		/// Seeks to the given sample frame.
 		/// </summary>
-		public abstract void Seek(uint sampleFrame);
+		public abstract void Seek(uint sampleFrame, bool flush = false);
 
 		protected override void Dispose(bool disposing)
 		{

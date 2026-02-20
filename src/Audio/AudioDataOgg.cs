@@ -74,12 +74,16 @@ namespace MoonWorks.Audio
 			OutOfData = false;
 		}
 
-		public override void Seek(uint sampleFrame)
+		public override void Seek(uint sampleFrame, bool flush = false)
 		{
 			FAudio.stb_vorbis_seek(VorbisHandle, sampleFrame);
 			OutOfData = false;
-			SendVoice?.Flush();
-			QueueBuffers();
+
+			if (flush)
+			{
+				SendVoice?.Flush();
+				QueueBuffers();
+			}
 		}
 
 		protected override FAudio.FAudioBuffer OnBufferNeeded()
