@@ -370,7 +370,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	private uint CopyBufferData<T>(ReadOnlySpan<T> span) where T : unmanaged
 	{
 		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
-		CheckAndResizeTransferBuffer(lengthInBytes);
+		CheckAndResizeTransferBuffer(WriteOffset + lengthInBytes);
 
 		if (WriteOffset + lengthInBytes > TransferBuffer.Size)
 		{
@@ -387,7 +387,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	private uint CopyTextureData<T>(ReadOnlySpan<T> span, uint alignment) where T : unmanaged
 	{
 		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
-		CheckAndResizeTransferBuffer(lengthInBytes);
+		CheckAndResizeTransferBuffer(WriteOffset + lengthInBytes);
 
 		WriteOffset = RoundToAlignment(WriteOffset, alignment);
 		if (WriteOffset + lengthInBytes >= TransferBuffer.Size)
