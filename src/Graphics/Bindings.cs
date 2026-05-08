@@ -650,7 +650,7 @@ public struct VertexBufferDescription
 		return new VertexBufferDescription
 		{
 			Slot = slot,
-			Pitch = (uint) Marshal.SizeOf<T>(),
+			Pitch = (uint) Unsafe.SizeOf<T>(),
 			InputRate = inputRate,
 			InstanceStepRate = stepRate
 		};

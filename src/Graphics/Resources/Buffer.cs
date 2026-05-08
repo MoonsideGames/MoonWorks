@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
@@ -39,7 +39,7 @@ public class Buffer : SDLGPUResource
 		var result = Create(device, new BufferCreateInfo
 		{
 			Usage = usageFlags,
-			Size = (uint) Marshal.SizeOf<T>() * elementCount,
+			Size = (uint) Unsafe.SizeOf<T>() * elementCount,
 			Props = props
 		});
 

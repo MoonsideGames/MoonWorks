@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
@@ -115,7 +115,7 @@ public class CopyPass
 		bool cycle
 	) where T : unmanaged
 	{
-		var elementSize = Marshal.SizeOf<T>();
+		var elementSize = Unsafe.SizeOf<T>();
 		var dataLengthInBytes = (uint) (elementSize * numElements);
 		var srcOffsetInBytes = (uint) (elementSize * sourceStartElement);
 		var dstOffsetInBytes = (uint) (elementSize * destinationStartElement);

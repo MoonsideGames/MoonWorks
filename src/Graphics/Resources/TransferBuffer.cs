@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using SDL = MoonWorks.Graphics.SDL_GPU;
 
 namespace MoonWorks.Graphics;
@@ -34,7 +34,7 @@ public class TransferBuffer : SDLGPUResource
 		return Create(device, new TransferBufferCreateInfo
 		{
 			Usage = usage,
-			Size = (uint) (Marshal.SizeOf<T>() * elementCount)
+			Size = (uint) (Unsafe.SizeOf<T>() * elementCount)
 		});
 	}
 
@@ -59,7 +59,7 @@ public class TransferBuffer : SDLGPUResource
 		var result = Create(device, new TransferBufferCreateInfo
 		{
 			Usage = usage,
-			Size = (uint) (Marshal.SizeOf<T>() * elementCount),
+			Size = (uint) (Unsafe.SizeOf<T>() * elementCount),
 			Props = props
 		});
 
@@ -119,7 +119,7 @@ public class TransferBuffer : SDLGPUResource
 			return Span<T>.Empty;
 		}
 
-		return new Span<T>((void*) (MapPointer + offsetInBytes), (int) ((Size - offsetInBytes) / Marshal.SizeOf<T>()));
+		return new Span<T>((void*) (MapPointer + offsetInBytes), (int) ((Size - offsetInBytes) / Unsafe.SizeOf<T>()));
 	}
 
 	/// <summary>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using MoonWorks.Storage;
 
@@ -63,7 +64,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public void SetBufferData<T>(Buffer buffer, uint bufferOffsetInElements, ReadOnlySpan<T> data, bool cycle) where T : unmanaged
 	{
-		uint elementSize = (uint) Marshal.SizeOf<T>();
+		uint elementSize = (uint) Unsafe.SizeOf<T>();
 		uint offsetInBytes = elementSize * bufferOffsetInElements;
 		uint lengthInBytes = (uint) (elementSize * data.Length);
 
@@ -280,7 +281,7 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// </summary>
 	public void SetTextureData<T>(TextureRegion textureRegion, ReadOnlySpan<T> data, bool cycle) where T : unmanaged
 	{
-		var elementSize = Marshal.SizeOf<T>();
+		var elementSize = Unsafe.SizeOf<T>();
 		var dataLengthInBytes = (uint) (elementSize * data.Length);
 
 		uint resourceOffset;
@@ -369,7 +370,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	private uint CopyBufferData<T>(ReadOnlySpan<T> span) where T : unmanaged
 	{
-		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
+		uint lengthInBytes = (uint) (Unsafe.SizeOf<T>() * span.Length);
 		CheckAndResizeTransferBuffer(WriteOffset + lengthInBytes);
 
 		if (WriteOffset + lengthInBytes > TransferBuffer.Size)
@@ -386,7 +387,7 @@ public unsafe class ResourceUploader : GraphicsResource
 
 	private uint CopyTextureData<T>(ReadOnlySpan<T> span, uint alignment) where T : unmanaged
 	{
-		uint lengthInBytes = (uint) (Marshal.SizeOf<T>() * span.Length);
+		uint lengthInBytes = (uint) (Unsafe.SizeOf<T>() * span.Length);
 		CheckAndResizeTransferBuffer(WriteOffset + lengthInBytes);
 
 		WriteOffset = RoundToAlignment(WriteOffset, alignment);

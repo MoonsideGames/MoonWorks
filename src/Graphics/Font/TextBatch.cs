@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using WellspringCS;
 
@@ -85,8 +86,8 @@ namespace MoonWorks.Graphics.Font
 			cmdbuf.EndCopyPass(copyPass);
 			GraphicsDevice.Submit(cmdbuf);
 
-			VertexSize = Marshal.SizeOf<Wellspring.Vertex>();
-			ChunkDataSize = Marshal.SizeOf<ChunkData>();
+			VertexSize = Unsafe.SizeOf<Wellspring.Vertex>();
+			ChunkDataSize = Unsafe.SizeOf<ChunkData>();
 
 			spriteIndexTransferBuffer.Dispose();
 		}
