@@ -16,7 +16,6 @@ namespace MoonWorks.Audio
 		public uint DestinationChannelCount { get; }
 
 		protected SubmixVoice OutputVoice;
-		protected ReverbEffect ReverbEffect;
 
 		protected byte* pMatrixCoefficients;
 
@@ -219,14 +218,14 @@ namespace MoonWorks.Audio
 		private float reverb;
 		/// <summary>
 		/// The wet-dry mix of the reverb effect.
-		/// Has no effect if SetReverbEffectChain has not been called.
+		/// Has no effect if the output voice is not a reverb effect.
 		/// </summary>
 		public unsafe float Reverb
 		{
 			get => reverb;
 			internal set
 			{
-				if (ReverbEffect != null)
+				if (OutputVoice is ReverbEffect reverbEffect)
 				{
 					value = MathF.Max(0, value);
 					if (reverb != value)
@@ -242,7 +241,7 @@ namespace MoonWorks.Audio
 
 						FAudio.FAudioVoice_SetOutputMatrix(
 							Handle,
-							ReverbEffect.Handle,
+							reverbEffect.WetVoice.Handle,
 							SourceChannelCount,
 							1,
 							(nint) pMatrixCoefficients,
@@ -250,9 +249,8 @@ namespace MoonWorks.Audio
 						);
 					}
 				}
-
 				#if DEBUG
-				if (ReverbEffect == null)
+				else
 				{
 					Logger.LogWarn("Tried to set reverb value before applying a reverb effect");
 				}
@@ -424,9 +422,27 @@ namespace MoonWorks.Audio
 		{
 			OutputVoice = send;
 
-			if (ReverbEffect != null)
+			if (send is ReverbEffect reverbEffect && reverbEffect.WetVoiceInitialized)
 			{
-				SetReverbEffectChain(ReverbEffect);
+				var sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
+				sendDesc[0].Flags = 0;
+				sendDesc[0].pOutputVoice = reverbEffect.Handle;
+				sendDesc[1].Flags = 0;
+				sendDesc[1].pOutputVoice = reverbEffect.WetVoice.Handle;
+
+				var sends = new FAudio.FAudioVoiceSends();
+				sends.SendCount = 2;
+				sends.pSends = (nint) sendDesc;
+
+				var result = FAudio.FAudioVoice_SetOutputVoices(
+					Handle,
+					ref sends
+				);
+
+				if (result != 0)
+				{
+					Logger.LogError($"Failed to set output voice {reverbEffect} for voice {this}");
+				}
 			}
 			else
 			{
@@ -451,56 +467,10 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Applies a reverb effect chain to this voice.
-		/// NOTE: For submixes, this method can fail - it's better to set the effect chain via the constructor.
-		/// </summary>
-		public unsafe void SetReverbEffectChain(ReverbEffect reverbEffect)
-		{
-			if (reverbEffect.Valid)
-			{
-				var sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
-				sendDesc[0].Flags = 0;
-				sendDesc[0].pOutputVoice = OutputVoice.Handle;
-				sendDesc[1].Flags = 0;
-				sendDesc[1].pOutputVoice = reverbEffect.Handle;
-
-				var sends = new FAudio.FAudioVoiceSends();
-				sends.SendCount = 2;
-				sends.pSends = (nint) sendDesc;
-
-				var result = FAudio.FAudioVoice_SetOutputVoices(
-					Handle,
-					ref sends
-				);
-
-				if (result != 0)
-				{
-					Logger.LogError($"Failed to set output voice {reverbEffect} for voice {this}");
-				}
-			}
-
-			ReverbEffect = reverbEffect;
-		}
-
-		/// <summary>
-		/// Removes the reverb effect chain from this voice.
-		/// </summary>
-		public void RemoveReverbEffectChain()
-		{
-			if (ReverbEffect != null)
-			{
-				ReverbEffect = null;
-				reverb = 0;
-				SetOutputVoice(OutputVoice);
-			}
-		}
-
-		/// <summary>
 		/// Resets all voice parameters to defaults.
 		/// </summary>
 		public virtual void Reset()
 		{
-			RemoveReverbEffectChain();
 			Volume = 1;
 			Pan = 0;
 			Pitch = 0;

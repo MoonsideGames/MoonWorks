@@ -4,9 +4,8 @@ using System.Runtime.InteropServices;
 namespace MoonWorks.Audio
 {
 	/// <summary>
-	/// Use this in conjunction with SourceVoice.SetReverbEffectChain to add reverb to a voice.
-	/// Creating the effect chain can fail on certain configurations, if this happens then
-	/// setting the reverb effect chain will become a no-op.
+	/// A type of submix that applies a reverb effect.
+	/// Use this with SetOutputVoice and the Reverb property on the source/submix voice.
 	/// </summary>
 	public unsafe class ReverbEffect : SubmixVoice
 	{
@@ -39,13 +38,18 @@ namespace MoonWorks.Audio
 
 		public FAudio.FAudioFXReverbParameters Params { get; private set; }
 
-		/// <summary>
-        /// Creating the reverb effect can fail, so we don't want weird dry output if that happens.
-        /// </summary>
-		internal bool Valid { get; private set; }
+		// Reverb is composed of a dry signal and a wet signal - so this object will just manage both
+		// the main voice handle will be the dry voice
+		internal Voice WetVoice;
+
+		// Can fail, so check just in case
+		internal bool WetVoiceInitialized { get; private set; }
 
 		private void Init()
 		{
+			WetVoiceInitialized = false;
+			WetVoice = new SubmixVoice(Device, SourceChannelCount, SampleRate, ProcessingStage);
+
 			/* Init reverb */
 			IntPtr reverb;
 			FAudio.FAudioCreateReverb(out reverb, 0);
@@ -62,26 +66,21 @@ namespace MoonWorks.Audio
 			chain.pEffectDescriptors = (nint) (&descriptor);
 
 			var result = FAudio.FAudioVoice_SetEffectChain(
-				Handle,
+				WetVoice.Handle,
 				ref chain
 			);
 
-			FAudio.FAPOBase_Release(reverb);
-
-			Valid = false;
-
-			if (result == 0)
-			{
-				// Success!
-				if (SetParams(DefaultParams))
-				{
-					Valid = true;
-				}
-			}
-			else
+			if (result != 0)
 			{
 				Logger.LogWarn("Failed to set reverb effect chain!");
 			}
+
+			if (SetParams(DefaultParams))
+			{
+				WetVoiceInitialized = true;
+			}
+
+			FAudio.FAPOBase_Release(reverb);
 		}
 
 		public ReverbEffect(AudioDevice audioDevice, uint processingStage) : base(audioDevice, 1, audioDevice.DeviceDetails.OutputFormat.Format.nSamplesPerSec, processingStage)
@@ -106,7 +105,7 @@ namespace MoonWorks.Audio
 			fixed (FAudio.FAudioFXReverbParameters* reverbParamsPtr = &reverbParams)
 			{
 				var result = FAudio.FAudioVoice_SetEffectParameters(
-					Handle,
+					WetVoice.Handle,
 					0,
 					(nint) reverbParamsPtr,
 					(uint) Marshal.SizeOf<FAudio.FAudioFXReverbParameters>(),
@@ -120,6 +119,12 @@ namespace MoonWorks.Audio
 
 				return result == 0;
 			}
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+			WetVoice.Dispose();
 		}
 	}
 }
