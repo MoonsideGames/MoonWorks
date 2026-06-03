@@ -418,7 +418,7 @@ namespace MoonWorks.Audio
 		/// NOTE: For submixes, this method can fail - it's better to do sends via the constructor.
 		/// </summary>
 		/// <param name="send">Where the output should be sent.</param>
-		public unsafe void SetOutputVoice(SubmixVoice send)
+		public virtual void SetOutputVoice(SubmixVoice send)
 		{
 			OutputVoice = send;
 

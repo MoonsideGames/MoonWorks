@@ -47,8 +47,7 @@ namespace MoonWorks.Audio
 
 		private void Init()
 		{
-			WetVoiceInitialized = false;
-			WetVoice = new SubmixVoice(Device, SourceChannelCount, SampleRate, ProcessingStage);
+			WetVoice = new SubmixVoice(Device, OutputVoice, SourceChannelCount, SampleRate, ProcessingStage);
 
 			/* Init reverb */
 			IntPtr reverb;
@@ -96,6 +95,16 @@ namespace MoonWorks.Audio
 		public ReverbEffect(AudioDevice audioDevice, SubmixVoice outputVoice, uint sampleRate, uint processingStage) : base(audioDevice, outputVoice, 1, sampleRate, processingStage)
 		{
 			Init();
+		}
+
+		public override void SetOutputVoice(SubmixVoice send)
+		{
+			base.SetOutputVoice(send);
+
+			if (WetVoiceInitialized)
+			{
+				WetVoice.SetOutputVoice(send);
+			}
 		}
 
 		public bool SetParams(in FAudio.FAudioFXReverbParameters reverbParams)
