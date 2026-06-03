@@ -207,14 +207,32 @@ namespace MoonWorks
 
 			if (settings.Mode == FramePacingMode.LatencyOptimized)
 			{
+				bool changedPresentMode = false;
+
 				// If latency-optimized, prefer mailbox or immediate mode
 				if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Mailbox))
 				{
-					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox);
+					changedPresentMode = GraphicsDevice.SetSwapchainParameters(
+						MainWindow, SwapchainComposition.SDR, PresentMode.Mailbox
+					);
 				}
-				else if (GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
+
+				if (!changedPresentMode
+					&& GraphicsDevice.SupportsPresentMode(MainWindow, PresentMode.Immediate))
 				{
-					GraphicsDevice.SetSwapchainParameters(MainWindow, SwapchainComposition.SDR, PresentMode.Immediate);
+					changedPresentMode = GraphicsDevice.SetSwapchainParameters(
+						MainWindow, SwapchainComposition.SDR, PresentMode.Immediate
+					);
+
+					if (changedPresentMode)
+					{
+						Logger.LogInfo("Mailbox present mode is unsupported; falling back to Immediate.");
+					}
+				}
+
+				if (!changedPresentMode)
+				{
+					Logger.LogInfo("Failed to change present mode to one with less latency due to lack of support.");
 				}
 			}
 
