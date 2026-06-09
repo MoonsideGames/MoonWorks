@@ -93,7 +93,7 @@ public class GraphicsPipeline : SDLGPUResource
 
 		if (handle == IntPtr.Zero)
 		{
-			throw new Exception("Could not create graphics pipeline!");
+			throw new Exception("Could not create graphics pipeline: " + SDL3.SDL.SDL_GetError());
 		}
 
 		var result = new GraphicsPipeline(device)
