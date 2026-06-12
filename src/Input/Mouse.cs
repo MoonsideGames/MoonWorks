@@ -19,7 +19,9 @@ namespace MoonWorks.Input
 		public int DeltaX { get; private set; }
 		public int DeltaY { get; private set; }
 
-		// note that this is a delta value
+		/// <summary>
+		/// NOTE: this is a delta value.
+		/// </summary>
 		public int Wheel { get; private set; }
 		internal int WheelRaw;
 		private int previousWheelRaw = 0;
@@ -118,6 +120,25 @@ namespace MoonWorks.Input
 				}
 
             }
+		}
+
+		internal void ReleaseInputs()
+		{
+			AnyPressed = false;
+
+			DeltaX = 0;
+			DeltaY = 0;
+			Wheel = 0;
+
+			foreach (var button in CodeToButton)
+			{
+				if (button == null) { continue; }
+
+				bool wasPressed = button.Down;
+				bool isDown = false;
+
+				button.Update(wasPressed, isDown);
+			}
 		}
 
 		/// <summary>
