@@ -98,27 +98,40 @@ namespace MoonWorks.Input
                 {
                     wasPressed = ButtonWasPressed(timestamp, events);
 					isDown = events[^1].down;
+
+					if (isDown)
+					{
+						// First, check if the input window has text input active.
+						var mostRecentWindowID = events[^1].windowID;
+						Window.IDToWindow.TryGetValue(mostRecentWindowID, out var activeWindow);
+
+						if (activeWindow == null)
+						{
+							Logger.LogError($"Input window with ID {mostRecentWindowID} is somehow invalid.");
+						}
+						else if (activeWindow.TextInputActive)
+						{
+							// If so, handle special text input characters.
+							if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
+							{
+								Inputs.OnTextInput(TextInputCharacters[textIndex]);
+							}
+							else if (IsDown(ScanCode.LeftControl) && button.ScanCode == ScanCode.V)
+							{
+								Inputs.OnTextInput(TextInputCharacters[6]);
+							}
+						}
+					}
+
 					events.Clear();
                 }
 
 				button.Update(wasPressed, isDown);
 
-				if (button.IsDown)
+				if (button.IsPressed)
 				{
-					if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
-					{
-						Inputs.OnTextInput(TextInputCharacters[textIndex]);
-					}
-					else if (IsDown(ScanCode.LeftControl) && button.ScanCode == ScanCode.V)
-					{
-						Inputs.OnTextInput(TextInputCharacters[6]);
-					}
-
-					if (button.IsPressed)
-					{
-						AnyPressed = true;
-						AnyPressedButton = button;
-					}
+					AnyPressed = true;
+					AnyPressedButton = button;
 				}
 
 				events.Clear();
