@@ -37,6 +37,11 @@ namespace MoonWorks
 
 		// General event handling
 		readonly Queue<SDL.SDL_Event> InputEventQueue = [];
+		/// <summary>
+		/// Text input events send a string that may be invalidated by the time we read it,
+		/// thus we need to copy that string.
+		/// </summary>
+		readonly Queue<char> TextInputEventQueue = [];
 		readonly Queue<SDL.SDL_Event> SystemEventQueue = [];
 
 		// For handling WINDOW_EXPOSED on Windows
@@ -381,6 +386,10 @@ namespace MoonWorks
 						break;
 
 					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
+						// Special case: text contained in the event may get invalidated,
+						// so we need to process it and store it immediately.
+						HandleLoadingTextInput(evt.text);
+						break;
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
@@ -397,14 +406,15 @@ namespace MoonWorks
 
 		private void ProcessInputEvents()
 		{
+			while (TextInputEventQueue.TryDequeue(out char text))
+			{
+				Inputs.OnTextInput(text);
+			}
+
 			while (InputEventQueue.TryDequeue(out var evt))
 			{
 				switch ((SDL.SDL_EventType) evt.type)
 				{
-					case SDL.SDL_EventType.SDL_EVENT_TEXT_INPUT:
-						HandleTextInput(evt.text);
-						break;
-
 					case SDL.SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
 						Inputs.Mouse.WheelRaw += (int) evt.wheel.y;
 						break;
@@ -499,7 +509,7 @@ namespace MoonWorks
 			}
 		}
 
-		private void HandleTextInput(SDL.SDL_TextInputEvent evt)
+		private void HandleLoadingTextInput(SDL.SDL_TextInputEvent evt)
 		{
 			// Based on the SDL2# LPUtf8StrMarshaler
 			unsafe
@@ -521,7 +531,7 @@ namespace MoonWorks
 
 					for (int i = 0; i < chars; i += 1)
 					{
-						Inputs.OnTextInput(charsBuffer[i]);
+						TextInputEventQueue.Enqueue(charsBuffer[i]);
 					}
 				}
 			}
