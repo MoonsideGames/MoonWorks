@@ -103,19 +103,22 @@ namespace MoonWorks.Input
 
 				button.Update(wasPressed, isDown);
 
-				if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
+				if (button.IsDown)
 				{
-					Inputs.OnTextInput(TextInputCharacters[(textIndex)]);
-				}
-				else if (IsDown(ScanCode.LeftControl) && button.ScanCode == ScanCode.V)
-				{
-					Inputs.OnTextInput(TextInputCharacters[6]);
-				}
+					if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
+					{
+						Inputs.OnTextInput(TextInputCharacters[textIndex]);
+					}
+					else if (IsDown(ScanCode.LeftControl) && button.ScanCode == ScanCode.V)
+					{
+						Inputs.OnTextInput(TextInputCharacters[6]);
+					}
 
-				if (button.IsPressed)
-				{
-					AnyPressed = true;
-					AnyPressedButton = button;
+					if (button.IsPressed)
+					{
+						AnyPressed = true;
+						AnyPressedButton = button;
+					}
 				}
 
 				events.Clear();
