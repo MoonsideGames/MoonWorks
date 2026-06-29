@@ -22,28 +22,6 @@ namespace MoonWorks.Input
 		private KeyboardButton[] Keys { get; }
 		private List<SDL.SDL_KeyboardEvent>[] ButtonEvents;
 
-		private static readonly char[] TextInputCharacters =
-		[
-			(char) 2,	// Home
-			(char) 3,	// End
-			(char) 8,	// Backspace
-			(char) 9,	// Tab
-			(char) 13,	// Enter
-			(char) 127,	// Delete
-			(char) 22	// Ctrl+V (Paste)
-		];
-
-		private static readonly Dictionary<ScanCode, int> TextInputBindings = new()
-		{
-			{ ScanCode.Home,         0 },
-			{ ScanCode.End,          1 },
-			{ ScanCode.Backspace,    2 },
-			{ ScanCode.Tab,          3 },
-			{ ScanCode.Return,       4 },
-			{ ScanCode.Delete,       5 }
-			// Ctrl+V is special!
-		};
-
 		internal Keyboard()
 		{
 			SDL.SDL_GetKeyboardState(out var numKeys);
@@ -102,15 +80,6 @@ namespace MoonWorks.Input
                 }
 
 				button.Update(wasPressed, isDown);
-
-				if (TextInputBindings.TryGetValue(button.ScanCode, out var textIndex))
-				{
-					Inputs.OnTextInput(TextInputCharacters[(textIndex)]);
-				}
-				else if (IsDown(ScanCode.LeftControl) && button.ScanCode == ScanCode.V)
-				{
-					Inputs.OnTextInput(TextInputCharacters[6]);
-				}
 
 				if (button.IsPressed)
 				{
