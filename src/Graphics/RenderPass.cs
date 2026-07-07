@@ -78,7 +78,7 @@ public class RenderPass
 			bufferBindings[i].Offset = 0;
 		}
 
-		BindVertexBuffers(0, bufferBindings);
+		BindVertexBuffers(slot, bufferBindings);
 	}
 
 	/// <summary>
