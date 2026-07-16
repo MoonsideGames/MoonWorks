@@ -1652,6 +1652,16 @@ internal static partial class IRO
 
 	[LibraryImport(nativeLibName)]
 	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+	public static partial IntPtr IRO_LoadImageGrayscale(
+		IntPtr bufferPtr,
+		uint bufferLength,
+		out uint w,
+		out uint h,
+		out uint len
+	);
+
+	[LibraryImport(nativeLibName)]
+	[UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
 	public static partial SDLBool IRO_GetImageInfo(
 		IntPtr bufferPtr,
 		uint bufferLength,

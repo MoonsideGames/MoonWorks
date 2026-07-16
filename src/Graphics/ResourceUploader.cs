@@ -111,10 +111,10 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a named 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, ReadOnlySpan<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, ReadOnlySpan<byte> compressedImageData, TextureUsageFlags usage)
 	{
 		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
-		var texture = Texture.Create2D(Device, name, width, height, format, usage);
+		var texture = Texture.Create2D(Device, name, width, height, TextureFormat.R8G8B8A8Unorm, usage);
 		SetTextureDataFromCompressed(
 			new TextureRegion
 			{
@@ -131,13 +131,13 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from compressed image data to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(ReadOnlySpan<byte> compressedImageData, TextureFormat format, TextureUsageFlags usage) =>
-		CreateTexture2DFromCompressed(null, compressedImageData, format, usage);
+	public Texture CreateTexture2DFromCompressed(ReadOnlySpan<byte> compressedImageData, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(null, compressedImageData, usage);
 
 	/// <summary>
 	/// Creates a named 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string path, TextureFormat format, TextureUsageFlags usage)
+	public Texture CreateTexture2DFromCompressed(string name, TitleStorage storage, string path, TextureUsageFlags usage)
 	{
 		if (!storage.GetFileSize(path, out var size))
 		{
@@ -153,7 +153,7 @@ public unsafe class ResourceUploader : GraphicsResource
 			return null;
 		}
 
-		var result = CreateTexture2DFromCompressed(name, span, format, usage);
+		var result = CreateTexture2DFromCompressed(name, span, usage);
 		NativeMemory.Free(buffer);
 
 		return result;
@@ -162,9 +162,65 @@ public unsafe class ResourceUploader : GraphicsResource
 	/// <summary>
 	/// Creates a 2D Texture from a compressed image file to be uploaded.
 	/// </summary>
-	public Texture CreateTexture2DFromCompressed(TitleStorage storage, string compressedImageFilePath, TextureFormat format, TextureUsageFlags usage) =>
-		CreateTexture2DFromCompressed(System.IO.Path.GetFileNameWithoutExtension(compressedImageFilePath), storage, compressedImageFilePath, format, usage);
+	public Texture CreateTexture2DFromCompressed(TitleStorage storage, string compressedImageFilePath, TextureUsageFlags usage) =>
+		CreateTexture2DFromCompressed(System.IO.Path.GetFileNameWithoutExtension(compressedImageFilePath), storage, compressedImageFilePath, usage);
 
+	/// <summary>
+	/// Creates a 2D one-channel texture from compressed image data to be uploaded.
+	/// </summary>
+	public Texture CreateSingleChannelTexture2DFromCompressed(string name, ReadOnlySpan<byte> compressedImageData, TextureUsageFlags usage)
+	{
+		ImageUtils.ImageInfoFromBytes(compressedImageData, out var width, out var height, out var _);
+		var texture = Texture.Create2D(Device, name, width, height, TextureFormat.R8Unorm, usage);
+		SetSingleChannelTextureDataFromCompressed(
+			new TextureRegion
+			{
+				Texture = texture.Handle,
+				W = width,
+				H = height,
+				D = 1
+			},
+			compressedImageData
+		);
+		return texture;
+	}
+
+	/// <summary>
+	/// Creates a 2D one-channel texture from a compressed image file to be uploaded.
+	/// </summary>
+	public Texture CreateSingleChannelTexture2DFromCompressed(ReadOnlySpan<byte> compressedImageData, TextureUsageFlags usage) =>
+		CreateSingleChannelTexture2DFromCompressed(null, compressedImageData, usage);
+
+	/// <summary>
+	/// Creates a 2D one-channel texture from a compressed image file to be uploaded.
+	/// </summary>
+	public Texture CreateSingleChannelTexture2DFromCompressed(string name, TitleStorage storage, string path, TextureUsageFlags usage)
+	{
+		if (!storage.GetFileSize(path, out var size))
+		{
+			return null;
+		}
+
+		var buffer = NativeMemory.Alloc((nuint) size);
+		var span = new Span<byte>(buffer, (int) size);
+
+		if (!storage.ReadFile(path, span))
+		{
+			Logger.LogError("CreateTexture2DFromCompressed failed: Could not read file!");
+			return null;
+		}
+
+		var result = CreateSingleChannelTexture2DFromCompressed(name, span, usage);
+		NativeMemory.Free(buffer);
+
+		return result;
+	}
+
+	/// <summary>
+	/// Creates a 2D one-channel texture from a compressed image file to be uploaded.
+	/// </summary>
+	public Texture CreateSingleChannelTexture2DFromCompressed(TitleStorage storage, string compressedImageFilePath, TextureUsageFlags usage) =>
+		CreateSingleChannelTexture2DFromCompressed(System.IO.Path.GetFileNameWithoutExtension(compressedImageFilePath), storage, compressedImageFilePath, usage);
 
 	/// <summary>
 	/// Creates a texture from a DDS stream.
@@ -274,6 +330,16 @@ public unsafe class ResourceUploader : GraphicsResource
 
 		SetTextureDataFromCompressed(textureRegion, span);
 		NativeMemory.Free(buffer);
+	}
+
+	public void SetSingleChannelTextureDataFromCompressed(TextureRegion textureRegion, ReadOnlySpan<byte> compressedImageData)
+	{
+		var pixelData = ImageUtils.GetSingleChannelPixelDataFromBytes(compressedImageData, out var _, out var _, out var sizeInBytes);
+		var pixelSpan = new ReadOnlySpan<byte>((void*) pixelData, (int) sizeInBytes);
+
+		SetTextureData(textureRegion, pixelSpan, false);
+
+		ImageUtils.FreePixelData(pixelData);
 	}
 
 	/// <summary>

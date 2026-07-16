@@ -37,6 +37,31 @@ public static class ImageUtils
 		}
 	}
 
+	public static unsafe byte* GetSingleChannelPixelDataFromBytes(
+		ReadOnlySpan<byte> data,
+		out uint width,
+		out uint height,
+		out uint sizeInBytes
+	) {
+		fixed (byte* ptr = data)
+		{
+			var pixelData =
+				IRO.IRO_LoadImageGrayscale(
+				(nint) ptr,
+				(uint) data.Length,
+				out var w,
+				out var h,
+				out var len
+			);
+
+			width = w;
+			height = h;
+			sizeInBytes = len;
+
+			return (byte*) pixelData;
+		}
+	}
+
 	/// <summary>
 	/// Gets pointer to pixel data from a compressed image file.
 	///
