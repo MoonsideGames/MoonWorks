@@ -634,7 +634,7 @@ public struct SamplerCreateInfo
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct VertexBufferDescription
+public record struct VertexBufferDescription
 {
 	public uint Slot;
 	public uint Pitch;
@@ -658,7 +658,7 @@ public struct VertexBufferDescription
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct VertexAttribute
+public record struct VertexAttribute
 {
 	public uint Location;
 	public uint BufferSlot;
@@ -685,7 +685,7 @@ public struct StencilOpState
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct ColorTargetBlendState
+public record struct ColorTargetBlendState
 {
 	public BlendFactor SrcColorBlendFactor;
 	public BlendFactor DstColorBlendFactor;
@@ -814,7 +814,7 @@ public struct TransferBufferCreateInfo
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct RasterizerState
+public record struct RasterizerState
 {
 	public FillMode FillMode;
 	public CullMode CullMode;
@@ -885,7 +885,7 @@ public struct RasterizerState
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct MultisampleState
+public record struct MultisampleState
 {
 	public SampleCount SampleCount;
 	public uint SampleMask;
@@ -901,7 +901,7 @@ public struct MultisampleState
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct DepthStencilState
+public record struct DepthStencilState
 {
 	public CompareOp CompareOp;
 	public StencilOpState BackStencilState;
@@ -924,7 +924,7 @@ public struct DepthStencilState
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct ColorTargetDescription
+public record struct ColorTargetDescription
 {
 	public TextureFormat Format;
 	public ColorTargetBlendState BlendState;
@@ -1008,6 +1008,38 @@ public struct VertexInputState
 			VertexAttributes = attributes
 		};
 	}
+
+	public override readonly int GetHashCode()
+	{
+		var hashCode = new HashCode();
+
+		foreach (var attrib in VertexAttributes)
+		{
+			hashCode.Add(attrib);
+		}
+
+		foreach (var bufferDesc in VertexBufferDescriptions)
+		{
+			hashCode.Add(bufferDesc);
+		}
+
+		return hashCode.ToHashCode();
+	}
+
+	public override readonly bool Equals(object obj)
+	{
+		return obj is VertexInputState state && Equals(state);
+	}
+
+	public readonly bool Equals(VertexInputState other)
+	{
+		return
+			VertexAttributes.AsSpan().SequenceEqual(other.VertexAttributes.AsSpan());
+
+	}
+
+	public static bool operator ==(VertexInputState a, VertexInputState b) => a.Equals(b);
+	public static bool operator !=(VertexInputState a, VertexInputState b) => !a.Equals(b);
 }
 
 public struct GraphicsPipelineTargetInfo
@@ -1018,6 +1050,41 @@ public struct GraphicsPipelineTargetInfo
 	public byte Padding1;
 	public byte Padding2;
 	public byte Padding3;
+
+	public override readonly bool Equals(object obj)
+	{
+		return obj is GraphicsPipelineTargetInfo targetInfo && Equals(targetInfo);
+	}
+
+	public readonly bool Equals(GraphicsPipelineTargetInfo other)
+	{
+		return
+			ColorTargetDescriptions.AsSpan().SequenceEqual(other.ColorTargetDescriptions.AsSpan()) &&
+			HasDepthStencilTarget == other.HasDepthStencilTarget &&
+			!(HasDepthStencilTarget && (DepthStencilFormat != other.DepthStencilFormat));
+	}
+
+	public static bool operator ==(GraphicsPipelineTargetInfo a, GraphicsPipelineTargetInfo b) => a.Equals(b);
+	public static bool operator !=(GraphicsPipelineTargetInfo a, GraphicsPipelineTargetInfo b) => !a.Equals(b);
+
+	public override readonly int GetHashCode()
+	{
+		var hashCode = new HashCode();
+
+		foreach (var description in ColorTargetDescriptions)
+		{
+			hashCode.Add(description);
+		}
+
+		hashCode.Add(HasDepthStencilTarget);
+
+		if (HasDepthStencilTarget)
+		{
+			hashCode.Add(DepthStencilFormat);
+		}
+
+		return hashCode.ToHashCode();
+	}
 }
 
 public struct GraphicsPipelineCreateInfo
@@ -1032,6 +1099,40 @@ public struct GraphicsPipelineCreateInfo
 	public GraphicsPipelineTargetInfo TargetInfo;
 	public string Name;
 	public uint Props;
+
+	public override readonly bool Equals(object obj)
+	{
+		return obj is GraphicsPipelineCreateInfo createInfo && Equals(createInfo);
+	}
+
+	public readonly bool Equals(GraphicsPipelineCreateInfo other)
+	{
+		return
+			VertexShader == other.VertexShader           && // reference equality
+			FragmentShader == other.FragmentShader       && // reference equality
+			VertexInputState == other.VertexInputState   &&
+			PrimitiveType == other.PrimitiveType         &&
+			RasterizerState == other.RasterizerState     &&
+			MultisampleState == other.MultisampleState   &&
+			DepthStencilState == other.DepthStencilState &&
+			TargetInfo == other.TargetInfo;
+	}
+
+	public override readonly int GetHashCode()
+	{
+		var hashCode = new HashCode();
+
+		hashCode.Add(VertexShader);     // reference equality
+		hashCode.Add(FragmentShader);   // reference equality
+		hashCode.Add(VertexInputState);
+		hashCode.Add(PrimitiveType);
+		hashCode.Add(RasterizerState);
+		hashCode.Add(MultisampleState);
+		hashCode.Add(DepthStencilState);
+		hashCode.Add(TargetInfo);
+
+		return hashCode.ToHashCode();
+	}
 }
 
 [StructLayout(LayoutKind.Sequential)]
