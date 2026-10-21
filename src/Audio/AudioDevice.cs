@@ -21,13 +21,14 @@ namespace MoonWorks.Audio
 		private SubmixVoice fauxMasteringVoice;
 		public SubmixVoice MasteringVoice => fauxMasteringVoice;
 
-		public float CurveDistanceScalar = 1f;
+		public float CurveDistanceScalar;
 		public float DopplerScale = 1f;
-		public float SpeedOfSound = 343.5f;
+		public float SpeedOfSound;
 
 		private readonly HashSet<GCHandle> resourceHandles = new HashSet<GCHandle>();
 		private readonly HashSet<StreamingAudioSource> streamingAudioSources = new HashSet<StreamingAudioSource>();
 		private readonly HashSet<TransientVoice> transientVoices = new HashSet<TransientVoice>();
+		private readonly HashSet<SourceVoice> positionalVoices = new HashSet<SourceVoice>();
 
 		private AudioTweenManager AudioTweenManager;
 
@@ -46,7 +47,7 @@ namespace MoonWorks.Audio
 		private bool Running;
 		public bool IsDisposed { get; private set; }
 
-		internal unsafe AudioDevice()
+		internal unsafe AudioDevice(AudioDeviceParameters parameters)
 		{
 			UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / Step);
 
@@ -115,6 +116,9 @@ namespace MoonWorks.Audio
 
 			/* Init 3D Audio */
 
+			CurveDistanceScalar = parameters.CurveDistanceScalar;
+			SpeedOfSound = parameters.SpeedOfSound;
+
 			Handle3D = new byte[FAudio.F3DAUDIO_HANDLE_BYTESIZE];
 			FAudio.F3DAudioInitialize(
 				DeviceDetails.OutputFormat.dwChannelMask,
@@ -180,6 +184,14 @@ namespace MoonWorks.Audio
 				}
 			}
 
+			foreach (var voice in positionalVoices)
+			{
+				if (voice.State == SoundState.Playing)
+				{
+					voice.Calculate3D();
+				}
+			}
+
 			foreach (var voice in transientVoices)
 			{
 				if (voice.State == SoundState.Playing && voice.BuffersQueued == 0)
@@ -192,6 +204,7 @@ namespace MoonWorks.Audio
 			foreach (var voice in VoicesToReturn)
 			{
 				voice.Reset();
+				UnregisterPositionalVoice(voice);
 				VoicePool.Return(voice);
 			}
 
@@ -251,6 +264,22 @@ namespace MoonWorks.Audio
 			lock (streamingAudioSources)
 			{
 				streamingAudioSources.Remove(source);
+			}
+		}
+
+		internal void RegisterPositionalVoice(SourceVoice voice)
+		{
+			lock (positionalVoices)
+			{
+				positionalVoices.Add(voice);
+			}
+		}
+
+		internal void UnregisterPositionalVoice(SourceVoice voice)
+		{
+			lock (positionalVoices)
+			{
+				positionalVoices.Remove(voice);
 			}
 		}
 

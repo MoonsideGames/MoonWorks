@@ -19,25 +19,6 @@ namespace MoonWorks.Audio
 
 		protected byte* pMatrixCoefficients;
 
-		public bool Is3D { get; protected set; }
-
-		private float dopplerFactor;
-		/// <summary>
-		/// The strength of the doppler effect on this voice.
-		/// </summary>
-		public float DopplerFactor
-		{
-			get => dopplerFactor;
-			set
-			{
-				if (dopplerFactor != value)
-				{
-					dopplerFactor = value;
-					UpdatePitch();
-				}
-			}
-		}
-
 		private float volume = 1;
 		/// <summary>
 		/// The overall volume level for the voice.
@@ -258,6 +239,28 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		// 3D Audio properties
+		public bool Is3D { get; protected set; }
+		public AudioEmitter AudioEmitter { get; protected set; }
+		public AudioListener AudioListener { get; protected set; }
+
+		private float dopplerFactor = 1f;
+		/// <summary>
+		/// The strength of the doppler effect on this voice.
+		/// </summary>
+		public float DopplerFactor
+		{
+			get => dopplerFactor;
+			set
+			{
+				if (dopplerFactor != value)
+				{
+					dopplerFactor = value;
+					UpdatePitch();
+				}
+			}
+		}
+
 		public Voice(AudioDevice device, uint sourceChannelCount, uint destinationChannelCount) : base(device)
 		{
 			SourceChannelCount = sourceChannelCount;
@@ -475,6 +478,9 @@ namespace MoonWorks.Audio
 			Pan = 0;
 			Pitch = 0;
 			FilterType = FilterType.None;
+			Is3D = false;
+			AudioListener = null;
+			AudioEmitter = null;
 			SetOutputVoice(Device.MasteringVoice);
 		}
 
