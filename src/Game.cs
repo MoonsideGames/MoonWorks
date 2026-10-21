@@ -78,6 +78,7 @@ namespace MoonWorks
 			AppInfo appInfo,
 			WindowCreateInfo windowCreateInfo,
 			FramePacingSettings framePacingSettings,
+			AudioDeviceParameters audioDeviceParameters,
 			ShaderFormat availableShaderFormats,
 			bool debugMode = false
 		) {
@@ -131,7 +132,7 @@ namespace MoonWorks
 			SetFramePacingSettings(framePacingSettings);
 
 			Logger.LogInfo("Initializing audio thread...");
-			AudioDevice = new AudioDevice();
+			AudioDevice = new AudioDevice(audioDeviceParameters);
 
 			Logger.LogInfo("Initializing video thread...");
 			VideoDevice = new VideoDevice(GraphicsDevice);

@@ -28,7 +28,7 @@ namespace MoonWorks.Audio
 			}
 		}
 
-		public SoundState State { get; protected set; }
+		public SoundState State { get; protected set; } = SoundState.Stopped;
 
 		protected object StateLock = new object();
 
@@ -150,17 +150,25 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Calculates positional sound. This must be called continuously to update positional sound.
+		/// Indicates that the voice should use positional sound.
+		/// The listener and emitter references are held and will be used by the audio device 
+		/// to continually update positional sound.
 		/// </summary>
-		/// <param name="listener"></param>
-		/// <param name="emitter"></param>
-		public unsafe void Apply3D(AudioListener listener, AudioEmitter emitter)
+		public void Apply3D(AudioListener listener, AudioEmitter emitter)
 		{
 			Is3D = true;
-
 			emitter.emitterData.CurveDistanceScaler = Device.CurveDistanceScalar;
 			emitter.emitterData.ChannelCount = SourceChannelCount;
 
+			AudioListener = listener;
+			AudioEmitter = emitter;
+
+			Calculate3D();
+			Device.RegisterPositionalVoice(this);
+		}
+
+		internal unsafe void Calculate3D()
+		{
 			var dspSettings = new FAudio.F3DAUDIO_DSP_SETTINGS
 			{
 				DopplerFactor = DopplerFactor,
@@ -171,8 +179,8 @@ namespace MoonWorks.Audio
 
 			FAudio.F3DAudioCalculate(
 				Device.Handle3D,
-				ref listener.listenerData,
-				ref emitter.emitterData,
+				ref AudioListener.listenerData,
+				ref AudioEmitter.emitterData,
 				FAudio.F3DAUDIO_CALCULATE_MATRIX | FAudio.F3DAUDIO_CALCULATE_DOPPLER,
 				ref dspSettings
 			);
