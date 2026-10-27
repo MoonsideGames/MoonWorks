@@ -12,7 +12,7 @@ namespace MoonWorks.Audio
 	/// </summary>
 	public unsafe class AudioEngine : IDisposable
 	{
-		private readonly Interop.ma_engine Engine;
+		public readonly Interop.ma_engine Engine;
 
 		private readonly HashSet<GCHandle> ResourceHandles = [];
 
@@ -32,7 +32,7 @@ namespace MoonWorks.Audio
 
 		internal AudioEngine()
 		{
-			var result = Interop.ma_engine_init(IntPtr.Zero, out Engine);
+			var result = Interop.ma_engine_init(Unsafe.NullRef<Interop.ma_engine_config>(), out Engine);
 			if (result != Interop.ma_result.MA_SUCCESS)
 			{
 				Logger.LogError("Failed to initialize audio engine!");
@@ -96,9 +96,19 @@ namespace MoonWorks.Audio
 
 		}
 
-		public static bool DecodeMemory(Span<byte> data, out ulong frameCount, out Span<byte> pcmFramesOut)
+		public static bool DecodeMemory(Span<byte> data, out ulong frameCount, out IntPtr pcmFramesOut)
 		{
-			Interop.ma_decode_memory(data, data.Length, nint.Zero, out frameCount, out pcmFramesOut);
+			// FIXME: would be nice for this to just stay as a span
+			fixed (byte* b = data)
+			{
+				var result = Interop.ma_decode_memory((nint) b, (nuint) data.Length, Unsafe.NullRef<Interop.ma_decoder_config>(), out frameCount, out pcmFramesOut);
+				if (result != Interop.ma_result.MA_SUCCESS)
+				{
+					return false;
+				}
+
+				return true;
+			}
 		}
 
 		internal void CreateTween(
