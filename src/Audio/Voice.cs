@@ -241,8 +241,7 @@ namespace MoonWorks.Audio
 
 		// 3D Audio properties
 		public bool Is3D { get; protected set; }
-		public AudioEmitter AudioEmitter { get; protected set; }
-		public AudioListener AudioListener { get; protected set; }
+		public Audio3D.Emitter AudioEmitter { get; protected set; }
 
 		private float dopplerFactor = 1f;
 		/// <summary>
@@ -479,7 +478,6 @@ namespace MoonWorks.Audio
 			Pitch = 0;
 			FilterType = FilterType.None;
 			Is3D = false;
-			AudioListener = null;
 			AudioEmitter = null;
 			SetOutputVoice(Device.MasteringVoice);
 		}
