@@ -151,14 +151,14 @@ namespace MoonWorks.Audio
 
 		/// <summary>
 		/// Indicates that the voice should use positional sound.
-		/// The listener and emitter references are held and will be used by the audio device 
+		/// The listener and emitter references are held and will be used by the audio device
 		/// to continually update positional sound.
 		/// </summary>
-		public void Apply3D(AudioListener listener, AudioEmitter emitter)
+		public void Apply3D(Audio3D.Listener listener, Audio3D.Emitter emitter)
 		{
 			Is3D = true;
-			emitter.emitterData.CurveDistanceScaler = Device.CurveDistanceScalar;
-			emitter.emitterData.ChannelCount = SourceChannelCount;
+			emitter.CurveDistanceScaler = Device.CurveDistanceScalar;
+			emitter.ChannelCount = SourceChannelCount;
 
 			AudioListener = listener;
 			AudioEmitter = emitter;
@@ -169,21 +169,20 @@ namespace MoonWorks.Audio
 
 		internal unsafe void Calculate3D()
 		{
-			var dspSettings = new FAudio.F3DAUDIO_DSP_SETTINGS
+			var dspSettings = new Audio3D.DSPSettings
 			{
 				DopplerFactor = DopplerFactor,
 				SrcChannelCount = SourceChannelCount,
 				DstChannelCount = DestinationChannelCount,
-				pMatrixCoefficients = (nint) pMatrixCoefficients
+				MatrixCoefficients = MatrixCoefficients
 			};
 
-			FAudio.F3DAudioCalculate(
+			Audio3D.Calculate(
 				Device.Handle3D,
-				ref AudioListener.listenerData,
-				ref AudioEmitter.emitterData,
+				AudioListener,
+				AudioEmitter,
 				FAudio.F3DAUDIO_CALCULATE_MATRIX | FAudio.F3DAUDIO_CALCULATE_DOPPLER,
-				ref dspSettings
-			);
+				ref dspSettings);
 
 			UpdatePitch();
 
