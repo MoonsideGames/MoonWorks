@@ -11,94 +11,15 @@ namespace MoonWorks.Audio
 	{
 		internal FAudio.F3DAUDIO_EMITTER emitterData;
 
-		public float DopplerScale
-		{
-			get
-			{
-				return emitterData.DopplerScaler;
-			}
-			set
-			{
-				if (value < 0.0f)
-				{
-					throw new ArgumentOutOfRangeException("AudioEmitter.DopplerScale must be greater than or equal to 0.0f");
-				}
-				emitterData.DopplerScaler = value;
-			}
-		}
+		public float MinDistance = 0;
+		public float MaxDistance = float.MaxValue;
+		public float Rolloff;
+		public float DopplerFactor;
 
-		public Vector3 Forward
-		{
-			get
-			{
-				return new Vector3(
-					emitterData.OrientFront.x,
-					emitterData.OrientFront.y,
-					-emitterData.OrientFront.z
-				);
-			}
-			set
-			{
-				emitterData.OrientFront.x = value.X;
-				emitterData.OrientFront.y = value.Y;
-				emitterData.OrientFront.z = -value.Z;
-			}
-		}
-
-		public Vector3 Position
-		{
-			get
-			{
-				return new Vector3(
-					emitterData.Position.x,
-					emitterData.Position.y,
-					-emitterData.Position.z
-				);
-			}
-			set
-			{
-				emitterData.Position.x = value.X;
-				emitterData.Position.y = value.Y;
-				emitterData.Position.z = -value.Z;
-			}
-		}
-
-
-		public Vector3 Up
-		{
-			get
-			{
-				return new Vector3(
-					emitterData.OrientTop.x,
-					emitterData.OrientTop.y,
-					-emitterData.OrientTop.z
-				);
-			}
-			set
-			{
-				emitterData.OrientTop.x = value.X;
-				emitterData.OrientTop.y = value.Y;
-				emitterData.OrientTop.z = -value.Z;
-			}
-		}
-
-		public Vector3 Velocity
-		{
-			get
-			{
-				return new Vector3(
-					emitterData.Velocity.x,
-					emitterData.Velocity.y,
-					-emitterData.Velocity.z
-				);
-			}
-			set
-			{
-				emitterData.Velocity.x = value.X;
-				emitterData.Velocity.y = value.Y;
-				emitterData.Velocity.z = -value.Z;
-			}
-		}
+		public Vector3 Position;
+		public Vector3 Forward;
+		public Vector3 Up;
+		public Vector3 Velocity;
 
 		private static readonly float[] stereoAzimuth = new float[]
 		{
