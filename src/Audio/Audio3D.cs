@@ -1,6 +1,6 @@
 // This code is largely translated from FAudio.
 // We need to add a few extra spatialization features, but it's not really worth extending FAudio for those,
-// since the 3D features are largely self-contained and require a call to initiate processing.
+// since the 3D features are largely self-contained and require a call to do the spatial calculations.
 // -cosmonaut
 
 /* FAudio - XAudio Reimplementation for FNA
@@ -46,15 +46,23 @@ public static class Audio3D
 		float InnerReverb,
 		float OuterReverb);
 
-	public record struct Listener(
-		Vector3 OrientFront,
-		Vector3 OrientTop,
-		Vector3 Position,
-		Vector3 Velocity,
+	public class Listener(
 		bool UsesCone,
-		Cone Cone);
+		Cone Cone,
+		Vector3 Forward,
+		Vector3 Up,
+		Vector3 Position,
+		Vector3 Velocity)
+	{
+		public bool UsesCone { get; set; } = UsesCone;
+		public Cone Cone { get; set; } = Cone;
+		public Vector3 Forward { get; set; } = Forward;
+		public Vector3 Up { get; set; } = Up;
+		public Vector3 Position { get; set; } = Position;
+		public Vector3 Velocity { get; set; } = Velocity;
+	}
 
-	public record struct Emitter(
+	public class Emitter(
 		bool UsesCone,
 		Cone Cone,
 		Vector3 Forward,
@@ -63,9 +71,6 @@ public static class Audio3D
 		Vector3 Velocity,
 		float InnerRadius,
 		float InnerRadiusAngle,
-		uint ChannelCount,
-		float ChannelRadius,
-		float[] ChannelAzimuths,
 		float CurveDistanceScaler,
 		float DopplerScaler,
 		float MinDistance,
@@ -84,9 +89,6 @@ public static class Audio3D
 			0,
 			1,
 			1,
-			[0, 0],
-			1,
-			1,
 			1,
 			float.MaxValue,
 			1,
@@ -94,11 +96,26 @@ public static class Audio3D
 		{
 
 		}
+
+		public bool UsesCone { get; set; } = UsesCone;
+		public Cone Cone { get; set; } = Cone;
+		public Vector3 Forward { get; set; } = Forward;
+		public Vector3 Up { get; set; } = Up;
+		public Vector3 Position { get; set; } = Position;
+		public Vector3 Velocity { get; set; } = Velocity;
+		public float InnerRadius { get; set; } = InnerRadius;
+		public float InnerRadiusAngle { get; set; } = InnerRadiusAngle;
+		public float CurveDistanceScaler { get; set; } = CurveDistanceScaler;
+		public float DopplerScaler { get; set; } = DopplerScaler;
+		public float MinDistance { get; set; } = MinDistance;
+		public float MaxDistance { get; set; } = MaxDistance;
+		public float Rolloff { get; set; } = Rolloff;
+		public AttenuationModel AttenuationModel { get; set; } = AttenuationModel;
 	}
 
-	public struct DSPSettings
+	public unsafe struct DSPSettings
 	{
-		public float[] MatrixCoefficients;
+		public float* MatrixCoefficients;
 		public float[] DelayTimes;
 		public uint SrcChannelCount;
 		public uint DstChannelCount;
@@ -110,6 +127,8 @@ public static class Audio3D
 		public float EmitterToListenerDistance;
 		public float EmitterVelocityComponent;
 		public float ListenerVelocityComponent;
+
+		public readonly Span<float> MatrixCoefficientsSpan => new(MatrixCoefficients, (int) (SrcChannelCount * DstChannelCount));
 	};
 
 	public record struct F3DAudio(
@@ -849,8 +868,9 @@ public static class Audio3D
 		uint dstChannelCount,
 		Vector3 emitterToListener,
 		float eToLDistance,
-		Span<float> matrixCoefficients
-	)
+		float channelRadius,
+		float[] channelAzimuths,
+		Span<float> matrixCoefficients)
 	{
 		uint iEC;
 		float curEmAzimuth;
@@ -890,7 +910,7 @@ public static class Audio3D
 			 * -Adrien
 			 */
 			var angle = -float.Acos(
-				Vector3.Dot(listener.OrientFront, emitterToListener) /
+				Vector3.Dot(listener.Forward, emitterToListener) /
 				eToLDistance
 			);
 
@@ -907,7 +927,7 @@ public static class Audio3D
 		}
 
 		/* See note above. */
-		if (emitter.UsesCone && emitter.ChannelCount == 1)
+		if (emitter.UsesCone && srcChannelCount == 1)
 		{
 			var angle = float.Acos(
 				Vector3.Dot(emitter.Forward, emitterToListener) /
@@ -930,12 +950,12 @@ public static class Audio3D
 		/* In the SPEAKER_MONO case, we can skip all energy diffusion calculation. */
 		if (dstChannelCount == 1)
 		{
-			for (iEC = 0; iEC < emitter.ChannelCount; iEC += 1)
+			for (iEC = 0; iEC < srcChannelCount; iEC += 1)
 			{
 				curEmAzimuth = 0.0f;
-				if (emitter.ChannelAzimuths != null)
+				if (channelAzimuths != null)
 				{
-					curEmAzimuth = emitter.ChannelAzimuths[iEC];
+					curEmAzimuth = channelAzimuths[iEC];
 				}
 
 				/* The MONO setup doesn't have an LFE speaker. */
@@ -949,17 +969,17 @@ public static class Audio3D
 		{
 			listenerToEmitter = emitterToListener * -1.0f;
 
-			/* Remember here that the coordinate system is Left-Handed. */
-			listenerBasis.Front = listener.OrientFront;
-			listenerBasis.Right = Vector3.Cross(listener.OrientTop, listener.OrientFront);
-			listenerBasis.Top = listener.OrientTop;
+			// FAudio expects a left-handed coordinate system so let's convert.
+			listenerBasis.Front = -listener.Forward;
+			listenerBasis.Right = -Vector3.Cross(listener.Up, listener.Forward);
+			listenerBasis.Top = listener.Up;
 
 			/* Handling the mono-channel emitter case separately is easier
 			 * than having it as a separate case of a for-loop; indeed, in
 			 * this case, we need to ignore the non-relevant values from the
 			 * emitter, _even if they're set_.
 			 */
-			if (emitter.ChannelCount == 1)
+			if (srcChannelCount == 1)
 			{
 				listenerToEmChannel = listenerToEmitter;
 
@@ -980,16 +1000,16 @@ public static class Audio3D
 			{
 				var emitterRight = Vector3.Cross(emitter.Up, emitter.Forward);
 
-				for (iEC = 0; iEC < emitter.ChannelCount; iEC += 1)
+				for (iEC = 0; iEC < srcChannelCount; iEC += 1)
 				{
-					var emChAzimuth = emitter.ChannelAzimuths[iEC];
+					var emChAzimuth = channelAzimuths[iEC];
 
 					/* LFEs are easy enough to deal with; we can
 					 * just do them separately.
 					 */
 					if (emChAzimuth == float.Pi * 2)
 					{
-						matrixCoefficients[(int) (curConfig.LFSpeakerIdx * emitter.ChannelCount + iEC)] = LFEattenuation;
+						matrixCoefficients[(int) (curConfig.LFSpeakerIdx * srcChannelCount + iEC)] = LFEattenuation;
 					}
 					else
 					{
@@ -997,8 +1017,8 @@ public static class Audio3D
 						 * vector relative to the emitter base...
 						 */
 						var emitterBaseToChannel =
-							emitter.Forward * emitter.ChannelRadius * float.Cos(emChAzimuth) +
-							emitterRight * emitter.ChannelRadius * float.Sin(emChAzimuth);
+							emitter.Forward * channelRadius * float.Cos(emChAzimuth) +
+							emitterRight * channelRadius * float.Sin(emChAzimuth);
 
 						/* ... then translate. */
 						listenerToEmChannel = listenerToEmitter + emitterBaseToChannel;
@@ -1012,7 +1032,7 @@ public static class Audio3D
 							LFEattenuation,
 							flags,
 							iEC,
-							emitter.ChannelCount,
+							srcChannelCount,
 							matrixCoefficients
 						);
 					}
@@ -1089,6 +1109,8 @@ public static class Audio3D
 		in Listener listener,
 		in Emitter emitter,
 		uint flags,
+		float channelRadius,
+		float[] channelAzimuths,
 		ref DSPSettings dspSettings)
 	{
 		uint i;
@@ -1114,7 +1136,9 @@ public static class Audio3D
 				dspSettings.DstChannelCount,
 				emitterToListener,
 				eToLDistance,
-				dspSettings.MatrixCoefficients
+				channelRadius,
+				channelAzimuths,
+				dspSettings.MatrixCoefficientsSpan
 			);
 		}
 
