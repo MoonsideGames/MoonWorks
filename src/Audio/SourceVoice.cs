@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace MoonWorks.Audio
 {
@@ -30,7 +31,12 @@ namespace MoonWorks.Audio
 
 		public SoundState State { get; protected set; } = SoundState.Stopped;
 
-		protected object StateLock = new object();
+		protected object StateLock = new();
+
+		// Spatial audio stuff
+		private Audio3D.Emitter Emitter = new();
+		private float ChannelRadius = 1f; // TODO: what does this do
+		private readonly float[] ChannelAzimuths;
 
 		public SourceVoice(
 			AudioDevice device,
@@ -39,6 +45,8 @@ namespace MoonWorks.Audio
 		{
 			this.format = format;
 			var fAudioFormat = format.ToFAudioFormat();
+
+			ChannelAzimuths = new float[format.Channels];
 
 			 FAudio.FAudio_CreateSourceVoice(
 				device.Handle,
@@ -150,21 +158,13 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
-		/// Indicates that the voice should use positional sound.
-		/// The listener and emitter references are held and will be used by the audio device
-		/// to continually update positional sound.
+		/// Attaches an emitter to the voice which causes it to use spatialization.
 		/// </summary>
-		public void Apply3D(Audio3D.Listener listener, Audio3D.Emitter emitter)
+		/// <param name="emitter"></param>
+		public void AttachEmitter(Audio3D.Emitter emitter)
 		{
-			Is3D = true;
-			emitter.CurveDistanceScaler = Device.CurveDistanceScalar;
-			emitter.ChannelCount = SourceChannelCount;
-
-			AudioListener = listener;
-			AudioEmitter = emitter;
-
-			Calculate3D();
-			Device.RegisterPositionalVoice(this);
+			Emitter = emitter;
+			Device.RegisterSpatialVoice(this);
 		}
 
 		internal unsafe void Calculate3D()
@@ -179,19 +179,22 @@ namespace MoonWorks.Audio
 
 			Audio3D.Calculate(
 				Device.Handle3D,
-				AudioListener,
-				AudioEmitter,
+				Device.Listener,
+				Emitter,
 				FAudio.F3DAUDIO_CALCULATE_MATRIX | FAudio.F3DAUDIO_CALCULATE_DOPPLER,
+				ChannelRadius,
+				ChannelAzimuths,
 				ref dspSettings);
 
-			UpdatePitch();
+			// Note: this automatically updates pitch as well
+			DopplerFactor = dspSettings.DopplerFactor;
 
 			FAudio.FAudioVoice_SetOutputMatrix(
 				Handle,
 				OutputVoice.Handle,
 				SourceChannelCount,
 				DestinationChannelCount,
-				(nint) pMatrixCoefficients,
+				(nint) MatrixCoefficients,
 				0
 			);
 		}
@@ -212,6 +215,7 @@ namespace MoonWorks.Audio
 		public override void Reset()
 		{
 			Stop();
+			Emitter = null;
 			base.Reset();
 		}
 	}

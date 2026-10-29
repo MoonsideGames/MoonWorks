@@ -11,43 +11,44 @@ namespace MoonWorks.Audio
 	public class AudioDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
-		public byte[] Handle3D { get; }
+		public Audio3D.F3DAudio Handle3D { get; }
 		public FAudio.FAudioDeviceDetails DeviceDetails { get; }
 
-		private IntPtr trueMasteringVoice;
+		private readonly IntPtr TrueMasteringVoice;
 
 		// this is a fun little trick where we use a submix voice as a "faux" mastering voice
 		// this lets us maintain API consistency for effects like panning and reverb
-		private SubmixVoice fauxMasteringVoice;
-		public SubmixVoice MasteringVoice => fauxMasteringVoice;
+		private readonly SubmixVoice FauxMasteringVoice;
+		public SubmixVoice MasteringVoice => FauxMasteringVoice;
 
-		public float CurveDistanceScalar;
+		public Audio3D.Listener Listener { get; private set; }
+		public float CurveDistanceScaler;
 		public float DopplerScale = 1f;
 		public float SpeedOfSound;
 
-		private readonly HashSet<GCHandle> resourceHandles = new HashSet<GCHandle>();
-		private readonly HashSet<StreamingAudioSource> streamingAudioSources = new HashSet<StreamingAudioSource>();
-		private readonly HashSet<TransientVoice> transientVoices = new HashSet<TransientVoice>();
-		private readonly HashSet<SourceVoice> positionalVoices = new HashSet<SourceVoice>();
+		private readonly HashSet<GCHandle> ResourceHandles = [];
+		private readonly HashSet<StreamingAudioSource> StreamingAudioSources = [];
+		private readonly HashSet<TransientVoice> TransientVoices = [];
+		private readonly HashSet<SourceVoice> SpatialVoices = [];
 
-		private AudioTweenManager AudioTweenManager;
+		private readonly AudioTweenManager AudioTweenManager;
 
-		private SourceVoicePool VoicePool;
-		private List<SourceVoice> VoicesToReturn = new List<SourceVoice>();
+		private readonly SourceVoicePool VoicePool;
+		private readonly List<SourceVoice> VoicesToReturn = [];
 
 		private const int Step = 200;
-		private TimeSpan UpdateInterval;
-		private System.Diagnostics.Stopwatch ThreadTimer = new System.Diagnostics.Stopwatch();
-		private System.Diagnostics.Stopwatch TimeElapsedStopwatch = new System.Diagnostics.Stopwatch();
+		private readonly TimeSpan UpdateInterval;
+		private readonly System.Diagnostics.Stopwatch ThreadTimer = new();
+		private readonly System.Diagnostics.Stopwatch TimeElapsedStopwatch = new();
 		private long previousTickTime;
-		private Thread Thread;
-		private AutoResetEvent WakeSignal;
-		internal readonly object StateLock = new object();
+		private readonly Thread Thread;
+		private readonly AutoResetEvent WakeSignal;
+		internal readonly object StateLock = new();
 
 		private bool Running;
 		public bool IsDisposed { get; private set; }
 
-		internal unsafe AudioDevice(AudioDeviceParameters parameters)
+		internal AudioDevice(AudioDeviceParameters parameters)
 		{
 			UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / Step);
 
@@ -97,7 +98,7 @@ namespace MoonWorks.Audio
 			/* Init Mastering Voice */
 			var result = FAudio.FAudio_CreateMasteringVoice(
 				Handle,
-				out trueMasteringVoice,
+				out TrueMasteringVoice,
 				FAudio.FAUDIO_DEFAULT_CHANNELS,
 				FAudio.FAUDIO_DEFAULT_SAMPLERATE,
 				0,
@@ -112,26 +113,20 @@ namespace MoonWorks.Audio
 				return;
 			}
 
-			fauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
+			FauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
 
 			/* Init 3D Audio */
 
-			CurveDistanceScalar = parameters.CurveDistanceScalar;
+			CurveDistanceScaler = parameters.CurveDistanceScalar;
 			SpeedOfSound = parameters.SpeedOfSound;
-
-			Handle3D = new byte[FAudio.F3DAUDIO_HANDLE_BYTESIZE];
-			FAudio.F3DAudioInitialize(
-				DeviceDetails.OutputFormat.dwChannelMask,
-				SpeedOfSound,
-				Handle3D
-			);
+			Handle3D = Audio3D.F3DAudioInitialize(DeviceDetails.OutputFormat.dwChannelMask, SpeedOfSound);
 
 			AudioTweenManager = new AudioTweenManager();
 			VoicePool = new SourceVoicePool(this);
 
 			WakeSignal = new AutoResetEvent(true);
 
-			Thread = new Thread(ThreadMain);			
+			Thread = new Thread(ThreadMain);
 			Thread.IsBackground = true;
 			Thread.Start();
 
@@ -176,35 +171,38 @@ namespace MoonWorks.Audio
 
 			AudioTweenManager.Update(elapsedSeconds);
 
-			lock (streamingAudioSources)
+			lock (StreamingAudioSources)
 			{
-				foreach (var voice in streamingAudioSources)
+				foreach (var voice in StreamingAudioSources)
 				{
 					voice.Update();
 				}
 			}
 
-			foreach (var voice in positionalVoices)
+			if (Listener != null)
 			{
-				if (voice.State == SoundState.Playing)
+				foreach (var voice in SpatialVoices)
 				{
-					voice.Calculate3D();
+					if (voice.State == SoundState.Playing)
+					{
+						voice.Calculate3D();
+					}
 				}
 			}
 
-			foreach (var voice in transientVoices)
+			foreach (var voice in TransientVoices)
 			{
 				if (voice.State == SoundState.Playing && voice.BuffersQueued == 0)
 				{
 					VoicesToReturn.Add(voice);
-					transientVoices.Remove(voice);
+					TransientVoices.Remove(voice);
 				}
 			}
 
 			foreach (var voice in VoicesToReturn)
 			{
 				voice.Reset();
-				UnregisterPositionalVoice(voice);
+				UnregisterSpatialVoice(voice);
 				VoicePool.Return(voice);
 			}
 
@@ -220,6 +218,16 @@ namespace MoonWorks.Audio
 		}
 
 		/// <summary>
+		/// Sets a listener. There can only be one listener.
+		/// A listener must be attached for spatial audio to function.
+		/// </summary>
+		public void AttachListener(Audio3D.Listener listener)
+		{
+			// TODO: should we allow multiple listeners?
+			Listener = listener;
+		}
+
+		/// <summary>
 		/// Obtains an appropriate source voice from the voice pool.
 		/// </summary>
 		/// <param name="format">The format that the voice must match.</param>
@@ -232,7 +240,7 @@ namespace MoonWorks.Audio
 
 				if (voice is TransientVoice transientVoice)
 				{
-					transientVoices.Add(transientVoice);
+					TransientVoices.Add(transientVoice);
 				}
 
 				return voice;
@@ -253,33 +261,33 @@ namespace MoonWorks.Audio
 
 		internal void RegisterStreamingAudioSource(StreamingAudioSource source)
 		{
-			lock (streamingAudioSources)
+			lock (StreamingAudioSources)
 			{
-				streamingAudioSources.Add(source);
+				StreamingAudioSources.Add(source);
 			}
 		}
 
 		internal void UnregisterStreamingAudioSource(StreamingAudioSource source)
 		{
-			lock (streamingAudioSources)
+			lock (StreamingAudioSources)
 			{
-				streamingAudioSources.Remove(source);
+				StreamingAudioSources.Remove(source);
 			}
 		}
 
-		internal void RegisterPositionalVoice(SourceVoice voice)
+		internal void RegisterSpatialVoice(SourceVoice voice)
 		{
-			lock (positionalVoices)
+			lock (SpatialVoices)
 			{
-				positionalVoices.Add(voice);
+				SpatialVoices.Add(voice);
 			}
 		}
 
-		internal void UnregisterPositionalVoice(SourceVoice voice)
+		internal void UnregisterSpatialVoice(SourceVoice voice)
 		{
-			lock (positionalVoices)
+			lock (SpatialVoices)
 			{
-				positionalVoices.Remove(voice);
+				SpatialVoices.Remove(voice);
 			}
 		}
 
@@ -325,7 +333,7 @@ namespace MoonWorks.Audio
 		{
 			lock (StateLock)
 			{
-				resourceHandles.Add(resourceReference);
+				ResourceHandles.Add(resourceReference);
 			}
 		}
 
@@ -333,7 +341,7 @@ namespace MoonWorks.Audio
 		{
 			lock (StateLock)
 			{
-				resourceHandles.Remove(resourceReference);
+				ResourceHandles.Remove(resourceReference);
 			}
 		}
 
@@ -348,7 +356,7 @@ namespace MoonWorks.Audio
 					Thread.Join();
 
 					// dispose audio sources first
-					foreach (var handle in resourceHandles)
+					foreach (var handle in ResourceHandles)
 					{
 						if (handle.Target is StreamingAudioSource streaming)
 						{
@@ -357,7 +365,7 @@ namespace MoonWorks.Audio
 					}
 
 					// then dispose source voices
-					foreach (var handle in resourceHandles)
+					foreach (var handle in ResourceHandles)
 					{
 						if (handle.Target is SourceVoice voice)
 						{
@@ -366,22 +374,22 @@ namespace MoonWorks.Audio
 					}
 
 					// dispose all submix voices except the faux mastering voice
-					foreach (var handle in resourceHandles)
+					foreach (var handle in ResourceHandles)
 					{
-						if (handle.Target is SubmixVoice voice && voice != fauxMasteringVoice)
+						if (handle.Target is SubmixVoice voice && voice != FauxMasteringVoice)
 						{
 							voice.Dispose();
 						}
 					}
 
 					// dispose the faux mastering voice
-					fauxMasteringVoice.Dispose();
+					FauxMasteringVoice.Dispose();
 
 					// dispose the true mastering voice
-					FAudio.FAudioVoice_DestroyVoice(trueMasteringVoice);
+					FAudio.FAudioVoice_DestroyVoice(TrueMasteringVoice);
 
 					// destroy all other audio resources
-					foreach (var handle in resourceHandles)
+					foreach (var handle in ResourceHandles)
 					{
 						if (handle.Target is AudioResource resource)
 						{
@@ -389,7 +397,7 @@ namespace MoonWorks.Audio
 						}
 					}
 
-					resourceHandles.Clear();
+					ResourceHandles.Clear();
 				}
 
 				FAudio.FAudio_Release(Handle);
