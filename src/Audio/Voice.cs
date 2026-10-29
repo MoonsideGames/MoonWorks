@@ -13,11 +13,11 @@ namespace MoonWorks.Audio
 		public IntPtr Handle => handle;
 
 		public uint SourceChannelCount { get; }
-		public uint DestinationChannelCount { get; }
+		public uint DestinationChannelCount { get; private set; }
 
 		protected SubmixVoice OutputVoice;
 
-		protected byte* pMatrixCoefficients;
+		protected float* MatrixCoefficients;
 
 		private float volume = 1;
 		/// <summary>
@@ -189,7 +189,7 @@ namespace MoonWorks.Audio
 						OutputVoice.Handle,
 						SourceChannelCount,
 						DestinationChannelCount,
-						(nint) pMatrixCoefficients,
+						(nint) MatrixCoefficients,
 						0
 					);
 				}
@@ -213,7 +213,7 @@ namespace MoonWorks.Audio
 					{
 						reverb = value;
 
-						float* outputMatrix = (float*) pMatrixCoefficients;
+						float* outputMatrix = (float*) MatrixCoefficients;
 						outputMatrix[0] = reverb;
 						if (SourceChannelCount == 2)
 						{
@@ -225,7 +225,7 @@ namespace MoonWorks.Audio
 							reverbEffect.WetVoice.Handle,
 							SourceChannelCount,
 							1,
-							(nint) pMatrixCoefficients,
+							(nint) MatrixCoefficients,
 							0
 						);
 					}
@@ -238,10 +238,6 @@ namespace MoonWorks.Audio
 				#endif
 			}
 		}
-
-		// 3D Audio properties
-		public bool Is3D { get; protected set; }
-		public Audio3D.Emitter AudioEmitter { get; protected set; }
 
 		private float dopplerFactor = 1f;
 		/// <summary>
@@ -260,12 +256,14 @@ namespace MoonWorks.Audio
 			}
 		}
 
+		public bool Is3D => (this is SourceVoice sourceVoice) && sourceVoice.AttachEmitter != null;
+
 		public Voice(AudioDevice device, uint sourceChannelCount, uint destinationChannelCount) : base(device)
 		{
 			SourceChannelCount = sourceChannelCount;
 			DestinationChannelCount = destinationChannelCount;
 			nuint memsize = 4 * sourceChannelCount * destinationChannelCount;
-			pMatrixCoefficients = (byte*) NativeMemory.AllocZeroed(memsize);
+			MatrixCoefficients = (float*) NativeMemory.AllocZeroed(memsize);
 			SetPanMatrixCoefficients();
 
 			OutputVoice = device.MasteringVoice;
@@ -424,6 +422,18 @@ namespace MoonWorks.Audio
 		{
 			OutputVoice = send;
 
+			if (DestinationChannelCount != OutputVoice.SourceChannelCount)
+			{
+				if (DestinationChannelCount > OutputVoice.SourceChannelCount)
+				{
+					nuint memsize = 4 * SourceChannelCount * DestinationChannelCount;
+					MatrixCoefficients = (float*) NativeMemory.Realloc(MatrixCoefficients, memsize);
+				}
+
+				DestinationChannelCount = OutputVoice.SourceChannelCount;
+				SetPanMatrixCoefficients();
+			}
+
 			if (send is ReverbEffect reverbEffect && reverbEffect.WetVoiceInitialized)
 			{
 				var sendDesc = stackalloc FAudio.FAudioSendDescriptor[2];
@@ -477,8 +487,6 @@ namespace MoonWorks.Audio
 			Pan = 0;
 			Pitch = 0;
 			FilterType = FilterType.None;
-			Is3D = false;
-			AudioEmitter = null;
 			SetOutputVoice(Device.MasteringVoice);
 		}
 
@@ -492,7 +500,7 @@ namespace MoonWorks.Audio
 			 *    entire channel; the two channels are blended on each side.
 			 * -flibit
 			 */
-			float* outputMatrix = (float*) pMatrixCoefficients;
+			float* outputMatrix = (float*) MatrixCoefficients;
 			if (SourceChannelCount == 1)
 			{
 				if (DestinationChannelCount == 1)
@@ -551,16 +559,16 @@ namespace MoonWorks.Audio
 
 			FAudio.FAudioSourceVoice_SetFrequencyRatio(
 				Handle,
-				(float) System.Math.Pow(2.0, pitch) * doppler,
+				float.Pow(2f, pitch) * doppler,
 				0
 			);
 		}
 
-		protected override unsafe void Dispose(bool disposing)
+		protected override void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{
-				NativeMemory.Free(pMatrixCoefficients);
+				NativeMemory.Free(MatrixCoefficients);
 				FAudio.FAudioVoice_DestroyVoice(Handle);
 			}
 			base.Dispose(disposing);
