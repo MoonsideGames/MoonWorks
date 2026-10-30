@@ -117,7 +117,7 @@ namespace MoonWorks.Audio
 
 			/* Init 3D Audio */
 
-			CurveDistanceScaler = parameters.CurveDistanceScalar;
+			CurveDistanceScaler = parameters.CurveDistanceScaler;
 			SpeedOfSound = parameters.SpeedOfSound;
 			Handle3D = Audio3D.F3DAudioInitialize(DeviceDetails.OutputFormat.dwChannelMask, SpeedOfSound);
 
