@@ -22,9 +22,8 @@ namespace MoonWorks.Audio
 		public SubmixVoice MasteringVoice => FauxMasteringVoice;
 
 		public Audio3D.Listener Listener { get; private set; }
-		public float CurveDistanceScaler;
 		public float DopplerScale = 1f;
-		public float SpeedOfSound;
+		public float SpeedOfSound = 343.5f;
 
 		private readonly HashSet<GCHandle> ResourceHandles = [];
 		private readonly HashSet<StreamingAudioSource> StreamingAudioSources = [];
@@ -48,7 +47,7 @@ namespace MoonWorks.Audio
 		private bool Running;
 		public bool IsDisposed { get; private set; }
 
-		internal AudioDevice(AudioDeviceParameters parameters)
+		internal AudioDevice()
 		{
 			UpdateInterval = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / Step);
 
@@ -116,9 +115,6 @@ namespace MoonWorks.Audio
 			FauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
 
 			/* Init 3D Audio */
-
-			CurveDistanceScaler = parameters.CurveDistanceScaler;
-			SpeedOfSound = parameters.SpeedOfSound;
 			Handle3D = Audio3D.F3DAudioInitialize(DeviceDetails.OutputFormat.dwChannelMask, SpeedOfSound);
 
 			AudioTweenManager = new AudioTweenManager();
