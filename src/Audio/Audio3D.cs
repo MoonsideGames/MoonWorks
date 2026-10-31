@@ -1115,12 +1115,11 @@ public static class Audio3D
 	{
 		uint i;
 		Vector3 emitterToListener;
-		float eToLDistance, scaledDistance, dp;
+		float eToLDistance, dp;
 
-		emitterToListener = listener.Position - emitter.Position;
+		emitterToListener = (listener.Position - emitter.Position) * emitter.CurveDistanceScaler;
 		eToLDistance = emitterToListener.Length();
-		scaledDistance = eToLDistance / emitter.CurveDistanceScaler;
-		dspSettings.EmitterToListenerDistance = scaledDistance;
+		dspSettings.EmitterToListenerDistance = eToLDistance;
 
 		if ((flags & FAudio.F3DAUDIO_CALCULATE_MATRIX) > 0)
 		{
@@ -1132,7 +1131,7 @@ public static class Audio3D
 				dspSettings.SrcChannelCount,
 				dspSettings.DstChannelCount,
 				emitterToListener,
-				scaledDistance,
+				eToLDistance,
 				channelRadius,
 				channelAzimuths,
 				dspSettings.MatrixCoefficientsSpan
@@ -1143,7 +1142,7 @@ public static class Audio3D
 		if ((flags & FAudio.F3DAUDIO_CALCULATE_LPF_DIRECT) > 0)
 		{
 			dspSettings.LPFDirectCoefficient = ComputeDistanceAttenuation(
-				scaledDistance,
+				eToLDistance,
 				emitter.MinDistance,
 				emitter.MaxDistance,
 				emitter.Rolloff,
@@ -1154,7 +1153,7 @@ public static class Audio3D
 		if ((flags & FAudio.F3DAUDIO_CALCULATE_LPF_REVERB) > 0)
 		{
 			dspSettings.LPFReverbCoefficient = ComputeDistanceAttenuation(
-				scaledDistance,
+				eToLDistance,
 				emitter.MinDistance,
 				emitter.MaxDistance,
 				emitter.Rolloff,
@@ -1165,7 +1164,7 @@ public static class Audio3D
 		if ((flags & FAudio.F3DAUDIO_CALCULATE_REVERB) > 0)
 		{
 			dspSettings.ReverbLevel = ComputeDistanceAttenuation(
-				scaledDistance,
+				eToLDistance,
 				emitter.MinDistance,
 				emitter.MaxDistance,
 				emitter.Rolloff,
@@ -1181,7 +1180,7 @@ public static class Audio3D
 				listener,
 				emitter,
 				emitterToListener,
-				scaledDistance,
+				eToLDistance,
 				out dspSettings.ListenerVelocityComponent,
 				out dspSettings.EmitterVelocityComponent,
 				out dspSettings.DopplerFactor
@@ -1193,14 +1192,14 @@ public static class Audio3D
 			/* Determined roughly.
 			 * Below that distance, the emitter angle is considered to be PI/2.
 			 */
-			if (scaledDistance < float.Epsilon)
+			if (eToLDistance < float.Epsilon)
 			{
 				dspSettings.EmitterToListenerAngle = float.Pi / 2.0f;
 			}
 			else
 			{
 				/* Note: pEmitter->OrientFront is normalized. */
-				dp = Vector3.Dot(emitterToListener, emitter.Forward) / scaledDistance;
+				dp = Vector3.Dot(emitterToListener, emitter.Forward) / eToLDistance;
 				dspSettings.EmitterToListenerAngle = float.Acos(dp);
 			}
 		}
