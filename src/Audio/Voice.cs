@@ -546,17 +546,7 @@ namespace MoonWorks.Audio
 
 		protected void UpdatePitch()
 		{
-			float doppler;
-			float dopplerScale = Device.DopplerScale;
-			if (!Is3D || dopplerScale == 0.0f)
-			{
-				doppler = 1.0f;
-			}
-			else
-			{
-				doppler = DopplerFactor * dopplerScale;
-			}
-
+			float doppler = Is3D ? DopplerFactor : 1.0f;
 			FAudio.FAudioSourceVoice_SetFrequencyRatio(
 				Handle,
 				float.Pow(2f, pitch) * doppler,
