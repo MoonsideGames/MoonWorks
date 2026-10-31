@@ -11,7 +11,7 @@ namespace MoonWorks.Audio
 	public class AudioDevice : IDisposable
 	{
 		public IntPtr Handle { get; }
-		public Audio3D.F3DAudio Handle3D { get; }
+		internal Audio3D.F3DAudio Handle3D;
 		public FAudio.FAudioDeviceDetails DeviceDetails { get; }
 
 		private readonly IntPtr TrueMasteringVoice;
@@ -22,8 +22,15 @@ namespace MoonWorks.Audio
 		public SubmixVoice MasteringVoice => FauxMasteringVoice;
 
 		public Audio3D.Listener Listener { get; private set; }
-		public float DopplerScale = 1f;
-		public float SpeedOfSound = 343.5f;
+		public float SpeedOfSound
+		{
+			get => Handle3D.SpeedOfSound;
+			set
+			{
+				Handle3D.SpeedOfSound = value;
+				Handle3D.SpeedOfSoundEpsilon = float.BitDecrement(value);
+			}
+		}
 
 		private readonly HashSet<GCHandle> ResourceHandles = [];
 		private readonly HashSet<StreamingAudioSource> StreamingAudioSources = [];
@@ -115,6 +122,7 @@ namespace MoonWorks.Audio
 			FauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
 
 			/* Init 3D Audio */
+			SpeedOfSound = 343.5f;
 			Handle3D = Audio3D.F3DAudioInitialize(DeviceDetails.OutputFormat.dwChannelMask, SpeedOfSound);
 
 			AudioTweenManager = new AudioTweenManager();
