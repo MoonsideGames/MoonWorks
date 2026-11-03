@@ -31,6 +31,7 @@
 
 using System;
 using System.Numerics;
+using MoonWorks.Math;
 
 namespace MoonWorks.Audio;
 
@@ -71,8 +72,6 @@ public static class Audio3D
 		Vector3 Velocity,
 		float InnerRadius,
 		float InnerRadiusAngle,
-		float CurveDistanceScaler,
-		float DopplerScaler,
 		float MinDistance,
 		float MaxDistance,
 		float Rolloff,
@@ -88,11 +87,9 @@ public static class Audio3D
 			0,
 			0,
 			1,
+			1024,
 			1,
-			1,
-			float.MaxValue,
-			1,
-			AttenuationModel.Inverse)
+			AttenuationModel.Linear)
 		{
 
 		}
@@ -105,8 +102,6 @@ public static class Audio3D
 		public Vector3 Velocity { get; set; } = Velocity;
 		public float InnerRadius { get; set; } = InnerRadius;
 		public float InnerRadiusAngle { get; set; } = InnerRadiusAngle;
-		public float CurveDistanceScaler { get; set; } = CurveDistanceScaler;
-		public float DopplerScaler { get; set; } = DopplerScaler;
 		public float MinDistance { get; set; } = MinDistance;
 		public float MaxDistance { get; set; } = MaxDistance;
 		public float Rolloff { get; set; } = Rolloff;
@@ -131,52 +126,71 @@ public static class Audio3D
 		public readonly Span<float> MatrixCoefficientsSpan => new(MatrixCoefficients, (int) (SrcChannelCount * DstChannelCount));
 	};
 
-	public record struct F3DAudio(
+	public class F3DAudio(
 		uint SpeakerMask,
 		uint SpeakerCount,
 		uint SpeakerLFIndex,
-		float SpeedOfSound,
-		float SpeedOfSoundEpsilon);
+		float DopplerScale, // Increase or decrease doppler effect
+		float SpeedOfSound)
+	{
+		public readonly uint SpeakerMask = SpeakerMask;
+		public readonly uint SpeakerCount = SpeakerCount;
+		public readonly uint SpeakerLFIndex = SpeakerLFIndex;
+		public float DopplerScale = DopplerScale;
+
+		private float _speedOfSound = SpeedOfSound;
+		public float SpeedOfSound
+		{
+			get => _speedOfSound;
+			set
+			{
+				_speedOfSound = value;
+				SpeedOfSoundEpsilon = float.BitDecrement(_speedOfSound);
+			}
+		}
+
+		public float SpeedOfSoundEpsilon { get; private set; } = float.BitDecrement(SpeedOfSound);
+	}
 
 	public enum AttenuationModel
 	{
-		None,
-		Inverse,
 		Linear,
-		Exponential
 	}
 
 	public static F3DAudio F3DAudioInitialize(
-		uint SpeakerChannelMask,
-		float SpeedOfSound)
+		uint speakerChannelMask,
+		float dopplerScale,
+		float distanceScale,
+		float unscaledSpeedOfSound)
 	{
-		F3DAudio instance = default;
-		instance.SpeakerMask = SpeakerChannelMask;
-		instance.SpeedOfSound = SpeedOfSound;
-		instance.SpeedOfSoundEpsilon = float.BitDecrement(SpeedOfSound);
-		instance.SpeakerLFIndex = 0xFFFFFFFF;
+		var inputChannelMask = speakerChannelMask;
+		var speakerLFIndex = 0xFFFFFFFF;
 
-		if ((SpeakerChannelMask & FAudio.SPEAKER_LOW_FREQUENCY) > 0)
+		if ((speakerChannelMask & FAudio.SPEAKER_LOW_FREQUENCY) > 0)
 		{
-			if ((SpeakerChannelMask & FAudio.SPEAKER_FRONT_CENTER) > 0)
+			if ((speakerChannelMask & FAudio.SPEAKER_FRONT_CENTER) > 0)
 			{
-				instance.SpeakerLFIndex = 3;
+				speakerLFIndex = 3;
 			}
 			else
 			{
-				instance.SpeakerLFIndex = 2;
+				speakerLFIndex = 2;
 			}
 		}
 
 		uint speakerCount = 0;
-		while (SpeakerChannelMask > 0)
+		while (speakerChannelMask > 0)
 		{
 			speakerCount += 1;
-			SpeakerChannelMask &= SpeakerChannelMask - 1;
+			speakerChannelMask &= speakerChannelMask - 1;
 		}
-		instance.SpeakerCount = speakerCount;
 
-		return instance;
+		return new F3DAudio(
+			inputChannelMask,
+			speakerCount,
+			speakerLFIndex,
+			dopplerScale,
+			unscaledSpeedOfSound);
 	}
 
 	/* This structure represent a tuple of vectors that form a left-handed basis.
@@ -198,27 +212,8 @@ public static class Audio3D
 			return 1; // avoid divide-by-zero
 		}
 
-		return 1 - rolloff * (float.Clamp(distance, minDistance, maxDistance) - minDistance) / (maxDistance - minDistance);
-	}
-
-	static float InverseAttenuation(float distance, float minDistance, float maxDistance, float rolloff)
-	{
-		if (minDistance >= maxDistance)
-		{
-			return 1; // avoid divide-by-zero
-		}
-
-		return minDistance / (minDistance + rolloff * (float.Clamp(distance, minDistance, maxDistance) - minDistance));
-	}
-
-	static float ExponentialAttenuation(float distance, float minDistance, float maxDistance, float rolloff)
-	{
-		if (minDistance >= maxDistance)
-		{
-			return 1; // avoid divide-by-zero
-		}
-
-		return float.Pow(float.Clamp(distance, minDistance, maxDistance) / minDistance, -rolloff);
+		distance = float.Clamp(distance, minDistance, maxDistance);
+		return MathHelper.Normalize(distance, minDistance, maxDistance, 1, 0);
 	}
 
 	// This function computes the distance attenuation according to the model given.
@@ -231,9 +226,7 @@ public static class Audio3D
 	{
 		return attenuationModel switch
 		{
-			AttenuationModel.Inverse => InverseAttenuation(distance, minDistance, maxDistance, rolloff),
 			AttenuationModel.Linear => LinearAttenuation(distance, minDistance, maxDistance, rolloff),
-			AttenuationModel.Exponential => ExponentialAttenuation(distance, minDistance, maxDistance, rolloff),
 			_ => 1,
 		};
 	}
@@ -1057,6 +1050,7 @@ public static class Audio3D
 	static void CalculateDoppler(
 		float speedOfSound,
 		float speedOfSoundEpsilon,
+		float dopplerScaler,
 		Listener listener,
 		Emitter emitter,
 		Vector3 emitterToListener,
@@ -1076,11 +1070,11 @@ public static class Audio3D
 			emitterVelocityComponent =
 				Vector3.Dot(emitterToListener, emitter.Velocity) / eToLDistance;
 
-			if (emitter.DopplerScaler > 0.0f)
+			if (dopplerScaler > 0.0f)
 			{
 				/* Multiply... */
-				float scaledListenerVelocityComponent = listenerVelocityComponent * emitter.DopplerScaler;
-				float scaledEmitterVelocityComponent = emitterVelocityComponent * emitter.DopplerScaler;
+				float scaledListenerVelocityComponent = listenerVelocityComponent * dopplerScaler;
+				float scaledEmitterVelocityComponent = emitterVelocityComponent * dopplerScaler;
 
 				/* ... then Clamp. */
 				DopplerFactor = (
@@ -1117,7 +1111,7 @@ public static class Audio3D
 		Vector3 emitterToListener;
 		float eToLDistance, dp;
 
-		emitterToListener = (listener.Position - emitter.Position) * emitter.CurveDistanceScaler;
+		emitterToListener = listener.Position - emitter.Position;
 		eToLDistance = emitterToListener.Length();
 		dspSettings.EmitterToListenerDistance = eToLDistance;
 
@@ -1177,6 +1171,7 @@ public static class Audio3D
 			CalculateDoppler(
 				Instance.SpeedOfSound,
 				Instance.SpeedOfSoundEpsilon,
+				Instance.DopplerScale,
 				listener,
 				emitter,
 				emitterToListener,
