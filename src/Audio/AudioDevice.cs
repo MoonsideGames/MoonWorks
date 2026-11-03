@@ -22,14 +22,15 @@ namespace MoonWorks.Audio
 		public SubmixVoice MasteringVoice => FauxMasteringVoice;
 
 		public Audio3D.Listener Listener { get; private set; }
+		public float DopplerScale
+		{
+			get => Handle3D.DopplerScale;
+			set => Handle3D.DopplerScale = value;
+		}
 		public float SpeedOfSound
 		{
 			get => Handle3D.SpeedOfSound;
-			set
-			{
-				Handle3D.SpeedOfSound = value;
-				Handle3D.SpeedOfSoundEpsilon = float.BitDecrement(value);
-			}
+			set => Handle3D.SpeedOfSound = value;
 		}
 
 		private readonly HashSet<GCHandle> ResourceHandles = [];
@@ -41,6 +42,9 @@ namespace MoonWorks.Audio
 
 		private readonly SourceVoicePool VoicePool;
 		private readonly List<SourceVoice> VoicesToReturn = [];
+		private readonly List<StreamingAudioSource> StreamingSourcesToAdd = [];
+		private readonly List<StreamingAudioSource> StreamingSourcesToRemove = [];
+		private readonly List<SourceVoice> SpatialVoicesToAdd = [];
 
 		private const int Step = 200;
 		private readonly TimeSpan UpdateInterval;
@@ -122,8 +126,11 @@ namespace MoonWorks.Audio
 			FauxMasteringVoice = SubmixVoice.CreateFauxMasteringVoice(this);
 
 			/* Init 3D Audio */
-			SpeedOfSound = 343.5f;
-			Handle3D = Audio3D.F3DAudioInitialize(DeviceDetails.OutputFormat.dwChannelMask, SpeedOfSound);
+			Handle3D = Audio3D.F3DAudioInitialize(
+				DeviceDetails.OutputFormat.dwChannelMask,
+				1,
+				1,
+				343.5f);
 
 			AudioTweenManager = new AudioTweenManager();
 			VoicePool = new SourceVoicePool(this);
@@ -175,14 +182,38 @@ namespace MoonWorks.Audio
 
 			AudioTweenManager.Update(elapsedSeconds);
 
-			lock (StreamingAudioSources)
+			lock (StreamingSourcesToAdd)
 			{
-				foreach (var voice in StreamingAudioSources)
+				foreach (var voice in StreamingSourcesToAdd)
 				{
-					voice.Update();
+					StreamingAudioSources.Add(voice);
 				}
+				StreamingSourcesToAdd.Clear();
 			}
 
+			lock (StreamingSourcesToRemove)
+			{
+				foreach (var voice in StreamingSourcesToRemove)
+				{
+					StreamingAudioSources.Remove(voice);
+				}
+				StreamingSourcesToRemove.Clear();
+			}
+
+			lock (SpatialVoicesToAdd)
+			{
+				foreach (var voice in SpatialVoicesToAdd)
+				{
+					SpatialVoices.Add(voice);
+				}
+				SpatialVoicesToAdd.Clear();
+			}
+
+			foreach (var voice in StreamingAudioSources)
+			{
+				voice.Update();
+			}
+			
 			if (Listener != null)
 			{
 				foreach (var voice in SpatialVoices)
@@ -206,7 +237,7 @@ namespace MoonWorks.Audio
 			foreach (var voice in VoicesToReturn)
 			{
 				voice.Reset();
-				UnregisterSpatialVoice(voice);
+				SpatialVoices.Remove(voice);
 				VoicePool.Return(voice);
 			}
 
@@ -265,33 +296,25 @@ namespace MoonWorks.Audio
 
 		internal void RegisterStreamingAudioSource(StreamingAudioSource source)
 		{
-			lock (StreamingAudioSources)
+			lock (StreamingSourcesToAdd)
 			{
-				StreamingAudioSources.Add(source);
+				StreamingSourcesToAdd.Add(source);
 			}
 		}
 
 		internal void UnregisterStreamingAudioSource(StreamingAudioSource source)
 		{
-			lock (StreamingAudioSources)
+			lock (StreamingSourcesToRemove)
 			{
-				StreamingAudioSources.Remove(source);
+				StreamingSourcesToRemove.Remove(source);
 			}
 		}
 
 		internal void RegisterSpatialVoice(SourceVoice voice)
 		{
-			lock (SpatialVoices)
+			lock (SpatialVoicesToAdd)
 			{
-				SpatialVoices.Add(voice);
-			}
-		}
-
-		internal void UnregisterSpatialVoice(SourceVoice voice)
-		{
-			lock (SpatialVoices)
-			{
-				SpatialVoices.Remove(voice);
+				SpatialVoicesToAdd.Add(voice);
 			}
 		}
 
