@@ -222,6 +222,11 @@ namespace MoonWorks.Graphics.Font
 			RenderPass renderPass,
 			Matrix4x4 viewProjectionMatrix
 		) {
+			if (VertexCount == 0)
+			{
+				return;
+			}
+
 			renderPass.CommandBuffer.PushVertexUniformData(viewProjectionMatrix);
 
 			renderPass.BindFragmentSamplers(FontTextureBindings);
