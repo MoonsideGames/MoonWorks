@@ -278,6 +278,8 @@ public static class ImageUtils
 		const uint FOURCC_DXT3 = 0x33545844;
 		const uint FOURCC_DXT5 = 0x35545844;
 		const uint FOURCC_DX10 = 0x30315844;
+		const uint FOURCC_BC4  = 0x31495441;
+		const uint FOURCC_BC5  = 0x32495441;
 		const uint pitchAndLinear = (
 			DDSD_PITCH | DDSD_LINEARSIZE
 		);
@@ -421,6 +423,14 @@ public static class ImageUtils
 							format = TextureFormat.BC3_RGBAUnorm;
 							break;
 
+						case 80:
+							format = TextureFormat.BC4_RUnorm;
+							break;
+
+						case 83:
+							format = TextureFormat.BC5_RGUnorm;
+							break;
+
 						case 98:
 							format = TextureFormat.BC7_RGBAUnorm;
 							break;
@@ -464,6 +474,15 @@ public static class ImageUtils
 					reader.Read<uint>(); // reserved
 
 					break;
+
+				case FOURCC_BC4:
+					format = TextureFormat.BC4_RUnorm;
+					break;
+
+				case FOURCC_BC5:
+					format = TextureFormat.BC5_RGUnorm;
+					break;
+
 				default:
 					Logger.LogError("Unsupported DDS texture format");
 					return false;
@@ -512,7 +531,7 @@ public static class ImageUtils
 		else
 		{
 			int blockSize = 16;
-			if (format == TextureFormat.BC1_RGBAUnorm)
+			if (format == TextureFormat.BC1_RGBAUnorm || format == TextureFormat.BC4_RUnorm)
 			{
 				blockSize = 8;
 			}
