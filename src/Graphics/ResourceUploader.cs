@@ -478,7 +478,6 @@ public unsafe class ResourceUploader : GraphicsResource
 		}
 		else if (dataLengthInBytes > TransferBuffer.Size)
 		{
-			Logger.LogInfo("Resizing resource uploader!");
 			Flush();
 			TransferBuffer.Unmap();
 			TransferBuffer.Dispose();
