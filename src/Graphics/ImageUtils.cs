@@ -250,7 +250,7 @@ public static class ImageUtils
 
 	// DDS loading extension, based on MojoDDS
 	// Taken from https://github.com/FNA-XNA/FNA/blob/1e49f868f595f62bc6385db45949a03186a7cd7f/src/Graphics/Texture.cs#L194
-	internal static bool ParseDDS(
+	public static bool ParseDDS(
 		ref ByteSpanReader reader,
 		out TextureFormat format,
 		out int width,
